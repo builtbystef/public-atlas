@@ -1,11 +1,16 @@
-"""Seeding a country (spec section 5.1): the global types, the country's five tables, its
-platforms and its anchors, from a seed module. Adds what is missing and never deletes or
-rewrites, so an edit made in the console survives a reseed."""
+"""The country tables: seeding them (spec section 5.1), reading them as a `CountryRules` object
+at the start of each assignment or load, and editing them from the console with every array
+validated against the type tables (spec section 4.4).
+
+Seeding adds what is missing and never deletes or rewrites, so an edit made in the console
+survives a reseed.
+"""
 
 from dataclasses import dataclass, fields
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.modules.countries.models import (
@@ -15,7 +20,18 @@ from public_atlas.modules.countries.models import (
     InstitutionType,
     SourceType,
 )
-from public_atlas.modules.countries.schemas import CountrySeed, PlaceSeed, SharedSeed
+from public_atlas.modules.countries.rules import CountryRules, build_rules
+from public_atlas.modules.countries.schemas import (
+    AdministrativeLevelInput,
+    CountryInstitutionTypeInput,
+    CountryOutput,
+    CountrySeed,
+    CountrySettingsInput,
+    InstitutionTypeInput,
+    PlaceSeed,
+    SharedSeed,
+    SourceTypeInput,
+)
 from public_atlas.modules.countries.seeds import shared as shared_seed
 from public_atlas.modules.graph.models import (
     Alias,
@@ -27,6 +43,32 @@ from public_atlas.modules.graph.models import (
     Place,
     ProcurementHandledBy,
 )
+from public_atlas.shared.exceptions import ConflictError, NotFoundError, UnprocessableError
+
+__all__ = [
+    "CountryRules",
+    "SeedReport",
+    "delete_administrative_level",
+    "delete_country_institution_type",
+    "delete_institution_type",
+    "delete_source_type",
+    "list_countries",
+    "list_institution_types",
+    "list_source_types",
+    "load_rules",
+    "put_administrative_level",
+    "put_country_institution_type",
+    "put_country_settings",
+    "put_institution_type",
+    "put_source_type",
+    "read_country",
+    "rules_from_seed",
+    "seed",
+    "validate",
+]
+
+
+# --- Seeds ---
 
 
 @dataclass
@@ -196,3 +238,326 @@ async def _add_alias(
     session.add(alias)
     await session.flush()
     return True
+
+
+# --- Rules ---
+
+
+async def load_rules(session: AsyncSession, country_code: str) -> CountryRules:
+    """The country's rules as the tables hold them now. Read at the start of each assignment and
+    each load, never cached across them."""
+    settings = await session.get(CountrySettings, country_code)
+    if settings is None:
+        raise NotFoundError(f"no country {country_code!r}: run `public-atlas seed` first")
+    levels = await session.scalars(
+        select(AdministrativeLevel).where(AdministrativeLevel.country_code == country_code)
+    )
+    uses = await session.scalars(
+        select(CountryInstitutionType).where(CountryInstitutionType.country_code == country_code)
+    )
+    institution_types = await session.scalars(select(InstitutionType))
+    source_types = await session.scalars(select(SourceType))
+    platforms = await session.scalars(
+        select(Domain.name).where(Domain.domain_kind == DomainKind.PLATFORM)
+    )
+    return build_rules(
+        settings=CountrySettingsInput.model_validate(settings, from_attributes=True),
+        administrative_levels=[
+            AdministrativeLevelInput.model_validate(row, from_attributes=True) for row in levels
+        ],
+        country_institution_types=[
+            CountryInstitutionTypeInput.model_validate(row, from_attributes=True) for row in uses
+        ],
+        institution_types=[
+            InstitutionTypeInput.model_validate(row, from_attributes=True)
+            for row in institution_types
+        ],
+        source_types=[
+            SourceTypeInput.model_validate(row, from_attributes=True) for row in source_types
+        ],
+        platforms=list(platforms),
+    )
+
+
+def rules_from_seed(country: dict[str, Any]) -> CountryRules:
+    """The rules a seed module would give, with no database: for the list modules' tests."""
+    shared, seed = validate(country)
+    return build_rules(
+        settings=seed.settings,
+        administrative_levels=seed.administrative_levels,
+        country_institution_types=seed.institution_types,
+        institution_types=shared.institution_types,
+        source_types=shared.source_types,
+        platforms=seed.platforms,
+    )
+
+
+# --- Reading and editing (the countries API) ---
+
+
+async def list_countries(session: AsyncSession) -> list[CountrySettingsInput]:
+    rows = await session.scalars(select(CountrySettings).order_by(CountrySettings.country_code))
+    return [CountrySettingsInput.model_validate(row, from_attributes=True) for row in rows]
+
+
+async def read_country(session: AsyncSession, country_code: str) -> CountryOutput:
+    settings = await _settings(session, country_code)
+    levels = await session.scalars(
+        select(AdministrativeLevel)
+        .where(AdministrativeLevel.country_code == country_code)
+        .order_by(AdministrativeLevel.rank, AdministrativeLevel.name)
+    )
+    uses = await session.scalars(
+        select(CountryInstitutionType)
+        .where(CountryInstitutionType.country_code == country_code)
+        .order_by(CountryInstitutionType.institution_type)
+    )
+    return CountryOutput(
+        settings=CountrySettingsInput.model_validate(settings, from_attributes=True),
+        administrative_levels=[
+            AdministrativeLevelInput.model_validate(row, from_attributes=True) for row in levels
+        ],
+        institution_types=[
+            CountryInstitutionTypeInput.model_validate(row, from_attributes=True) for row in uses
+        ],
+    )
+
+
+async def put_country_settings(
+    session: AsyncSession, data: CountrySettingsInput
+) -> CountrySettingsInput:
+    """Create the country or change its name and naming rules. Flushed, not committed."""
+    row = await session.get(CountrySettings, data.country_code)
+    if row is None:
+        row = CountrySettings(country_code=data.country_code)
+        session.add(row)
+    row.name = data.name
+    row.naming_rules = data.naming_rules.model_dump()
+    await session.flush()
+    return CountrySettingsInput.model_validate(row, from_attributes=True)
+
+
+async def put_administrative_level(
+    session: AsyncSession, country_code: str, name: str, data: AdministrativeLevelInput
+) -> AdministrativeLevelInput:
+    """Create or change the level `name`; a body naming another level renames it, and the
+    places at the level follow. Its types must be ones the country uses."""
+    await _settings(session, country_code)
+    await _check_types_used(
+        session,
+        country_code,
+        [data.government_institution_type, *data.expected_institution_types],
+    )
+    row = await session.get(AdministrativeLevel, (country_code, name))
+    if row is None:
+        if data.name != name:
+            raise NotFoundError(f"{country_code} has no administrative level {name!r}")
+        row = AdministrativeLevel(country_code=country_code, name=name)
+        session.add(row)
+    elif data.name != name:
+        if await session.get(AdministrativeLevel, (country_code, data.name)) is not None:
+            raise ConflictError(f"{country_code} already has a level {data.name!r}")
+        row.name = data.name
+    row.rank = data.rank
+    row.government_institution_type = data.government_institution_type
+    row.expected_institution_types = list(data.expected_institution_types)
+    await session.flush()
+    return AdministrativeLevelInput.model_validate(row, from_attributes=True)
+
+
+async def delete_administrative_level(session: AsyncSession, country_code: str, name: str) -> None:
+    """Refused while a place sits at the level."""
+    row = await session.get(AdministrativeLevel, (country_code, name))
+    if row is None:
+        raise NotFoundError(f"{country_code} has no administrative level {name!r}")
+    in_use = await session.scalar(
+        select(Place.id)
+        .where(Place.country_code == country_code, Place.administrative_level == name)
+        .limit(1)
+    )
+    if in_use is not None:
+        raise ConflictError(f"places sit at level {name!r}")
+    await session.delete(row)
+    await session.flush()
+
+
+async def list_institution_types(session: AsyncSession) -> list[InstitutionTypeInput]:
+    rows = await session.scalars(select(InstitutionType).order_by(InstitutionType.name))
+    return [InstitutionTypeInput.model_validate(row, from_attributes=True) for row in rows]
+
+
+async def put_institution_type(
+    session: AsyncSession, name: str, data: InstitutionTypeInput
+) -> InstitutionTypeInput:
+    """Create or change the type `name`. A body naming another type renames it: the foreign keys
+    cascade, and the levels' checklists are rewritten in the same transaction."""
+    row = await session.get(InstitutionType, name)
+    if row is None:
+        if data.name != name:
+            raise NotFoundError(f"no institution type {name!r}")
+        row = InstitutionType(name=name)
+        session.add(row)
+    elif data.name != name:
+        if await session.get(InstitutionType, data.name) is not None:
+            raise ConflictError(f"an institution type {data.name!r} exists already")
+        row.name = data.name
+        levels = await session.scalars(
+            select(AdministrativeLevel).where(
+                AdministrativeLevel.expected_institution_types.contains([name])
+            )
+        )
+        for level in levels:
+            level.expected_institution_types = [
+                data.name if found == name else found for found in level.expected_institution_types
+            ]
+    row.description = data.description
+    await session.flush()
+    return InstitutionTypeInput.model_validate(row, from_attributes=True)
+
+
+async def delete_institution_type(session: AsyncSession, name: str) -> None:
+    """Refused while a country uses the type, a level expects it or an institution has it."""
+    row = await session.get(InstitutionType, name)
+    if row is None:
+        raise NotFoundError(f"no institution type {name!r}")
+    listed = await session.scalar(
+        select(AdministrativeLevel.name)
+        .where(AdministrativeLevel.expected_institution_types.contains([name]))
+        .limit(1)
+    )
+    if listed is not None:
+        raise ConflictError(f"level {listed!r} expects institution type {name!r}")
+    await _delete_or_conflict(session, row, f"institution type {name!r} is in use")
+
+
+async def list_source_types(session: AsyncSession) -> list[SourceTypeInput]:
+    rows = await session.scalars(select(SourceType).order_by(SourceType.name))
+    return [SourceTypeInput.model_validate(row, from_attributes=True) for row in rows]
+
+
+async def put_source_type(
+    session: AsyncSession, name: str, data: SourceTypeInput
+) -> SourceTypeInput:
+    """As `put_institution_type`; a rename rewrites the countries' expected sources."""
+    row = await session.get(SourceType, name)
+    if row is None:
+        if data.name != name:
+            raise NotFoundError(f"no source type {name!r}")
+        row = SourceType(name=name)
+        session.add(row)
+    elif data.name != name:
+        if await session.get(SourceType, data.name) is not None:
+            raise ConflictError(f"a source type {data.name!r} exists already")
+        row.name = data.name
+        uses = await session.scalars(
+            select(CountryInstitutionType).where(
+                CountryInstitutionType.expected_source_types.contains([name])
+            )
+        )
+        for use in uses:
+            use.expected_source_types = [
+                data.name if found == name else found for found in use.expected_source_types
+            ]
+    row.description = data.description
+    await session.flush()
+    return SourceTypeInput.model_validate(row, from_attributes=True)
+
+
+async def delete_source_type(session: AsyncSession, name: str) -> None:
+    """Refused while a country expects the source or a source has the type."""
+    row = await session.get(SourceType, name)
+    if row is None:
+        raise NotFoundError(f"no source type {name!r}")
+    listed = await session.scalar(
+        select(CountryInstitutionType.institution_type)
+        .where(CountryInstitutionType.expected_source_types.contains([name]))
+        .limit(1)
+    )
+    if listed is not None:
+        raise ConflictError(f"institution type {listed!r} expects source type {name!r}")
+    await _delete_or_conflict(session, row, f"source type {name!r} is in use")
+
+
+async def put_country_institution_type(
+    session: AsyncSession, country_code: str, data: CountryInstitutionTypeInput
+) -> CountryInstitutionTypeInput:
+    """How the country uses a type: create or change the row. The type and every expected
+    source must exist."""
+    await _settings(session, country_code)
+    if await session.get(InstitutionType, data.institution_type) is None:
+        raise UnprocessableError(f"no institution type {data.institution_type!r}")
+    await _check_source_types(session, data.expected_source_types)
+    row = await session.get(CountryInstitutionType, (country_code, data.institution_type))
+    if row is None:
+        row = CountryInstitutionType(
+            country_code=country_code, institution_type=data.institution_type
+        )
+        session.add(row)
+    row.expected_source_types = list(data.expected_source_types)
+    row.name_pattern = data.name_pattern
+    await session.flush()
+    return CountryInstitutionTypeInput.model_validate(row, from_attributes=True)
+
+
+async def delete_country_institution_type(
+    session: AsyncSession, country_code: str, institution_type: str
+) -> None:
+    """Refused while one of the country's levels expects the type."""
+    row = await session.get(CountryInstitutionType, (country_code, institution_type))
+    if row is None:
+        raise NotFoundError(f"{country_code} does not use institution type {institution_type!r}")
+    listed = await session.scalar(
+        select(AdministrativeLevel.name)
+        .where(
+            AdministrativeLevel.country_code == country_code,
+            (AdministrativeLevel.government_institution_type == institution_type)
+            | AdministrativeLevel.expected_institution_types.contains([institution_type]),
+        )
+        .limit(1)
+    )
+    if listed is not None:
+        raise ConflictError(f"level {listed!r} expects institution type {institution_type!r}")
+    await session.delete(row)
+    await session.flush()
+
+
+async def _settings(session: AsyncSession, country_code: str) -> CountrySettings:
+    settings = await session.get(CountrySettings, country_code)
+    if settings is None:
+        raise NotFoundError(f"no country {country_code!r}")
+    return settings
+
+
+async def _check_types_used(
+    session: AsyncSession, country_code: str, institution_types: list[str]
+) -> None:
+    """Every name is a type the country uses (a row in `country_institution_types`), which also
+    makes it a type that exists."""
+    used = set(
+        await session.scalars(
+            select(CountryInstitutionType.institution_type).where(
+                CountryInstitutionType.country_code == country_code,
+                CountryInstitutionType.institution_type.in_(institution_types),
+            )
+        )
+    )
+    if unknown := sorted(set(institution_types) - used):
+        raise UnprocessableError(f"{country_code} does not use institution types {unknown}")
+
+
+async def _check_source_types(session: AsyncSession, source_types: list[str]) -> None:
+    known = set(
+        await session.scalars(select(SourceType.name).where(SourceType.name.in_(source_types)))
+    )
+    if unknown := sorted(set(source_types) - known):
+        raise UnprocessableError(f"no source types {unknown}")
+
+
+async def _delete_or_conflict(session: AsyncSession, row: object, message: str) -> None:
+    """Delete a type row, or report the foreign key that holds it."""
+    try:
+        async with session.begin_nested():
+            await session.delete(row)
+            await session.flush()
+    except IntegrityError:
+        raise ConflictError(message) from None

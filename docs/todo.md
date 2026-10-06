@@ -25,13 +25,13 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [x] The five country tables from spec section 4.4: `country_settings`, `administrative_levels`, `institution_types`, `source_types`, `country_institution_types`, with type names as primary keys and the two checklists as text arrays validated by the API.
 - [x] Turn v1's `data/shared` and `data/canada` YAML into Python seed modules, `countries/seeds/shared.py` (global types, default expected sources) and `countries/seeds/canada.py` (settings and naming rules, levels with expected types, Canada's type rows, platforms, and the Ontario anchor as verified place, government and domains). Validated by the countries API's Pydantic models. No YAML.
 - [x] `public-atlas seed canada`: idempotent, adds what is missing, never deletes.
-- [ ] The `CountryRules` object built from the country tables at the start of each assignment, so an edit takes effect on the next one: levels and ranks, expected types per level, expected sources per type for this country, naming forms, platforms.
-- [ ] The shared list loader in `imports/`: download and hash-check with a local cache, one text renderer per format (CSV and spreadsheet, JSON, HTML, PDF, ZIP member), store each source as a snapshot and an `official_lists` row, diff against the database, apply `PlaceEntry` and `InstitutionEntry` records with their citations as evidence. Idempotent by code then name under the same parent.
-- [ ] The entry models: `PlaceEntry`, `InstitutionEntry`, `Citation`, in memory only.
-- [ ] `imports/lists/ontario_places.py`: port v1's `generate.py` and `statcan.py` into `SOURCES` (census population table, census geography file, Ontario directory page), `OVERRIDES` and `entries()`. No generated files.
-- [ ] `public-atlas load-list <name>`: prints the diff, applies with `--apply`.
-- [ ] Port the rule test to call `entries()` on the cached files.
-- [ ] Countries API: list and edit country settings, administrative levels and their expected types, institution types, source types, and a country's type rows with their expected sources, with validation of every array against the type tables.
+- [x] The `CountryRules` object built from the country tables at the start of each assignment, so an edit takes effect on the next one: levels and ranks, expected types per level, expected sources per type for this country, naming forms, platforms.
+- [x] The shared list loader in `imports/`: download and hash-check with a local cache, one text renderer per format (CSV and spreadsheet, JSON, HTML, PDF, ZIP member), store each source as a snapshot and an `official_lists` row, diff against the database, apply `PlaceEntry` and `InstitutionEntry` records with their citations as evidence. Idempotent by code then name under the same parent.
+- [x] The entry models: `PlaceEntry`, `InstitutionEntry`, `Citation`, in memory only.
+- [x] `imports/lists/ontario_places.py`: port v1's `generate.py` and `statcan.py` into `SOURCES` (census population table, census geography file, Ontario directory page), `OVERRIDES` and `entries()`. No generated files.
+- [x] `public-atlas load-list <name>`: prints the diff, applies with `--apply`.
+- [x] Port the rule test to call `entries()` on the cached files.
+- [x] Countries API: list and edit country settings, administrative levels and their expected types, institution types, source types, and a country's type rows with their expected sources, with validation of every array against the type tables.
 
 **Done when** seeding and loading Ontario produces 40 regions, 414 municipalities and 444 governments with codes and populations, a rerun changes nothing, and the rule test passes.
 

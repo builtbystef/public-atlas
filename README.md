@@ -77,6 +77,8 @@ vp run ci            # everything CI runs
 vp run infra:up      # PostgreSQL and RustFS in Docker (infra:down stops them)
 vp run db:migrate    # alembic upgrade head
 cd apps/server && uv run public-atlas seed canada   # the country tables and the Ontario anchor; safe to rerun
+cd apps/server && uv run public-atlas load-list ontario_places           # what loading Ontario's places would change
+cd apps/server && uv run public-atlas load-list ontario_places --apply   # load them; a rerun changes nothing
 vp run dev           # API, worker and web together, on the host
 vp run dev:api       # http://127.0.0.1:8000/docs
 vp run dev:web       # http://localhost:3000

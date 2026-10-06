@@ -39,6 +39,13 @@ class GoneError(AppError):
     status_code = status.HTTP_410_GONE
 
 
+class UnprocessableError(AppError):
+    """The request is well formed but names something the tables do not hold: a type that does
+    not exist, a level that would sit above its parent."""
+
+    status_code = status.HTTP_422_UNPROCESSABLE_CONTENT
+
+
 class PayloadTooLargeError(AppError):
     status_code = status.HTTP_413_CONTENT_TOO_LARGE
 

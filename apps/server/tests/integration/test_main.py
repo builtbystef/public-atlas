@@ -7,9 +7,21 @@ if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
-def test_the_app_has_only_the_health_routes(client: TestClient):
+def test_the_app_has_the_health_and_countries_routes(client: TestClient):
     schema = client.get("/openapi.json").json()
-    assert sorted(schema["paths"]) == ["/health", "/health/db", "/health/storage"]
+    assert sorted(schema["paths"]) == [
+        "/countries",
+        "/countries/{country_code}",
+        "/countries/{country_code}/administrative-levels/{name}",
+        "/countries/{country_code}/institution-types/{institution_type}",
+        "/health",
+        "/health/db",
+        "/health/storage",
+        "/institution-types",
+        "/institution-types/{name}",
+        "/source-types",
+        "/source-types/{name}",
+    ]
     assert schema["info"]["title"] == "Public Atlas API"
 
 

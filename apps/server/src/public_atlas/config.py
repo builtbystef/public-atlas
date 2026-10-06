@@ -7,6 +7,7 @@ Nothing reads these at import time; each process builds one `Settings` at its en
 """
 
 from datetime import timedelta
+from pathlib import Path
 
 from pydantic import Field, HttpUrl, PostgresDsn, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -51,6 +52,13 @@ class Settings(BaseSettings):
     # True: host/bucket/key URLs (RustFS, MinIO). False: bucket.host/key (AWS, R2).
     storage_path_style: bool = True
     storage_url_ttl: timedelta = timedelta(minutes=15)
+
+    # --- Official lists ---
+    # Where `public-atlas load-list` keeps the files it downloads, checked against the hash the
+    # list module records. Outside the repository, so it does not depend on the working directory.
+    lists_cache_dir: Path = Field(
+        default_factory=lambda: Path.home() / ".cache" / "public-atlas" / "official-lists"
+    )
 
     # --- Background jobs ---
     # Jobs one worker process runs at a time.

@@ -104,6 +104,15 @@ class CountryInstitutionTypeInput(BaseModel):
         return compiled(value)
 
 
+class CountryOutput(BaseModel):
+    """One country's five tables, as the console reads them. The global type tables have routes
+    of their own."""
+
+    settings: CountrySettingsInput
+    administrative_levels: list[AdministrativeLevelInput]
+    institution_types: list[CountryInstitutionTypeInput]
+
+
 # --- Seeds (spec section 5.1) ---
 
 
