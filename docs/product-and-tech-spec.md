@@ -159,7 +159,7 @@ institutions have no rows here.
 A snapshot holds both the raw bytes and the extracted text. Identical bytes
 fetched twice share one text, keyed by content hash.
 
-### 4.4 Country setup
+### 4.4 Countries
 
 What v1 kept in YAML and a JSON column is now five tables, so the console can
 edit it with validation. Python seed modules fill them once (section 5.1).
@@ -185,7 +185,7 @@ Why this shape:
 
 The naming rules stay JSON because they are a rule set, not rows. When a
 checklist changes, the next assignment reads the new rows. The loader's
-record of which files it loaded (`official_lists`, section 5.2) is not setup
+record of which files it loaded (`official_lists`, section 5.2) is not country data
 and sits with the import tables.
 
 ### 4.5 Work
@@ -214,16 +214,16 @@ Three doors, in the order a country is built.
 
 ### 5.1 Seeds (manual, once)
 
-The seeds are Python modules, not data files. `setup/seeds/shared.py` holds
+The seeds are Python modules, not data files. `countries/seeds/shared.py` holds
 the global institution types and source types, and the default list of
-expected sources per type that a country starts from. `setup/seeds/canada.py`
+expected sources per type that a country starts from. `countries/seeds/canada.py`
 holds Canada's settings row and naming rules, its administrative levels with
 the types expected at each, its `country_institution_types` rows (which
 types Canada uses, with any change to the default sources and its name
 patterns), its platforms, and its anchors: the Ontario place, its government
 institution and its two domains, all created verified with
 `entered_by = manual`. Each is a plain dictionary validated by the same
-Pydantic models the setup API uses, so the schema lives in one place.
+Pydantic models the countries API uses, so the schema lives in one place.
 `public-atlas seed canada` fills the tables. From then on the tables are the
 truth and the console edits them. Re-seeding adds what is missing and never
 deletes.
@@ -420,7 +420,7 @@ every result except `failed`.
 
 A worker on the `assignment` queue picks up an assignment and runs a Pydantic
 AI agent. The briefing is the standing instructions for the type, the
-country's setup (levels, types, descriptions), the subject, the checklist of
+country's levels, types and descriptions, the subject, the checklist of
 types still to account for, the pages already visited, and the last handoff
 note. Never the old transcript.
 
@@ -519,7 +519,7 @@ order:
 2. **Assignments**: list with filters, detail with the events in order (prompt, the model's words, tool calls and results), the videos when recorded, findings, spend and result.
 3. **Institutions**: a table with search, filters by place, level, type and status; and a detail page with aliases, type, parent, homepage, sources by type, and every evidence quote linked to its snapshot.
 4. **Review queue**: open items with reason, snapshot and highlighted quote; approve, reject, merge; items grouped by kind with one decision for the group.
-5. **Setup**: country settings, administrative levels with their expected types, institution types, source types, and each country's use of a type with its expected sources, editable with validation.
+5. **Countries**: country settings, administrative levels with their expected types, institution types, source types, and each country's use of a type with its expected sources, editable with validation.
 6. **Evals**: runs over time with their scores and cost.
 
 ---
@@ -551,7 +551,7 @@ apps/server/src/public_atlas/
   integrations/           storage, search, parse, browser, ai: one port each
   jobs/                   Procrastinate wrapper, worker, stalled sweep, purge
   modules/
-    setup/                the five setup tables, seeds, naming rules, the CountryRules object
+    countries/            the five country tables, seeds, naming rules, the CountryRules object
     graph/                places, institutions, sources, domains, homepages, webpages,
                           aliases, identifiers, metrics, duplicate search, status_changes.py
     evidence/             snapshots, evidence, quote_checks.py, capture.py, parse jobs

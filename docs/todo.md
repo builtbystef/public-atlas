@@ -19,19 +19,19 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 1: schema and seeds
 
-- [ ] Write the models from spec section 4: the `entities` parent with joined-table inheritance for places, institutions, sources, domains and homepages; aliases, identifiers and metrics with the two-column link and check constraint; `institution_served_places`; webpages, snapshots, evidence, blocked attempts; the setup tables; runs, assignments, review items, usage, agent run events, eval runs and scores.
+- [ ] Write the models from spec section 4: the `entities` parent with joined-table inheritance for places, institutions, sources, domains and homepages; aliases, identifiers and metrics with the two-column link and check constraint; `institution_served_places`; webpages, snapshots, evidence, blocked attempts; the country tables; runs, assignments, review items, usage, agent run events, eval runs and scores.
 - [ ] Checked strings generated from each `StrEnum`, with a test that compares the constraints with the enums.
 - [ ] One initial Alembic migration. Partial unique index on assignments per subject and type while open. Trigram index on aliases.
-- [ ] The five setup tables from spec section 4.4: `country_settings`, `administrative_levels`, `institution_types`, `source_types`, `country_institution_types`, with type names as primary keys and the two checklists as text arrays validated by the API.
-- [ ] Turn v1's `data/shared` and `data/canada` YAML into Python seed modules, `setup/seeds/shared.py` (global types, default expected sources) and `setup/seeds/canada.py` (settings and naming rules, levels with expected types, Canada's type rows, platforms, and the Ontario anchor as verified place, government and domains). Validated by the setup API's Pydantic models. No YAML.
+- [ ] The five country tables from spec section 4.4: `country_settings`, `administrative_levels`, `institution_types`, `source_types`, `country_institution_types`, with type names as primary keys and the two checklists as text arrays validated by the API.
+- [ ] Turn v1's `data/shared` and `data/canada` YAML into Python seed modules, `countries/seeds/shared.py` (global types, default expected sources) and `countries/seeds/canada.py` (settings and naming rules, levels with expected types, Canada's type rows, platforms, and the Ontario anchor as verified place, government and domains). Validated by the countries API's Pydantic models. No YAML.
 - [ ] `public-atlas seed canada`: idempotent, adds what is missing, never deletes.
-- [ ] The `CountryRules` object built from the setup tables at the start of each assignment, so an edit takes effect on the next one: levels and ranks, expected types per level, expected sources per type for this country, naming forms, platforms.
+- [ ] The `CountryRules` object built from the country tables at the start of each assignment, so an edit takes effect on the next one: levels and ranks, expected types per level, expected sources per type for this country, naming forms, platforms.
 - [ ] The shared list loader in `imports/`: download and hash-check with a local cache, one text renderer per format (CSV and spreadsheet, JSON, HTML, PDF, ZIP member), store each source as a snapshot and an `official_lists` row, diff against the database, apply `PlaceEntry` and `InstitutionEntry` records with their citations as evidence. Idempotent by code then name under the same parent.
 - [ ] The entry models: `PlaceEntry`, `InstitutionEntry`, `Citation`, in memory only.
 - [ ] `imports/lists/ontario_places.py`: port v1's `generate.py` and `statcan.py` into `SOURCES` (census population table, census geography file, Ontario directory page), `OVERRIDES` and `entries()`. No generated files.
 - [ ] `public-atlas load-list <name>`: prints the diff, applies with `--apply`.
 - [ ] Port the rule test to call `entries()` on the cached files.
-- [ ] Setup API: list and edit country settings, administrative levels and their expected types, institution types, source types, and a country's type rows with their expected sources, with validation of every array against the type tables.
+- [ ] Countries API: list and edit country settings, administrative levels and their expected types, institution types, source types, and a country's type rows with their expected sources, with validation of every array against the type tables.
 
 **Done when** seeding and loading Ontario produces 40 regions, 414 municipalities and 444 governments with codes and populations, a rerun changes nothing, and the rule test passes.
 
@@ -52,7 +52,7 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 - [ ] `graph/service.py`: create and find places and institutions, add aliases, duplicate search (trigram, designator rule, one row per entity, at most five), normalize URLs, candidate domain names.
 - [ ] `graph/status_changes.py`: trust a domain, reject a domain, verify a homepage, verify an institution, reject an institution, merge two entities. Each records `entered_by`, sets status once and returns what to spawn.
-- [ ] Review: raise (dedup per entity, fold into a kind when the rule has one), approve, reject, merge, decide a kind, settle open type items when the setup tables change. Review API.
+- [ ] Review: raise (dedup per entity, fold into a kind when the rule has one), approve, reject, merge, decide a kind, settle open type items when the country tables change. Review API.
 - [ ] Merge fixed properly: check conflicts first, move aliases, evidence, sources, homepages and open assignments, set the government link and the homepage link.
 - [ ] Integration tests for every status change and every review action.
 
@@ -70,7 +70,7 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [ ] Findings as typed functions registered as tools through one adapter: `save_institution` (with parent and `procurement_handled_by`), `save_homepage`, `save_source`, `confirm_domain`, `reject_domain`, `domain_moved`, `status`, `request_review`, `finish`, `read_file`, `search`.
 - [ ] The merged `find_homepage` assignment: trusted-domain path, new-domain path, search path; `no_homepage` result with its review item.
 - [ ] `find_institutions` and `find_sources` with the checklist, refused short close, `complete_with_gaps` and its review item.
-- [ ] Briefing and prompts from v1, rewritten in the glossary's words and read from the setup tables.
+- [ ] Briefing and prompts from v1, rewritten in the glossary's words and read from the country tables.
 - [ ] Integration tests with a scripted model for each type and each end state; port v1's findings tests.
 - [ ] CLI: `seed`, `load-list`, `run create [--video]|pause|stop|release`, `worker`.
 
@@ -93,7 +93,7 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [ ] Assignments list and detail: filters, the event timeline, video playback, findings, spend, result.
 - [ ] Institutions table with search and filters; institution detail with aliases, parent, homepage, sources by type, evidence quotes linked to presigned snapshot downloads.
 - [ ] Review queue: items with snapshot and highlighted quote; approve, reject, merge; kinds decided together.
-- [ ] Setup pages: country settings, administrative levels, institution types, source types, a country's expected sources per type.
+- [ ] Countries pages: country settings, administrative levels, institution types, source types, a country's expected sources per type.
 - [ ] Evals page: runs over time, scores per type, cost.
 - [ ] Web tests for the list state, formatting and error handling that the pages use.
 
