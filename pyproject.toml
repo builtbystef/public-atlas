@@ -54,6 +54,9 @@ runtime-evaluated-base-classes = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
+# `__mapper_args__` is a dict SQLAlchemy's base declares as an instance attribute, so a ClassVar
+# annotation (the fix RUF012 asks for) is an invalid override for ty.
+"**/models.py" = ["RUF012"]
 "**/tests/**" = [
   "S101", # assert
   "PLR2004", # magic values

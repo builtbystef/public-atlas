@@ -63,6 +63,7 @@ torchvision = [
 ]
 
 [project.scripts]
+public-atlas = "public_atlas.cli:main"
 public-atlas-worker = "public_atlas.jobs.worker:main"
 
 [tool.fastapi]

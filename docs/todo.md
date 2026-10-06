@@ -19,12 +19,12 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 1: schema and seeds
 
-- [ ] Write the models from spec section 4: the `entities` parent with joined-table inheritance for places, institutions, sources, domains and homepages; aliases, identifiers and metrics with the two-column link and check constraint; `institution_served_places`; webpages, snapshots, evidence, blocked attempts; the country tables; runs, assignments, review items, usage, agent run events, eval runs and scores.
-- [ ] Checked strings generated from each `StrEnum`, with a test that compares the constraints with the enums.
-- [ ] One initial Alembic migration. Partial unique index on assignments per subject and type while open. Trigram index on aliases.
-- [ ] The five country tables from spec section 4.4: `country_settings`, `administrative_levels`, `institution_types`, `source_types`, `country_institution_types`, with type names as primary keys and the two checklists as text arrays validated by the API.
-- [ ] Turn v1's `data/shared` and `data/canada` YAML into Python seed modules, `countries/seeds/shared.py` (global types, default expected sources) and `countries/seeds/canada.py` (settings and naming rules, levels with expected types, Canada's type rows, platforms, and the Ontario anchor as verified place, government and domains). Validated by the countries API's Pydantic models. No YAML.
-- [ ] `public-atlas seed canada`: idempotent, adds what is missing, never deletes.
+- [x] Write the models from spec section 4: the `entities` parent with joined-table inheritance for places, institutions, sources, domains and homepages; aliases, identifiers and metrics with the two-column link and check constraint; `institution_served_places`; webpages, snapshots, evidence, blocked attempts; the country tables; runs, assignments, review items, usage, agent run events, eval runs and scores.
+- [x] Checked strings generated from each `StrEnum`, with a test that compares the constraints with the enums.
+- [x] One initial Alembic migration. Partial unique index on assignments per subject and type while open. Trigram index on aliases.
+- [x] The five country tables from spec section 4.4: `country_settings`, `administrative_levels`, `institution_types`, `source_types`, `country_institution_types`, with type names as primary keys and the two checklists as text arrays validated by the API.
+- [x] Turn v1's `data/shared` and `data/canada` YAML into Python seed modules, `countries/seeds/shared.py` (global types, default expected sources) and `countries/seeds/canada.py` (settings and naming rules, levels with expected types, Canada's type rows, platforms, and the Ontario anchor as verified place, government and domains). Validated by the countries API's Pydantic models. No YAML.
+- [x] `public-atlas seed canada`: idempotent, adds what is missing, never deletes.
 - [ ] The `CountryRules` object built from the country tables at the start of each assignment, so an edit takes effect on the next one: levels and ranks, expected types per level, expected sources per type for this country, naming forms, platforms.
 - [ ] The shared list loader in `imports/`: download and hash-check with a local cache, one text renderer per format (CSV and spreadsheet, JSON, HTML, PDF, ZIP member), store each source as a snapshot and an `official_lists` row, diff against the database, apply `PlaceEntry` and `InstitutionEntry` records with their citations as evidence. Idempotent by code then name under the same parent.
 - [ ] The entry models: `PlaceEntry`, `InstitutionEntry`, `Citation`, in memory only.

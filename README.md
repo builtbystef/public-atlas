@@ -76,6 +76,7 @@ vp run test          # Vitest + pytest
 vp run ci            # everything CI runs
 vp run infra:up      # PostgreSQL and RustFS in Docker (infra:down stops them)
 vp run db:migrate    # alembic upgrade head
+cd apps/server && uv run public-atlas seed canada   # the country tables and the Ontario anchor; safe to rerun
 vp run dev           # API, worker and web together, on the host
 vp run dev:api       # http://127.0.0.1:8000/docs
 vp run dev:web       # http://localhost:3000
@@ -101,11 +102,12 @@ are listed under `[tool.uv.workspace] members` in the root `pyproject.toml`.
 ```
 apps/server/src/public_atlas/
   asgi.py                 the ASGI app for `fastapi run`; the one place the API reads the environment
+  cli.py                  `public-atlas`: the operator's commands (seed), reading the environment like asgi.py
   main.py                 create_app(settings): the FastAPI app; its lifespan calls build_resources once
   resources.py            build_resources(settings): database, store, jobs (searcher and model follow)
   dependencies.py         FastAPI dependencies that read the resources from request.state
   config.py               Settings: deployment values only, no product data
-  db/                     base, session
+  db/                     base, session, checked strings (an enum as text with a check constraint)
   integrations/           storage, search, parse, browser, ai: one port each
   jobs/                   Procrastinate registry, task decorator, worker, stalled sweep, purge
   modules/
