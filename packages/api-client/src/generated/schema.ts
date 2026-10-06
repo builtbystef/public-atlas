@@ -110,7 +110,8 @@ export interface paths {
         get?: never;
         /**
          * Put Administrative Level
-         * @description Create or change a level. Its types must be ones the country uses.
+         * @description Create or change a level. Its types must be ones the country uses. Open review items the
+         *     change answers (a type now expected at the level) are settled.
          */
         put: operations["countries-put_administrative_level"];
         post?: never;
@@ -135,6 +136,8 @@ export interface paths {
         /**
          * Put Country Institution Type
          * @description How the country uses a type: the sources expected for it and what its names look like.
+         *     Open review items the change answers (bodies saved as `other` with this type suggested) are
+         *     settled.
          */
         put: operations["countries-put_country_institution_type"];
         post?: never;
@@ -233,6 +236,165 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/review-items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Review Items
+         * @description The items, open ones by default, oldest first.
+         */
+        get: operations["review-list_review_items"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Review Kinds
+         * @description The open items grouped by the question they share; one call on a kind decides them all.
+         */
+        get: operations["review-list_review_kinds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/kinds/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Review Kind
+         * @description Approve every open item of the kind. A `new_type` kind gives its bodies the type named,
+         *     by default the suggested type as a type name; the type must exist.
+         */
+        post: operations["review-approve_review_kind"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/kinds/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Review Kind
+         * @description Reject every open item of the kind.
+         */
+        post: operations["review-reject_review_kind"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Review Item
+         * @description The item with its entity, the entity's names and status, and every quote for it with a
+         *     link to the stored copy it was found on.
+         */
+        get: operations["review-read_review_item"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Review Item
+         * @description The entity is what the agent said. An institution saved as `other` may be given its type.
+         */
+        post: operations["review-approve_review_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject Review Item */
+        post: operations["review-reject_review_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Review Item
+         * @description The entity is a duplicate of `into_id`: what it holds moves over and it is rejected.
+         */
+        post: operations["review-merge_review_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -251,6 +413,18 @@ export interface components {
              */
             expected_institution_types: string[];
         };
+        /** ApproveInput */
+        ApproveInput: {
+            /** Note */
+            note?: string | null;
+            /** Institution Type */
+            institution_type?: string | null;
+        };
+        /**
+         * AssignmentType
+         * @enum {string}
+         */
+        AssignmentType: "find_homepage" | "find_institutions" | "find_sources";
         /** CountryInstitutionTypeInput */
         CountryInstitutionTypeInput: {
             /** Institution Type */
@@ -291,6 +465,40 @@ export interface components {
              */
             naming_rules: components["schemas"]["NamingRules"];
         };
+        /** DecisionInput */
+        DecisionInput: {
+            /** Note */
+            note?: string | null;
+        };
+        /** DecisionOutput */
+        DecisionOutput: {
+            review_item: components["schemas"]["ReviewItemOutput"];
+            /** Spawn */
+            spawn: components["schemas"]["SpawnOutput"][];
+        };
+        /**
+         * EntityKind
+         * @enum {string}
+         */
+        EntityKind: "place" | "institution" | "source" | "domain" | "homepage";
+        /** EvidenceOutput */
+        EvidenceOutput: {
+            /** Quote */
+            quote: string;
+            /** Kind */
+            kind: string;
+            /** Locator */
+            locator: number | null;
+            /** Link Url */
+            link_url: string | null;
+            /** Page Url */
+            page_url: string;
+            /**
+             * Snapshot Url
+             * @description A short-lived download link to the stored page or file; null once pruned.
+             */
+            snapshot_url: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -307,6 +515,61 @@ export interface components {
             name: string;
             /** Description */
             description: string;
+        };
+        /** KindApproveInput */
+        KindApproveInput: {
+            /** Note */
+            note?: string | null;
+            /** Kind */
+            kind: string;
+            /** Institution Type */
+            institution_type?: string | null;
+        };
+        /** KindDecisionInput */
+        KindDecisionInput: {
+            /** Note */
+            note?: string | null;
+            /** Kind */
+            kind: string;
+        };
+        /** KindDecisionOutput */
+        KindDecisionOutput: {
+            /** Kind */
+            kind: string;
+            /** Review Items */
+            review_items: components["schemas"]["ReviewItemOutput"][];
+            /** Spawn */
+            spawn: components["schemas"]["SpawnOutput"][];
+        };
+        /** KindOutput */
+        KindOutput: {
+            /** Kind */
+            kind: string;
+            /** Rule */
+            rule: string;
+            /** Count */
+            count: number;
+            /** Question */
+            question: {
+                [key: string]: unknown;
+            };
+            /**
+             * Names
+             * @description The first few entities of the kind, to recognise it by.
+             */
+            names: string[];
+            /** Item Ids */
+            item_ids: string[];
+        };
+        /** MergeInput */
+        MergeInput: {
+            /** Note */
+            note?: string | null;
+            /**
+             * Into Id
+             * Format: uuid
+             */
+            into_id: string;
         };
         /**
          * NamingRules
@@ -337,12 +600,98 @@ export interface components {
              */
             and_words: string[];
         };
+        /** ReviewItemDetail */
+        ReviewItemDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Rule */
+            rule: string;
+            /** Question */
+            question: {
+                [key: string]: unknown;
+            };
+            /** Kind */
+            kind: string | null;
+            status: components["schemas"]["ReviewStatus"];
+            /** Raised By Assignment Id */
+            raised_by_assignment_id: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Note */
+            note: string | null;
+            entity_kind: components["schemas"]["EntityKind"];
+            /** Entity Status */
+            entity_status: string;
+            /** Label */
+            label: string;
+            /** Names */
+            names: string[];
+            /** Entity */
+            entity: {
+                [key: string]: unknown;
+            };
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceOutput"][];
+        };
+        /** ReviewItemOutput */
+        ReviewItemOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Rule */
+            rule: string;
+            /** Question */
+            question: {
+                [key: string]: unknown;
+            };
+            /** Kind */
+            kind: string | null;
+            status: components["schemas"]["ReviewStatus"];
+            /** Raised By Assignment Id */
+            raised_by_assignment_id: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Note */
+            note: string | null;
+        };
+        /**
+         * ReviewStatus
+         * @enum {string}
+         */
+        ReviewStatus: "open" | "approved" | "rejected" | "merged";
         /** SourceTypeInput */
         SourceTypeInput: {
             /** Name */
             name: string;
             /** Description */
             description: string;
+        };
+        /**
+         * SpawnOutput
+         * @description Work the decision asks for; the assignments module queues it.
+         */
+        SpawnOutput: {
+            type: components["schemas"]["AssignmentType"];
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -365,14 +714,29 @@ export interface components {
     pathItems: never;
 }
 export type AdministrativeLevelInput = components['schemas']['AdministrativeLevelInput'];
+export type ApproveInput = components['schemas']['ApproveInput'];
+export type AssignmentType = components['schemas']['AssignmentType'];
 export type CountryInstitutionTypeInput = components['schemas']['CountryInstitutionTypeInput'];
 export type CountryOutput = components['schemas']['CountryOutput'];
 export type CountrySettingsInput = components['schemas']['CountrySettingsInput'];
+export type DecisionInput = components['schemas']['DecisionInput'];
+export type DecisionOutput = components['schemas']['DecisionOutput'];
+export type EntityKind = components['schemas']['EntityKind'];
+export type EvidenceOutput = components['schemas']['EvidenceOutput'];
 export type HttpValidationError = components['schemas']['HTTPValidationError'];
 export type Health = components['schemas']['Health'];
 export type InstitutionTypeInput = components['schemas']['InstitutionTypeInput'];
+export type KindApproveInput = components['schemas']['KindApproveInput'];
+export type KindDecisionInput = components['schemas']['KindDecisionInput'];
+export type KindDecisionOutput = components['schemas']['KindDecisionOutput'];
+export type KindOutput = components['schemas']['KindOutput'];
+export type MergeInput = components['schemas']['MergeInput'];
 export type NamingRules = components['schemas']['NamingRules'];
+export type ReviewItemDetail = components['schemas']['ReviewItemDetail'];
+export type ReviewItemOutput = components['schemas']['ReviewItemOutput'];
+export type ReviewStatus = components['schemas']['ReviewStatus'];
 export type SourceTypeInput = components['schemas']['SourceTypeInput'];
+export type SpawnOutput = components['schemas']['SpawnOutput'];
 export type ValidationError = components['schemas']['ValidationError'];
 export type $defs = Record<string, never>;
 export interface operations {
@@ -810,6 +1174,262 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-list_review_items": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["ReviewStatus"] | null;
+                kind?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewItemOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-list_review_kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KindOutput"][];
+                };
+            };
+        };
+    };
+    "review-approve_review_kind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KindApproveInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KindDecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-reject_review_kind": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KindDecisionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KindDecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-read_review_item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewItemDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-approve_review_item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-reject_review_item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-merge_review_item": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOutput"];
+                };
             };
             /** @description Validation Error */
             422: {

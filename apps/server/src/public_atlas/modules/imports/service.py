@@ -32,6 +32,7 @@ from public_atlas.modules.countries.service import CountryRules
 from public_atlas.modules.evidence import service as evidence
 from public_atlas.modules.evidence.models import EvidenceKind, Snapshot
 from public_atlas.modules.graph import service as graph
+from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
     EnteredBy,
     EntityStatus,
@@ -41,7 +42,6 @@ from public_atlas.modules.graph.models import (
     InstitutionServedPlace,
     Metric,
     Place,
-    ProcurementHandledBy,
 )
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import (
@@ -204,11 +204,12 @@ class Loader:
         for source in sources:
             opened = self.files[source.name]
             domain, created = await graph.ensure_domain(
-                self.session,
-                graph.host_of(source.url),
-                status=EntityStatus.VERIFIED,
-                entered_by=EnteredBy.SCRIPT,
+                self.session, graph.host_of(source.url), entered_by=EnteredBy.SCRIPT
             )
+            if not graph.is_trusted(domain):
+                await status_changes.verify_domain(
+                    self.session, domain, entered_by=EnteredBy.SCRIPT
+                )
             if created:
                 self.changed("add", "domain", domain.name, "trusted: an official list's")
             webpage = await graph.ensure_webpage(self.session, source.url, domain=domain)
@@ -329,16 +330,16 @@ class Loader:
                 raise Skip(f"{len(found)} places go by that name at level {entry.level!r}")
             place = found[0] if found else None
         if place is None:
-            place = Place(
+            place = await graph.create_place(
+                self.session,
                 name=entry.name,
                 country_code=self.rules.country_code,
                 administrative_level=entry.level,
-                parent_place_id=parent.id if parent is not None else None,
-                status=EntityStatus.VERIFIED,
+                parent=parent,
                 entered_by=EnteredBy.SCRIPT,
+                language=entry.language,
             )
-            self.session.add(place)
-            await self.session.flush()
+            await status_changes.verify_place(self.session, place, entered_by=EnteredBy.SCRIPT)
             (await self._known(entry.level)).append(Known(place, set()))
             self.changed(
                 "add", "place", label, f"under {parent.name}" if parent is not None else ""
@@ -516,16 +517,17 @@ class Loader:
         given its candidate homepage either way."""
         assert entry.government is not None  # noqa: S101 - the caller checked
         if place.government_institution_id is None:
-            government = Institution(
+            government = await graph.create_institution(
+                self.session,
                 name=entry.government,
                 institution_type=self.rules.government_type(entry.level),
-                place_id=place.id,
-                procurement_handled_by=ProcurementHandledBy.SELF,
-                status=EntityStatus.VERIFIED,
+                place=place,
                 entered_by=EnteredBy.SCRIPT,
+                language=entry.language,
             )
-            self.session.add(government)
-            await self.session.flush()
+            await status_changes.verify_institution(
+                self.session, government, entered_by=EnteredBy.SCRIPT
+            )
             place.government_institution_id = government.id
             await self.session.flush()
             self.changed("add", "institution", entry.government, f"government of {label}")
@@ -546,10 +548,7 @@ class Loader:
         webpage = await graph.webpage_by_url(self.session, normalized)
         if webpage is None:
             domain, created = await graph.ensure_domain(
-                self.session,
-                graph.host_of(normalized),
-                status=EntityStatus.CANDIDATE,
-                entered_by=EnteredBy.SCRIPT,
+                self.session, graph.host_of(normalized), entered_by=EnteredBy.SCRIPT
             )
             if created:
                 self.changed("add", "domain", domain.name, "candidate")
@@ -565,14 +564,9 @@ class Loader:
                     f"{institution.name}: has a verified homepage already; {normalized} not claimed"
                 )
                 return
-            homepage = Homepage(
-                institution_id=institution.id,
-                webpage_id=webpage.id,
-                status=EntityStatus.CANDIDATE,
-                entered_by=EnteredBy.SCRIPT,
+            homepage = await graph.create_homepage(
+                self.session, institution, webpage, entered_by=EnteredBy.SCRIPT
             )
-            self.session.add(homepage)
-            await self.session.flush()
             self.changed("add", "homepage", institution.name, f"{normalized} (candidate)")
         _, snapshot, quote = self.cited(citation)
         await self._cite(
@@ -594,9 +588,9 @@ class Loader:
         if place is None:
             raise Skip(f"place {entry.place!r} is not loaded")
         label = f"{entry.name} ({entry.institution_type})"
-        institution = await self._match_institution(entry, place, label)
+        institution, created = await self._match_institution(entry, place, label)
         await self._aliases(institution, entry.name, entry.language, entry.aliases)
-        if institution.parent_institution_id is None:
+        if created or institution.parent_institution_id is None:
             institution.parent_institution_id = await self._parent_institution(entry, place)
         for served in entry.served_places:
             await self._served_place(institution, served, label)
@@ -607,28 +601,29 @@ class Loader:
 
     async def _match_institution(
         self, entry: InstitutionEntry, place: Place, label: str
-    ) -> Institution:
+    ) -> tuple[Institution, bool]:
         """The institution of the entry's type at the place that goes by its name, else a new
-        one."""
+        verified one. Whether it was created."""
         found = await self._institutions_named(
             place, self._entry_forms(entry.name, entry.aliases), entry.institution_type
         )
         if len(found) > 1:
             raise Skip(f"{len(found)} institutions go by that name at {place.name}")
         if found:
-            return found[0]
-        institution = Institution(
+            return found[0], False
+        institution = await graph.create_institution(
+            self.session,
             name=entry.name,
             institution_type=entry.institution_type,
-            place_id=place.id,
-            procurement_handled_by=ProcurementHandledBy.SELF,
-            status=EntityStatus.VERIFIED,
+            place=place,
             entered_by=EnteredBy.SCRIPT,
+            language=entry.language,
         )
-        self.session.add(institution)
-        await self.session.flush()
+        await status_changes.verify_institution(
+            self.session, institution, entered_by=EnteredBy.SCRIPT
+        )
         self.changed("add", "institution", label, f"at {place.name}")
-        return institution
+        return institution, True
 
     async def _institutions_named(
         self, place: Place, forms: AbstractSet[str], institution_type: str | None

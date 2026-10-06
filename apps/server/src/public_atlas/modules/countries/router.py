@@ -14,6 +14,7 @@ from public_atlas.modules.countries.schemas import (
     InstitutionTypeInput,
     SourceTypeInput,
 )
+from public_atlas.modules.review import service as review
 from public_atlas.shared.exceptions import UnprocessableError
 
 router = APIRouter(tags=["countries"])
@@ -46,8 +47,10 @@ async def put_country_settings(
 async def put_administrative_level(
     country_code: str, name: str, data: AdministrativeLevelInput, session: SessionDep
 ) -> AdministrativeLevelInput:
-    """Create or change a level. Its types must be ones the country uses."""
+    """Create or change a level. Its types must be ones the country uses. Open review items the
+    change answers (a type now expected at the level) are settled."""
     result = await service.put_administrative_level(session, country_code, name, data)
+    await review.settle_type_items(session, country_code)
     await session.commit()
     return result
 
@@ -69,10 +72,13 @@ async def put_country_institution_type(
     data: CountryInstitutionTypeInput,
     session: SessionDep,
 ) -> CountryInstitutionTypeInput:
-    """How the country uses a type: the sources expected for it and what its names look like."""
+    """How the country uses a type: the sources expected for it and what its names look like.
+    Open review items the change answers (bodies saved as `other` with this type suggested) are
+    settled."""
     if data.institution_type != institution_type:
         raise UnprocessableError("the body's institution type is not the path's")
     result = await service.put_country_institution_type(session, country_code, data)
+    await review.settle_type_items(session, country_code)
     await session.commit()
     return result
 

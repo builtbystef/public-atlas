@@ -50,11 +50,11 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 3: graph, status changes and review
 
-- [ ] `graph/service.py`: create and find places and institutions, add aliases, duplicate search (trigram, designator rule, one row per entity, at most five), normalize URLs, candidate domain names.
-- [ ] `graph/status_changes.py`: trust a domain, reject a domain, verify a homepage (setting `trusted_path` when the homepage is on a platform), verify an institution, reject an institution, merge two entities. Each records `entered_by`, sets status once and returns what to spawn.
-- [ ] Review: raise (dedup per entity, fold into a kind when the rule has one), approve, reject, merge, decide a kind, settle open type items when the country tables change. Review API.
-- [ ] Merge fixed properly: check conflicts first, move aliases, evidence, sources, homepages and open assignments, set the government link and the homepage link.
-- [ ] Integration tests for every status change and every review action.
+- [x] `graph/service.py`: create and find places and institutions, add aliases, duplicate search (trigram, designator rule, one row per entity, at most five), normalize URLs, candidate domain names.
+- [x] `graph/status_changes.py`: trust a domain, reject a domain, verify a homepage (setting `trusted_path` when the homepage is on a platform), verify an institution, reject an institution, merge two entities. Each records `entered_by`, sets status once and returns what to spawn.
+- [x] Review: raise (dedup per entity, fold into a kind when the rule has one), approve, reject, merge, decide a kind, settle open type items when the country tables change. Review API.
+- [x] Merge fixed properly: check conflicts first, move aliases, evidence, sources, homepages and open assignments, set the government link and the homepage link.
+- [x] Integration tests for every status change and every review action.
 
 **Done when** every path that changes a status goes through `status_changes.py` (a grep for direct status writes finds nothing else) and the review tests pass.
 

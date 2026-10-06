@@ -1,21 +1,67 @@
-"""The assignments module's door. Phase 2: recording what a call cost. Phase 4 adds runs,
-assignments, spawning and budgets."""
+"""The assignments module's door: recording what a call cost, what a status change asks to
+spawn, and the open work on a subject. Phase 4 adds runs, assignments, spawning and budgets."""
 
 import logging
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from public_atlas.modules.assignments.models import Usage, UsageKind
+from public_atlas.modules.assignments import lifecycle
+from public_atlas.modules.assignments.models import (
+    OPEN_STATUSES,
+    Assignment,
+    AssignmentType,
+    Usage,
+    UsageKind,
+)
 from public_atlas.modules.assignments.pricing import load_prices
 
-__all__ = ["record_usage"]
+__all__ = ["Spawn", "cancel", "move_subject", "open_assignments", "record_usage"]
 
 logger = logging.getLogger(__name__)
 
 _unpriced: set[str] = set()
+
+
+@dataclass(frozen=True, slots=True)
+class Spawn:
+    """Work a status change asks for (spec section 7.3): one assignment type on one subject. The
+    backend inserts it and queues or holds it by the run's mode; the status change only says."""
+
+    type: AssignmentType
+    subject_id: uuid.UUID
+
+
+async def open_assignments(session: AsyncSession, subject_id: uuid.UUID) -> list[Assignment]:
+    """The held, queued and running assignments on a subject."""
+    rows = await session.scalars(
+        select(Assignment)
+        .where(Assignment.subject_id == subject_id, Assignment.status.in_(OPEN_STATUSES))
+        .order_by(Assignment.id)
+    )
+    return list(rows)
+
+
+def cancel(assignment: Assignment) -> None:
+    lifecycle.cancel(assignment)
+
+
+async def move_subject(session: AsyncSession, from_id: uuid.UUID, into_id: uuid.UUID) -> None:
+    """When two entities merge, the duplicate's open assignments move to the survivor, except
+    where the survivor has one of that type open already: those are cancelled, since one open
+    assignment per subject and type is all the index allows."""
+    taken = {assignment.type for assignment in await open_assignments(session, into_id)}
+    for assignment in await open_assignments(session, from_id):
+        if assignment.type in taken:
+            lifecycle.cancel(assignment)
+        else:
+            assignment.subject_id = into_id
+            taken.add(assignment.type)
+    await session.flush()
 
 
 async def record_usage(  # noqa: PLR0913

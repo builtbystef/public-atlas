@@ -89,7 +89,11 @@ class Entity(UUIDPrimaryKey, Base):
     __tablename__ = "entities"
 
     kind: Mapped[EntityKind] = checked_string(EntityKind, "kind")
-    status: Mapped[EntityStatus] = checked_string(EntityStatus, "status")
+    # Every entity starts as a candidate; `status_changes.py` is the one place it moves from
+    # there, and `entered_by` then says who moved it.
+    status: Mapped[EntityStatus] = checked_string(
+        EntityStatus, "status", default=EntityStatus.CANDIDATE
+    )
     entered_by: Mapped[EnteredBy] = checked_string(EnteredBy, "entered_by")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 

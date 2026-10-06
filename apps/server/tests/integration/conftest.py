@@ -131,7 +131,17 @@ class Database:
     connection: AsyncConnection
 
     def run[T](self, func: Callable[..., Awaitable[T]], *args: object) -> T:
-        return self.portal.call(func, *args)
+        """Run `func` on the app's event loop. A `pytest.raises` that does not raise fails with
+        a `BaseException`, which would stop the portal and leave the transaction open for every
+        test after it; it is turned into an ordinary failure here."""
+
+        async def guarded() -> T:
+            try:
+                return await func(*args)
+            except pytest.fail.Exception as exc:
+                raise AssertionError(str(exc)) from None
+
+        return self.portal.call(guarded)
 
     def session(self) -> AsyncSession:
         # commit() releases a savepoint; the fixture rolls back the outer transaction.

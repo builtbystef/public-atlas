@@ -196,7 +196,7 @@
           "countries"
         ],
         "summary": "Put Administrative Level",
-        "description": "Create or change a level. Its types must be ones the country uses.",
+        "description": "Create or change a level. Its types must be ones the country uses. Open review items the\nchange answers (a type now expected at the level) are settled.",
         "operationId": "countries-put_administrative_level",
         "parameters": [
           {
@@ -301,7 +301,7 @@
           "countries"
         ],
         "summary": "Put Country Institution Type",
-        "description": "How the country uses a type: the sources expected for it and what its names look like.",
+        "description": "How the country uses a type: the sources expected for it and what its names look like.\nOpen review items the change answers (bodies saved as `other` with this type suggested) are\nsettled.",
         "operationId": "countries-put_country_institution_type",
         "parameters": [
           {
@@ -624,6 +624,416 @@
           }
         }
       }
+    },
+    "/review-items": {
+      "get": {
+        "tags": [
+          "review"
+        ],
+        "summary": "List Review Items",
+        "description": "The items, open ones by default, oldest first.",
+        "operationId": "review-list_review_items",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ReviewStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "open",
+              "title": "Status"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 300
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReviewItemOutput"
+                  },
+                  "title": "Response Review-List Review Items"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/kinds": {
+      "get": {
+        "tags": [
+          "review"
+        ],
+        "summary": "List Review Kinds",
+        "description": "The open items grouped by the question they share; one call on a kind decides them all.",
+        "operationId": "review-list_review_kinds",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/KindOutput"
+                  },
+                  "type": "array",
+                  "title": "Response Review-List Review Kinds"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/kinds/approve": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Approve Review Kind",
+        "description": "Approve every open item of the kind. A `new_type` kind gives its bodies the type named,\nby default the suggested type as a type name; the type must exist.",
+        "operationId": "review-approve_review_kind",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KindApproveInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KindDecisionOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/kinds/reject": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Reject Review Kind",
+        "description": "Reject every open item of the kind.",
+        "operationId": "review-reject_review_kind",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KindDecisionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KindDecisionOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}": {
+      "get": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Read Review Item",
+        "description": "The item with its entity, the entity's names and status, and every quote for it with a\nlink to the stored copy it was found on.",
+        "operationId": "review-read_review_item",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewItemDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}/approve": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Approve Review Item",
+        "description": "The entity is what the agent said. An institution saved as `other` may be given its type.",
+        "operationId": "review-approve_review_item",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}/reject": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Reject Review Item",
+        "operationId": "review-reject_review_item",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}/merge": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Merge Review Item",
+        "description": "The entity is a duplicate of `into_id`: what it holds moves over and it is rejected.",
+        "operationId": "review-merge_review_item",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -669,6 +1079,47 @@
           "government_institution_type"
         ],
         "title": "AdministrativeLevelInput"
+      },
+      "ApproveInput": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "institution_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Type"
+          }
+        },
+        "type": "object",
+        "title": "ApproveInput"
+      },
+      "AssignmentType": {
+        "type": "string",
+        "enum": [
+          "find_homepage",
+          "find_institutions",
+          "find_sources"
+        ],
+        "title": "AssignmentType"
       },
       "CountryInstitutionTypeInput": {
         "properties": {
@@ -769,6 +1220,115 @@
         ],
         "title": "CountrySettingsInput"
       },
+      "DecisionInput": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "title": "DecisionInput"
+      },
+      "DecisionOutput": {
+        "properties": {
+          "review_item": {
+            "$ref": "#/components/schemas/ReviewItemOutput"
+          },
+          "spawn": {
+            "items": {
+              "$ref": "#/components/schemas/SpawnOutput"
+            },
+            "type": "array",
+            "title": "Spawn"
+          }
+        },
+        "type": "object",
+        "required": [
+          "review_item",
+          "spawn"
+        ],
+        "title": "DecisionOutput"
+      },
+      "EntityKind": {
+        "type": "string",
+        "enum": [
+          "place",
+          "institution",
+          "source",
+          "domain",
+          "homepage"
+        ],
+        "title": "EntityKind"
+      },
+      "EvidenceOutput": {
+        "properties": {
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "page_url": {
+            "type": "string",
+            "title": "Page Url"
+          },
+          "snapshot_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Url",
+            "description": "A short-lived download link to the stored page or file; null once pruned."
+          }
+        },
+        "type": "object",
+        "required": [
+          "quote",
+          "kind",
+          "locator",
+          "link_url",
+          "page_url",
+          "snapshot_url"
+        ],
+        "title": "EvidenceOutput"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -818,6 +1378,174 @@
         ],
         "title": "InstitutionTypeInput"
       },
+      "KindApproveInput": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "kind": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Kind"
+          },
+          "institution_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64,
+                "minLength": 1,
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "KindApproveInput"
+      },
+      "KindDecisionInput": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "kind": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "KindDecisionInput"
+      },
+      "KindDecisionOutput": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "review_items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewItemOutput"
+            },
+            "type": "array",
+            "title": "Review Items"
+          },
+          "spawn": {
+            "items": {
+              "$ref": "#/components/schemas/SpawnOutput"
+            },
+            "type": "array",
+            "title": "Spawn"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "review_items",
+          "spawn"
+        ],
+        "title": "KindDecisionOutput"
+      },
+      "KindOutput": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "question": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Question"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Names",
+            "description": "The first few entities of the kind, to recognise it by."
+          },
+          "item_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Item Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "rule",
+          "count",
+          "question",
+          "names",
+          "item_ids"
+        ],
+        "title": "KindOutput"
+      },
+      "MergeInput": {
+        "properties": {
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "into_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Into Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "into_id"
+        ],
+        "title": "MergeInput"
+      },
       "NamingRules": {
         "properties": {
           "designators": {
@@ -861,6 +1589,222 @@
         "title": "NamingRules",
         "description": "How the country writes its public bodies' names, in its languages. A government's name is\na place name with a designator around it (\"Township of Elmwood\", \"Elmwood, Township of\");\nknowing the designators lets the checks find the place name and tell a township from the\ncity of the same name."
       },
+      "ReviewItemDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "question": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Question"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "raised_by_assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raised By Assignment Id"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "entity_status": {
+            "type": "string",
+            "title": "Entity Status"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Names"
+          },
+          "entity": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Entity"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceOutput"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_id",
+          "rule",
+          "question",
+          "kind",
+          "status",
+          "raised_by_assignment_id",
+          "decided_at",
+          "note",
+          "entity_kind",
+          "entity_status",
+          "label",
+          "names",
+          "entity",
+          "evidence"
+        ],
+        "title": "ReviewItemDetail"
+      },
+      "ReviewItemOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "question": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Question"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "raised_by_assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raised By Assignment Id"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_id",
+          "rule",
+          "question",
+          "kind",
+          "status",
+          "raised_by_assignment_id",
+          "decided_at",
+          "note"
+        ],
+        "title": "ReviewItemOutput"
+      },
+      "ReviewStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "approved",
+          "rejected",
+          "merged"
+        ],
+        "title": "ReviewStatus"
+      },
       "SourceTypeInput": {
         "properties": {
           "name": {
@@ -883,6 +1827,25 @@
           "description"
         ],
         "title": "SourceTypeInput"
+      },
+      "SpawnOutput": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "subject_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Subject Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "subject_id"
+        ],
+        "title": "SpawnOutput",
+        "description": "Work the decision asks for; the assignments module queues it."
       },
       "ValidationError": {
         "properties": {

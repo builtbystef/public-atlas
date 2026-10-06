@@ -33,16 +33,9 @@ from public_atlas.modules.countries.schemas import (
     SourceTypeInput,
 )
 from public_atlas.modules.countries.seeds import shared as shared_seed
-from public_atlas.modules.graph.models import (
-    Alias,
-    Domain,
-    DomainKind,
-    EnteredBy,
-    EntityStatus,
-    Institution,
-    Place,
-    ProcurementHandledBy,
-)
+from public_atlas.modules.graph import service as graph
+from public_atlas.modules.graph import status_changes
+from public_atlas.modules.graph.models import Domain, DomainKind, EnteredBy, Institution, Place
 from public_atlas.shared.exceptions import ConflictError, NotFoundError, UnprocessableError
 
 __all__ = [
@@ -157,8 +150,9 @@ async def _seed_country_tables(
 async def _seed_place(
     session: AsyncSession, code: str, seed: PlaceSeed, parent: Place | None, report: SeedReport
 ) -> Place:
-    """The place, its government and their domains, each created verified by hand when it is
-    not there yet."""
+    """The place, its government and their domains, each created and verified by hand when it
+    is not there yet. Verification goes through `status_changes`, as every other does."""
+    by = EnteredBy.MANUAL
     place = await session.scalar(
         select(Place).where(
             Place.country_code == code,
@@ -167,36 +161,40 @@ async def _seed_place(
         )
     )
     if place is None:
-        place = Place(
+        place = await graph.create_place(
+            session,
             name=seed.name,
             country_code=code,
             administrative_level=seed.level,
-            parent_place_id=parent.id if parent is not None else None,
-            status=EntityStatus.VERIFIED,
-            entered_by=EnteredBy.MANUAL,
+            parent=parent,
+            entered_by=by,
+            language=seed.language,
         )
-        session.add(place)
-        await session.flush()
+        await status_changes.verify_place(session, place, entered_by=by)
         report.places += 1
-    if await _add_alias(session, place, seed.name, seed.language):
+        report.aliases += 1
+    elif await graph.add_alias(session, place, seed.name, language=seed.language, entered_by=by):
         report.aliases += 1
     if seed.government is not None and place.government_institution_id is None:
         level = await session.get_one(AdministrativeLevel, (code, seed.level))
-        government = Institution(
+        government = await graph.create_institution(
+            session,
             name=seed.government,
             institution_type=level.government_institution_type,
-            place_id=place.id,
-            procurement_handled_by=ProcurementHandledBy.SELF,
-            status=EntityStatus.VERIFIED,
-            entered_by=EnteredBy.MANUAL,
+            place=place,
+            entered_by=by,
+            language=seed.language,
         )
-        session.add(government)
-        await session.flush()
+        await status_changes.verify_institution(session, government, entered_by=by)
         place.government_institution_id = government.id
+        await session.flush()
         report.institutions += 1
-    if place.government_institution_id is not None and seed.government is not None:
+        report.aliases += 1
+    elif place.government_institution_id is not None and seed.government is not None:
         government = await session.get_one(Institution, place.government_institution_id)
-        if await _add_alias(session, government, seed.government, seed.language):
+        if await graph.add_alias(
+            session, government, seed.government, language=seed.language, entered_by=by
+        ):
             report.aliases += 1
     for name in seed.domains:
         if await _add_domain(session, name, DomainKind.OFFICIAL):
@@ -205,38 +203,13 @@ async def _seed_place(
 
 
 async def _add_domain(session: AsyncSession, name: str, kind: DomainKind) -> bool:
-    """Whether a domain was added. One that is there already is left as it is, whatever its kind
-    or status: a reviewer may have changed either."""
-    if await session.scalar(select(Domain.id).where(Domain.name == name)) is not None:
+    """Whether a domain was added, verified by hand: an official one is an anchor and trusted,
+    a platform is confirmed as one. One that is there already is left as it is, whatever its
+    kind or status: a reviewer may have changed either."""
+    if await graph.domain_by_name(session, name) is not None:
         return False
-    session.add(
-        Domain(
-            name=name,
-            domain_kind=kind,
-            status=EntityStatus.VERIFIED,
-            entered_by=EnteredBy.MANUAL,
-        )
-    )
-    await session.flush()
-    return True
-
-
-async def _add_alias(
-    session: AsyncSession, owner: Place | Institution, text: str, language: str
-) -> bool:
-    owner_column = Alias.place_id if isinstance(owner, Place) else Alias.institution_id
-    found = await session.scalar(
-        select(Alias.id).where(owner_column == owner.id, Alias.text == text)
-    )
-    if found is not None:
-        return False
-    alias = Alias(text=text, language=language, entered_by=EnteredBy.MANUAL)
-    if isinstance(owner, Place):
-        alias.place_id = owner.id
-    else:
-        alias.institution_id = owner.id
-    session.add(alias)
-    await session.flush()
+    domain = await graph.create_domain(session, name, kind=kind, entered_by=EnteredBy.MANUAL)
+    await status_changes.verify_domain(session, domain, entered_by=EnteredBy.MANUAL)
     return True
 
 
