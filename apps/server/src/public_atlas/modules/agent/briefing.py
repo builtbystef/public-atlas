@@ -1,105 +1,49 @@
-"""What a session is told (spec section 8): the standing instructions of its assignment type and
-country, and a briefing with the subject, the checklist of types still to account for, the pages
-already visited and the last handoff note. Never the old transcript. The full port of v1's
-prompts in the glossary's words comes with the second half of phase 4."""
+"""What a session is told (spec section 8): the briefing with the subject and its ids, the
+places a body may be saved under, the checklist of types still to account for, where to look,
+the homepages claimed before, the pages already visited and the last handoff note. Never the old
+transcript. The standing instructions are in `prompts.py`."""
+
+import uuid
+from collections.abc import Callable
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.modules.agent import findings
 from public_atlas.modules.agent.context import SessionContext
+from public_atlas.modules.agent.prompts import instructions
+from public_atlas.modules.assignments.descriptors import Checklist
 from public_atlas.modules.assignments.models import Assignment
-from public_atlas.modules.evidence.models import Snapshot
-from public_atlas.modules.graph.models import EntityStatus, Homepage, Institution, Place, Webpage
+from public_atlas.modules.evidence.models import Evidence, Snapshot
+from public_atlas.modules.graph import service as graph
+from public_atlas.modules.graph.models import (
+    Domain,
+    EntityStatus,
+    Homepage,
+    Institution,
+    Place,
+    Webpage,
+)
 
-COMMON = """\
-You are Public Atlas, an agent building a verified map of public institutions and the web \
-pages that carry procurement signals about them. You work one assignment per session. \
-Everything you save goes to a database that outlives this session; the database is your \
-memory, not this conversation.
+__all__ = ["briefing", "earlier_claims", "instructions", "places_to_save_under", "where_to_look"]
 
-Rules enforced in code, so work with them:
-- You reach only the allowed domains the briefing lists. navigate refuses every other site \
-and the refusal is recorded. A link elsewhere is not a dead end: save it as a homepage with \
-the tool for that, and another assignment decides it.
-- Every finding needs a quote that exists word for word on a page you opened. Copy text \
-exactly as get_text or navigate returned it; do not paraphrase, translate or trim words from \
-inside a phrase. A quote is at least twelve characters and, for a place, institution or \
-homepage, contains a name or acronym of the thing saved. The backend checks the quote \
-against the stored copy of the page and refuses what it cannot find, answering with the \
-closest passage so you can copy the page's own words.
-- Only code or a human marks something verified. A quote from a trusted domain verifies \
-what it names; you never set a status yourself.
-- Only the backend creates work; you never spawn it. Your assignment ends with the \
-finishing tool your goal names.
-
-How to work:
-- Read directories and lists with navigate, snapshot and get_text. Page through every \
-"next" and "load more" until a list ends.
-- Save as you go, one call per finding. A session can restart, and unsaved findings are lost.
-- PDFs, spreadsheets and other files open with read_file, not in the browser.
-- When you are unsure whether something belongs, request_review with what you saw; do not \
-skip it silently.
-- status() tells you what this assignment has saved and opened; use it before repeating \
-work, and after a restart.
-- Use screenshot only when snapshot and get_text do not explain a page.
-"""
-
-
-def instructions(ctx: SessionContext) -> str:
-    """The standing text of an assignment type and country. It is the same for every session of
-    that type, so the provider can cache it."""
-    rules = ctx.rules
-    parts = [COMMON, "Your goal:", ctx.descriptor.goal, ""]
-    parts.append(f"Country: {rules.name} ({rules.country_code}).")
-    parts.append(
-        "Administrative levels, from the top (level: government type; institution types "
-        "expected at a place of the level):"
-    )
-    parts.extend(
-        f"- {level.name}: {level.government_institution_type}; "
-        f"{', '.join(level.expected_institution_types) or 'none'}"
-        for level in rules.levels_by_rank
-    )
-    parts.append(
-        "Institution types this country uses (type: what it is; the source types expected for "
-        "it; what its names look like, when stated). A body of a listed type at another level "
-        "is still saved with that type and goes to review:"
-    )
-    for name, use in sorted(rules.uses.items()):
-        line = f"- {name}: {rules.institution_types.get(name, '')}; "
-        line += ", ".join(use.expected_source_types) or "no sources expected"
-        if use.name_pattern is not None:
-            line += f"; names match /{use.name_pattern.pattern}/"
-        parts.append(line)
-    parts.append(
-        "- other: a public body that buys things and fits none of the types above; pass "
-        "suggested_type with it (the kind of body, in a few words). It goes to review, where a "
-        "human adds the type. Only when no listed type fits."
-    )
-    parts.append("Source types (what counts as each one, in any language):")
-    parts.extend(f"- {name}: {text}" for name, text in sorted(rules.source_types.items()))
-    if rules.platforms:
-        parts.append(
-            (
-                "Platforms (fetchable, never trusted; a page on one becomes a source only when a "
-                "trusted page links to it): "
-            )
-            + ", ".join(rules.platforms)
-        )
-    return "\n".join(parts)
+# Records a domain with a reason to look there; a domain that is not allowed is dropped.
+type Note = Callable[[str | None, str], None]
 
 
 async def briefing(ctx: SessionContext, session: AsyncSession) -> str:
-    """The user prompt of a session: the subject, the checklist still open, the pages this
-    assignment opened already, and the previous session's handoff note."""
+    """The user prompt of a session: the subject, the checklist still open, where to look, the
+    pages this assignment opened already, and the previous session's handoff note."""
     assignment = await session.get_one(Assignment, ctx.assignment_id)
-    parts = [f"Assignment: {ctx.descriptor.type.value}."]
+    parts = [f"Assignment: {ctx.descriptor.type.value}, session {assignment.sessions}."]
     parts.extend(await _subject_lines(ctx, session))
     remaining = await findings.remaining_checklist(ctx, session)
     if remaining:
-        parts.append("Types still to account for: " + ", ".join(remaining) + ".")
-    parts.append("Allowed domains: " + (", ".join(ctx.allowed_domains) or "none") + ".")
+        parts.append(
+            "Types still to account for: " + ", ".join(remaining) + ". Each is saved under the "
+            "subject or named in types_not_found when you finish."
+        )
+    parts.extend(await where_to_look(ctx, session))
     visited = list(
         await session.scalars(
             select(Webpage.url)
@@ -118,43 +62,234 @@ async def briefing(ctx: SessionContext, session: AsyncSession) -> str:
     parts.append(
         f"Budget left: {max(assignment.budget_requests - assignment.requests_used, 0)} requests."
     )
+    parts.append("Begin. Start with the subject's pages listed above.")
     return "\n".join(parts)
 
 
+# --- The subject ---
+
+
 async def _subject_lines(ctx: SessionContext, session: AsyncSession) -> list[str]:
-    place = ctx.place
+    place = await session.get_one(Place, ctx.place.id)
     if isinstance(ctx.subject, Place):
-        lines = [f"Subject: the place {place.name!r}, a {place.administrative_level}."]
+        names = await findings_names(session, place)
+        lines = [f"Subject: the place {names} ({place.administrative_level}, id {place.id})."]
         if place.government_institution_id is not None:
             government = await session.get_one(Institution, place.government_institution_id)
-            lines.append(f"Its government: {government.name!r}.")
+            lines.append(await _institution_line(session, government, "Its government"))
             lines.extend(await _homepage_lines(session, government))
+        if ctx.descriptor.checklist is Checklist.INSTITUTION_TYPES:
+            lines.append(await places_to_save_under(session, place))
         return lines
-    institution = ctx.subject
-    subject = (
-        f"Subject: the institution {institution.name!r} ({institution.institution_type}), at "
-        f"{place.name!r} ({place.administrative_level})."
-    )
-    lines = [subject]
+    institution = await session.get_one(Institution, ctx.subject.id)
+    lines = [await _institution_line(session, institution, "Subject"), _belongs_to(place)]
     lines.extend(await _homepage_lines(session, institution))
+    if ctx.finding_homepage:
+        lines.extend(await earlier_claims(session, institution))
+        lines.extend(await _candidate_lines(ctx, session))
+    if ctx.descriptor.checklist is Checklist.SOURCE_TYPES:
+        lines.append(_source_types_line(ctx, institution))
+        lines.append(await places_to_save_under(session, place))
     return lines
 
 
-async def _homepage_lines(session: AsyncSession, institution: Institution) -> list[str]:
-    claims = await session.execute(
-        select(Homepage, Webpage.url)
-        .join(Webpage, Webpage.id == Homepage.webpage_id)
-        .where(Homepage.institution_id == institution.id)
-        .order_by(Homepage.id)
+async def findings_names(session: AsyncSession, owner: Place | Institution) -> str:
+    """Every name the body goes by, as one string."""
+    names = [alias.text for alias in await graph.names_of(session, owner)]
+    return " / ".join(names) if names else owner.name
+
+
+async def _institution_line(session: AsyncSession, institution: Institution, label: str) -> str:
+    names = await findings_names(session, institution)
+    return (
+        f"{label}: the institution {names} ({institution.institution_type}, id {institution.id})."
     )
+
+
+def _belongs_to(place: Place) -> str:
+    """The institution's place: many places share a name, so a search, on the web or in a
+    site's own search box, has to name it."""
+    return (
+        f"It belongs to: {place.name} ({place.administrative_level}, id {place.id}). Name the "
+        "place in your searches."
+    )
+
+
+async def _homepage_lines(session: AsyncSession, institution: Institution) -> list[str]:
+    """The institution's verified homepage, or its open claims."""
     lines = []
-    for homepage, url in claims.all():
+    for homepage in await graph.homepages_of(session, institution):
+        url = (await session.get_one(Webpage, homepage.webpage_id)).url
         if homepage.id == institution.homepage_id:
             lines.append(f"Homepage (verified): {url}")
         elif homepage.status in (EntityStatus.CANDIDATE, EntityStatus.NEEDS_REVIEW):
             lines.append(f"Candidate homepage ({homepage.status.value}): {url}")
-        elif homepage.status is EntityStatus.REJECTED:
-            lines.append(f"Rejected homepage claim: {url} ({homepage.rejected_reason})")
     if not lines:
         lines.append("Homepage: none known yet.")
     return lines
+
+
+async def earlier_claims(session: AsyncSession, institution: Institution) -> list[str]:
+    """The homepages claimed for the institution before and what became of each, so a new
+    search does not bring back a dead or wrong one."""
+    rows = await session.execute(
+        select(Homepage, Webpage)
+        .join(Webpage, Webpage.id == Homepage.webpage_id)
+        .where(
+            Homepage.institution_id == institution.id,
+            Homepage.status == EntityStatus.REJECTED,
+        )
+        .order_by(Homepage.id)
+    )
+    lines = [
+        f"- {webpage.url}: rejected ({homepage.rejected_reason or 'no reason recorded'})"
+        for homepage, webpage in rows.all()
+    ]
+    if not lines:
+        return []
+    return ["Homepages claimed for it before; do not save these again:", *lines]
+
+
+async def _candidate_lines(ctx: SessionContext, session: AsyncSession) -> list[str]:
+    """The claim the session is deciding on, and whether a trusted page vouches for it."""
+    if ctx.candidate is None:
+        return []
+    homepage = await session.get_one(Homepage, ctx.candidate.homepage_id)
+    webpage = await session.get_one(Webpage, homepage.webpage_id)
+    lines = [
+        (
+            f"Candidate to decide: {webpage.url} on the candidate domain "
+            f"{ctx.candidate.domain_name}, which is open to you. Open it, judge it, and end "
+            "with confirm_domain, reject_domain or domain_moved."
+        )
+    ]
+    if homepage.found_on_webpage_id is not None:
+        found_on = await session.get_one(Webpage, homepage.found_on_webpage_id)
+        lines.append(f"Found as a link on the trusted page {found_on.url}.")
+    else:
+        lines.append(
+            "No trusted page links to it: it was found by a web search or on an untrusted page. "
+            "Judge the site as usual; if you confirm it, a human makes the final call with your "
+            "quotes."
+        )
+    return lines
+
+
+def _source_types_line(ctx: SessionContext, institution: Institution) -> str:
+    sources = ", ".join(ctx.rules.expected_source_types(institution.institution_type))
+    if sources:
+        return (
+            f"Source types to find for a {institution.institution_type}: {sources}. Each is "
+            "saved or named in types_not_found when you finish. Save a page of any other "
+            "source type too, when you meet one."
+        )
+    return (
+        f"The country lists no source types for a {institution.institution_type}: look for a "
+        "page of each source type listed above and save the ones you find."
+    )
+
+
+async def places_to_save_under(session: AsyncSession, place: Place) -> str:
+    """The places `save_institution` accepts, with their ids: the subject's place and each place
+    above it. The agent sees no other place id, so this line is how a regional body found on a
+    town's site gets filed under the region."""
+    chain = await graph.place_chain(session, place)
+    places = "; ".join(
+        f"{found.name} ({found.administrative_level}) id={found.id}" for found in chain
+    )
+    return (
+        f"Places to save under (place_id of save_institution): {places}. The first is the "
+        "default. A body serving the whole of a place above goes under that place; no other "
+        "place is accepted."
+    )
+
+
+# --- Where to look ---
+
+
+async def where_to_look(ctx: SessionContext, session: AsyncSession) -> list[str]:
+    """The allowed domains with a stake in the subject, each with why: the subject's own site,
+    the pages that name it, its place's government and the governments above. The allowlist
+    itself is every trusted domain and every platform, enforced by the browser; the model is
+    told these few instead of the whole list, so a session's briefing stays short."""
+    reasons: dict[str, list[str]] = {}
+
+    def note(domain: str | None, reason: str) -> None:
+        if domain is not None and domain in ctx.allowed_domains:
+            why = reasons.setdefault(domain, [])
+            if reason not in why:
+                why.append(reason)
+
+    if isinstance(ctx.subject, Institution):
+        institution = await session.get_one(Institution, ctx.subject.id)
+        note(await _homepage_domain(session, institution), "its homepage")
+        await _found_on(session, institution.id, note)
+        await _governments_above(session, institution.place_id, institution.id, note)
+    else:
+        await _found_on(session, ctx.subject.id, note)
+        await _governments_above(session, ctx.subject.id, None, note)
+    if ctx.candidate is not None:
+        note(ctx.candidate.domain_name, "the candidate domain, yours to decide")
+    for name in sorted(ctx.search_hosts):
+        note(name, "a site a search of yours returned")
+    heading = (
+        "Where to look (the allowed domains tied to the subject; navigate refuses every other "
+        "domain"
+        + (
+            " until a search of yours returns a page on it, and search limited to domains "
+            "takes only allowed ones):"
+            if ctx.finding_homepage
+            else "):"
+        )
+    )
+    if not reasons:
+        return [heading, "- none tied to the subject yet; the platforms are open to you"]
+    return [heading, *(f"- {domain}: {'; '.join(why)}" for domain, why in reasons.items())]
+
+
+async def _homepage_domain(session: AsyncSession, institution: Institution) -> str | None:
+    if institution.homepage_id is None:
+        return None
+    homepage = await session.get_one(Homepage, institution.homepage_id)
+    webpage = await session.get_one(Webpage, homepage.webpage_id)
+    domain = await graph.domain_of_webpage(session, webpage)
+    return domain.name if domain is not None else None
+
+
+async def _found_on(session: AsyncSession, entity_id: uuid.UUID, note: Note) -> None:
+    """One page per domain among those whose text names the entity: the site that lists it is
+    where its link is most likely written."""
+    rows = await session.execute(
+        select(Domain.name, Webpage.url)
+        .select_from(Evidence)
+        .join(Snapshot, Snapshot.id == Evidence.snapshot_id)
+        .join(Webpage, Webpage.id == Snapshot.webpage_id)
+        .join(Domain, Domain.id == Webpage.domain_id)
+        .where(Evidence.entity_id == entity_id)
+        .order_by(Evidence.id)
+    )
+    seen: set[str] = set()
+    for domain, url in rows.all():
+        if domain not in seen:
+            seen.add(domain)
+            note(domain, f"names it: {url}")
+
+
+async def _governments_above(
+    session: AsyncSession,
+    place_id: uuid.UUID,
+    subject_institution_id: uuid.UUID | None,
+    note: Note,
+) -> None:
+    """The homepage's domain of the government of each place from this one up to the country,
+    the subject itself excepted."""
+    place = await session.get_one(Place, place_id)
+    for found in await graph.place_chain(session, place):
+        government_id = found.government_institution_id
+        if government_id is None or government_id == subject_institution_id:
+            continue
+        government = await session.get_one(Institution, government_id)
+        note(
+            await _homepage_domain(session, government),
+            f"government of {found.name} ({found.administrative_level})",
+        )

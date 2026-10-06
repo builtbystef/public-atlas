@@ -67,12 +67,13 @@ def test_database_name() -> str:
 
 @pytest.fixture
 def settings() -> Settings:
-    """The configured settings, on the test database, with the in-memory parser and no search
-    engine: tests never load Docling or call Brave."""
+    """The configured settings, on the test database, with the in-memory parser, no search
+    engine and no model: tests never load Docling, call Brave or run a real model."""
     return _configured.model_copy(
         update={
             "database_url": PostgresDsn(_test_url),
             "parse_provider": "memory",
             "search_provider": "none",
+            "openai_api_key": None,
         }
     )

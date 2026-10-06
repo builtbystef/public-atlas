@@ -20,11 +20,19 @@ logger = logging.getLogger(__name__)
 # A tool's refusals are retried this many times before the run gives up on it.
 TOOL_RETRIES = 3
 
-# The findings by the names the descriptors use. The saving tools join here with the second half
-# of phase 4; a name a descriptor lists that is not here yet is left out with a warning.
+# The findings by the names the descriptors use.
 FINDINGS: dict[str, Callable[..., Awaitable[Any]]] = {
     "status": findings.status,
     "finish": findings.finish,
+    "request_review": findings.request_review,
+    "save_institution": findings.save_institution,
+    "save_homepage": findings.save_homepage,
+    "save_source": findings.save_source,
+    "confirm_domain": findings.confirm_domain,
+    "reject_domain": findings.reject_domain,
+    "domain_moved": findings.domain_moved,
+    "read_file": findings.read_file,
+    "search": findings.search,
 }
 
 
@@ -57,10 +65,10 @@ def toolset(ctx: SessionContext, browser: Browser) -> Adapter:
     for name in ctx.descriptor.tools:
         if name in BROWSING:
             adapter.add_function(getattr(browser, name), name=name, takes_ctx=False)
-        elif name in FINDINGS:
-            adapter.add_function(FINDINGS[name], name=name, takes_ctx=True)
         elif name == "search" and ctx.searcher is None:
             continue
-        else:
-            logger.warning("Tool %s is not registered yet; the session runs without it", name)
+        elif name in FINDINGS:
+            adapter.add_function(FINDINGS[name], name=name, takes_ctx=True)
+        else:  # pragma: no cover - the descriptor test keeps the names in step
+            logger.warning("Tool %s is not registered; the session runs without it", name)
     return adapter

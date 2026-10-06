@@ -357,9 +357,12 @@ def test_the_runs_api_creates_controls_and_reads_runs(
     assert detail["sessions"] == 1
     assert detail["finished_at"] is not None
     events = client.get(f"/assignments/{released[0]['id']}/events").json()
+    # The first finish left the source types unaccounted for and was refused once.
     assert [event["kind"] for event in events] == [
         "prompt",
         "prompt",
+        "tool_call",
+        "tool_result",
         "tool_call",
         "tool_result",
     ]

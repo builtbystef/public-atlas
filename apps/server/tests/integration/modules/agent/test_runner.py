@@ -127,10 +127,14 @@ def test_a_session_runs_the_tools_accounts_for_its_calls_and_finishes(
                 parts=[ToolCallPart("finish", {"summary": "Done.", "types_not_found": ["castle"]})]
             )
         assert isinstance(messages[-1].parts[0], RetryPromptPart)
+        # The checklist: every source type expected of the county is named as not found.
+        not_found = world.rules.expected_source_types(world.county.institution_type)
         return ModelResponse(
             parts=[
                 TextPart("Finishing."),
-                ToolCallPart("finish", {"summary": "Found the budget page."}),
+                ToolCallPart(
+                    "finish", {"summary": "Found the budget page.", "types_not_found": not_found}
+                ),
             ],
             usage=RequestUsage(input_tokens=1000, cache_read_tokens=800, output_tokens=50),
         )
@@ -182,13 +186,14 @@ def test_a_session_runs_the_tools_accounts_for_its_calls_and_finishes(
     assert events[0].content["role"] == "instructions"
     assert "Your goal:" in events[0].content["text"]
     assert "County of Elm" in events[1].content["text"]
-    assert "not a type the goal names" in events[5].content["retry"]
-    assert events[8].content["content"] == "Assignment finished."
+    assert "names no source type the country lists" in events[5].content["retry"]
+    assert events[8].content["content"] == "Assignment finished (complete)."
     assert all(e.session == 1 for e in events)
 
 
 def test_a_full_window_hands_off_and_the_next_session_finishes(
     db: Database,
+    world: World,
     scripted: Callable[[Script], Resources],
     make: Callable[..., Assignment],
     reload: Callable[[uuid.UUID], Assignment],
@@ -203,12 +208,17 @@ def test_a_full_window_hands_off_and_the_next_session_finishes(
             return ModelResponse(parts=[TextPart("Was reading the budget page; try the tenders.")])
         briefings.append(prompt)
         if "Handoff note from the previous session" in prompt:
-            return ModelResponse(parts=[ToolCallPart("finish", {"summary": "Done after handoff."})])
+            return ModelResponse(
+                parts=[ToolCallPart("finish", {"summary": "Done after handoff.", **not_found})]
+            )
         return ModelResponse(
             parts=[ToolCallPart("status", {})],
             usage=RequestUsage(input_tokens=WINDOW // 2 + 1, output_tokens=10),
         )
 
+    not_found = {
+        "types_not_found": world.rules.expected_source_types(world.county.institution_type)
+    }
     res = scripted(script)
     assignment = make()
     assert db.run(runner.run_assignment, res, assignment.id) == "complete"
@@ -351,6 +361,7 @@ def test_no_model_configured_fails_the_job_and_leaves_the_assignment_to_retry(
 
 def test_a_job_that_hits_the_session_cap_queues_the_assignment_again(
     db: Database,
+    world: World,
     queue: InlineConnector,
     scripted: Callable[[Script], Resources],
     make: Callable[..., Assignment],
@@ -365,7 +376,12 @@ def test_a_job_that_hits_the_session_cap_queues_the_assignment_again(
         if prompt.startswith("Your context is nearly full"):
             return ModelResponse(parts=[TextPart("Halfway down the list.")])
         if "Handoff note from the previous session" in prompt:
-            return ModelResponse(parts=[ToolCallPart("finish", {"summary": "Second job."})])
+            not_found = world.rules.expected_source_types(world.county.institution_type)
+            return ModelResponse(
+                parts=[
+                    ToolCallPart("finish", {"summary": "Second job.", "types_not_found": not_found})
+                ]
+            )
         return ModelResponse(
             parts=[ToolCallPart("status", {})],
             usage=RequestUsage(input_tokens=WINDOW, output_tokens=10),

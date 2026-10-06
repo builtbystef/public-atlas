@@ -86,6 +86,8 @@ class Rule(StrEnum):
     GAPS = "gaps"
     # A page on a platform no trusted page links to.
     PLATFORM_SOURCE = "platform_source"
+    # A homepage claim on a platform no trusted page links to.
+    PLATFORM_HOMEPAGE = "platform_homepage"
     # The agent asked.
     AGENT = "agent"
 

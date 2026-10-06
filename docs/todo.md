@@ -67,12 +67,12 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [x] `agent_run_events`: write the session's message list (prompt, text, tool calls, results) as rows when a session ends.
 - [x] Video: `record_video` on the run turns on Playwright video for the browser context; store each file through the storage port and note it as a `video` event.
 - [x] Purge jobs, scheduled daily: delete videos of assignments finished more than `video_keep_days` ago (default 7) from storage and mark their events as purged; delete the events of assignments finished more than `events_keep_days` ago (default 90). Both settings; findings, usage and the summary are never purged. Snapshots no evidence cites are pruned when the assignment finishes, as in spec section 8.2.
-- [ ] Findings as typed functions registered as tools through one adapter: `save_institution` (with parent and `procurement_handled_by`), `save_homepage`, `save_source` (a page under a platform homepage's `trusted_path` verifies like one on a trusted domain), `confirm_domain`, `reject_domain`, `domain_moved`, `status`, `request_review`, `finish`, `read_file`, `search`.
-- [ ] The merged `find_homepage` assignment: trusted-domain path, new-domain path, search path; `no_homepage` result with its review item.
-- [ ] `find_institutions` and `find_sources` with the checklist, refused short close, `complete_with_gaps` and its review item.
-- [ ] Briefing and prompts from v1, rewritten in the glossary's words and read from the country tables.
-- [ ] Integration tests with a scripted model for each type and each end state; port v1's findings tests.
-- [ ] CLI: `seed`, `load-list`, `run create [--video]|pause|stop|release`, `worker`.
+- [x] Findings as typed functions registered as tools through one adapter: `save_institution` (with parent and `procurement_handled_by`), `save_homepage`, `save_source` (a page under a platform homepage's `trusted_path` verifies like one on a trusted domain), `confirm_domain`, `reject_domain`, `domain_moved`, `status`, `request_review`, `finish`, `read_file`, `search`.
+- [x] The merged `find_homepage` assignment: trusted-domain path, new-domain path, search path; `no_homepage` result with its review item.
+- [x] `find_institutions` and `find_sources` with the checklist, refused short close, `complete_with_gaps` and its review item.
+- [x] Briefing and prompts from v1, rewritten in the glossary's words and read from the country tables.
+- [x] Integration tests with a scripted model for each type and each end state; port v1's findings tests.
+- [x] CLI: `seed`, `load-list`, `run create [--video]|pause|stop|release`, `worker`.
 
 **Done when** a step-mode run on one eval subject, released one assignment at a time, produces verified institutions, homepages and sources with checked quotes, and every end state in spec section 7.2 is reached by a test.
 
@@ -120,3 +120,7 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [ ] Submit at the posting and note the date here.
 
 **Done when** the application is submitted.
+
+## Open decisions
+
+- [ ] **The false gap in `find_institutions`.** A body that serves a whole region is saved under the region, as the goal text asks, but the checklist only counts bodies saved under the subject place. In the Oakville pilot the police service, the conservation authority and the public health unit were all found and verified under Halton, yet the assignment ended `complete_with_gaps` with a `gaps` review item naming those three types, because the agent would not list types it had found in `types_not_found`. Decide between: (a) the checklist counts a verified body of the type under any place above the subject, one query change in `saved_types`, with the risk of a wrong "covered" where a town has its own body beside the region's; (b) the goal text and the refusal message tell the agent to name such types in `types_not_found` with that reason, no rule change, no review item. Nothing done yet.

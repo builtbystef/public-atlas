@@ -83,8 +83,15 @@ logger = logging.getLogger(__name__)
 # never imports the job module, which imports the agent, which imports this module.
 RUN_ASSIGNMENT_TASK = "assignments.run_assignment"
 # A subject with a finished assignment of a type that ended one of these ways has had that
-# work done: a run seeding itself does not do it again. Any other ending leaves it to be redone.
-SETTLED_RESULTS = (AssignmentResult.COMPLETE, AssignmentResult.COMPLETE_WITH_GAPS)
+# work done: a run seeding itself does not do it again, and nor does a finish that saved the
+# subject again. Any other ending leaves it to be redone. `no_homepage` is settled because the
+# searches were made and a review item asks a person for the address; another search would
+# find the same nothing.
+SETTLED_RESULTS = (
+    AssignmentResult.COMPLETE,
+    AssignmentResult.COMPLETE_WITH_GAPS,
+    AssignmentResult.NO_HOMEPAGE,
+)
 
 _unpriced: set[str] = set()
 
@@ -457,18 +464,19 @@ async def _insert(
 async def spawn_on_finish(
     session: AsyncSession, jobs: App, assignment: Assignment
 ) -> list[Assignment]:
-    """What a finished assignment sets in motion (spec section 7.3): after `find_institutions`,
-    `find_homepage` for every institution it saved that has no verified homepage and no decision
-    pending. Nothing after a `failed` one."""
-    if (
-        assignment.result is AssignmentResult.FAILED
-        or assignment.type is not AssignmentType.FIND_INSTITUTIONS
-    ):
+    """What a finished assignment sets in motion (spec section 7.3): `find_homepage` for every
+    institution it saved that has no verified homepage and no decision pending. Spec section
+    7.3 names `find_institutions`; the other two types may save a body they meet, and that body
+    is owed the same. The subject of a `find_homepage` is never its own follow-up: one that
+    ended `no_homepage` is settled by its review item. Nothing after a `failed` one."""
+    if assignment.result is AssignmentResult.FAILED:
         return []
     run = await session.get_one(Run, assignment.run_id)
     saved = select(Evidence.entity_id).where(Evidence.assignment_id == assignment.id)
     institutions = await session.scalars(
-        select(Institution).where(Institution.id.in_(saved)).order_by(Institution.id)
+        select(Institution)
+        .where(Institution.id.in_(saved), Institution.id != assignment.subject_id)
+        .order_by(Institution.id)
     )
     spawns = [
         spawn_
@@ -476,7 +484,7 @@ async def spawn_on_finish(
         for spawn_ in await due_work(session, institution)
         if spawn_.type is AssignmentType.FIND_HOMEPAGE
     ]
-    return await spawn(session, jobs, run, spawns, parent=assignment)
+    return await spawn(session, jobs, run, spawns, parent=assignment, skip_settled=True)
 
 
 async def run_for_decision(

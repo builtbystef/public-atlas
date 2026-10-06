@@ -64,6 +64,9 @@ __all__ = [
     "names_of",
     "normalize_url",
     "place_chain",
+    "redirect_chain",
+    "redirected_from",
+    "redirects_to",
     "similar_institutions",
     "similar_places",
     "trusted_path_of",
@@ -237,6 +240,57 @@ async def ensure_webpage(
         webpage.domain_id = domain.id
         await session.flush()
     return webpage
+
+
+# How many recorded redirects are followed from one URL: the browser's own cap.
+MAX_REDIRECT_HOPS = 5
+
+
+async def redirect_chain(session: AsyncSession, url: str) -> list[str]:
+    """The URLs the browser is on record as having been sent to from `url`, in order: a page a
+    site forwards to another address, then wherever that one forwards. Empty when `url` has
+    no redirect on record."""
+    chain: list[str] = []
+    current = normalize_url(url)
+    for _ in range(MAX_REDIRECT_HOPS):
+        webpage = await webpage_by_url(session, current)
+        if webpage is None or webpage.redirects_to_url is None:
+            break
+        current = webpage.redirects_to_url
+        if current in chain:
+            break
+        chain.append(current)
+    return chain
+
+
+def _home_pages(url: str) -> list[str]:
+    """The home page of `url`'s site, with and without `www.`, in both schemes: where an old
+    address usually forwards from when the listed page itself is dead."""
+    host = host_of(url)
+    bare = host.removeprefix("www.")
+    hosts = dict.fromkeys([host, bare, f"www.{bare}"])
+    return [f"{scheme}://{name}/" for name in hosts for scheme in ("https", "http")]
+
+
+async def redirected_from(session: AsyncSession, target: str) -> list[str]:
+    """The URLs the browser is on record as having been sent on from to `target`: the address
+    a page linked, when the site answered from another one."""
+    rows = await session.scalars(
+        select(Webpage.url)
+        .where(Webpage.redirects_to_url == normalize_url(target))
+        .order_by(Webpage.url)
+    )
+    return list(rows)
+
+
+async def redirects_to(session: AsyncSession, start: str, target: str) -> bool:
+    """Whether the browser recorded `start`, or the home page of its site with or without
+    `www.`, as redirecting to `target` (directly or through further hops)."""
+    wanted = normalize_url(target)
+    for origin in [normalize_url(start), *_home_pages(start)]:
+        if wanted in await redirect_chain(session, origin):
+            return True
+    return False
 
 
 # --- Entities ---

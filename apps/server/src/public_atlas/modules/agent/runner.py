@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.integrations.browser import create_browser
 from public_atlas.jobs.context import current_attempt
-from public_atlas.modules.agent import briefing, events, tools, video
+from public_atlas.modules.agent import briefing, events, prompts, tools, video
 from public_atlas.modules.agent.context import (
     Ended,
     SessionContext,
@@ -215,7 +215,7 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
     async with res.session() as session:
         ctx = await build_context(session, res, assignment)
         prompt = await briefing.briefing(ctx, session)
-    standing = briefing.instructions(ctx)
+    standing = prompts.instructions(ctx)
     ctx.capture = evidence.PageCapture(
         res.session_factory, res.object_store, assignment_id=assignment.id
     )
@@ -227,6 +227,8 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
         allow_private=res.settings.browser_allow_private_addresses,
         video_dir=recording,
     )
+    # `read_file` fetches under the browser's policy: one allowlist, one pacing, one robots.
+    ctx.policy = browser.policy
     agent = Agent(
         res.models.model(descriptor.model),
         deps_type=SessionContext,

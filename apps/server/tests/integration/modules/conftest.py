@@ -5,6 +5,7 @@ no homepage yet; and a step-mode run. `Build` adds to it the same way; it is rea
 fixture because the tests are collected in importlib mode, with no `tests` package to import.
 A scripted model stands in for every model choice when a test runs the agent."""
 
+import re
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, replace
@@ -15,6 +16,7 @@ from pydantic_ai.messages import (
     ModelMessage,
     ModelRequest,
     ModelResponse,
+    RetryPromptPart,
     ToolCallPart,
     UserPromptPart,
 )
@@ -247,11 +249,21 @@ def calls_made(messages: list[ModelMessage]) -> int:
     )
 
 
+_UNACCOUNTED = re.compile(r"named in types_not_found: ([^.]+)\.")
+
+
 def finishing(summary: str = "Nothing more to find.") -> Script:
-    """A model that finishes at once."""
+    """A model that finishes at once, and, when the finish is refused for a type left
+    unaccounted for, finishes again naming the types as not found, as an agent would."""
 
     def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
-        return ModelResponse(parts=[ToolCallPart("finish", {"summary": summary})])
+        args: dict[str, object] = {"summary": summary}
+        last = messages[-1].parts[0] if messages and messages[-1].parts else None
+        if isinstance(last, RetryPromptPart):
+            found = _UNACCOUNTED.search(str(last.content))
+            if found:
+                args["types_not_found"] = [name.strip() for name in found.group(1).split(",")]
+        return ModelResponse(parts=[ToolCallPart("finish", args)])
 
     return script
 

@@ -25,3 +25,63 @@ def test_load_list_refuses_an_unknown_list(capsys):
     with pytest.raises(SystemExit):
         build_parser().parse_args(["load-list", "atlantis_places"])
     assert "invalid choice" in capsys.readouterr().err
+
+
+def test_run_create_takes_a_filter_and_a_mode():
+    args = build_parser().parse_args(
+        [
+            "run",
+            "create",
+            "pilot",
+            "--mode",
+            "auto",
+            "--level",
+            "municipality",
+            "--level",
+            "region",
+            "--type",
+            "library",
+            "--assignment-type",
+            "find_homepage",
+            "--video",
+        ]
+    )
+    assert (args.command, args.action, args.name, args.country, args.mode) == (
+        "run",
+        "create",
+        "pilot",
+        "CA",
+        "auto",
+    )
+    assert (args.level, args.type, args.assignment_type, args.video) == (
+        ["municipality", "region"],
+        ["library"],
+        ["find_homepage"],
+        True,
+    )
+    held = build_parser().parse_args(["run", "create", "one"])
+    assert (held.mode, held.level, held.video) == ("step", None, False)
+
+
+def test_run_control_takes_a_run_id_and_release_its_choices():
+    run_id = "01a111f5-b766-7646-9e2d-7f71b935bb68"
+    for action in ("pause", "resume", "stop", "show"):
+        args = build_parser().parse_args(["run", action, run_id])
+        assert (args.action, str(args.run_id)) == (action, run_id)
+    args = build_parser().parse_args(
+        ["run", "release", run_id, "--limit", "3", "--type", "find_sources", "--assignment", run_id]
+    )
+    assert (args.limit, args.type, args.assignment) == (3, "find_sources", [run_id])
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["run", "pause", "not-an-id"])
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["run", "release", run_id, "--type", "find_castles"])
+
+
+def test_worker_takes_the_queues_to_serve(capsys):
+    args = build_parser().parse_args(["worker", "--queues", "parse,assignment"])
+    assert args.queues == ["assignment", "parse"]
+    assert build_parser().parse_args(["worker"]).queues is None
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["worker", "--queues", "mail"])
+    assert "unknown queue: mail" in capsys.readouterr().err
