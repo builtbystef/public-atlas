@@ -48,7 +48,7 @@ bodies under them and their sources. Targets:
 | Database | PostgreSQL, SQLAlchemy 2 async, Alembic, `pg_trgm` for duplicate matching                                                |
 | Jobs     | Procrastinate on the same database. Queues: `assignment`, `parse`, `default`                                             |
 | Agent    | Pydantic AI; model and reasoning effort set per assignment type                                                          |
-| Browser  | Playwright Chromium, an owned layer of about 700 lines                                                                   |
+| Browser  | Playwright Chromium, an owned layer: one policy object, one session, the tools                                           |
 | Parsing  | Docling on the `parse` worker image only                                                                                 |
 | Storage  | S3-compatible port: RustFS locally, Cloudflare R2 hosted                                                                 |
 | Search   | Brave Search behind a port, off unless configured                                                                        |
@@ -106,11 +106,11 @@ apps/server/src/public_atlas/
   asgi.py                 the ASGI app for `fastapi run`; the one place the API reads the environment
   cli.py                  `public-atlas`: the operator's commands (seed), reading the environment like asgi.py
   main.py                 create_app(settings): the FastAPI app; its lifespan calls build_resources once
-  resources.py            build_resources(settings): database, store, jobs (searcher and model follow)
+  resources.py            build_resources(settings): database, store, jobs, searcher, parser
   dependencies.py         FastAPI dependencies that read the resources from request.state
   config.py               Settings: deployment values only, no product data
   db/                     base, session, checked strings (an enum as text with a check constraint)
-  integrations/           storage, search, parse, browser, ai: one port each
+  integrations/           storage, search, parse, browser: one port each (ai follows)
   jobs/                   Procrastinate registry, task decorator, worker, stalled sweep, purge
   modules/
     countries/            the five country tables, seeds, naming rules, the CountryRules object
@@ -135,7 +135,10 @@ from `PUBLIC_ATLAS_*` environment variables (every one is documented in
 - **Database**: SQLAlchemy 2 async over psycopg 3, Alembic migrations (`cd apps/server && uv run alembic revision --autogenerate -m "..."`). Integration tests run against real PostgreSQL in a rolled-back transaction; a model change without a migration fails CI.
 - **Routes** have no trailing slash. The console reaches the API through a same-origin `/api` rewrite, which drops one, and the API does not redirect, so a redirect could never leak its internal address.
 - **Storage**: a port in `integrations/storage`, S3-compatible. The app writes snapshots and videos; the browser reads through presigned download URLs.
-- **Jobs**: [Procrastinate](https://procrastinate.readthedocs.io) on the app's PostgreSQL, no broker. Jobs are written on the handler's session, so they commit or roll back with the rows they are about. Tasks live in a `jobs.py` next to what they work on, are listed in `jobs/__init__.py` and name their queue: `default` for the platform's own tasks, `assignment` for the agent, `parse` for document parsing. `public-atlas-worker` serves every queue unless started with `--queues`. A cron task requeues the jobs of a worker whose heartbeat stopped.
+- **Jobs**: [Procrastinate](https://procrastinate.readthedocs.io) on the app's PostgreSQL, no broker. Jobs are written on the handler's session, so they commit or roll back with the rows they are about. Tasks live in a `jobs.py` next to what they work on, are listed in `jobs/__init__.py` and name their queue: `default` for the platform's own tasks, `assignment` for the agent, `parse` for document parsing. `public-atlas-worker` serves every queue unless started with `--queues`. A cron task requeues the jobs of a worker whose heartbeat stopped, and fails one that is out of retries through its task's `abandoned` hook.
+- **Browser** (`integrations/browser`): one `BrowserPolicy` decides every request (the allowlist with subdomains, private addresses, `robots.txt`, pacing shared across sessions, the resource types never fetched); the session is one Chromium with a route guard; the tools return typed results. Every page the agent lands on reaches `modules/evidence/capture.py` as plain values and is stored as a snapshot. Tests marked `browser` drive a real Chromium against a local fixture site and are skipped until `vp run browser:install` has run.
+- **Parsing** (`integrations/parse`): documents fetched with `read_file` are parsed on the `parse` queue in ranges of pages, one page per range on a retry; a worker that has grown past `parse_retire_rss_mb` stops after its job. Tests marked `parse` need the `parse-cpu` group and run in a CI job of their own.
+- **Cost**: every model and search call is one `usage` row, priced from `modules/assignments/prices.toml`.
 
 ### Rules for the code
 

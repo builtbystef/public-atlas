@@ -25,6 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.db.base import utcnow
+from public_atlas.integrations.parse import Parser
 from public_atlas.integrations.storage import ObjectStore
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.service import CountryRules
@@ -130,22 +131,25 @@ def module_name(module: ModuleType) -> str:
     return module.__name__.rsplit(".", 1)[-1]
 
 
-async def load_list(
+async def load_list(  # noqa: PLR0913 - the resources a load needs
     session: AsyncSession,
     store: ObjectStore,
     module: ModuleType,
     *,
     cache_dir: Path,
     apply: bool,
+    parser: Parser | None = None,
 ) -> LoadReport:
     """Load one list module. Flushed, not committed: the caller commits when `apply` and rolls
-    back otherwise. The object store is written only when `apply`."""
+    back otherwise. The object store is written only when `apply`. `parser` reads a PDF list."""
     name = module_name(module)
     report = LoadReport(list_name=name, applied=apply)
     rules = await countries.load_rules(session, module.COUNTRY)
     opened: dict[str, files.OpenedFile] = {}
     for source in module.SOURCES:
-        opened[source.name] = await asyncio.to_thread(files.open_source, source, cache_dir)
+        opened[source.name] = await asyncio.to_thread(
+            files.open_source, source, cache_dir, parser=parser
+        )
         report.sources.append(source.name)
     entries: list[Entry] = list(module.entries(opened, rules))
     report.entries = len(entries)
@@ -207,7 +211,7 @@ class Loader:
             )
             if created:
                 self.changed("add", "domain", domain.name, "trusted: an official list's")
-            webpage = await graph.ensure_webpage(self.session, source.url, domain)
+            webpage = await graph.ensure_webpage(self.session, source.url, domain=domain)
             snapshot, created = await evidence.store_snapshot(
                 self.session,
                 self.store,
@@ -549,7 +553,7 @@ class Loader:
             )
             if created:
                 self.changed("add", "domain", domain.name, "candidate")
-            webpage = await graph.ensure_webpage(self.session, normalized, domain)
+            webpage = await graph.ensure_webpage(self.session, normalized, domain=domain)
         homepage = await self.session.scalar(
             select(Homepage).where(
                 Homepage.institution_id == institution.id, Homepage.webpage_id == webpage.id

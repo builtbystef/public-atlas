@@ -1,90 +1,152 @@
-"""Storing a copy of a page or file with its text, and the quotes taken from it. The browser's
-capture hook (phase 2) and the list loader both store through here. Bytes and text are keyed by
-content hash in the object store, so identical bytes fetched twice share one copy of each."""
+"""The evidence module's door: storing a copy of a page or file with its text, the quotes taken
+from it, and the checks a quote or link must pass against a stored copy (spec section 6.2).
 
-import hashlib
+Bytes and text are keyed by content hash in the object store, so identical bytes fetched twice,
+by whoever and from whatever URL, share one copy of each; a snapshot row is one fetch. A
+snapshot's text is `ready` at once for a page or a plain-text file, `parsing` until the parse
+queue has done a document, and `failed` with the reason when it cannot be made.
+"""
+
 import uuid
-from datetime import datetime
+from dataclasses import dataclass
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from public_atlas.db.base import utcnow
+from public_atlas.integrations.parse import PAGE_SEPARATOR
 from public_atlas.integrations.storage import ObjectStore
-from public_atlas.modules.evidence.models import Evidence, EvidenceKind, Snapshot, TextStatus
+from public_atlas.modules.evidence.capture import (
+    PageCapture,
+    delete_objects,
+    prune_unreferenced,
+    record_blocked,
+)
+from public_atlas.modules.evidence.files import FileParsing, FileRefusal, FileText, read_file
+from public_atlas.modules.evidence.models import Evidence, EvidenceKind, Snapshot
+from public_atlas.modules.evidence.quote_checks import (
+    HTML,
+    closest_passage,
+    find_quote,
+    html_text,
+    link_in_html,
+    link_in_text,
+    link_text,
+)
+from public_atlas.modules.evidence.snapshots import (
+    bytes_key,
+    content_hash,
+    latest_snapshot,
+    mark_text_failed,
+    mark_text_ready,
+    share_text,
+    snapshot_bytes,
+    snapshot_text,
+    store_snapshot,
+    text_key,
+)
 from public_atlas.modules.graph.models import EnteredBy, Webpage
+from public_atlas.modules.graph.service import normalize_url
 
-# The longest file name a snapshot keeps.
-FILENAME_LENGTH = 200
+__all__ = [
+    "HTML",
+    "PAGE_SEPARATOR",
+    "FileParsing",
+    "FileRefusal",
+    "FileText",
+    "PageCapture",
+    "QuoteMatch",
+    "add_evidence",
+    "bytes_key",
+    "check_link",
+    "check_quote",
+    "content_hash",
+    "delete_objects",
+    "evidence_for",
+    "latest_snapshot",
+    "mark_text_failed",
+    "mark_text_ready",
+    "nearest_text",
+    "prune_unreferenced",
+    "read_file",
+    "record_blocked",
+    "share_text",
+    "snapshot_bytes",
+    "snapshot_text",
+    "store_snapshot",
+    "text_key",
+]
 
-
-def content_hash(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def bytes_key(digest: str) -> str:
-    return f"snapshots/{digest}/bytes"
-
-
-def text_key(digest: str) -> str:
-    return f"snapshots/{digest}/text"
-
-
-async def store_snapshot(  # noqa: PLR0913
-    session: AsyncSession,
-    store: ObjectStore,
-    webpage: Webpage,
-    data: bytes,
-    *,
-    text: str,
-    media_type: str,
-    filename: str | None,
-    assignment_id: uuid.UUID | None = None,
-    fetched_at: datetime | None = None,
-    write_store: bool = True,
-) -> tuple[Snapshot, bool]:
-    """The snapshot of `data` for `webpage`, with its text ready: the one an earlier fetch of
-    the same bytes made, else a new one. Whether it was created. `write_store=False` writes the
-    row and not the objects, for a dry run that rolls back."""
-    digest = content_hash(data)
-    existing = await session.scalar(
-        select(Snapshot)
-        .where(
-            Snapshot.webpage_id == webpage.id,
-            Snapshot.content_hash == digest,
-            Snapshot.text_status == TextStatus.READY,
-            Snapshot.pruned_at.is_(None),
-        )
-        .order_by(Snapshot.fetched_at.desc())
-        .limit(1)
-    )
-    if existing is not None:
-        return existing, False
-    snapshot = Snapshot(
-        webpage_id=webpage.id,
-        assignment_id=assignment_id,
-        fetched_at=fetched_at or utcnow(),
-        content_hash=digest,
-        media_type=media_type,
-        size=len(data),
-        filename=filename[:FILENAME_LENGTH] if filename else None,
-        bytes_key=bytes_key(digest),
-        text_key=text_key(digest),
-        text_status=TextStatus.READY,
-    )
-    session.add(snapshot)
-    await session.flush()
-    if write_store:
-        await store.put(snapshot.bytes_key, data, media_type)
-        await store.put(text_key(digest), text.encode(), "text/plain; charset=utf-8")
-    return snapshot, True
+# --- The quote and link checks ---
 
 
-async def snapshot_text(store: ObjectStore, snapshot: Snapshot) -> str:
-    """The extracted text; empty until it is ready."""
-    if snapshot.text_key is None or snapshot.text_status is not TextStatus.READY:
-        return ""
-    return (await store.get(snapshot.text_key)).decode()
+@dataclass(frozen=True, slots=True)
+class QuoteMatch:
+    """Where a quote was found: the snapshot, and the page of a file."""
+
+    snapshot: Snapshot
+    locator: int | None
+
+
+async def check_quote(
+    session: AsyncSession, store: ObjectStore, webpage: Webpage, quote: str
+) -> QuoteMatch | None:
+    """Where `quote` appears in the newest stored copy of `webpage`, or None. A page never
+    opened cannot vouch for anything. For a page the text of its stored HTML is tried after
+    the rendered text: it has what the rendered text missed, such as a footer hidden until
+    scrolled to."""
+    snapshot = await latest_snapshot(session, webpage.id)
+    if snapshot is None:
+        return None
+    found = find_quote(await snapshot_text(store, snapshot), quote)
+    if found is None and snapshot.media_type == HTML:
+        page_html = await snapshot_bytes(store, snapshot)
+        if page_html is not None:
+            found = find_quote(html_text(page_html.decode(errors="replace")), quote)
+    if found is None:
+        return None
+    return QuoteMatch(snapshot=snapshot, locator=found.page)
+
+
+async def nearest_text(
+    session: AsyncSession, store: ObjectStore, webpage: Webpage, quote: str
+) -> str | None:
+    """The passage of `webpage`'s newest stored copy most like `quote`, for the agent to copy
+    the page's own words from."""
+    snapshot = await latest_snapshot(session, webpage.id)
+    if snapshot is None:
+        return None
+    text = await snapshot_text(store, snapshot)
+    if snapshot.media_type == HTML:
+        page_html = await snapshot_bytes(store, snapshot)
+        if page_html is not None:
+            text = f"{text}\n{html_text(page_html.decode(errors='replace'))}"
+    return closest_passage(text, quote)
+
+
+async def check_link(
+    store: ObjectStore, snapshot: Snapshot, page_url: str, target: str, *, quote: str | None = None
+) -> str | None:
+    """The link's text when the stored copy `snapshot` links to `target`, `target` itself when
+    the link has no text, None when it does not link there. A page is checked in its stored
+    HTML, a file in its text, where a URL in a cell is the link. An address written out in the
+    finding's `quote` ("Township of Elmwood www.elmwood.ca") counts too: the quote was found on
+    the page, beside the body it names."""
+    if quote is not None and link_in_text(quote, page_url, target):
+        return normalize_url(target)
+    if snapshot.media_type == HTML:
+        page_html = await snapshot_bytes(store, snapshot)
+        if page_html is None:
+            return None
+        html = page_html.decode(errors="replace")
+        if not link_in_html(html, page_url, target):
+            return None
+        return link_text(html, page_url, target) or normalize_url(target)
+    if not link_in_text(await snapshot_text(store, snapshot), page_url, target):
+        return None
+    return normalize_url(target)
+
+
+# --- Evidence ---
 
 
 async def add_evidence(  # noqa: PLR0913
@@ -100,8 +162,8 @@ async def add_evidence(  # noqa: PLR0913
     assignment_id: uuid.UUID | None = None,
 ) -> bool:
     """Record the quote for the entity, once per snapshot and quote. Whether a row was added.
-    The quote check (phase 2) runs before this for the agent's saves; a list's own line needs
-    none."""
+    The quote check runs before this for the agent's saves; a list's own line needs none."""
+    quote = quote.strip()
     found = await session.scalar(
         select(Evidence.id)
         .where(
@@ -121,10 +183,17 @@ async def add_evidence(  # noqa: PLR0913
             kind=kind,
             quote=quote,
             locator=locator,
-            link_url=link_url,
+            link_url=normalize_url(link_url) if link_url else None,
             assignment_id=assignment_id,
             entered_by=entered_by,
         )
     )
     await session.flush()
     return True
+
+
+async def evidence_for(session: AsyncSession, entity_id: uuid.UUID) -> list[Evidence]:
+    rows = await session.scalars(
+        select(Evidence).where(Evidence.entity_id == entity_id).order_by(Evidence.id)
+    )
+    return list(rows)

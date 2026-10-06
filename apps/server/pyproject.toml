@@ -10,6 +10,10 @@ dependencies = [
   "alembic>=1.19.1,<1.21",
   # 0.x: a minor bump can break, so pin the minor. Starlette is left to FastAPI.
   "fastapi[standard-no-fastapi-cloud-cli]>=0.141.1,<0.142",
+  # The browser's plain fetches (`robots.txt`, `read_file`) and the search port.
+  "httpx>=0.28,<1",
+  # Hosts compared in their IDNA form on the allowlist.
+  "idna>=3.10,<4",
   "logfire[fastapi,sqlalchemy]>=4.41,<6",
   # Spreadsheets among the official lists the loader reads (modules/imports/files.py).
   "openpyxl>=3.1.5,<4",

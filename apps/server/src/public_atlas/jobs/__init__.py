@@ -27,6 +27,7 @@ QUEUES: tuple[Queue, ...] = ("default", "assignment", "parse")
 TASK_MODULES = [
     "public_atlas.jobs.purge",
     "public_atlas.jobs.stalled",
+    "public_atlas.modules.evidence.jobs",
 ]
 
 # What every `@task` registers on. Import-time, settings-free.

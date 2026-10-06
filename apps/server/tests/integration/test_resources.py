@@ -10,6 +10,7 @@ from procrastinate.testing import InMemoryConnector
 from sqlalchemy import text
 
 from public_atlas.config import Settings
+from public_atlas.integrations.parse import MemoryParser
 from public_atlas.integrations.storage.memory import MemoryObjectStore
 from public_atlas.jobs.purge import purge_old_jobs
 from public_atlas.jobs.stalled import retry_stalled
@@ -30,6 +31,9 @@ def test_resources_are_built_from_the_settings_alone(settings: Settings, test_da
         ) as resources:
             assert resources.settings is settings
             assert resources.object_store is store
+            # No search engine is configured for the tests, and the parser is the settings'.
+            assert resources.searcher is None
+            assert isinstance(resources.parser, MemoryParser)
             async with resources.session() as session:
                 database = (await session.execute(text("SELECT current_database()"))).scalar()
             return database, str(resources.engine.url.database)

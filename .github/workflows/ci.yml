@@ -68,6 +68,20 @@ jobs:
 
       - run: uv sync --locked --all-packages
 
+      # Playwright's Chromium, for the tests marked `browser`. Cached by the Playwright version
+      # in the lockfile.
+      - id: playwright-version
+        run: echo "version=$(uv run python -c 'from importlib.metadata import version; print(version("playwright"))')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: chromium
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+      - if: steps.chromium.outputs.cache-hit != 'true'
+        run: uv run playwright install --with-deps chromium
+      - if: steps.chromium.outputs.cache-hit == 'true'
+        run: uv run playwright install-deps chromium
+
       # What the storage-init Compose service does locally.
       - run: aws s3api create-bucket --bucket public-atlas
         env:
@@ -97,3 +111,45 @@ jobs:
         with:
           path: node_modules/.vite/task-cache
           key: ${{ steps.task-cache.outputs.cache-primary-key }}
+
+  # The tests marked `parse` run Docling, which the job above does not install: the parse-cpu
+  # group is several gigabytes.
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PUBLIC_ATLAS_DATABASE_URL: postgresql+psycopg://public_atlas:public_atlas@localhost:5432/public_atlas
+      DOCLING_ARTIFACTS_PATH: ${{ github.workspace }}/models
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: public_atlas
+          POSTGRES_PASSWORD: public_atlas
+          POSTGRES_DB: public_atlas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username public_atlas --dbname public_atlas"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - run: uv sync --locked --all-packages --group parse-cpu
+
+      # The models the parse image downloads, kept between runs of one lockfile.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: models
+        with:
+          path: models
+          key: docling-models-${{ hashFiles('uv.lock') }}
+      - if: steps.models.outputs.cache-hit != 'true'
+        run: uv run docling-tools models download --quiet --output-dir models layout tableformer rapidocr
+
+      - run: uv run pytest -m parse

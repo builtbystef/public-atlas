@@ -37,14 +37,14 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 2: port the stable pieces
 
-- [ ] Storage port (S3, memory) from v1; add an R2 configuration note.
-- [ ] Search port (Brave, memory) from v1, one request per call.
-- [ ] Parse port (Docling, memory) and the parse worker with its page ranges, memory trim, retire threshold and retry-with-one-page from v1.
-- [ ] Browser: rewrite v1's `integrations/browser` as an owned layer. One policy object (allowlist with subdomains, private addresses, robots, shared pacing, resource filtering), the twelve tools used, a capture hook that receives plain values. Drop CDP, auto-install, storage state, event-log tools, protocols file and the durability guard. Port `test_browser.py`.
-- [ ] Evidence: `quote_checks.py` (text normalization, mojibake repair, name-in-quote, link-in-HTML) and `capture.py` from v1, with the snapshot now holding bytes and text together and sharing text by hash.
-- [ ] Jobs: the Procrastinate wrapper, worker, stalled sweep and purge from alloy, taking resources as an argument.
-- [ ] Usage recording: one `usage` table and one `record_usage` function for model and search calls, priced from a prices data file.
-- [ ] Unit tests ported for quote checks, name matching, media detection, browser policy.
+- [x] Storage port (S3, memory) from v1; add an R2 configuration note.
+- [x] Search port (Brave, memory) from v1, one request per call.
+- [x] Parse port (Docling, memory) and the parse worker with its page ranges, memory trim, retire threshold and retry-with-one-page from v1.
+- [x] Browser: rewrite v1's `integrations/browser` as an owned layer. One policy object (allowlist with subdomains, private addresses, robots, shared pacing, resource filtering), the twelve tools used, a capture hook that receives plain values. Drop CDP, auto-install, storage state, event-log tools, protocols file and the durability guard. Port `test_browser.py`.
+- [x] Evidence: `quote_checks.py` (text normalization, mojibake repair, name-in-quote, link-in-HTML) and `capture.py` from v1, with the snapshot now holding bytes and text together and sharing text by hash.
+- [x] Jobs: the Procrastinate wrapper, worker, stalled sweep and purge from alloy, taking resources as an argument.
+- [x] Usage recording: one `usage` table and one `record_usage` function for model and search calls, priced from a prices data file.
+- [x] Unit tests ported for quote checks, name matching, media detection, browser policy.
 
 **Done when** a test drives real Chromium against the fixture site and every navigating tool produces a snapshot, a refused domain produces a blocked attempt and nothing else, and a PDF goes through `read_file` to text.
 

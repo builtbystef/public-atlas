@@ -20,6 +20,7 @@ from urllib.parse import unquote, urlsplit
 import httpx
 import openpyxl
 
+from public_atlas.integrations.parse import Parser
 from public_atlas.modules.evidence.service import content_hash
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class Format(StrEnum):
     SPREADSHEET = "spreadsheet"
     JSON = "json"
     HTML = "html"
-    # Parsed by Docling on the parse queue (phase 2); refused until that port exists.
+    # Parsed by the parser the loader is given (Docling where it is installed).
     PDF = "pdf"
 
 
@@ -186,15 +187,16 @@ def fetch(source: Source, cache_dir: Path) -> bytes:
     return data
 
 
-def open_source(source: Source, cache_dir: Path) -> OpenedFile:
-    return render(source, fetch(source, cache_dir))
+def open_source(source: Source, cache_dir: Path, *, parser: Parser | None = None) -> OpenedFile:
+    return render(source, fetch(source, cache_dir), parser=parser)
 
 
 # --- Rendering ---
 
 
-def render(source: Source, data: bytes) -> OpenedFile:
-    """The file as lines of text, with its rows or parsed object."""
+def render(source: Source, data: bytes, *, parser: Parser | None = None) -> OpenedFile:
+    """The file as lines of text, with its rows or parsed object. A PDF goes through `parser`,
+    one line of text per line of its pages."""
     digest = content_hash(data)
     if digest != source.sha256:
         raise ListFileError(f"{source.name}: sha256 {digest} is not the recorded {source.sha256}")
@@ -219,9 +221,13 @@ def render(source: Source, data: bytes) -> OpenedFile:
         if source.format is Format.HTML:
             text = stream.read().decode(source.encoding, errors="replace")
             return OpenedFile(source=source, data=data, sha256=digest, lines=visible_lines(text))
-    raise ListFileError(
-        f"{source.name}: {source.format} lists are parsed on the parse queue, which phase 2 adds"
-    )
+        if source.format is Format.PDF:
+            if parser is None:
+                raise ListFileError(f"{source.name}: a PDF list needs a parser")
+            document = parser.parse(stream.read(), source.filename)
+            lines = [line for page in document.pages for line in page.splitlines()]
+            return OpenedFile(source=source, data=data, sha256=digest, lines=lines)
+    raise ListFileError(f"{source.name}: no renderer for {source.format}")  # pragma: no cover
 
 
 def _member(source: Source, data: bytes) -> IO[bytes]:

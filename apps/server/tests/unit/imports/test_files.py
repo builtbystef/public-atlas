@@ -9,6 +9,7 @@ from typing import Any
 import openpyxl
 import pytest
 
+from public_atlas.integrations.parse import MemoryParser
 from public_atlas.modules.evidence.service import content_hash
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.files import Format, ListFileError, Source
@@ -105,10 +106,14 @@ def test_a_spreadsheet_is_read_like_a_csv():
     assert opened.rows[0]["code"] == "3501"
 
 
-def test_a_pdf_waits_for_the_parse_port():
-    data = b"%PDF-1.4 not really"
-    with pytest.raises(ListFileError, match="parse queue"):
-        files.render(source(data, format=Format.PDF, url="https://x.test/list.pdf"), data)
+def test_a_pdf_goes_through_the_parser_one_line_per_line_of_its_pages():
+    data = b"Hospitals\nToronto General\fOttawa Civic\n"
+    pdf = source(data, format=Format.PDF, url="https://x.test/list.pdf")
+    with pytest.raises(ListFileError, match="needs a parser"):
+        files.render(pdf, data)
+    opened = files.render(pdf, data, parser=MemoryParser())
+    assert opened.lines == ["Hospitals", "Toronto General", "Ottawa Civic"]
+    assert opened.line(3) == "Ottawa Civic"
 
 
 def test_the_hash_is_checked():

@@ -79,14 +79,31 @@ docstring-code-format = true
 [tool.ty.src]
 exclude = ["**/.agents/**", "**/.claude/**"]
 
+# Docling is an optional group (parse-cpu or parse-cu130), not installed where the checks run.
+[[tool.ty.overrides]]
+include = [
+  "apps/server/src/public_atlas/integrations/parse/docling.py",
+  "apps/server/tests/unit/integrations/test_parse_docling.py",
+]
+
+[tool.ty.overrides.rules]
+unresolved-import = "ignore"
+
 [tool.pytest]
 minversion = "9.0"
 testpaths = ["apps", "packages", "tools"]
 addopts = ["-ra", "--import-mode=importlib"]
+markers = [
+  "browser: drives a real Chromium; skipped unless `playwright install chromium` ran",
+  "parse: runs Docling; skipped unless the parse-cpu dependency group is installed",
+]
 # Unknown markers, unknown config keys, passing xfails and duplicate parametrize ids are errors.
 strict = true
 filterwarnings = [
   "error",
   # Starlette's TestClient bug; drop once it stops using anyio.abc.BlockingPortal.
   "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+  # Docling reads its own deprecated fields; drop when it stops.
+  "ignore:This field is deprecated:DeprecationWarning:docling.pipeline.standard_pdf_pipeline",
+  "ignore:deprecated:DeprecationWarning:docling.models.stages.ocr.rapid_ocr_model",
 ]

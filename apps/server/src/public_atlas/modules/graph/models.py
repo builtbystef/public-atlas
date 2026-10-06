@@ -329,7 +329,9 @@ class Webpage(UUIDPrimaryKey, Base):
 
     # Normalized.
     url: Mapped[str] = mapped_column(Text, unique=True)
-    domain_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("domains.id"), index=True)
+    # Null until a domain row covers the host: a page on a site a search returned is captured
+    # before the agent claims the site, and `ensure_webpage` attaches the domain once it exists.
+    domain_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("domains.id"), index=True)
     redirects_to_url: Mapped[str | None] = mapped_column(Text)
     # Null when the loader wrote the row.
     first_seen_assignment_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("assignments.id"))

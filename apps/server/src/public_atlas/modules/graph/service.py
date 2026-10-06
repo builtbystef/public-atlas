@@ -99,15 +99,26 @@ async def webpage_by_url(session: AsyncSession, url: str) -> Webpage | None:
 
 
 async def ensure_webpage(
-    session: AsyncSession, url: str, domain: Domain, *, assignment_id: uuid.UUID | None = None
+    session: AsyncSession,
+    url: str,
+    *,
+    domain: Domain | None = None,
+    assignment_id: uuid.UUID | None = None,
 ) -> Webpage:
-    """The row for `url`, created if new. Two writers may race for one URL (the agent's tool calls
-    from one response run at once); the savepoint lets the loser take the winner's row."""
+    """The row for `url`, created if new. Its domain is `domain`, or the row that covers the
+    host; a row made before its domain had a row (a page on a site a search returned) is
+    attached to the domain here, so its evidence counts once the domain is trusted. Two writers
+    may race for one URL (the agent's tool calls from one response run at once); the savepoint
+    lets the loser take the winner's row."""
     normalized = normalize_url(url)
+    if domain is None:
+        domain = await domain_of_host(session, host_of(normalized))
     webpage = await webpage_by_url(session, normalized)
     if webpage is None:
         webpage = Webpage(
-            url=normalized, domain_id=domain.id, first_seen_assignment_id=assignment_id
+            url=normalized,
+            domain_id=domain.id if domain is not None else None,
+            first_seen_assignment_id=assignment_id,
         )
         try:
             async with session.begin_nested():
@@ -117,6 +128,9 @@ async def ensure_webpage(
             webpage = await webpage_by_url(session, normalized)
             if webpage is None:  # pragma: no cover - the other writer's row is committed
                 raise
+    if webpage.domain_id is None and domain is not None:
+        webpage.domain_id = domain.id
+        await session.flush()
     return webpage
 
 

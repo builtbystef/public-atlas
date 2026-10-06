@@ -19,6 +19,8 @@ from public_atlas.shared.routing import generate_unique_id
 if TYPE_CHECKING:
     from procrastinate.connector import BaseConnector
 
+    from public_atlas.integrations.parse import Parser
+    from public_atlas.integrations.search import Searcher
     from public_atlas.integrations.storage import ObjectStore
 
 TITLE = "Public Atlas API"
@@ -29,8 +31,10 @@ def create_app(
     *,
     object_store: ObjectStore | None = None,
     jobs_connector: BaseConnector | None = None,
+    searcher: Searcher | None = None,
+    parser: Parser | None = None,
 ) -> FastAPI:
-    """The doubles go to `build_resources`; tests pass an in-memory store and queue."""
+    """The doubles go to `build_resources`; tests pass an in-memory store, queue and parser."""
     logs.configure(settings.log_level, settings.log_format)
     if (handler := telemetry.configure(settings, service_name="public-atlas-server")) is not None:
         logging.getLogger().addHandler(handler)
@@ -39,7 +43,11 @@ def create_app(
     async def lifespan(_app: FastAPI) -> AsyncIterator[dict[str, object]]:
         """The yielded dict becomes `request.state`."""
         async with build_resources(
-            settings, object_store=object_store, jobs_connector=jobs_connector
+            settings,
+            object_store=object_store,
+            jobs_connector=jobs_connector,
+            searcher=searcher,
+            parser=parser,
         ) as resources:
             yield {"resources": resources}
 

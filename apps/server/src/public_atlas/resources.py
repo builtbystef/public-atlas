@@ -1,8 +1,9 @@
-"""What every process works with: the settings, the database, the object store and the job
-queue, opened once by `build_resources` and passed as an argument from there.
+"""What every process works with: the settings, the database, the object store, the job queue,
+the search engine and the parser, opened once by `build_resources` and passed as an argument
+from there.
 
-The API's lifespan, the worker and the tests call `build_resources` with their own settings.
-Nothing reads settings or opens a connection at import time.
+The API's lifespan, the worker, the CLI and the tests call `build_resources` with their own
+settings. Nothing reads settings or opens a connection at import time.
 """
 
 from collections.abc import AsyncIterator, Callable
@@ -15,6 +16,8 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from public_atlas.config import Settings
 from public_atlas.db.session import create_engine
+from public_atlas.integrations.parse import Parser, create_parser
+from public_atlas.integrations.search import Searcher, create_searcher
 from public_atlas.integrations.storage import ObjectStore, create_object_store
 from public_atlas.jobs import create_app
 
@@ -35,6 +38,10 @@ class Resources:
     object_store: ObjectStore
     # The job queue: `defer` queues through it and the worker serves it.
     jobs: App
+    # None when no search engine is configured: the agent then has no `search` tool.
+    searcher: Searcher | None
+    # Built in every process; only the parse worker loads its models (`warm_up`).
+    parser: Parser
 
     def session(self) -> AsyncSession:
         """A new session. One per request or job run; commit explicitly."""
@@ -47,10 +54,12 @@ async def build_resources(
     *,
     object_store: ObjectStore | None = None,
     jobs_connector: BaseConnector | None = None,
+    searcher: Searcher | None = None,
+    parser: Parser | None = None,
 ) -> AsyncIterator[Resources]:
     """Open every resource from `settings` and close them on exit. The engine connects lazily;
     the object store and the job queue open their pools here. Tests pass an in-memory
-    `object_store` and an in-memory `jobs_connector`."""
+    `object_store`, an in-memory `jobs_connector`, and a `searcher` and `parser` of their own."""
     engine = create_engine(settings)
     jobs = create_app(settings, connector=jobs_connector)
     async with AsyncExitStack() as stack:
@@ -65,6 +74,8 @@ async def build_resources(
             session_factory=async_sessionmaker(engine, expire_on_commit=False),
             object_store=object_store,
             jobs=jobs,
+            searcher=searcher if searcher is not None else create_searcher(settings),
+            parser=parser if parser is not None else create_parser(settings),
         )
 
 

@@ -1,0 +1,19 @@
+# What a model or search call costs, in US dollars. Product data: edit here, not in Settings.
+# A provider not listed has no price; its usage is recorded at zero cost with a warning.
+
+# Per million tokens, from OpenAI's price list (developers.openai.com/api/docs/pricing, read
+# 2026-09-30). `cached_input` is for the input served from the prompt cache; the rest of the
+# input is charged at `input`.
+[model."gpt-6.1-sol"]
+input = "2.00"
+cached_input = "0.10"
+output = "10.00"
+
+[model."gpt-6-luna"]
+input = "0.10"
+cached_input = "0.01"
+output = "0.50"
+
+# Per request, from Brave's Search plan as billed in September 2026 (5.00 per thousand).
+[search.brave]
+request = "0.005"

@@ -14,10 +14,12 @@ from public_atlas.db.base import utcnow
 from public_atlas.jobs import TASK_MODULES, conninfo, create_app
 from public_atlas.jobs.purge import purge_old_jobs
 from public_atlas.jobs.stalled import retry_stalled
-from public_atlas.jobs.tasks import RETRY_ON_ERROR, AnyTask, defer
+from public_atlas.jobs.tasks import ABANDONED, RETRY_ON_ERROR, AnyTask, defer
 
 if TYPE_CHECKING:
     from tests.integration.conftest import Database, InlineConnector
+
+    from public_atlas.resources import Resources
 
 
 async def run_now(db: Database, queue: InlineConnector, task: AnyTask) -> int:
@@ -46,6 +48,7 @@ def test_every_jobs_module_in_the_tree_is_registered():
     listed = {module for module in TASK_MODULES if module.endswith(".jobs")}
     assert found == listed
     assert set(TASK_MODULES) - listed == {"public_atlas.jobs.purge", "public_atlas.jobs.stalled"}
+    assert "public_atlas.modules.evidence.jobs" in listed
 
 
 def test_the_platform_tasks_carry_their_retry_and_queue():
@@ -86,28 +89,47 @@ def test_a_job_is_queued_in_the_transaction_of_the_rows_it_is_about(
     assert rows == [committed]
 
 
-def test_retry_stalled_requeues_the_jobs_of_a_dead_worker(db: Database, queue: InlineConnector):
-    """A job left running by a worker whose heartbeat stopped goes back to the queue (and,
-    here, is run at once by the same worker); one held by a live worker is left alone."""
+def stalled_job(job_id: int, task_name: str, worker_id: int, attempts: int) -> dict[str, object]:
+    return {
+        "id": job_id,
+        "status": "doing",
+        "task_name": task_name,
+        "priority": 0,
+        "lock": None,
+        "queueing_lock": None,
+        "args": {},
+        "scheduled_at": None,
+        "queue_name": "default",
+        "attempts": attempts,
+        "worker_id": worker_id,
+        "abort_requested": False,
+    }
+
+
+def test_retry_stalled_requeues_the_jobs_of_a_dead_worker_and_fails_those_out_of_retries(
+    db: Database, queue: InlineConnector, monkeypatch: pytest.MonkeyPatch
+):
+    """A job left running by a worker whose heartbeat stopped goes back to the queue when its
+    task has retries left (and, here, is run at once by the same worker); one out of retries
+    is failed and its task's `abandoned` hook settles what it left; one held by a live worker
+    is left alone."""
+    settled: list[dict[str, object]] = []
+
+    async def settle(res: Resources, **kwargs: object) -> None:
+        settled.append(kwargs)
+
+    monkeypatch.setitem(ABANDONED, "tests.abandoned", settle)
     dead, live = 1, 2
     long_ago = utcnow() - timedelta(minutes=5)
     queue.workers = {dead: long_ago, live: utcnow()}
-    for job_id, worker_id in ((10, dead), (11, live)):
-        queue.jobs[job_id] = {
-            "id": job_id,
-            "status": "doing",
-            "task_name": "jobs.retry_stalled",
-            "priority": 0,
-            "lock": None,
-            "queueing_lock": None,
-            "args": {},
-            "scheduled_at": None,
-            "queue_name": "default",
-            "attempts": 1,
-            "worker_id": worker_id,
-            "abort_requested": False,
-        }
+    queue.jobs[10] = stalled_job(10, "jobs.retry_stalled", dead, attempts=0)
+    queue.jobs[11] = stalled_job(11, "jobs.retry_stalled", live, attempts=0)
+    queue.jobs[12] = stalled_job(12, "tests.abandoned", dead, attempts=3)
+    queue.jobs[12]["args"] = {"snapshot_id": "abc", "trace": {}}
+    for job_id in (10, 11, 12):
         queue.events[job_id] = [{"type": "started", "at": long_ago}]
+    # `retry_stalled` itself retries on error, so the dead worker's run of it is requeued.
+    monkeypatch.setattr(retry_stalled, "retry_strategy", RETRY_ON_ERROR)
 
     assert db.run(run_now, db, queue, retry_stalled) > 0
     assert [e["type"] for e in queue.events[10]] == [
@@ -119,6 +141,8 @@ def test_retry_stalled_requeues_the_jobs_of_a_dead_worker(db: Database, queue: I
     ]
     assert queue.jobs[10]["status"] == "succeeded"
     assert queue.jobs[11]["status"] == "doing"
+    assert queue.jobs[12]["status"] == "failed"
+    assert settled == [{"snapshot_id": "abc"}]
 
 
 def test_the_purge_task_runs_with_the_worker_resources_and_drops_old_failed_jobs(

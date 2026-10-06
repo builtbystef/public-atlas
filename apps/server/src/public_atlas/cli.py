@@ -42,6 +42,7 @@ async def load_list(settings: Settings, name: str, *, apply: bool) -> imports.Lo
             LISTS[name],
             cache_dir=settings.lists_cache_dir,
             apply=apply,
+            parser=resources.parser,
         )
         if apply:
             await session.commit()
