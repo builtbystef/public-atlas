@@ -8,12 +8,12 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 0: scaffold
 
-- [ ] Copy current alloy into this folder, rename to `public_atlas` and `@public-atlas/*`.
-- [ ] In the first commit delete auth, workspaces, mail, rate limits and the CRM, on both server and web. Delete the web proxy route and replace it with a `rewrites` rule in `next.config.ts`.
-- [ ] Add `resources.py` with `build_resources(settings)` and make `main.py`, the worker and the test fixtures call it. Remove every import-time `get_settings()` and the module-level job app.
-- [ ] Set up compose with PostgreSQL and RustFS, the three server image targets (`server`, `agent`, `parse`) and CI, copied from v1 and trimmed.
-- [ ] Write `README.md` from the spec's sections 1 and 12, and `apps/server/.env.example`.
-- [ ] Add a `docs/glossary.md` link to the spec's section 13 and keep it in `CLAUDE.md` so coding agents follow the naming rules.
+- [x] Copy current alloy into this folder, rename to `public_atlas` and `@public-atlas/*`.
+- [x] In the first commit delete auth, workspaces, mail, rate limits and the CRM, on both server and web. Delete the web proxy route and replace it with a `rewrites` rule in `next.config.ts`.
+- [x] Add `resources.py` with `build_resources(settings)` and make `main.py`, the worker and the test fixtures call it. Remove every import-time `get_settings()` and the module-level job app.
+- [x] Set up compose with PostgreSQL and RustFS, the three server image targets (`server`, `agent`, `parse`) and CI, copied from v1 and trimmed.
+- [x] Write `README.md` from the spec's sections 1 and 12, and `apps/server/.env.example`.
+- [x] Add a `docs/glossary.md` link to the spec's section 13 and keep it in `CLAUDE.md` so coding agents follow the naming rules.
 
 **Done when** `vp run check` and `vp run test` pass on an app with only a health route, and a test can build resources against the test database without touching environment variables.
 
