@@ -1,13 +1,29 @@
 # Glossary
 
-The code uses one word per concept, from
-[section 13 of the spec](product-and-tech-spec.md#13-glossary). That table is the source;
-this page points at it so the rule is one link away from `CLAUDE.md` and the README.
+The code uses one word per concept. The "Not" column lists the synonyms it does not use.
 
-Rules for naming, from [section 12.2](product-and-tech-spec.md#122-rules-for-the-code):
-
-- One word per concept. No synonyms: `assignment`, not `item`, `task` or `work`; `homepage`, not `website` or `official webpage`; `finish`, not `complete`, `close` or `done`; `institution`, not `organization`, `entity` or `org`; `place`, not `jurisdiction` or `division`.
-- `trusted` is a verified official domain; `allowed` is on the browser allowlist. They are not the same thing.
-- `entered by` is `manual`, `script` or `agent`, never `verified_by` or `origin`.
-- An `official list` is a published file the loader reads instead of the agent; a `register` is one with codes; an `entry` is one record a list module returns, in memory only.
-- Table names are full words. The two type tables use the type's name as the primary key.
+| Word | Means | Not |
+| --- | --- | --- |
+| place | A unit of the hierarchy | jurisdiction, division |
+| institution | A public body | organization, entity, org |
+| government | A place's own institution | municipality (that is the place) |
+| source | A signal page for an institution | link, document |
+| homepage | An institution's official page | website, official webpage |
+| webpage | A visited URL | page, link |
+| domain | A website address, the unit of trust | site, host |
+| snapshot | A stored copy of a page or file with its text | capture, parsed text |
+| evidence | A quote supporting an entity | proof, citation |
+| alias | A name or acronym of a place or institution | name |
+| identifier | A code in an outside scheme | external code |
+| run | A controlled batch of assignments | crawl, job |
+| assignment | One piece of agent work | item, task, work |
+| event | One thing the agent saw, said or did in a session | step, log, trace |
+| session | One agent context inside an assignment | attempt |
+| finish | The agent's terminal tool and the finished status | complete, close, done |
+| result | How a finished assignment ended | outcome, state |
+| review item | A question for a human | ticket, flag |
+| trusted | A verified official domain | allowed (that is the fence) |
+| allowed | On the browser allowlist | trusted |
+| entered by | manual, script or agent | verified_by, origin |
+| official list | A published file the loader reads instead of the agent | register (only when it has codes), directory |
+| entry | One record a list module returns, in memory only | row, record |

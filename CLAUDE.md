@@ -6,7 +6,7 @@ Read `docs/product-and-tech-spec.md` before changing anything: it is the design,
 
 ## Words
 
-Use the words in `docs/glossary.md` (the spec's section 13) and no synonyms. One word per
+Use the words in `docs/glossary.md` and no synonyms. One word per
 concept, even when the name gets longer: `assignment` not `item`, `homepage` not `website`,
 `institution` not `organization`, `finish` not `complete`. `trusted` (a verified official
 domain) is not `allowed` (on the browser allowlist). Check new names against the glossary's

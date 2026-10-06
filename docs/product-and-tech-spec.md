@@ -18,7 +18,6 @@ from them are folded in here, and `todo.md` holds the build order.
 10. [Evaluation](#10-evaluation)
 11. [Console](#11-console)
 12. [Tech stack and code layout](#12-tech-stack-and-code-layout)
-13. [Glossary](#13-glossary)
 
 ---
 
@@ -74,7 +73,7 @@ governments, the public bodies under them and their sources. Targets:
 6. **Never drop a public body for want of a type.** A body with no matching type is saved as `other` and sent to review.
 7. **Relationships are derived, not recorded.** The agent saves facts about one body at a time. Links between bodies come from foreign keys.
 8. **Every state change goes through one door.** A domain becomes trusted, a homepage becomes verified, an institution is approved: each has one function, called by the rules, by the reviewer, by the loader and by the country reload alike.
-9. **Plain names.** Code uses everyday words, one word per concept (section 13), even when the name gets longer.
+9. **Plain names.** Code uses everyday words, one word per concept (`glossary.md`), even when the name gets longer.
 
 ---
 
@@ -569,38 +568,8 @@ call `build_resources` with their own settings.
 
 ### 12.2 Rules for the code
 
-- One word per concept, from the glossary. No synonyms (`assignment`, not `item` or `work`; `homepage`, not `official webpage`; `finish`, not `complete` or `close`).
+- One word per concept, from `glossary.md`. No synonyms (`assignment`, not `item` or `work`; `homepage`, not `official webpage`; `finish`, not `complete` or `close`).
 - A status changes only in `status_changes.py`. An assignment changes status only in `assignments/lifecycle.py`.
 - Tool results and refusals are typed values; prose is rendered at the tool edge.
 - A module imports another only through its `service.py` and `models.py`. No imports after `TYPE_CHECKING` blocks to dodge cycles; a cycle means two things are one module.
 - Product data (city names, prices, model names) lives in tables or data files, never in `Settings`.
-
----
-
-## 13. Glossary
-
-| Word | Means | Not |
-| --- | --- | --- |
-| place | A unit of the hierarchy | jurisdiction, division |
-| institution | A public body | organization, entity, org |
-| government | A place's own institution | municipality (that is the place) |
-| source | A signal page for an institution | link, document |
-| homepage | An institution's official page | website, official webpage |
-| webpage | A visited URL | page, link |
-| domain | A website address, the unit of trust | site, host |
-| snapshot | A stored copy of a page or file with its text | capture, parsed text |
-| evidence | A quote supporting an entity | proof, citation |
-| alias | A name or acronym of a place or institution | name |
-| identifier | A code in an outside scheme | external code |
-| run | A controlled batch of assignments | crawl, job |
-| assignment | One piece of agent work | item, task, work |
-| event | One thing the agent saw, said or did in a session | step, log, trace |
-| session | One agent context inside an assignment | attempt |
-| finish | The agent's terminal tool and the finished status | complete, close, done |
-| result | How a finished assignment ended | outcome, state |
-| review item | A question for a human | ticket, flag |
-| trusted | A verified official domain | allowed (that is the fence) |
-| allowed | On the browser allowlist | trusted |
-| entered by | manual, script or agent | verified_by, origin |
-| official list | A published file the loader reads instead of the agent | register (only when it has codes), directory |
-| entry | One record a list module returns, in memory only | row, record |
