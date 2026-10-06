@@ -27,6 +27,8 @@ QUEUES: tuple[Queue, ...] = ("default", "assignment", "parse")
 TASK_MODULES = [
     "public_atlas.jobs.purge",
     "public_atlas.jobs.stalled",
+    "public_atlas.modules.agent.jobs",
+    "public_atlas.modules.assignments.jobs",
     "public_atlas.modules.evidence.jobs",
 ]
 

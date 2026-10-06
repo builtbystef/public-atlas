@@ -1,17 +1,28 @@
-"""A small graph for the status change and review tests to work in, built through the same
-doors the loader and the rules use: Canada seeded; the region Elm with its government, a
-trusted domain and a verified homepage; the town Oakville under it with a government that has
+"""A small graph for the status change, review, run and runner tests to work in, built through
+the same doors the loader and the rules use: Canada seeded; the region Elm with its government,
+a trusted domain and a verified homepage; the town Oakville under it with a government that has
 no homepage yet; and a step-mode run. `Build` adds to it the same way; it is reached through a
-fixture because the tests are collected in importlib mode, with no `tests` package to import."""
+fixture because the tests are collected in importlib mode, with no `tests` package to import.
+A scripted model stands in for every model choice when a test runs the agent."""
 
 import uuid
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 import pytest
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelRequest,
+    ModelResponse,
+    ToolCallPart,
+    UserPromptPart,
+)
+from pydantic_ai.models.function import AgentInfo, FunctionModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from public_atlas.integrations.ai import FixedModels
 from public_atlas.modules.assignments.models import (
     Assignment,
     AssignmentStatus,
@@ -36,9 +47,10 @@ from public_atlas.modules.graph.models import (
 )
 
 if TYPE_CHECKING:
-    from tests.integration.conftest import Database
+    from tests.integration.conftest import Database, InlineConnector
 
     from public_atlas.integrations.storage import ObjectStore
+    from public_atlas.resources import Resources
 
 BY = EnteredBy.SCRIPT
 
@@ -208,3 +220,68 @@ def world(db: Database) -> World:
 @pytest.fixture
 def build() -> type[Build]:
     return Build
+
+
+# --- A scripted model ---
+
+type Script = Callable[[list[ModelMessage], AgentInfo], ModelResponse]
+
+
+def last_prompt(messages: list[ModelMessage]) -> str:
+    """The newest user prompt: the briefing, or the handoff request appended to the history."""
+    return next(
+        str(getattr(part, "content", ""))
+        for message in reversed(messages)
+        if isinstance(message, ModelRequest)
+        for part in message.parts
+        if isinstance(part, UserPromptPart)
+    )
+
+
+def calls_made(messages: list[ModelMessage]) -> int:
+    return sum(
+        isinstance(part, ToolCallPart)
+        for message in messages
+        if isinstance(message, ModelResponse)
+        for part in message.parts
+    )
+
+
+def finishing(summary: str = "Nothing more to find.") -> Script:
+    """A model that finishes at once."""
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        return ModelResponse(parts=[ToolCallPart("finish", {"summary": summary})])
+
+    return script
+
+
+@pytest.fixture
+def scripted(queue: InlineConnector) -> Callable[[Script], Resources]:
+    """Install `script` as the model every session runs on, for the inline jobs too, and return
+    the resources to run an assignment with directly."""
+
+    def install(script: Script) -> Resources:
+        assert queue.resources is not None
+        queue.resources = replace(
+            queue.resources,
+            models=FixedModels(FunctionModel(script, model_name="scripted")),
+        )
+        return queue.resources
+
+    return install
+
+
+@pytest.fixture
+def prompt_of() -> Callable[[list[ModelMessage]], str]:
+    return last_prompt
+
+
+@pytest.fixture
+def count_calls() -> Callable[[list[ModelMessage]], int]:
+    return calls_made
+
+
+@pytest.fixture
+def finish_script() -> Callable[..., Script]:
+    return finishing

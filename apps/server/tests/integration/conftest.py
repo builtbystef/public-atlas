@@ -92,6 +92,9 @@ class InlineConnector(InMemoryConnector):
         )
         for row in rows:
             job = self.jobs[row["id"]]
+            if job["status"] == "todo" and job["scheduled_at"]:
+                # Put back for later (a paused run's assignment): not run now.
+                continue
             assert job["status"] == "succeeded", job
         return rows
 

@@ -1,6 +1,6 @@
 """What every process works with: the settings, the database, the object store, the job queue,
-the search engine and the parser, opened once by `build_resources` and passed as an argument
-from there.
+the search engine, the model and the parser, opened once by `build_resources` and passed as an
+argument from there.
 
 The API's lifespan, the worker, the CLI and the tests call `build_resources` with their own
 settings. Nothing reads settings or opens a connection at import time.
@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
 from public_atlas.config import Settings
 from public_atlas.db.session import create_engine
+from public_atlas.integrations.ai import Models, create_models
 from public_atlas.integrations.parse import Parser, create_parser
 from public_atlas.integrations.search import Searcher, create_searcher
 from public_atlas.integrations.storage import ObjectStore, create_object_store
@@ -40,6 +41,8 @@ class Resources:
     jobs: App
     # None when no search engine is configured: the agent then has no `search` tool.
     searcher: Searcher | None
+    # None when no model key is configured: no assignment can run. Tests pass a scripted model.
+    models: Models | None
     # Built in every process; only the parse worker loads its models (`warm_up`).
     parser: Parser
 
@@ -49,17 +52,19 @@ class Resources:
 
 
 @asynccontextmanager
-async def build_resources(
+async def build_resources(  # noqa: PLR0913 - one argument per double
     settings: Settings,
     *,
     object_store: ObjectStore | None = None,
     jobs_connector: BaseConnector | None = None,
     searcher: Searcher | None = None,
+    models: Models | None = None,
     parser: Parser | None = None,
 ) -> AsyncIterator[Resources]:
     """Open every resource from `settings` and close them on exit. The engine connects lazily;
     the object store and the job queue open their pools here. Tests pass an in-memory
-    `object_store`, an in-memory `jobs_connector`, and a `searcher` and `parser` of their own."""
+    `object_store`, an in-memory `jobs_connector`, and a `searcher`, `models` and `parser` of
+    their own."""
     engine = create_engine(settings)
     jobs = create_app(settings, connector=jobs_connector)
     async with AsyncExitStack() as stack:
@@ -75,6 +80,7 @@ async def build_resources(
             object_store=object_store,
             jobs=jobs,
             searcher=searcher if searcher is not None else create_searcher(settings),
+            models=models if models is not None else create_models(settings),
             parser=parser if parser is not None else create_parser(settings),
         )
 

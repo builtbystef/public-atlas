@@ -106,11 +106,11 @@ apps/server/src/public_atlas/
   asgi.py                 the ASGI app for `fastapi run`; the one place the API reads the environment
   cli.py                  `public-atlas`: the operator's commands (seed), reading the environment like asgi.py
   main.py                 create_app(settings): the FastAPI app; its lifespan calls build_resources once
-  resources.py            build_resources(settings): database, store, jobs, searcher, parser
+  resources.py            build_resources(settings): database, store, jobs, searcher, models, parser
   dependencies.py         FastAPI dependencies that read the resources from request.state
   config.py               Settings: deployment values only, no product data
   db/                     base, session, checked strings (an enum as text with a check constraint)
-  integrations/           storage, search, parse, browser: one port each (ai follows)
+  integrations/           storage, search, parse, browser, ai: one port each
   jobs/                   Procrastinate registry, task decorator, worker, stalled sweep, purge
   modules/
     countries/            the five country tables, seeds, naming rules, the CountryRules object
@@ -118,8 +118,8 @@ apps/server/src/public_atlas/
                           aliases, identifiers, metrics, duplicate search, status_changes.py
     evidence/             snapshots, evidence, quote_checks.py, capture.py, parse jobs
     review/               review items, kinds, approve, reject, merge
-    assignments/          runs, assignments, spawning, budgets, the run_assignment job
-    agent/                briefing, tools (the findings), runner, prompts
+    assignments/          runs, assignments, spawning, the descriptor per type (budget, model), the run_assignment job
+    agent/                the session context, briefing, the findings and their adapter, runner, events, video, purges
     imports/              the shared list loader, and lists/<name>.py per official list
     evals/                dataset, harness, scorer, eval runs
   shared/                 errors, logs, pagination, text helpers
@@ -138,6 +138,8 @@ from `PUBLIC_ATLAS_*` environment variables (every one is documented in
 - **Jobs**: [Procrastinate](https://procrastinate.readthedocs.io) on the app's PostgreSQL, no broker. Jobs are written on the handler's session, so they commit or roll back with the rows they are about. Tasks live in a `jobs.py` next to what they work on, are listed in `jobs/__init__.py` and name their queue: `default` for the platform's own tasks, `assignment` for the agent, `parse` for document parsing. `public-atlas-worker` serves every queue unless started with `--queues`. A cron task requeues the jobs of a worker whose heartbeat stopped, and fails one that is out of retries through its task's `abandoned` hook.
 - **Browser** (`integrations/browser`): one `BrowserPolicy` decides every request (the allowlist with subdomains, private addresses, `robots.txt`, pacing shared across sessions, the resource types never fetched); the session is one Chromium with a route guard; the tools return typed results. Every page the agent lands on reaches `modules/evidence/capture.py` as plain values and is stored as a snapshot. Tests marked `browser` drive a real Chromium against a local fixture site and are skipped until `vp run browser:install` has run.
 - **Parsing** (`integrations/parse`): documents fetched with `read_file` are parsed on the `parse` queue in ranges of pages, one page per range on a retry; a worker that has grown past `parse_retire_rss_mb` stops after its job. Tests marked `parse` need the `parse-cpu` group and run in a CI job of their own.
+- **Runs and assignments** (`modules/assignments`): a run is created with a filter and a mode and seeds itself with the work due for the subjects in scope; every status change that asks for work (`Spawn`) becomes an assignment of the run it belongs to, held in step mode and queued with a job in auto mode, never doubled while open. Pause puts a picked-up job back with a delay and leaves the assignment queued; stop cancels what is held or queued. An assignment changes status only through `lifecycle.py`.
+- **The agent** (`modules/agent`): one job runs an assignment as fresh sessions from the database and the last handoff note, each on the model its descriptor names (`descriptors.py`, product data) with the browser's tools and the findings registered through one adapter. A session ends with a finishing tool, when the budget runs out (`out_of_budget`) or when a request passes half the context window (a handoff); a job runs at most twenty sessions, then requeues; a job that fails on its last attempt finishes the assignment `failed`. Everything a session saw, said and did is written to `agent_run_events` when it ends, with the videos of a run that records them; daily purges drop the videos after `video_keep_days` and the events after `events_keep_days`.
 - **Cost**: every model and search call is one `usage` row, priced from `modules/assignments/prices.toml`.
 
 ### Rules for the code

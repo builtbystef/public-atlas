@@ -31,8 +31,10 @@ def test_resources_are_built_from_the_settings_alone(settings: Settings, test_da
         ) as resources:
             assert resources.settings is settings
             assert resources.object_store is store
-            # No search engine is configured for the tests, and the parser is the settings'.
+            # No search engine and no model key are configured for the tests, and the parser
+            # is the settings'.
             assert resources.searcher is None
+            assert resources.models is None
             assert isinstance(resources.parser, MemoryParser)
             async with resources.session() as session:
                 database = (await session.execute(text("SELECT current_database()"))).scalar()
@@ -57,8 +59,18 @@ def test_the_job_queue_is_built_with_every_task_registered(settings: Settings):
 
     names, periodic = asyncio.run(scenario())
     # Other test modules register tasks of their own on the same registry.
-    assert {"jobs.purge_old_jobs", "jobs.retry_stalled"} <= names
-    assert periodic == {"jobs.purge_old_jobs": "0 * * * *", "jobs.retry_stalled": "*/10 * * * *"}
+    assert {
+        "jobs.purge_old_jobs",
+        "jobs.retry_stalled",
+        "assignments.run_assignment",
+        "evidence.parse_snapshot",
+    } <= names
+    assert periodic == {
+        "jobs.purge_old_jobs": "0 * * * *",
+        "jobs.retry_stalled": "*/10 * * * *",
+        "agent.purge_videos": "0 3 * * *",
+        "agent.purge_events": "30 3 * * *",
+    }
     assert purge_old_jobs.name == "jobs.purge_old_jobs"
     assert retry_stalled.queue == "default"
 

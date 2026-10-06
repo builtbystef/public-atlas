@@ -60,13 +60,13 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 4: runs, assignments and the agent
 
-- [ ] Runs: create with filter and mode, pause, stop, release held. Pause as in spec section 7.1: the worker reads the run's status when it picks up a job and puts a paused run's job back with a short delay; jobs stay `queued`. `assignments/lifecycle.py` with the status and result columns and the allowed moves.
-- [ ] Spawning as a consequence of status changes, obeying the run's mode. No `ensure-items` command.
-- [ ] One descriptor per assignment type: subject kind, tools, finishing tool, goal text, checklist, budget, model choice (GPT-6 Luna at the efforts in spec section 8.4).
-- [ ] The runner from v1: sessions, half-window handoff, budgets, twenty sessions per job, requeue, finish as `failed` on the last attempt. Three ended signals collapsed into one.
-- [ ] `agent_run_events`: write the session's message list (prompt, text, tool calls, results) as rows when a session ends.
-- [ ] Video: `record_video` on the run turns on Playwright video for the browser context; store each file through the storage port and note it as a `video` event.
-- [ ] Purge jobs, scheduled daily: delete videos of assignments finished more than `video_keep_days` ago (default 7) from storage and mark their events as purged; delete the events of assignments finished more than `events_keep_days` ago (default 90). Both settings; findings, usage and the summary are never purged. Snapshots no evidence cites are pruned when the assignment finishes, as in spec section 8.2.
+- [x] Runs: create with filter and mode, pause, stop, release held. Pause as in spec section 7.1: the worker reads the run's status when it picks up a job and puts a paused run's job back with a short delay; jobs stay `queued`. `assignments/lifecycle.py` with the status and result columns and the allowed moves.
+- [x] Spawning as a consequence of status changes, obeying the run's mode. No `ensure-items` command.
+- [x] One descriptor per assignment type: subject kind, tools, finishing tool, goal text, checklist, budget, model choice (GPT-6 Luna at the efforts in spec section 8.4).
+- [x] The runner from v1: sessions, half-window handoff, budgets, twenty sessions per job, requeue, finish as `failed` on the last attempt. Three ended signals collapsed into one.
+- [x] `agent_run_events`: write the session's message list (prompt, text, tool calls, results) as rows when a session ends.
+- [x] Video: `record_video` on the run turns on Playwright video for the browser context; store each file through the storage port and note it as a `video` event.
+- [x] Purge jobs, scheduled daily: delete videos of assignments finished more than `video_keep_days` ago (default 7) from storage and mark their events as purged; delete the events of assignments finished more than `events_keep_days` ago (default 90). Both settings; findings, usage and the summary are never purged. Snapshots no evidence cites are pruned when the assignment finishes, as in spec section 8.2.
 - [ ] Findings as typed functions registered as tools through one adapter: `save_institution` (with parent and `procurement_handled_by`), `save_homepage`, `save_source` (a page under a platform homepage's `trusted_path` verifies like one on a trusted domain), `confirm_domain`, `reject_domain`, `domain_moved`, `status`, `request_review`, `finish`, `read_file`, `search`.
 - [ ] The merged `find_homepage` assignment: trusted-domain path, new-domain path, search path; `no_homepage` result with its review item.
 - [ ] `find_institutions` and `find_sources` with the checklist, refused short close, `complete_with_gaps` and its review item.

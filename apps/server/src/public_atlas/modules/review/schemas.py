@@ -70,6 +70,9 @@ class MergeInput(DecisionInput):
 class DecisionOutput(BaseModel):
     review_item: ReviewItemOutput
     spawn: list[SpawnOutput]
+    # The assignments the spawn became, in the run of the assignment that raised the question
+    # or the newest run of the country; empty when no run is going.
+    assignment_ids: list[uuid.UUID] = []
 
 
 class KindOutput(BaseModel):
@@ -93,3 +96,4 @@ class KindDecisionOutput(BaseModel):
     kind: str
     review_items: list[ReviewItemOutput]
     spawn: list[SpawnOutput]
+    assignment_ids: list[uuid.UUID] = []

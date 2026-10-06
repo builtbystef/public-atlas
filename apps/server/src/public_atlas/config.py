@@ -98,6 +98,9 @@ class Settings(BaseSettings):
     # Off where Chromium's sandbox cannot start, as in a container without the privileges it
     # needs.
     browser_chromium_sandbox: bool = True
+    # Lets the agent's browser reach loopback and private addresses. Only for a test against a
+    # fixture server; never in a deployment.
+    browser_allow_private_addresses: bool = False
 
     # --- Files (the read_file tool) ---
     read_file_max_bytes: int = Field(50 * 1024 * 1024, ge=1024)
@@ -113,6 +116,21 @@ class Settings(BaseSettings):
     # "brave" backs the `search` tool; "none" leaves the tool out.
     search_provider: SearchProvider = "none"
     brave_api_key: SecretStr | None = None
+
+    # --- The model ---
+    # The OpenAI key the agent's sessions run with. None: no assignment can run; a worker that
+    # picks one up fails the job and the queue retries it later. Which model each assignment
+    # type uses is product data (`modules/assignments/descriptors.py`).
+    openai_api_key: SecretStr | None = None
+
+    # --- Runs ---
+    # A worker that picks up an assignment of a paused run puts the job back for this long.
+    paused_run_delay: timedelta = timedelta(seconds=30)
+    # The recorded videos of an assignment are deleted this many days after it finished; its
+    # events say so. The events themselves go after `events_keep_days`. Findings, usage and the
+    # summary are never purged.
+    video_keep_days: int = Field(7, ge=1)
+    events_keep_days: int = Field(90, ge=1)
 
     # env_ignore_empty: hosting platforms often pass an unset variable as "", which must read
     # as the default (None for the Logfire token), not as "".

@@ -101,6 +101,10 @@ class Assignment(UUIDPrimaryKey, Base):
     types_not_found: Mapped[list[str]] = mapped_column(JSONB, default=list)
     last_error: Mapped[str | None] = mapped_column(Text)
     parent_assignment_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("assignments.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    # When the first session started, and when it finished: the purge jobs count from the latter.
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     __table_args__ = (
         # Concurrent workers cannot queue the same work twice.

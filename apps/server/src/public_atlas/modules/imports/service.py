@@ -542,8 +542,9 @@ class Loader:
 
     async def _homepage(self, institution: Institution, url: str, citation: Citation) -> None:
         """The list's link as a candidate homepage of the institution, on a candidate domain when
-        the domain is new, with the list's line as the evidence that links to it. Phase 4 spawns
-        `find_homepage` here (spec section 7.3)."""
+        the domain is new, with the list's line as the evidence that links to it. The loader
+        has no run to spawn into: the `find_homepage` this asks for (spec section 7.3) is
+        created when a run covering the place seeds itself (`assignments.service.seed_run`)."""
         normalized = graph.normalize_url(url)
         webpage = await graph.webpage_by_url(self.session, normalized)
         if webpage is None:

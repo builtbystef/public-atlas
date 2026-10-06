@@ -1,28 +1,90 @@
-"""The assignments module's door: recording what a call cost, what a status change asks to
-spawn, and the open work on a subject. Phase 4 adds runs, assignments, spawning and budgets."""
+"""The assignments module's door: runs (spec section 7.1), the assignments inside them and how
+they are spawned (section 7.3), their budgets, and what each call cost.
+
+A run is how a person controls work. Creating one seeds it with the work due for the subjects
+its filter names: `find_homepage` for an institution without a verified homepage, `find_sources`
+for one with, `find_institutions` for a place whose government has one. From then on every
+status change that asks for work (`Spawn`) is turned into an assignment here, in the run of the
+assignment that caused it, held or queued by the run's mode and bounded by its filter. Only the
+backend creates work; the agent has no tool for it.
+"""
 
 import logging
 import uuid
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import select
+from procrastinate import App
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from public_atlas.jobs.tasks import defer
+from public_atlas.modules.agent.models import AgentRunEvent
 from public_atlas.modules.assignments import lifecycle
+from public_atlas.modules.assignments.descriptors import descriptor_for
 from public_atlas.modules.assignments.models import (
     OPEN_STATUSES,
     Assignment,
+    AssignmentResult,
+    AssignmentStatus,
     AssignmentType,
+    Run,
+    RunMode,
+    RunStatus,
     Usage,
     UsageKind,
 )
 from public_atlas.modules.assignments.pricing import load_prices
+from public_atlas.modules.assignments.schemas import Progress, RunFilter
+from public_atlas.modules.evidence.models import Evidence
+from public_atlas.modules.graph.models import (
+    EntityStatus,
+    Homepage,
+    Institution,
+    Place,
+)
+from public_atlas.shared.exceptions import ConflictError, NotFoundError
 
-__all__ = ["Spawn", "cancel", "move_subject", "open_assignments", "record_usage"]
+__all__ = [
+    "RUN_ASSIGNMENT_TASK",
+    "Spawn",
+    "assignment_cost",
+    "cancel",
+    "create_run",
+    "due_work",
+    "events_of",
+    "get_assignment",
+    "get_run",
+    "list_assignments",
+    "list_runs",
+    "move_subject",
+    "open_assignments",
+    "pause_run",
+    "progress",
+    "queue_job",
+    "record_usage",
+    "release",
+    "requeue",
+    "resume_run",
+    "run_filter",
+    "run_for_decision",
+    "seed_run",
+    "spawn",
+    "spawn_on_finish",
+    "stop_run",
+]
 
 logger = logging.getLogger(__name__)
+
+# The job that runs an assignment (`jobs.py`). Looked up by name on the app, so this module
+# never imports the job module, which imports the agent, which imports this module.
+RUN_ASSIGNMENT_TASK = "assignments.run_assignment"
+# A subject with a finished assignment of a type that ended one of these ways has had that
+# work done: a run seeding itself does not do it again. Any other ending leaves it to be redone.
+SETTLED_RESULTS = (AssignmentResult.COMPLETE, AssignmentResult.COMPLETE_WITH_GAPS)
 
 _unpriced: set[str] = set()
 
@@ -36,12 +98,497 @@ class Spawn:
     subject_id: uuid.UUID
 
 
+# --- Runs ---
+
+
+def run_filter(run: Run) -> RunFilter:
+    return RunFilter.model_validate(run.filter)
+
+
+async def create_run(  # noqa: PLR0913
+    session: AsyncSession,
+    jobs: App,
+    *,
+    name: str,
+    country_code: str,
+    mode: RunMode,
+    filter: RunFilter | None = None,  # noqa: A002 - the column's name
+    record_video: bool = False,
+    is_eval: bool = False,
+    seed: bool = True,
+) -> Run:
+    """A run, seeded with the work due for the subjects in its filter unless `seed` is off (the
+    eval harness seeds its own). Flushed, not committed."""
+    run = Run(
+        name=name,
+        country_code=country_code,
+        mode=mode,
+        filter=(filter or RunFilter()).model_dump(mode="json"),
+        record_video=record_video,
+        is_eval=is_eval,
+    )
+    session.add(run)
+    await session.flush()
+    if seed:
+        await seed_run(session, jobs, run)
+    return run
+
+
+async def seed_run(session: AsyncSession, jobs: App, run: Run) -> list[Assignment]:
+    """The work due for every place and institution the run's filter covers, skipping what a
+    finished assignment settled already. Safe to call again: open work is never doubled."""
+    wanted = run_filter(run)
+    created: list[Assignment] = []
+    for subject in await _subjects_in_scope(session, run.country_code, wanted):
+        spawns = await due_work(session, subject)
+        created.extend(await spawn(session, jobs, run, spawns, skip_settled=True))
+    logger.info("Run %s (%s) seeded with %d assignments", run.name, run.id, len(created))
+    return created
+
+
+async def _subjects_in_scope(
+    session: AsyncSession, country_code: str, wanted: RunFilter
+) -> list[Place | Institution]:
+    """The places and institutions a run starts from: the ones its filter names, or every one
+    of the country at the filter's levels, with the institutions of the filter's types."""
+    if wanted.subject_ids:
+        places = list(
+            await session.scalars(
+                select(Place).where(
+                    Place.id.in_(wanted.subject_ids), Place.country_code == country_code
+                )
+            )
+        )
+        institutions = list(
+            await session.scalars(select(Institution).where(Institution.id.in_(wanted.subject_ids)))
+        )
+        return [*places, *institutions]
+    place_query = select(Place).where(
+        Place.country_code == country_code, Place.status != EntityStatus.REJECTED
+    )
+    if wanted.administrative_levels:
+        place_query = place_query.where(
+            Place.administrative_level.in_(wanted.administrative_levels)
+        )
+    places = list(await session.scalars(place_query.order_by(Place.id)))
+    institution_query = select(Institution).where(
+        Institution.place_id.in_([place.id for place in places]),
+        Institution.status != EntityStatus.REJECTED,
+    )
+    if wanted.institution_types:
+        institution_query = institution_query.where(
+            Institution.institution_type.in_(wanted.institution_types)
+        )
+    institutions = list(await session.scalars(institution_query.order_by(Institution.id)))
+    return [*places, *institutions]
+
+
+async def due_work(session: AsyncSession, subject: Place | Institution) -> list[Spawn]:
+    """What the subject is owed now (spec section 7.3): `find_institutions` for a place whose
+    government has a verified homepage; `find_sources` for an institution with one;
+    `find_homepage` for an institution without, unless a reviewer is deciding a claim of its."""
+    if subject.status is EntityStatus.REJECTED:
+        return []
+    if isinstance(subject, Place):
+        return await _due_for_place(session, subject)
+    return await _due_for_institution(session, subject)
+
+
+async def _due_for_place(session: AsyncSession, place: Place) -> list[Spawn]:
+    if place.government_institution_id is None:
+        return []
+    government = await session.get_one(Institution, place.government_institution_id)
+    if government.homepage_id is None or government.status is EntityStatus.REJECTED:
+        return []
+    return [Spawn(AssignmentType.FIND_INSTITUTIONS, place.id)]
+
+
+async def _due_for_institution(session: AsyncSession, institution: Institution) -> list[Spawn]:
+    if institution.homepage_id is not None:
+        return [Spawn(AssignmentType.FIND_SOURCES, institution.id)]
+    pending = await session.scalar(
+        select(Homepage.id)
+        .where(
+            Homepage.institution_id == institution.id,
+            Homepage.status == EntityStatus.NEEDS_REVIEW,
+        )
+        .limit(1)
+    )
+    if pending is not None:
+        return []
+    return [Spawn(AssignmentType.FIND_HOMEPAGE, institution.id)]
+
+
+async def list_runs(session: AsyncSession, *, limit: int = 100, offset: int = 0) -> list[Run]:
+    rows = await session.scalars(
+        select(Run).order_by(Run.created_at.desc(), Run.id.desc()).limit(limit).offset(offset)
+    )
+    return list(rows)
+
+
+async def get_run(session: AsyncSession, run_id: uuid.UUID) -> Run:
+    run = await session.get(Run, run_id)
+    if run is None:
+        raise NotFoundError("no such run")
+    return run
+
+
+async def pause_run(session: AsyncSession, run: Run) -> None:
+    """The worker starts none of the run's assignments until it is resumed; running ones finish
+    their session. Queued jobs stay queued."""
+    if run.status is not RunStatus.ACTIVE:
+        raise ConflictError(f"a {run.status.value} run cannot be paused")
+    run.status = RunStatus.PAUSED
+    await session.flush()
+
+
+async def resume_run(session: AsyncSession, run: Run) -> None:
+    if run.status is not RunStatus.PAUSED:
+        raise ConflictError(f"a {run.status.value} run cannot be resumed")
+    run.status = RunStatus.ACTIVE
+    await session.flush()
+
+
+async def stop_run(session: AsyncSession, run: Run) -> list[Assignment]:
+    """Cancel everything held or queued. A running assignment finishes its session and is
+    cancelled by the runner when it sees the run stopped. Nothing is spawned into a stopped
+    run."""
+    if run.status is RunStatus.STOPPED:
+        raise ConflictError("the run is stopped already")
+    run.status = RunStatus.STOPPED
+    cancelled = list(
+        await session.scalars(
+            select(Assignment).where(
+                Assignment.run_id == run.id,
+                Assignment.status.in_([AssignmentStatus.HELD, AssignmentStatus.QUEUED]),
+            )
+        )
+    )
+    for assignment in cancelled:
+        lifecycle.cancel(assignment)
+    await session.flush()
+    return cancelled
+
+
+async def release(  # noqa: PLR0913 - one argument per way of choosing
+    session: AsyncSession,
+    jobs: App,
+    run: Run,
+    *,
+    limit: int = 1,
+    assignment_type: AssignmentType | None = None,
+    assignment_ids: Iterable[uuid.UUID] = (),
+) -> list[Assignment]:
+    """Queue held assignments of the run, oldest first: `limit` of them, of one type, or the
+    ones named. A step-mode run advances this way."""
+    if run.status is RunStatus.STOPPED:
+        raise ConflictError("the run is stopped")
+    query = select(Assignment).where(
+        Assignment.run_id == run.id, Assignment.status == AssignmentStatus.HELD
+    )
+    ids = list(assignment_ids)
+    if ids:
+        query = query.where(Assignment.id.in_(ids))
+    if assignment_type is not None:
+        query = query.where(Assignment.type == assignment_type)
+    released = list(
+        await session.scalars(query.order_by(Assignment.created_at, Assignment.id).limit(limit))
+    )
+    for assignment in released:
+        lifecycle.queue(assignment)
+        await queue_job(session, jobs, assignment)
+    await session.flush()
+    return released
+
+
+async def progress(session: AsyncSession, run: Run) -> Progress:
+    by_status = {
+        AssignmentStatus(status): count
+        for status, count in (
+            await session.execute(
+                select(Assignment.status, func.count())
+                .where(Assignment.run_id == run.id)
+                .group_by(Assignment.status)
+            )
+        ).tuples()
+    }
+    by_result = {
+        AssignmentResult(result): count
+        for result, count in (
+            await session.execute(
+                select(Assignment.result, func.count())
+                .where(Assignment.run_id == run.id, Assignment.result.is_not(None))
+                .group_by(Assignment.result)
+            )
+        ).tuples()
+    }
+    cost = await session.scalar(
+        select(func.coalesce(func.sum(Usage.cost), 0))
+        .join(Assignment, Assignment.id == Usage.assignment_id)
+        .where(Assignment.run_id == run.id)
+    )
+    return Progress(by_status=by_status, by_result=by_result, cost=Decimal(cost or 0))
+
+
+# --- Spawning ---
+
+
+async def spawn(  # noqa: PLR0913
+    session: AsyncSession,
+    jobs: App,
+    run: Run,
+    spawns: Sequence[Spawn],
+    *,
+    parent: Assignment | None = None,
+    skip_settled: bool = False,
+) -> list[Assignment]:
+    """Turn what a status change asked for into assignments of `run`: held in step mode, queued
+    with a job in auto mode. Work outside the run's filter, on a subject with that type open
+    already, or (with `skip_settled`) done by a finished assignment is not created; nor is
+    anything in a stopped run. Flushed, not committed."""
+    if run.status is RunStatus.STOPPED:
+        if spawns:
+            logger.info("Run %s is stopped: %d spawns dropped", run.id, len(spawns))
+        return []
+    wanted = run_filter(run)
+    created: list[Assignment] = []
+    for asked in dict.fromkeys(spawns):
+        subject = await _subject(session, asked)
+        if subject is None or not await _in_scope(session, wanted, asked.type, subject):
+            continue
+        if await _open(session, asked) is not None:
+            continue
+        if skip_settled and await _settled(session, asked):
+            continue
+        assignment = await _insert(session, run, asked, parent)
+        if assignment is None:
+            continue
+        if assignment.status is AssignmentStatus.QUEUED:
+            await queue_job(session, jobs, assignment)
+        logger.info(
+            "%s %s on %s: %s", asked.type.value, assignment.id, asked.subject_id, assignment.status
+        )
+        created.append(assignment)
+    await session.flush()
+    return created
+
+
+async def _subject(session: AsyncSession, asked: Spawn) -> Place | Institution | None:
+    kind = descriptor_for(asked.type).subject_kind
+    table: type[Place | Institution] = Place if kind == "place" else Institution
+    subject = await session.get(table, asked.subject_id)
+    if subject is None:
+        logger.warning("No %s %s for %s", kind, asked.subject_id, asked.type.value)
+    return subject
+
+
+async def _in_scope(
+    session: AsyncSession, wanted: RunFilter, assignment_type: AssignmentType, subject: object
+) -> bool:
+    """Whether the run's filter admits this work: its type, the level of the subject's place and,
+    for an institution, its type. The subject ids bound only what a run starts from."""
+    if wanted.assignment_types and assignment_type not in wanted.assignment_types:
+        return False
+    if isinstance(subject, Place):
+        place = subject
+    elif isinstance(subject, Institution):
+        place = await session.get_one(Place, subject.place_id)
+        if wanted.institution_types and subject.institution_type not in wanted.institution_types:
+            return False
+    else:  # pragma: no cover - `_subject` returns one of the two
+        return False
+    return (
+        not wanted.administrative_levels
+        or place.administrative_level in wanted.administrative_levels
+    )
+
+
+async def _open(session: AsyncSession, asked: Spawn) -> Assignment | None:
+    return await session.scalar(
+        select(Assignment)
+        .where(
+            Assignment.subject_id == asked.subject_id,
+            Assignment.type == asked.type,
+            Assignment.status.in_(OPEN_STATUSES),
+        )
+        .limit(1)
+    )
+
+
+async def _settled(session: AsyncSession, asked: Spawn) -> bool:
+    found = await session.scalar(
+        select(Assignment.id)
+        .where(
+            Assignment.subject_id == asked.subject_id,
+            Assignment.type == asked.type,
+            Assignment.status == AssignmentStatus.FINISHED,
+            Assignment.result.in_(SETTLED_RESULTS),
+        )
+        .limit(1)
+    )
+    return found is not None
+
+
+async def _insert(
+    session: AsyncSession, run: Run, asked: Spawn, parent: Assignment | None
+) -> Assignment | None:
+    """The row, held or queued by the run's mode. Two workers may ask for the same work at once;
+    the partial unique index lets one in, and the loser takes nothing."""
+    budget = descriptor_for(asked.type).budget
+    assignment = Assignment(
+        run_id=run.id,
+        type=asked.type,
+        subject_id=asked.subject_id,
+        status=AssignmentStatus.HELD if run.mode is RunMode.STEP else AssignmentStatus.QUEUED,
+        budget_requests=budget.requests,
+        budget_tokens=budget.tokens,
+        parent_assignment_id=parent.id if parent is not None else None,
+    )
+    try:
+        async with session.begin_nested():
+            session.add(assignment)
+            await session.flush()
+    except IntegrityError:
+        logger.info("%s on %s was queued by another worker", asked.type.value, asked.subject_id)
+        return None
+    return assignment
+
+
+async def spawn_on_finish(
+    session: AsyncSession, jobs: App, assignment: Assignment
+) -> list[Assignment]:
+    """What a finished assignment sets in motion (spec section 7.3): after `find_institutions`,
+    `find_homepage` for every institution it saved that has no verified homepage and no decision
+    pending. Nothing after a `failed` one."""
+    if (
+        assignment.result is AssignmentResult.FAILED
+        or assignment.type is not AssignmentType.FIND_INSTITUTIONS
+    ):
+        return []
+    run = await session.get_one(Run, assignment.run_id)
+    saved = select(Evidence.entity_id).where(Evidence.assignment_id == assignment.id)
+    institutions = await session.scalars(
+        select(Institution).where(Institution.id.in_(saved)).order_by(Institution.id)
+    )
+    spawns = [
+        spawn_
+        for institution in institutions
+        for spawn_ in await due_work(session, institution)
+        if spawn_.type is AssignmentType.FIND_HOMEPAGE
+    ]
+    return await spawn(session, jobs, run, spawns, parent=assignment)
+
+
+async def run_for_decision(
+    session: AsyncSession, *, assignment_id: uuid.UUID | None, country_code: str | None
+) -> Run | None:
+    """The run a reviewer's decision spawns into: the run of the assignment that raised the
+    question, while it is not stopped, else the newest run of the country still going. None
+    when there is none: the work waits for the next run to seed itself."""
+    if assignment_id is not None:
+        raised_by = await session.get(Assignment, assignment_id)
+        if raised_by is not None:
+            run = await session.get_one(Run, raised_by.run_id)
+            if run.status is not RunStatus.STOPPED:
+                return run
+    if country_code is None:
+        return None
+    return await session.scalar(
+        select(Run)
+        .where(
+            Run.country_code == country_code,
+            Run.status != RunStatus.STOPPED,
+            Run.is_eval.is_(False),
+        )
+        .order_by(Run.created_at.desc(), Run.id.desc())
+        .limit(1)
+    )
+
+
+# --- Queueing ---
+
+
+async def queue_job(
+    session: AsyncSession, jobs: App, assignment: Assignment, *, delay: timedelta | None = None
+) -> int:
+    """One job for the assignment, in the session's transaction. Jobs of one assignment never
+    run at once."""
+    return await defer(
+        jobs,
+        session,
+        jobs.tasks[RUN_ASSIGNMENT_TASK],
+        lock=f"assignment:{assignment.id}",
+        schedule_in=delay,
+        assignment_id=str(assignment.id),
+    )
+
+
+async def requeue(session: AsyncSession, jobs: App, assignment: Assignment) -> None:
+    """Another job for a running assignment whose job has had its twenty sessions, or whose run
+    was paused meanwhile. The next job's first session resumes from the handoff note."""
+    lifecycle.queue(assignment)
+    await queue_job(session, jobs, assignment)
+    await session.flush()
+
+
+# --- Assignments ---
+
+
 async def open_assignments(session: AsyncSession, subject_id: uuid.UUID) -> list[Assignment]:
     """The held, queued and running assignments on a subject."""
     rows = await session.scalars(
         select(Assignment)
         .where(Assignment.subject_id == subject_id, Assignment.status.in_(OPEN_STATUSES))
         .order_by(Assignment.id)
+    )
+    return list(rows)
+
+
+async def list_assignments(  # noqa: PLR0913
+    session: AsyncSession,
+    *,
+    run_id: uuid.UUID | None = None,
+    status: AssignmentStatus | None = None,
+    assignment_type: AssignmentType | None = None,
+    subject_id: uuid.UUID | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> list[Assignment]:
+    query = select(Assignment)
+    if run_id is not None:
+        query = query.where(Assignment.run_id == run_id)
+    if status is not None:
+        query = query.where(Assignment.status == status)
+    if assignment_type is not None:
+        query = query.where(Assignment.type == assignment_type)
+    if subject_id is not None:
+        query = query.where(Assignment.subject_id == subject_id)
+    rows = await session.scalars(
+        query.order_by(Assignment.created_at, Assignment.id).limit(limit).offset(offset)
+    )
+    return list(rows)
+
+
+async def get_assignment(session: AsyncSession, assignment_id: uuid.UUID) -> Assignment:
+    assignment = await session.get(Assignment, assignment_id)
+    if assignment is None:
+        raise NotFoundError("no such assignment")
+    return assignment
+
+
+async def assignment_cost(session: AsyncSession, assignment_id: uuid.UUID) -> Decimal:
+    cost = await session.scalar(
+        select(func.coalesce(func.sum(Usage.cost), 0)).where(Usage.assignment_id == assignment_id)
+    )
+    return Decimal(cost or 0)
+
+
+async def events_of(session: AsyncSession, assignment_id: uuid.UUID) -> list[AgentRunEvent]:
+    """Everything the agent saw, said and did on the assignment, in order."""
+    rows = await session.scalars(
+        select(AgentRunEvent)
+        .where(AgentRunEvent.assignment_id == assignment_id)
+        .order_by(AgentRunEvent.session, AgentRunEvent.position)
     )
     return list(rows)
 
@@ -62,6 +609,9 @@ async def move_subject(session: AsyncSession, from_id: uuid.UUID, into_id: uuid.
             assignment.subject_id = into_id
             taken.add(assignment.type)
     await session.flush()
+
+
+# --- Usage ---
 
 
 async def record_usage(  # noqa: PLR0913

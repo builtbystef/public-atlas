@@ -4,7 +4,8 @@ names; a body naming another row renames it where the keys cascade."""
 
 from fastapi import APIRouter, status
 
-from public_atlas.dependencies import SessionDep
+from public_atlas.dependencies import ResourcesDep, SessionDep
+from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.countries import service
 from public_atlas.modules.countries.schemas import (
     AdministrativeLevelInput,
@@ -18,6 +19,19 @@ from public_atlas.modules.review import service as review
 from public_atlas.shared.exceptions import UnprocessableError
 
 router = APIRouter(tags=["countries"])
+
+
+async def _settle(session: SessionDep, resources: ResourcesDep, country_code: str) -> None:
+    """Approve the open type items the edit answers, and create the work each approval asks
+    for in the run its question came from (spec section 7.3)."""
+    for decision in await review.settle_type_items(session, country_code):
+        run = await assignments.run_for_decision(
+            session,
+            assignment_id=decision.item.raised_by_assignment_id,
+            country_code=country_code,
+        )
+        if run is not None:
+            await assignments.spawn(session, resources.jobs, run, decision.spawn)
 
 
 @router.get("/countries")
@@ -45,12 +59,16 @@ async def put_country_settings(
 
 @router.put("/countries/{country_code}/administrative-levels/{name}")
 async def put_administrative_level(
-    country_code: str, name: str, data: AdministrativeLevelInput, session: SessionDep
+    country_code: str,
+    name: str,
+    data: AdministrativeLevelInput,
+    session: SessionDep,
+    resources: ResourcesDep,
 ) -> AdministrativeLevelInput:
     """Create or change a level. Its types must be ones the country uses. Open review items the
     change answers (a type now expected at the level) are settled."""
     result = await service.put_administrative_level(session, country_code, name, data)
-    await review.settle_type_items(session, country_code)
+    await _settle(session, resources, country_code)
     await session.commit()
     return result
 

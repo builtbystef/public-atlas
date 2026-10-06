@@ -2,6 +2,7 @@
 
 import functools
 from collections.abc import Awaitable, Callable
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Concatenate
 
 from procrastinate import App, JobContext, RetryStrategy
@@ -78,12 +79,14 @@ def retries_left(task: AnyTask | None, attempts: int) -> bool:
     return not limit or attempts < limit
 
 
-async def defer(
+async def defer(  # noqa: PLR0913 - one argument per queueing option
     jobs: App,
     session: AsyncSession,
     task: AnyTask,
     *,
+    lock: str | None = None,
     queueing_lock: str | None = None,
+    schedule_in: timedelta | None = None,
     **kwargs: JSONValue,
 ) -> int:
     """Queue one run of `task` on `jobs`, in `session`'s transaction, and return its job ID.
@@ -92,8 +95,9 @@ async def defer(
     with the rows it is about; a worker is notified at commit, never before. (Sessions run on
     psycopg, which is the connection Procrastinate accepts; this would not survive a change of
     driver.) Built through `jobs` rather than the task's own back-link, so the caller says
-    which queue it means. With `queueing_lock`, a second defer while a job with that lock
-    waits raises `AlreadyEnqueued`.
+    which queue it means. Jobs with the same `lock` run one at a time. With `queueing_lock`, a
+    second defer while a job with that lock waits raises `AlreadyEnqueued`. With `schedule_in`,
+    the job is not picked up before then.
     """
     await session.flush()
     connection = await (await session.connection()).get_raw_connection()
@@ -101,8 +105,11 @@ async def defer(
         name=task.name,
         job_manager=jobs.job_manager,
         queue=task.queue,
-        lock=task.lock,
+        lock=lock or task.lock,
         queueing_lock=queueing_lock or task.queueing_lock,
+        schedule_in=(
+            {"seconds": int(schedule_in.total_seconds())} if schedule_in is not None else None
+        ),
         connection=connection.driver_connection,
     )
     # `Trace` is `dict[str, str]`, which is not a `JSONValue` (dicts are invariant).

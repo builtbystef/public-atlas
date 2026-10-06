@@ -51,6 +51,7 @@ __all__ = [
     "KindDecision",
     "Rule",
     "approve",
+    "country_of",
     "decide_kind",
     "kind_of",
     "list_items",
@@ -280,6 +281,31 @@ async def _columns(session: AsyncSession, entity: Entity) -> dict[str, Any]:
     if isinstance(entity, Homepage | Source):
         found["url"] = (await session.get_one(Webpage, entity.webpage_id)).url
     return found
+
+
+async def country_of(session: AsyncSession, item: ReviewItem) -> str | None:
+    """The country the item's entity belongs to, for the run a decision spawns into: a place's
+    own, an institution's place's, a homepage's or source's institution's, and for a domain the
+    institution of the homepage claim the question names. None when nothing says."""
+    entity = await _entity(session, item.entity_id)
+    institution_id: uuid.UUID | None = None
+    match entity:
+        case Place():
+            return entity.country_code
+        case Institution():
+            institution_id = entity.id
+        case Homepage() | Source():
+            institution_id = entity.institution_id
+        case Domain():
+            homepage_id = item.question.get("homepage_id")
+            homepage = await session.get(Homepage, uuid.UUID(homepage_id)) if homepage_id else None
+            institution_id = homepage.institution_id if homepage is not None else None
+        case _:  # pragma: no cover - every kind is listed above
+            return None
+    if institution_id is None:
+        return None
+    institution = await session.get_one(Institution, institution_id)
+    return (await session.get_one(Place, institution.place_id)).country_code
 
 
 # --- Deciding ---

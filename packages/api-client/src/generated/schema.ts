@@ -350,6 +350,7 @@ export interface paths {
         /**
          * Approve Review Item
          * @description The entity is what the agent said. An institution saved as `other` may be given its type.
+         *     The work the approval asks for is created in the run it belongs to.
          */
         post: operations["review-approve_review_item"];
         delete?: never;
@@ -395,6 +396,184 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runs
+         * @description Every run, newest first.
+         */
+        get: operations["runs-list_runs"];
+        put?: never;
+        /**
+         * Create Run
+         * @description Start a run: the work due for the subjects in its filter is created, held in step mode
+         *     and queued in auto mode.
+         */
+        post: operations["runs-create_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Run
+         * @description The run with its assignments counted by status and result, and what it has cost.
+         */
+        get: operations["runs-read_run"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Run
+         * @description The worker starts none of the run's assignments until it is resumed; running ones finish
+         *     their session.
+         */
+        post: operations["runs-pause_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Run */
+        post: operations["runs-resume_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/stop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Stop Run
+         * @description Cancel everything held or queued; running assignments finish their session.
+         */
+        post: operations["runs-stop_run"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/runs/{run_id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Release Assignments
+         * @description Queue held assignments: a few at a time, of one type, or the ones named.
+         */
+        post: operations["runs-release_assignments"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Assignments */
+        get: operations["runs-list_assignments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assignments/{assignment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Assignment */
+        get: operations["runs-read_assignment"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assignments/{assignment_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Assignment Events
+         * @description Everything the agent saw, said and did, in order: the prompt, its words, its tool calls
+         *     and their results, and the videos when recorded.
+         */
+        get: operations["runs-read_assignment_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -420,6 +599,120 @@ export interface components {
             /** Institution Type */
             institution_type?: string | null;
         };
+        /** AssignmentDetail */
+        AssignmentDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            type: components["schemas"]["AssignmentType"];
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            status: components["schemas"]["AssignmentStatus"];
+            result: components["schemas"]["AssignmentResult"] | null;
+            /** Budget Requests */
+            budget_requests: number;
+            /** Budget Tokens */
+            budget_tokens: number;
+            /** Requests Used */
+            requests_used: number;
+            /** Tokens Used */
+            tokens_used: number;
+            /** Sessions */
+            sessions: number;
+            /** Handoff Note */
+            handoff_note: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Types Not Found */
+            types_not_found: string[];
+            /** Last Error */
+            last_error: string | null;
+            /** Parent Assignment Id */
+            parent_assignment_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** Cost */
+            cost: string;
+        };
+        /** AssignmentOutput */
+        AssignmentOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            type: components["schemas"]["AssignmentType"];
+            /**
+             * Subject Id
+             * Format: uuid
+             */
+            subject_id: string;
+            status: components["schemas"]["AssignmentStatus"];
+            result: components["schemas"]["AssignmentResult"] | null;
+            /** Budget Requests */
+            budget_requests: number;
+            /** Budget Tokens */
+            budget_tokens: number;
+            /** Requests Used */
+            requests_used: number;
+            /** Tokens Used */
+            tokens_used: number;
+            /** Sessions */
+            sessions: number;
+            /** Handoff Note */
+            handoff_note: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Types Not Found */
+            types_not_found: string[];
+            /** Last Error */
+            last_error: string | null;
+            /** Parent Assignment Id */
+            parent_assignment_id: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Started At */
+            started_at: string | null;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /**
+         * AssignmentResult
+         * @description How a finished assignment ended.
+         * @enum {string}
+         */
+        AssignmentResult: "complete" | "complete_with_gaps" | "out_of_budget" | "needs_review" | "no_homepage" | "failed";
+        /**
+         * AssignmentStatus
+         * @description The lifecycle: is it still going.
+         * @enum {string}
+         */
+        AssignmentStatus: "held" | "queued" | "running" | "finished" | "cancelled";
         /**
          * AssignmentType
          * @enum {string}
@@ -475,12 +768,46 @@ export interface components {
             review_item: components["schemas"]["ReviewItemOutput"];
             /** Spawn */
             spawn: components["schemas"]["SpawnOutput"][];
+            /**
+             * Assignment Ids
+             * @default []
+             */
+            assignment_ids: string[];
         };
         /**
          * EntityKind
          * @enum {string}
          */
         EntityKind: "place" | "institution" | "source" | "domain" | "homepage";
+        /**
+         * EventKind
+         * @enum {string}
+         */
+        EventKind: "prompt" | "text" | "tool_call" | "tool_result" | "video";
+        /** EventOutput */
+        EventOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Session */
+            session: number;
+            /** Position */
+            position: number;
+            kind: components["schemas"]["EventKind"];
+            /** Tool */
+            tool: string | null;
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
         /** EvidenceOutput */
         EvidenceOutput: {
             /** Quote */
@@ -540,6 +867,11 @@ export interface components {
             review_items: components["schemas"]["ReviewItemOutput"][];
             /** Spawn */
             spawn: components["schemas"]["SpawnOutput"][];
+            /**
+             * Assignment Ids
+             * @default []
+             */
+            assignment_ids: string[];
         };
         /** KindOutput */
         KindOutput: {
@@ -599,6 +931,39 @@ export interface components {
              * @default []
              */
             and_words: string[];
+        };
+        /**
+         * Progress
+         * @description How far a run has got and what it has spent.
+         */
+        Progress: {
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** By Result */
+            by_result: {
+                [key: string]: number;
+            };
+            /** Cost */
+            cost: string;
+        };
+        /**
+         * ReleaseInput
+         * @description Which held assignments to queue: a few at a time by default.
+         */
+        ReleaseInput: {
+            /**
+             * Limit
+             * @default 1
+             */
+            limit: number;
+            assignment_type?: components["schemas"]["AssignmentType"] | null;
+            /**
+             * Assignment Ids
+             * @default []
+             */
+            assignment_ids: string[];
         };
         /** ReviewItemDetail */
         ReviewItemDetail: {
@@ -674,6 +1039,121 @@ export interface components {
          * @enum {string}
          */
         ReviewStatus: "open" | "approved" | "rejected" | "merged";
+        /** RunDetail */
+        RunDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Country Code */
+            country_code: string;
+            mode: components["schemas"]["RunMode"];
+            status: components["schemas"]["RunStatus"];
+            /** Filter */
+            filter: {
+                [key: string]: unknown;
+            };
+            /** Is Eval */
+            is_eval: boolean;
+            /** Record Video */
+            record_video: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            progress: components["schemas"]["Progress"];
+        };
+        /**
+         * RunFilter
+         * @description What a run works on (spec section 7.1). An empty list is no restriction. The levels and
+         *     types bound the subjects a run seeds itself with and every assignment it spawns; the subject
+         *     ids name the places and institutions it starts from, and spawned work descends from them.
+         */
+        RunFilter: {
+            /**
+             * Administrative Levels
+             * @default []
+             */
+            administrative_levels: string[];
+            /**
+             * Institution Types
+             * @default []
+             */
+            institution_types: string[];
+            /**
+             * Assignment Types
+             * @default []
+             */
+            assignment_types: components["schemas"]["AssignmentType"][];
+            /**
+             * Subject Ids
+             * @default []
+             */
+            subject_ids: string[];
+        };
+        /** RunInput */
+        RunInput: {
+            /** Name */
+            name: string;
+            /** Country Code */
+            country_code: string;
+            mode: components["schemas"]["RunMode"];
+            /**
+             * @default {
+             *       "administrative_levels": [],
+             *       "institution_types": [],
+             *       "assignment_types": [],
+             *       "subject_ids": []
+             *     }
+             */
+            filter: components["schemas"]["RunFilter"];
+            /**
+             * Record Video
+             * @default false
+             */
+            record_video: boolean;
+        };
+        /**
+         * RunMode
+         * @enum {string}
+         */
+        RunMode: "step" | "auto";
+        /** RunOutput */
+        RunOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Country Code */
+            country_code: string;
+            mode: components["schemas"]["RunMode"];
+            status: components["schemas"]["RunStatus"];
+            /** Filter */
+            filter: {
+                [key: string]: unknown;
+            };
+            /** Is Eval */
+            is_eval: boolean;
+            /** Record Video */
+            record_video: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * RunStatus
+         * @enum {string}
+         */
+        RunStatus: "active" | "paused" | "stopped";
         /** SourceTypeInput */
         SourceTypeInput: {
             /** Name */
@@ -715,6 +1195,10 @@ export interface components {
 }
 export type AdministrativeLevelInput = components['schemas']['AdministrativeLevelInput'];
 export type ApproveInput = components['schemas']['ApproveInput'];
+export type AssignmentDetail = components['schemas']['AssignmentDetail'];
+export type AssignmentOutput = components['schemas']['AssignmentOutput'];
+export type AssignmentResult = components['schemas']['AssignmentResult'];
+export type AssignmentStatus = components['schemas']['AssignmentStatus'];
 export type AssignmentType = components['schemas']['AssignmentType'];
 export type CountryInstitutionTypeInput = components['schemas']['CountryInstitutionTypeInput'];
 export type CountryOutput = components['schemas']['CountryOutput'];
@@ -722,6 +1206,8 @@ export type CountrySettingsInput = components['schemas']['CountrySettingsInput']
 export type DecisionInput = components['schemas']['DecisionInput'];
 export type DecisionOutput = components['schemas']['DecisionOutput'];
 export type EntityKind = components['schemas']['EntityKind'];
+export type EventKind = components['schemas']['EventKind'];
+export type EventOutput = components['schemas']['EventOutput'];
 export type EvidenceOutput = components['schemas']['EvidenceOutput'];
 export type HttpValidationError = components['schemas']['HTTPValidationError'];
 export type Health = components['schemas']['Health'];
@@ -732,9 +1218,17 @@ export type KindDecisionOutput = components['schemas']['KindDecisionOutput'];
 export type KindOutput = components['schemas']['KindOutput'];
 export type MergeInput = components['schemas']['MergeInput'];
 export type NamingRules = components['schemas']['NamingRules'];
+export type Progress = components['schemas']['Progress'];
+export type ReleaseInput = components['schemas']['ReleaseInput'];
 export type ReviewItemDetail = components['schemas']['ReviewItemDetail'];
 export type ReviewItemOutput = components['schemas']['ReviewItemOutput'];
 export type ReviewStatus = components['schemas']['ReviewStatus'];
+export type RunDetail = components['schemas']['RunDetail'];
+export type RunFilter = components['schemas']['RunFilter'];
+export type RunInput = components['schemas']['RunInput'];
+export type RunMode = components['schemas']['RunMode'];
+export type RunOutput = components['schemas']['RunOutput'];
+export type RunStatus = components['schemas']['RunStatus'];
 export type SourceTypeInput = components['schemas']['SourceTypeInput'];
 export type SpawnOutput = components['schemas']['SpawnOutput'];
 export type ValidationError = components['schemas']['ValidationError'];
@@ -1429,6 +1923,328 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-list_runs": {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-create_run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-read_run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-pause_run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-resume_run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-stop_run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-release_assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-list_assignments": {
+        parameters: {
+            query?: {
+                run_id?: string | null;
+                status?: components["schemas"]["AssignmentStatus"] | null;
+                type?: components["schemas"]["AssignmentType"] | null;
+                subject_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-read_assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssignmentDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "runs-read_assignment_events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventOutput"][];
                 };
             };
             /** @description Validation Error */

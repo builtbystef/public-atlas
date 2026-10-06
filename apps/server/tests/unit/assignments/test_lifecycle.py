@@ -50,4 +50,34 @@ def test_cancel():
     lifecycle.cancel(queued)
     assert queued.status is AssignmentStatus.CANCELLED
     with pytest.raises(ConflictError):
-        lifecycle.cancel(assignment(AssignmentStatus.RUNNING))
+        lifecycle.cancel(queued)
+    with pytest.raises(ConflictError):
+        lifecycle.cancel(assignment(AssignmentStatus.FINISHED))
+
+
+def test_the_named_moves_set_the_timestamps():
+    """Release queues a held one; a worker starts it once; a requeue puts it back without
+    touching the start; finishing stamps the end and keeps the summary it is given."""
+    held = assignment(AssignmentStatus.HELD)
+    assert (held.started_at, held.finished_at) == (None, None)
+    lifecycle.queue(held)
+    lifecycle.start(held)
+    started = held.started_at
+    assert started is not None
+    lifecycle.queue(held)
+    lifecycle.start(held)
+    assert held.started_at is started
+    lifecycle.finish(held, AssignmentResult.OUT_OF_BUDGET, summary="Budget exhausted")
+    assert (held.status, held.result, held.summary) == (
+        AssignmentStatus.FINISHED,
+        AssignmentResult.OUT_OF_BUDGET,
+        "Budget exhausted",
+    )
+    assert held.finished_at is not None
+    with pytest.raises(ConflictError, match="finished to running"):
+        lifecycle.start(held)
+
+
+def test_a_held_assignment_cannot_start_without_being_queued():
+    with pytest.raises(ConflictError, match="held to running"):
+        lifecycle.start(assignment(AssignmentStatus.HELD))
