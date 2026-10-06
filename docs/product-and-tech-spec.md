@@ -122,7 +122,7 @@ table with the same id. In code each is one object.
 | `institutions` | name, institution_type, suggested_type (text, when the type is `other`), place_id, parent_institution_id, procurement_handled_by, homepage_id (the verified one) |
 | `sources` | institution_id, webpage_id, source_type, access (`public`, `login`); unique per webpage, institution and type |
 | `domains` | name, kind (`official`, `platform`) |
-| `homepages` | institution_id, webpage_id, found_on_webpage_id (the trusted page that linked to it, null for a search result or a directory link), rejected_reason (why the claim was rejected, for the briefing and the reviewer) |
+| `homepages` | institution_id, webpage_id, found_on_webpage_id (the trusted page that linked to it, null for a search result or a directory link), rejected_reason (why the claim was rejected, for the briefing and the reviewer), trusted_path (set when a verified homepage sits on a platform: the URL prefix whose pages vouch for this institution, section 6.4) |
 
 Rules the tables enforce: a place's government is an institution whose
 `place_id` is that place. An institution's `homepage_id` points at a homepage
@@ -329,6 +329,13 @@ A platform is fetchable but never trusted. A page on one becomes a source
 only when a trusted page links to it and the page names the institution. The
 link is recorded as evidence against the trusted page.
 
+One exception, scoped to a path. When an institution's verified homepage is
+itself on a platform, verifying it sets `trusted_path` on the homepage row to
+the homepage's URL prefix. Pages under that prefix verify what they name for
+that one institution, exactly as a trusted domain's pages do, so its sources
+do not each need a reviewer. Pages elsewhere on the platform still need the
+normal rule, and the platform itself stays untrusted.
+
 ### 6.5 The review queue
 
 A review item is raised when the agent is unsure, a check fails in a way the
@@ -362,7 +369,10 @@ mode.
 - **Auto mode.** Spawned assignments are queued at once. For a whole province.
 
 Pause stops the worker from starting the run's assignments; running ones
-finish their session. Stop cancels everything held or queued. Every
+finish their session. The worker reads the run's status when it picks up a
+job and, if the run is paused, puts the job back with a short delay. Paused
+jobs stay `queued`: `held` means step mode and nothing else, so resume has
+nothing to undo. Stop cancels everything held or queued. Every
 assignment belongs to a run, and the console shows a run's progress and cost.
 
 ### 7.2 Assignment types
@@ -474,6 +484,11 @@ of ten pages with the memory guards from v1. A file already parsed by any
 assignment shares its text. `read_file` waits up to ninety seconds and then
 tells the agent to check `status` later.
 
+### 8.4 Model
+
+The model and its reasoning effort are set per assignment type, carried over
+from v1: GPT-6 Luna throughout, at `xhigh` for `find_institutions`, `find_sources` and `find_homepage`, and `medium` for handoff notes and summaries.
+
 ---
 
 ## 9. Derived relationships
@@ -531,7 +546,7 @@ order:
 | API | Python 3.14, FastAPI |
 | Database | PostgreSQL, SQLAlchemy 2 async, Alembic, `pg_trgm` for duplicate matching |
 | Jobs | Procrastinate on the same database. Queues: `assignment`, `parse`, `default` |
-| Agent | Pydantic AI; model and reasoning effort set per assignment type |
+| Agent | Pydantic AI; model and reasoning effort set per assignment type (section 8.4) |
 | Browser | Playwright Chromium, an owned layer of about 700 lines |
 | Parsing | Docling on the `parse` worker image only |
 | Storage | S3-compatible port: RustFS locally, Cloudflare R2 hosted |
