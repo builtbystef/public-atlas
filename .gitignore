@@ -1,0 +1,38 @@
+# Agent tooling
+.agents/
+.claude/
+
+# Dependencies
+node_modules/
+.venv/
+
+# Build output
+dist/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+*.egg-info/
+
+# Test output
+coverage/
+.coverage
+
+# Tool caches
+.cache/
+.vite/
+__pycache__/
+.ruff_cache/
+.pytest_cache/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs & OS noise
+*.log
+.DS_Store
+
+# Docling's models, downloaded by the parse image's build
+models/

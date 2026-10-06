@@ -1,0 +1,8 @@
+{
+  // Published packages: emit declarations alongside the build.
+  "extends": "./base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true
+  }
+}

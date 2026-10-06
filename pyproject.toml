@@ -1,0 +1,89 @@
+[project]
+name = "public-atlas"
+version = "0.0.0"
+requires-python = ">=3.14"
+license = "LicenseRef-Proprietary"
+authors = [{ name = "builtbystef" }]
+
+[dependency-groups]
+dev = ["pytest>=9.1.1", "ruff>=0.16.5", "ty>=0.0.77"]
+
+[tool.uv]
+required-version = ">=0.12"
+# Never resolve a release younger than 4 days. Written to uv.lock as a duration, so the lockfile
+# stays reproducible as time passes.
+exclude-newer = "4 days"
+
+[tool.uv.workspace]
+# uv rejects a glob that matches a directory without a pyproject.toml, and apps/ and packages/
+# also hold TypeScript packages. List Python projects explicitly instead.
+members = ["apps/server"]
+
+[tool.ruff]
+line-length = 100
+# Agent tooling is excluded here as well as in .gitignore, so a committed copy never fails the
+# checks. docs holds prose and example snippets.
+extend-exclude = [".agents", ".claude", "docs"]
+# Lets isort classify imports of workspace members as first-party.
+src = [".", "apps/*/src", "packages/*/src", "tools/*/src"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "D", # docstrings are optional
+  "COM812", # conflicts with the formatter
+  "CPY", # no per-file copyright headers
+  "FIX", # TODO and FIXME comments are allowed
+  "TD", # and need no author or issue link
+  # FastAPI, SQLAlchemy and Pydantic read annotations at runtime, so most imports cannot move
+  # into a TYPE_CHECKING block anyway.
+  "TC",
+  # An `AppError` carries the message the client sees, and the agent's tools answer the model
+  # with retry prompts: the message is the point of the raise.
+  "EM",
+  "TRY003",
+]
+
+[tool.ruff.lint.flake8-type-checking]
+# SQLAlchemy and Pydantic read model annotations at import time, so their subclasses need
+# quoted forward references (UP037).
+runtime-evaluated-base-classes = [
+  "public_atlas.db.base.Base",
+  "sqlalchemy.orm.DeclarativeBase",
+  "pydantic.BaseModel",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = [
+  "S101", # assert
+  "PLR2004", # magic values
+  "ANN", # missing annotations
+  "INP001", # implicit namespace package
+  "ARG001", # a fixture taken for its effect
+  "PLR0913", # a test takes the fixtures it needs
+  "PLR0917",
+]
+# Run by Alembic, not a package.
+"**/alembic/env.py" = ["INP001"]
+"**/alembic/versions/*.py" = [
+  "INP001",
+  "N999", # file names start with a timestamp
+]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ty.src]
+exclude = ["**/.agents/**", "**/.claude/**"]
+
+[tool.pytest]
+minversion = "9.0"
+testpaths = ["apps", "packages", "tools"]
+addopts = ["-ra", "--import-mode=importlib"]
+# Unknown markers, unknown config keys, passing xfails and duplicate parametrize ids are errors.
+strict = true
+filterwarnings = [
+  "error",
+  # Starlette's TestClient bug; drop once it stops using anyio.abc.BlockingPortal.
+  "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
+]

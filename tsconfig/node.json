@@ -1,0 +1,9 @@
+{
+  // Node applications, CLIs, workers running on Node.
+  "extends": "./base.json",
+  "compilerOptions": {
+    "module": "nodenext",
+    "lib": ["ES2024"],
+    "types": ["node"]
+  }
+}

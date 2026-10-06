@@ -1,0 +1,98 @@
+[project]
+name = "public-atlas-server"
+version = "0.0.0"
+description = "The API, the workers and the agent"
+requires-python = ">=3.14"
+license = "LicenseRef-Proprietary"
+authors = [{ name = "builtbystef" }]
+dependencies = [
+  "aiobotocore>=3.9,<4",
+  "alembic>=1.19.1,<1.21",
+  # 0.x: a minor bump can break, so pin the minor. Starlette is left to FastAPI.
+  "fastapi[standard-no-fastapi-cloud-cli]>=0.141.1,<0.142",
+  "logfire[fastapi,sqlalchemy]>=4.41,<6",
+  # The agent's Chromium. Installed with `vp run browser:install`; the `agent` image installs it
+  # at build time.
+  "playwright>=1.61,<2",
+  # The job queue, on PostgreSQL. Its tables are created by our Alembic migrations, so a bump may
+  # need a new migration.
+  "procrastinate[psycopg]>=3.9,<4",
+  "psycopg[binary]>=3.3.5,<4",
+  "pydantic-settings>=2.13.1,<3",
+  "sqlalchemy[asyncio]>=2.0.52,<2.1",
+]
+
+[dependency-groups]
+# Starlette >= 1.6 TestClient warns unless httpx2 is installed.
+dev = ["httpx2>=2.12,<3", "types-aiobotocore-s3>=3.9,<4"]
+# Docling, for the parse worker only. One group per PyTorch build: `parse-cpu` for the parse
+# image, `parse-cu130` for a dev machine with an NVIDIA GPU (CUDA 13 driver), which also takes
+# the GPU ONNX Runtime and so names rapidocr directly. A plain `uv sync` drops the group again;
+# keep the flag on every resync. torch and torchvision are listed so the sources below apply.
+parse-cpu = ["docling[rapidocr]>=2.129,<3", "torch>=2.14,<3", "torchvision>=0.29,<1"]
+parse-cu130 = [
+  "docling[onnxruntime]>=2.129,<3",
+  "rapidocr>=3.9.1,<4",
+  "torch>=2.14,<3",
+  "torchvision>=0.29,<1",
+]
+
+[tool.uv]
+conflicts = [[{ group = "parse-cpu" }, { group = "parse-cu130" }]]
+
+# PyTorch's own indexes, for torch and torchvision only. macOS has no wheels there and gets
+# PyPI's CPU build.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cpu", group = "parse-cpu", marker = "sys_platform != 'darwin'" },
+  { index = "pytorch-cu130", group = "parse-cu130", marker = "sys_platform != 'darwin'" },
+]
+torchvision = [
+  { index = "pytorch-cpu", group = "parse-cpu", marker = "sys_platform != 'darwin'" },
+  { index = "pytorch-cu130", group = "parse-cu130", marker = "sys_platform != 'darwin'" },
+]
+
+[project.scripts]
+public-atlas-worker = "public_atlas.jobs.worker:main"
+
+[tool.fastapi]
+# The ASGI app, built from the environment. Everything else gets its settings as an argument.
+entrypoint = "public_atlas.asgi:app"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+# The package is `public_atlas`, not the `public_atlas_server` the project name would give.
+module-name = "public_atlas"
+
+
+[tool.alembic]
+# `uv run alembic ...` from apps/server, or `vp run db:migrate`. URL: alembic/env.py.
+script_location = "%(here)s/alembic"
+# The date prefix keeps versions/ in order.
+file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"
+
+# Lint and format each new migration.
+[[tool.alembic.post_write_hooks]]
+name = "ruff-check"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff-format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"

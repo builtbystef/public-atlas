@@ -1,0 +1,51 @@
+packages:
+  - apps/*
+  - packages/*
+  - tools/*
+
+catalogMode: prefer
+
+catalog:
+  "@base-ui/react": ^1.8.0
+  "@tailwindcss/postcss": ^4.3.3
+  "@tanstack/react-form": ^1.33.5
+  "@tanstack/react-query": ^5.104.0
+  "@tanstack/react-query-devtools": ^5.104.0
+  "@tanstack/react-table": ^9.2.4
+  "@types/node": ^24
+  class-variance-authority: ^0.7.1
+  cn: ^0.2.4
+  concurrently: ^10.0.5
+  lucide-react: ^1.48.0
+  next-themes: ^0.4.6
+  postcss: ^8.5.28
+  server-only: ^0.0.1
+  shadcn: ^4.21.0
+  sonner: ^2.0.8
+  tailwindcss: ^4.3.3
+  tw-animate-css: ^1.4.0
+  typescript: ^7.0.2
+  # Bump these two together; a mismatched pair fails at startup. Dependabot
+  # cannot see the coupling through the npm: alias, so update both by hand.
+  vite: npm:@voidzero-dev/vite-plus-core@0.3.3
+  vite-plus: 0.3.3
+  zod: ^4.6.5
+overrides:
+  vite: "catalog:"
+peerDependencyRules:
+  allowAny:
+    - vite
+  allowedVersions:
+    vite: "*"
+
+# Supply-chain policy.
+minimumReleaseAge: 5760 # 4 days
+strictDepBuilds: true
+allowBuilds: {}
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # Needed by shadcn via @babel/core. Old release without provenance.
+  - semver@6.3.1
+verifyDepsBeforeRun: install
+engineStrict: true

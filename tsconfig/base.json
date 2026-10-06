@@ -1,0 +1,20 @@
+{
+  // Runtime-neutral strictness shared by every workspace project.
+  // Projects don't extend this directly; they extend an environment preset
+  // from this folder (node.json, browser.json, library.json).
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "preserve",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true
+  }
+}

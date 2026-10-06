@@ -1,0 +1,182 @@
+# Local PostgreSQL and RustFS for apps/server: `vp run infra:up`. Credentials match the defaults
+# in src/public_atlas/config.py and the CI services.
+#
+# The `app` profile adds the API, the workers and the web app from their images, as a deployment
+# runs them: `vp run app:build`, then `vp run app:up`. Day to day, `vp run dev` runs them on the
+# host against this infra.
+name: public-atlas
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: public_atlas
+      POSTGRES_PASSWORD: public_atlas
+      POSTGRES_DB: public_atlas
+    ports:
+      # Loopback only.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # PostgreSQL 18 stores data under /var/lib/postgresql/<major>, not .../data.
+      - db-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --username public_atlas --dbname public_atlas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # S3-compatible object storage for snapshots and videos. The API and the workers write to it;
+  # the browser reads through presigned URLs the API signs. Console (bucket browser) at
+  # http://localhost:9001, same credentials.
+  storage:
+    image: rustfs/rustfs:1.0.0-rc.5
+    restart: unless-stopped
+    environment:
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_ACCESS_KEY: rustfsadmin
+      RUSTFS_SECRET_KEY: rustfsadmin
+    ports:
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - storage-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # Creates the bucket the API expects, then exits. RustFS ships no client, so the AWS CLI does
+  # it. Rerun with `docker compose up storage-init`.
+  storage-init:
+    image: amazon/aws-cli:2.32.0
+    depends_on:
+      storage:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: rustfsadmin
+      AWS_SECRET_ACCESS_KEY: rustfsadmin
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_ENDPOINT_URL: http://storage:9000
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        aws s3api head-bucket --bucket public-atlas 2>/dev/null || aws s3api create-bucket --bucket public-atlas
+
+  # --- The app itself (`--profile app`) ---------------------------------------
+  # One image for the API and the default-queue worker, one with Chromium for the assignment
+  # worker, and one with Docling for the parse worker; the command picks the process. A code
+  # change needs `vp run app:build` before `app:up` shows it.
+  api:
+    profiles: [app]
+    image: public-atlas-server
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+      target: server
+    restart: unless-stopped
+    environment: &app-env
+      PUBLIC_ATLAS_DATABASE_URL: postgresql+psycopg://public_atlas:public_atlas@db:5432/public_atlas
+      PUBLIC_ATLAS_STORAGE_ENDPOINT_URL: http://storage:9000
+      # Presigned download URLs are opened by the browser, outside the Compose network.
+      PUBLIC_ATLAS_STORAGE_PUBLIC_ENDPOINT_URL: http://localhost:9000
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  worker:
+    profiles: [app]
+    image: public-atlas-server
+    command: public-atlas-worker --queues default
+    restart: unless-stopped
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+
+  # The agent: Playwright's Chromium on top of the server image. Reads apps/server/.env for the
+  # model and search keys.
+  agent:
+    profiles: [app]
+    image: public-atlas-server-agent
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+      target: agent
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    environment: *app-env
+    # Chromium's sandbox needs user namespaces, which Docker's default seccomp profile refuses.
+    security_opt: [seccomp=unconfined]
+    shm_size: 1gb
+    depends_on:
+      db:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+
+  # Docling on CPU PyTorch with the models baked in, about 4 GB more than the server image. With
+  # an NVIDIA GPU, run the parse worker on the host instead: `uv sync --group parse-cu130`, then
+  # `public-atlas-worker --queues parse`.
+  parse:
+    profiles: [app]
+    image: public-atlas-server-parse
+    build:
+      context: ../..
+      dockerfile: apps/server/Dockerfile
+      target: parse
+    restart: unless-stopped
+    environment: *app-env
+    depends_on:
+      db:
+        condition: service_healthy
+      storage-init:
+        condition: service_completed_successfully
+
+  web:
+    profiles: [app]
+    image: public-atlas-web
+    build:
+      context: ../..
+      dockerfile: apps/web/Dockerfile
+      args:
+        # Baked into the `/api` rewrite at build time (apps/web/next.config.ts).
+        API_URL: http://api:8000
+    restart: unless-stopped
+    environment:
+      API_URL: http://api:8000
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  db-data:
+  storage-data:

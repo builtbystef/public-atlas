@@ -1,0 +1,28 @@
+# Build context for apps/server/Dockerfile and apps/web/Dockerfile (both build
+# from the repository root). Everything the images need is copied by name in
+# the Dockerfiles; this keeps installed dependencies, build output, secrets,
+# and Git history out of the context.
+.git
+.github
+.agents
+.claude
+.vscode
+node_modules
+.venv
+.next
+dist
+out
+coverage
+.cache
+.vite
+.ruff_cache
+.pytest_cache
+__pycache__
+*.tsbuildinfo
+*.log
+.env
+.env.*
+# Not needed inside the images
+apps/server/tests
+apps/server/compose.yaml
+apps/*/Dockerfile

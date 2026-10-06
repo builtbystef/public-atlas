@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Same database as apps/server/compose.yaml; the job runs on the runner.
+      PUBLIC_ATLAS_DATABASE_URL: postgresql+psycopg://public_atlas:public_atlas@localhost:5432/public_atlas
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: public_atlas
+          POSTGRES_PASSWORD: public_atlas
+          POSTGRES_DB: public_atlas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username public_atlas --dbname public_atlas"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      # Same object storage as apps/server/compose.yaml; the storage tests run against it.
+      storage:
+        image: rustfs/rustfs:1.0.0-rc.5
+        env:
+          RUSTFS_VOLUMES: /data
+          RUSTFS_ADDRESS: 0.0.0.0:9000
+          RUSTFS_ACCESS_KEY: rustfsadmin
+          RUSTFS_SECRET_KEY: rustfsadmin
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -fsS http://127.0.0.1:9000/health"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Installs Vite+, the Node version from .node-version and the package manager from
+      # package.json "packageManager", then runs `vp install`.
+      - uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
+        with:
+          node-version-file: .node-version
+          cache: true
+          run-install: |
+            args: ["--frozen-lockfile"]
+
+      # Installs the uv version `required-version` in pyproject.toml allows and the interpreter
+      # from .python-version. Caching is on by default.
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+
+      - run: uv sync --locked --all-packages
+
+      # What the storage-init Compose service does locally.
+      - run: aws s3api create-bucket --bucket public-atlas
+        env:
+          AWS_ACCESS_KEY_ID: rustfsadmin
+          AWS_SECRET_ACCESS_KEY: rustfsadmin
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ENDPOINT_URL: http://127.0.0.1:9000
+
+      # The `vp run` task cache. Restored after install, because installing can recreate
+      # node_modules.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: task-cache
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-
+
+      - run: vp run check
+      # The committed OpenAPI schema and generated client types must match apps/server.
+      - run: vp run check:generated
+      - run: vp run test
+      - run: vp run -r build
+
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: success()
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.task-cache.outputs.cache-primary-key }}

@@ -1,0 +1,42 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Matches minimumReleaseAge in pnpm-workspace.yaml.
+    cooldown:
+      default-days: 4
+    ignore:
+      # Keep @types/node on the same major as .node-version.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # packages/api-client pins typescript 5: openapi-typescript needs the
+      # TypeScript 5 compiler API and crashes under 7. The catalog is on 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+    groups:
+      # See the catalog note in pnpm-workspace.yaml.
+      vite-plus:
+        patterns: ["vite", "vite-plus", "@voidzero-dev/vite-plus-core"]
+      tanstack-query:
+        patterns: ["@tanstack/react-query", "@tanstack/react-query-devtools"]
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    # Matches exclude-newer in pyproject.toml.
+    cooldown:
+      default-days: 4
+    groups:
+      # uv does not support dependency-type grouping, so group by pattern.
+      python-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
