@@ -1,7 +1,7 @@
 {
   "name": "public-atlas",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "builtbystef",
   "type": "module",
   "scripts": {

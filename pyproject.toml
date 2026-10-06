@@ -2,7 +2,7 @@
 name = "public-atlas"
 version = "0.0.0"
 requires-python = ">=3.14"
-license = "LicenseRef-Proprietary"
+license = "MIT"
 authors = [{ name = "builtbystef" }]
 
 [dependency-groups]

@@ -3,7 +3,7 @@ name = "public-atlas-server"
 version = "0.0.0"
 description = "The API, the workers and the agent"
 requires-python = ">=3.14"
-license = "LicenseRef-Proprietary"
+license = "MIT"
 authors = [{ name = "builtbystef" }]
 dependencies = [
   "aiobotocore>=3.9,<4",
