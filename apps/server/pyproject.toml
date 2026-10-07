@@ -6,7 +6,7 @@ requires-python = ">=3.14"
 license = "MIT"
 authors = [{ name = "builtbystef" }]
 dependencies = [
-  "aiobotocore>=3.9,<4",
+  "aiobotocore>=3.9.2,<4",
   "alembic>=1.19.1,<1.21",
   # 0.x: a minor bump can break, so pin the minor. Starlette is left to FastAPI.
   "fastapi[standard-no-fastapi-cloud-cli]>=0.141.1,<0.142",
