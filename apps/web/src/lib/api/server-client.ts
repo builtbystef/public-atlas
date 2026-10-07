@@ -1,5 +1,7 @@
 import { createApiClient, type ApiClient } from "@public-atlas/api-client";
 
+import { DATABASE_HEADER, type Database } from "./database";
+
 const DEV_API_URL = "http://127.0.0.1:8000";
 
 /**
@@ -23,11 +25,17 @@ export function assertApiUrl(): void {
 
 /**
  * The typed client for apps/server, for use in Server Components, Route Handlers and Server
- * Actions. Requests are memoized per render by Next.js's `fetch`, so calling this in several
- * components costs one request.
+ * Actions, reading `database` (see lib/api/database.ts). Requests are memoized per render by
+ * Next.js's `fetch`, so calling this in several components costs one request. Pages get one
+ * through `getApi()` in lib/api/server.ts, which reads the database cookie.
  */
-export function createApi(fetch: typeof globalThis.fetch = globalThis.fetch): ApiClient {
-  return createApiClient({ baseUrl: getApiUrl(), fetch });
+export function createApi(
+  fetch: typeof globalThis.fetch = globalThis.fetch,
+  database: Database = "main",
+): ApiClient {
+  return createApiClient({
+    baseUrl: getApiUrl(),
+    fetch,
+    headers: { [DATABASE_HEADER]: database },
+  });
 }
-
-export const api: ApiClient = createApi();

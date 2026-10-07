@@ -19,7 +19,6 @@ from types import ModuleType
 from typing import Any
 
 from alembic import command
-from pydantic import PostgresDsn
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.engine import Connection, make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
@@ -85,10 +84,7 @@ type Report = Callable[[str], None]
 
 def eval_settings(settings: Settings) -> Settings:
     """The same settings on the eval database (spec section 10)."""
-    url = make_url(str(settings.database_url)).set(database=settings.eval_database_name)
-    return settings.model_copy(
-        update={"database_url": PostgresDsn(url.render_as_string(hide_password=False))}
-    )
+    return settings.eval_settings()
 
 
 def refuse_shared_database(settings: Settings, eval_name: str) -> None:

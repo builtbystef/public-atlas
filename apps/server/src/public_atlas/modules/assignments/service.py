@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from procrastinate import App
-from sqlalchemy import func, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -53,6 +53,7 @@ __all__ = [
     "Spawn",
     "assignment_cost",
     "cancel",
+    "count_assignments",
     "create_run",
     "due_work",
     "events_of",
@@ -64,6 +65,7 @@ __all__ = [
     "open_assignments",
     "pause_run",
     "progress",
+    "progress_many",
     "queue_job",
     "queue_spawns",
     "record_usage",
@@ -76,6 +78,7 @@ __all__ = [
     "spawn",
     "spawn_on_finish",
     "stop_run",
+    "subjects_of",
 ]
 
 logger = logging.getLogger(__name__)
@@ -239,11 +242,15 @@ async def _due_for_institution(session: AsyncSession, institution: Institution) 
     return [Spawn(AssignmentType.FIND_HOMEPAGE, institution.id)]
 
 
-async def list_runs(session: AsyncSession, *, limit: int = 100, offset: int = 0) -> list[Run]:
+async def list_runs(
+    session: AsyncSession, *, limit: int = 100, offset: int = 0
+) -> tuple[list[Run], int]:
+    """A page of runs, newest first, and how many there are."""
     rows = await session.scalars(
         select(Run).order_by(Run.created_at.desc(), Run.id.desc()).limit(limit).offset(offset)
     )
-    return list(rows)
+    total = await session.scalar(select(func.count()).select_from(Run))
+    return list(rows), int(total or 0)
 
 
 async def get_run(session: AsyncSession, run_id: uuid.UUID) -> Run:
@@ -322,32 +329,40 @@ async def release(  # noqa: PLR0913 - one argument per way of choosing
 
 
 async def progress(session: AsyncSession, run: Run) -> Progress:
-    by_status = {
-        AssignmentStatus(status): count
-        for status, count in (
-            await session.execute(
-                select(Assignment.status, func.count())
-                .where(Assignment.run_id == run.id)
-                .group_by(Assignment.status)
-            )
-        ).tuples()
-    }
-    by_result = {
-        AssignmentResult(result): count
-        for result, count in (
-            await session.execute(
-                select(Assignment.result, func.count())
-                .where(Assignment.run_id == run.id, Assignment.result.is_not(None))
-                .group_by(Assignment.result)
-            )
-        ).tuples()
-    }
-    cost = await session.scalar(
-        select(func.coalesce(func.sum(Usage.cost), 0))
-        .join(Assignment, Assignment.id == Usage.assignment_id)
-        .where(Assignment.run_id == run.id)
+    return (await progress_many(session, [run.id]))[run.id]
+
+
+async def progress_many(
+    session: AsyncSession, run_ids: Sequence[uuid.UUID]
+) -> dict[uuid.UUID, Progress]:
+    """How far each run has got and what it has spent, in three queries for the batch."""
+    found = {run_id: Progress(by_status={}, by_result={}, cost=Decimal(0)) for run_id in run_ids}
+    if not run_ids:
+        return found
+    ids = list(found)
+    by_status = await session.execute(
+        select(Assignment.run_id, Assignment.status, func.count())
+        .where(Assignment.run_id.in_(ids))
+        .group_by(Assignment.run_id, Assignment.status)
     )
-    return Progress(by_status=by_status, by_result=by_result, cost=Decimal(cost or 0))
+    for run_id, status, count in by_status.tuples():
+        found[run_id].by_status[AssignmentStatus(status)] = count
+    by_result = await session.execute(
+        select(Assignment.run_id, Assignment.result, func.count())
+        .where(Assignment.run_id.in_(ids), Assignment.result.is_not(None))
+        .group_by(Assignment.run_id, Assignment.result)
+    )
+    for run_id, result, count in by_result.tuples():
+        found[run_id].by_result[AssignmentResult(result)] = count
+    costs = await session.execute(
+        select(Assignment.run_id, func.coalesce(func.sum(Usage.cost), 0))
+        .join(Assignment, Assignment.id == Usage.assignment_id)
+        .where(Assignment.run_id.in_(ids))
+        .group_by(Assignment.run_id)
+    )
+    for run_id, cost in costs.tuples():
+        found[run_id].cost = Decimal(cost or 0)
+    return found
 
 
 # --- Spawning ---
@@ -611,24 +626,87 @@ async def list_assignments(  # noqa: PLR0913
     *,
     run_id: uuid.UUID | None = None,
     status: AssignmentStatus | None = None,
+    result: AssignmentResult | None = None,
     assignment_type: AssignmentType | None = None,
     subject_id: uuid.UUID | None = None,
+    newest_first: bool = False,
     limit: int = 100,
     offset: int = 0,
 ) -> list[Assignment]:
+    """A page of assignments, oldest first unless `newest_first`."""
+    query = _assignments_matching(
+        run_id=run_id,
+        status=status,
+        result=result,
+        assignment_type=assignment_type,
+        subject_id=subject_id,
+    )
+    order = (
+        (Assignment.created_at.desc(), Assignment.id.desc())
+        if newest_first
+        else (Assignment.created_at, Assignment.id)
+    )
+    rows = await session.scalars(query.order_by(*order).limit(limit).offset(offset))
+    return list(rows)
+
+
+async def count_assignments(  # noqa: PLR0913 - one argument per filter
+    session: AsyncSession,
+    *,
+    run_id: uuid.UUID | None = None,
+    status: AssignmentStatus | None = None,
+    result: AssignmentResult | None = None,
+    assignment_type: AssignmentType | None = None,
+    subject_id: uuid.UUID | None = None,
+) -> int:
+    """How many assignments `list_assignments` would page through with the same filters."""
+    query = _assignments_matching(
+        run_id=run_id,
+        status=status,
+        result=result,
+        assignment_type=assignment_type,
+        subject_id=subject_id,
+    )
+    total = await session.scalar(select(func.count()).select_from(query.subquery()))
+    return int(total or 0)
+
+
+def _assignments_matching(
+    *,
+    run_id: uuid.UUID | None,
+    status: AssignmentStatus | None,
+    result: AssignmentResult | None,
+    assignment_type: AssignmentType | None,
+    subject_id: uuid.UUID | None,
+) -> Select[tuple[Assignment]]:
     query = select(Assignment)
     if run_id is not None:
         query = query.where(Assignment.run_id == run_id)
     if status is not None:
         query = query.where(Assignment.status == status)
+    if result is not None:
+        query = query.where(Assignment.result == result)
     if assignment_type is not None:
         query = query.where(Assignment.type == assignment_type)
     if subject_id is not None:
         query = query.where(Assignment.subject_id == subject_id)
-    rows = await session.scalars(
-        query.order_by(Assignment.created_at, Assignment.id).limit(limit).offset(offset)
-    )
-    return list(rows)
+    return query
+
+
+async def subjects_of(
+    session: AsyncSession, assignments: Iterable[Assignment]
+) -> dict[uuid.UUID, Place | Institution]:
+    """The place or institution each assignment works on, by subject id, in two queries. A
+    subject merged away or deleted since is left out."""
+    ids = list({assignment.subject_id for assignment in assignments})
+    if not ids:
+        return {}
+    found: dict[uuid.UUID, Place | Institution] = {}
+    for place in await session.scalars(select(Place).where(Place.id.in_(ids))):
+        found[place.id] = place
+    for institution in await session.scalars(select(Institution).where(Institution.id.in_(ids))):
+        found[institution.id] = institution
+    return found
 
 
 async def get_assignment(session: AsyncSession, assignment_id: uuid.UUID) -> Assignment:

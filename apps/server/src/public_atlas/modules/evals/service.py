@@ -19,7 +19,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.config import Settings
@@ -35,7 +35,12 @@ from public_atlas.modules.evals import dataset, harness, scorer
 from public_atlas.modules.evals.dataset import PlaceList, SubjectFile
 from public_atlas.modules.evals.harness import CostLine, Report, Seeded
 from public_atlas.modules.evals.models import EvalRun, EvalScore
-from public_atlas.modules.evals.schemas import EvalRunDetail, EvalRunOutput, EvalScoreOutput
+from public_atlas.modules.evals.schemas import (
+    EvalRunDetail,
+    EvalRunOutput,
+    EvalScoreOutput,
+    TypeSummary,
+)
 from public_atlas.modules.imports.lists import ontario_places
 from public_atlas.resources import Resources, build_resources
 from public_atlas.shared.exceptions import NotFoundError
@@ -400,14 +405,47 @@ async def record_results(
 
 async def list_eval_runs(
     session: AsyncSession, *, limit: int = 100, offset: int = 0
-) -> list[EvalRunOutput]:
+) -> tuple[list[EvalRunOutput], int]:
+    """A page of eval runs, newest first, and how many there are."""
     rows = await session.scalars(
         select(EvalRun)
         .order_by(EvalRun.started_at.desc(), EvalRun.id.desc())
         .limit(limit)
         .offset(offset)
     )
-    return [EvalRunOutput.model_validate(row) for row in rows]
+    total = await session.scalar(select(func.count()).select_from(EvalRun))
+    outputs = [EvalRunOutput.model_validate(row) for row in rows]
+    summaries = await _summaries(session, [output.id for output in outputs])
+    for output in outputs:
+        output.summary = summaries.get(output.id, {})
+    return outputs, int(total or 0)
+
+
+async def _summaries(
+    session: AsyncSession, eval_run_ids: Sequence[uuid.UUID]
+) -> dict[uuid.UUID, dict[AssignmentType, TypeSummary]]:
+    """Each run's scores folded per assignment type, in one query for the batch."""
+    if not eval_run_ids:
+        return {}
+    rows = await session.execute(
+        select(
+            EvalScore.eval_run_id,
+            EvalScore.assignment_type,
+            func.count(),
+            func.avg(EvalScore.recall),
+            func.avg(EvalScore.precision),
+        )
+        .where(EvalScore.eval_run_id.in_(list(eval_run_ids)))
+        .group_by(EvalScore.eval_run_id, EvalScore.assignment_type)
+    )
+    found: dict[uuid.UUID, dict[AssignmentType, TypeSummary]] = {}
+    for eval_run_id, assignment_type, subjects, recall, precision in rows.tuples():
+        found.setdefault(eval_run_id, {})[AssignmentType(assignment_type)] = TypeSummary(
+            subjects=int(subjects),
+            mean_recall=float(recall) if recall is not None else None,
+            mean_precision=float(precision) if precision is not None else None,
+        )
+    return found
 
 
 async def read_eval_run(session: AsyncSession, eval_run_id: uuid.UUID) -> EvalRunDetail:
@@ -419,8 +457,11 @@ async def read_eval_run(session: AsyncSession, eval_run_id: uuid.UUID) -> EvalRu
         .where(EvalScore.eval_run_id == eval_run_id)
         .order_by(EvalScore.subject, EvalScore.assignment_type)
     )
+    summaries = await _summaries(session, [eval_run_id])
+    output = EvalRunOutput.model_validate(eval_run)
+    output.summary = summaries.get(eval_run_id, {})
     return EvalRunDetail(
-        **EvalRunOutput.model_validate(eval_run).model_dump(),
+        **output.model_dump(),
         scores=[EvalScoreOutput.model_validate(row) for row in scores],
     )
 

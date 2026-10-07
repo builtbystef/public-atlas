@@ -118,8 +118,8 @@ export function SelectField({
 }: CommonProps & {
   options: readonly SelectOption[];
   /** Adds an empty option with this label, which the schema turns into null. */
-  placeholder?: string;
-  disabled?: boolean;
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
 }) {
   const { field, invalid } = useFieldState();
   return (

@@ -16,6 +16,7 @@ from public_atlas.modules.assignments.models import (
     RunMode,
     RunStatus,
 )
+from public_atlas.modules.graph.models import EntityKind, EntityStatus
 
 
 class RunFilter(BaseModel):
@@ -73,6 +74,14 @@ class ReleaseInput(BaseModel):
     assignment_ids: list[uuid.UUID] = []
 
 
+class SubjectOutput(BaseModel):
+    """The place or institution an assignment works on, by name."""
+
+    id: uuid.UUID
+    kind: EntityKind
+    name: str
+
+
 class AssignmentOutput(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,6 +89,8 @@ class AssignmentOutput(BaseModel):
     run_id: uuid.UUID
     type: AssignmentType
     subject_id: uuid.UUID
+    # None when the subject was merged away or deleted since.
+    subject: SubjectOutput | None = None
     status: AssignmentStatus
     result: AssignmentResult | None
     budget_requests: int
@@ -111,3 +122,22 @@ class EventOutput(BaseModel):
     tool: str | None
     content: dict[str, Any]
     at: datetime
+    # A short-lived link to play a recorded video; null for every other kind and once purged.
+    video_url: str | None = None
+
+
+class FindingOutput(BaseModel):
+    """One thing the assignment saved, with the quote it gave for it."""
+
+    evidence_id: uuid.UUID
+    entity_id: uuid.UUID
+    entity_kind: EntityKind
+    entity_status: EntityStatus
+    label: str
+    # The institution a homepage or a source belongs to; the institution itself otherwise.
+    institution_id: uuid.UUID | None
+    quote: str
+    kind: str
+    page_url: str
+    link_url: str | None
+    snapshot_url: str | None

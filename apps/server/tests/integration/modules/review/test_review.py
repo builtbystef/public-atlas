@@ -99,8 +99,12 @@ def test_approving_a_domain_trusts_it_and_verifies_the_homepage_in_question(
 
     item, towns, librarys, domain = db.run(make)
     listed = client.get("/review-items").json()
-    assert [row["id"] for row in listed] == [str(item.id)]
-    assert client.get("/review-items", params={"status": "approved"}).json() == []
+    assert [row["id"] for row in listed["items"]] == [str(item.id)]
+    assert (listed["items"][0]["label"], listed["items"][0]["entity_kind"]) == (
+        "oakville.example",
+        "domain",
+    )
+    assert client.get("/review-items", params={"status": "approved"}).json()["items"] == []
 
     approved = client.post(f"/review-items/{item.id}/approve", json={"note": "it is the town"})
     assert approved.status_code == 200, approved.text
@@ -268,7 +272,7 @@ def test_merging_through_the_api_closes_the_item_and_remembers_where_the_entity_
     duplicate, aliases = db.run(check)
     assert duplicate.status is EntityStatus.REJECTED
     assert aliases == ["Oakville Library", "Oakville Public Library"]
-    assert client.get("/review-items").json()[0]["id"] == str(domain_item.id)
+    assert client.get("/review-items").json()["items"][0]["id"] == str(domain_item.id)
 
 
 def test_a_kind_is_decided_once_for_every_item_of_it(
@@ -475,9 +479,8 @@ def test_an_edit_of_the_country_tables_settles_the_type_items_it_answers(
         ("approved", "settled: Canada now uses housing_corporation"),
         ("open", None),
     ]
-    assert client.get("/review-items", params={"kind": "new_type:zoo"}).json()[0]["kind"] == (
-        "new_type:zoo"
-    )
+    zoo_items = client.get("/review-items", params={"kind": "new_type:zoo"}).json()["items"]
+    assert zoo_items[0]["kind"] == "new_type:zoo"
 
 
 def test_reading_an_item_shows_the_entity_and_its_quotes_with_links_to_the_stored_pages(

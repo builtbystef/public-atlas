@@ -8,7 +8,9 @@ queue has done a document, and `failed` with the reason when it cannot be made.
 """
 
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import timedelta
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -55,16 +57,20 @@ from public_atlas.modules.evidence.snapshots import (
 )
 from public_atlas.modules.graph.models import EnteredBy, Webpage
 from public_atlas.modules.graph.service import normalize_url
+from public_atlas.shared.exceptions import NotFoundError
+from public_atlas.shared.text import normalize_text
 
 __all__ = [
     "HTML",
     "MIN_QUOTE_CHARS",
     "PAGE_SEPARATOR",
+    "EvidenceDetail",
     "FileParsing",
     "FileRefusal",
     "FileResult",
     "FileText",
     "PageCapture",
+    "QuoteContext",
     "QuoteMatch",
     "add_evidence",
     "bytes_key",
@@ -72,13 +78,17 @@ __all__ = [
     "check_quote",
     "content_hash",
     "delete_objects",
+    "evidence_context",
+    "evidence_details",
     "evidence_for",
+    "findings_of",
     "latest_snapshot",
     "mark_text_failed",
     "mark_text_ready",
     "mentions_any",
     "nearest_text",
     "prune_unreferenced",
+    "quote_context",
     "read_file",
     "record_blocked",
     "record_redirect",
@@ -210,3 +220,132 @@ async def evidence_for(session: AsyncSession, entity_id: uuid.UUID) -> list[Evid
         select(Evidence).where(Evidence.entity_id == entity_id).order_by(Evidence.id)
     )
     return list(rows)
+
+
+async def findings_of(session: AsyncSession, assignment_id: uuid.UUID) -> list[Evidence]:
+    """Every quote the assignment recorded, oldest first: what it saved."""
+    rows = await session.scalars(
+        select(Evidence).where(Evidence.assignment_id == assignment_id).order_by(Evidence.id)
+    )
+    return list(rows)
+
+
+# How much of the page is shown around a quote.
+CONTEXT_CHARS = 600
+
+
+@dataclass(frozen=True, slots=True)
+class QuoteContext:
+    """A quote as it sits on the stored page: the text before it and after it, so a reader can
+    see it where the rules found it. `found` is False when the stored text no longer has it
+    (the copy was pruned, or the quote matched the page's HTML and not its rendered text), and
+    then only the quote is given."""
+
+    found: bool
+    before: str
+    quote: str
+    after: str
+    page: int | None
+
+
+def quote_context(text: str, quote: str, *, chars: int = CONTEXT_CHARS) -> QuoteContext:
+    """`quote` with up to `chars` of the text before and after it. The text is searched
+    case-folded with its whitespace collapsed, as the quote check searches it."""
+    pages = text.split(PAGE_SEPARATOR)
+    for number, page in enumerate(pages, start=1):
+        collapsed = " ".join(page.split())
+        folded = normalize_text(collapsed)
+        needle = normalize_text(quote)
+        # Normalizing does not change the length of what `split` and `casefold` keep, except
+        # for the rare character whose case folding grows; the slice is then off by a little.
+        at = folded.find(needle) if needle else -1
+        if at < 0 or len(folded) != len(collapsed):
+            continue
+        end = at + len(needle)
+        return QuoteContext(
+            found=True,
+            before=collapsed[max(0, at - chars) : at],
+            quote=collapsed[at:end],
+            after=collapsed[end : end + chars],
+            page=number if len(pages) > 1 else None,
+        )
+    return QuoteContext(found=False, before="", quote=quote, after="", page=None)
+
+
+async def evidence_context(
+    session: AsyncSession, store: ObjectStore, evidence_id: uuid.UUID
+) -> tuple[Evidence, QuoteContext]:
+    """The quote of `evidence_id` in the text of the stored copy it was taken from."""
+    row = await session.get(Evidence, evidence_id)
+    if row is None:
+        raise NotFoundError("no such evidence")
+    snapshot = await session.get_one(Snapshot, row.snapshot_id)
+    text = await snapshot_text(store, snapshot)
+    if snapshot.media_type == HTML and find_quote(text, row.quote) is None:
+        page_html = await snapshot_bytes(store, snapshot)
+        if page_html is not None:
+            text = html_text(page_html.decode(errors="replace"))
+    return row, quote_context(text, row.quote)
+
+
+@dataclass(frozen=True, slots=True)
+class EvidenceDetail:
+    """A quote as the console shows it: with the page it was found on and a link to the stored
+    copy, so a reader can check it as the rules did."""
+
+    id: uuid.UUID
+    entity_id: uuid.UUID
+    quote: str
+    kind: str
+    locator: int | None
+    link_url: str | None
+    entered_by: str
+    assignment_id: uuid.UUID | None
+    page_url: str
+    snapshot_id: uuid.UUID
+    # A short-lived link to the stored copy; None once the copy was pruned.
+    snapshot_url: str | None
+
+
+async def evidence_details(
+    session: AsyncSession,
+    store: ObjectStore,
+    entity_ids: Iterable[uuid.UUID],
+    *,
+    url_ttl: timedelta,
+) -> list[EvidenceDetail]:
+    """Every quote for any of `entity_ids`, oldest first, each with its page and a link to the
+    stored copy it was found on."""
+    ids = list(entity_ids)
+    if not ids:
+        return []
+    rows = await session.execute(
+        select(Evidence, Snapshot, Webpage)
+        .join(Snapshot, Snapshot.id == Evidence.snapshot_id)
+        .join(Webpage, Webpage.id == Snapshot.webpage_id)
+        .where(Evidence.entity_id.in_(ids))
+        .order_by(Evidence.id)
+    )
+    details: list[EvidenceDetail] = []
+    for row, snapshot, webpage in rows.tuples():
+        url = None
+        if snapshot.pruned_at is None:
+            url = await store.download_url(
+                snapshot.bytes_key, snapshot.filename or "snapshot", url_ttl
+            )
+        details.append(
+            EvidenceDetail(
+                id=row.id,
+                entity_id=row.entity_id,
+                quote=row.quote,
+                kind=row.kind.value,
+                locator=row.locator,
+                link_url=row.link_url,
+                entered_by=row.entered_by.value,
+                assignment_id=row.assignment_id,
+                page_url=webpage.url,
+                snapshot_id=snapshot.id,
+                snapshot_url=url,
+            )
+        )
+    return details

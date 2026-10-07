@@ -35,19 +35,42 @@ from public_atlas.modules.graph.models import (
     SourceAccess,
     Webpage,
 )
+from public_atlas.modules.graph.reading import (
+    HomepageRow,
+    InstitutionFilters,
+    InstitutionRow,
+    count_institutions,
+    descendant_place_ids,
+    get_place,
+    homepage_rows,
+    identifiers_of,
+    institution_children,
+    list_institutions,
+    list_places,
+    metrics_of,
+    place_parents,
+    served_places_of,
+    source_rows,
+    subject_of,
+)
 
 __all__ = [
     "MAX_MATCHES",
     "SIMILARITY_FLOOR",
+    "HomepageRow",
+    "InstitutionFilters",
+    "InstitutionRow",
     "Match",
     "add_alias",
     "aliases_of",
     "candidate_domain_name",
+    "count_institutions",
     "create_domain",
     "create_homepage",
     "create_institution",
     "create_place",
     "create_source",
+    "descendant_place_ids",
     "domain_by_name",
     "domain_of_host",
     "domain_of_webpage",
@@ -56,19 +79,31 @@ __all__ = [
     "entity_by_id",
     "find_institutions",
     "find_places",
+    "get_place",
+    "homepage_rows",
     "homepages_of",
     "host_of",
+    "identifiers_of",
+    "institution_children",
     "institutions_at",
     "is_domain_name",
     "is_trusted",
+    "label_of",
+    "list_institutions",
+    "list_places",
+    "metrics_of",
     "names_of",
     "normalize_url",
     "place_chain",
+    "place_parents",
     "redirect_chain",
     "redirected_from",
     "redirects_to",
+    "served_places_of",
     "similar_institutions",
     "similar_places",
+    "source_rows",
+    "subject_of",
     "trusted_path_of",
     "under_trusted_path",
     "verified_homepage_owner",
@@ -294,6 +329,20 @@ async def redirects_to(session: AsyncSession, start: str, target: str) -> bool:
 
 
 # --- Entities ---
+
+
+async def label_of(session: AsyncSession, entity: Entity) -> str:
+    """What to recognise an entity by in a list: a name, or a URL for a homepage or a source."""
+    match entity:
+        case Place() | Institution() | Domain():
+            return entity.name
+        case Homepage():
+            return (await session.get_one(Webpage, entity.webpage_id)).url
+        case Source():
+            webpage = await session.get_one(Webpage, entity.webpage_id)
+            return f"{entity.source_type} {webpage.url}"
+        case _:  # pragma: no cover - every kind is listed above
+            return str(entity.id)
 
 
 async def entity_by_id(session: AsyncSession, entity_id: uuid.UUID) -> Entity | None:

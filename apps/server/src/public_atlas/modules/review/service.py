@@ -17,7 +17,7 @@ from datetime import timedelta
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.db.base import utcnow
@@ -26,7 +26,6 @@ from public_atlas.modules.assignments.service import Spawn
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.models import InstitutionType
 from public_atlas.modules.evidence import service as evidence
-from public_atlas.modules.evidence.models import Snapshot
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
@@ -45,7 +44,6 @@ from public_atlas.shared.exceptions import ConflictError, NotFoundError, Unproce
 
 __all__ = [
     "Decision",
-    "EvidenceDetail",
     "ItemDetail",
     "Kind",
     "KindDecision",
@@ -53,7 +51,9 @@ __all__ = [
     "approve",
     "country_of",
     "decide_kind",
+    "entity_kind_of",
     "kind_of",
+    "labels_of",
     "list_items",
     "merge",
     "open_kinds",
@@ -174,20 +174,38 @@ async def _entity(session: AsyncSession, entity_id: uuid.UUID) -> Entity:
 # --- Reading ---
 
 
-async def list_items(
+async def list_items(  # noqa: PLR0913
     session: AsyncSession,
     *,
     status: ReviewStatus | None = ReviewStatus.OPEN,
     kind: str | None = None,
+    rule: str | None = None,
     limit: int = 100,
     offset: int = 0,
-) -> list[ReviewItem]:
-    query = select(ReviewItem).order_by(ReviewItem.id)
+) -> tuple[list[ReviewItem], int]:
+    """A page of items, oldest first, and how many match."""
+    query = select(ReviewItem)
     if status is not None:
         query = query.where(ReviewItem.status == status)
     if kind is not None:
         query = query.where(ReviewItem.kind == kind)
-    return list(await session.scalars(query.limit(limit).offset(offset)))
+    if rule is not None:
+        query = query.where(ReviewItem.rule == rule)
+    rows = await session.scalars(query.order_by(ReviewItem.id).limit(limit).offset(offset))
+    total = await session.scalar(select(func.count()).select_from(query.subquery()))
+    return list(rows), int(total or 0)
+
+
+async def entity_kind_of(session: AsyncSession, item: ReviewItem) -> EntityKind:
+    return (await _entity(session, item.entity_id)).kind
+
+
+async def labels_of(session: AsyncSession, items: Sequence[ReviewItem]) -> dict[uuid.UUID, str]:
+    """What to recognise each item's entity by, by item id."""
+    found: dict[uuid.UUID, str] = {}
+    for item in items:
+        found[item.id] = await graph.label_of(session, await _entity(session, item.entity_id))
+    return found
 
 
 async def get_item(session: AsyncSession, item_id: uuid.UUID) -> ReviewItem:
@@ -195,17 +213,6 @@ async def get_item(session: AsyncSession, item_id: uuid.UUID) -> ReviewItem:
     if item is None:
         raise NotFoundError("no such review item")
     return item
-
-
-@dataclass(frozen=True, slots=True)
-class EvidenceDetail:
-    quote: str
-    kind: str
-    locator: int | None
-    link_url: str | None
-    page_url: str
-    # A short-lived link to the stored copy; None once the copy was pruned.
-    snapshot_url: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -217,7 +224,7 @@ class ItemDetail:
     names: list[str]
     # The entity's own columns, as the reviewer sees them.
     entity: dict[str, Any]
-    evidence: list[EvidenceDetail]
+    evidence: list[evidence.EvidenceDetail]
 
 
 async def read_item(
@@ -225,25 +232,7 @@ async def read_item(
 ) -> ItemDetail:
     """The item with its entity and every quote for it, each linked to the stored page."""
     entity = await _entity(session, item.entity_id)
-    details: list[EvidenceDetail] = []
-    for row in await evidence.evidence_for(session, entity.id):
-        snapshot = await session.get_one(Snapshot, row.snapshot_id)
-        webpage = await session.get_one(Webpage, snapshot.webpage_id)
-        url = None
-        if snapshot.pruned_at is None:
-            url = await store.download_url(
-                snapshot.bytes_key, snapshot.filename or "snapshot", url_ttl
-            )
-        details.append(
-            EvidenceDetail(
-                quote=row.quote,
-                kind=row.kind.value,
-                locator=row.locator,
-                link_url=row.link_url,
-                page_url=webpage.url,
-                snapshot_url=url,
-            )
-        )
+    details = await evidence.evidence_details(session, store, [entity.id], url_ttl=url_ttl)
     names = (
         [alias.text for alias in await graph.names_of(session, entity)]
         if isinstance(entity, Place | Institution)
@@ -253,25 +242,11 @@ async def read_item(
         item=item,
         entity_kind=entity.kind,
         entity_status=entity.status.value,
-        label=await _label(session, entity),
+        label=await graph.label_of(session, entity),
         names=names,
         entity=await _columns(session, entity),
         evidence=details,
     )
-
-
-async def _label(session: AsyncSession, entity: Entity) -> str:
-    """What to recognise an entity by in a list."""
-    match entity:
-        case Place() | Institution() | Domain():
-            return entity.name
-        case Homepage():
-            return (await session.get_one(Webpage, entity.webpage_id)).url
-        case Source():
-            webpage = await session.get_one(Webpage, entity.webpage_id)
-            return f"{entity.source_type} {webpage.url}"
-        case _:  # pragma: no cover - every kind is listed above
-            return str(entity.id)
 
 
 async def _columns(session: AsyncSession, entity: Entity) -> dict[str, Any]:
@@ -483,7 +458,7 @@ async def open_kinds(session: AsyncSession) -> list[Kind]:
         kind.item_ids.append(item.id)
         if len(kind.names) < SAMPLE_NAMES:
             entity = await _entity(session, item.entity_id)
-            kind.names.append(await _label(session, entity))
+            kind.names.append(await graph.label_of(session, entity))
     return sorted(kinds.values(), key=lambda kind: (-kind.count, kind.kind))
 
 

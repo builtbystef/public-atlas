@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from public_atlas.modules.assignments.models import AssignmentType
 from public_atlas.modules.graph.models import EntityKind
+from public_atlas.modules.graph.schemas import EvidenceOutput
 from public_atlas.modules.review.models import ReviewStatus
 
 # A type name as the countries API takes one.
@@ -28,15 +29,11 @@ class ReviewItemOutput(BaseModel):
     note: str | None
 
 
-class EvidenceOutput(BaseModel):
-    quote: str
-    kind: str
-    locator: int | None
-    link_url: str | None
-    page_url: str
-    snapshot_url: str | None = Field(
-        description="A short-lived download link to the stored page or file; null once pruned."
-    )
+class ReviewItemRow(ReviewItemOutput):
+    """An item as the queue lists it: with what to recognise its entity by."""
+
+    entity_kind: EntityKind
+    label: str
 
 
 class ReviewItemDetail(ReviewItemOutput):

@@ -22,6 +22,15 @@ class EvalScoreOutput(BaseModel):
     false_positives: list[dict[str, Any]]
 
 
+class TypeSummary(BaseModel):
+    """One assignment type's scores over the subjects of a run: how many subjects were judged
+    on it, and the mean of their recall and precision (unweighted: each subject counts once)."""
+
+    subjects: int
+    mean_recall: float | None
+    mean_precision: float | None
+
+
 class EvalRunOutput(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -33,6 +42,7 @@ class EvalRunOutput(BaseModel):
     cost: Decimal
     started_at: datetime
     finished_at: datetime | None
+    summary: dict[AssignmentType, TypeSummary] = {}
 
 
 class EvalRunDetail(EvalRunOutput):

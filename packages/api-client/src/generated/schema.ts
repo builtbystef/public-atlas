@@ -236,6 +236,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/institutions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Institutions
+         * @description A page of institutions. `q` matches a name or an alias; `place_id` admits the place and
+         *     every place under it.
+         */
+        get: operations["graph-list_institutions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/institutions/{institution_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Institution
+         * @description The institution with its aliases, its place and the places above, its parent and the
+         *     bodies under it, every homepage claim, its sources, and every quote for any of them with a
+         *     link to the stored copy it was found on.
+         */
+        get: operations["graph-read_institution"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Places
+         * @description A page of places by name; `q` matches a name or an alias.
+         */
+        get: operations["graph-list_places"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/places/{place_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Place
+         * @description The place with the places above it and its government.
+         */
+        get: operations["graph-read_place"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/evidence/{evidence_id}/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Evidence Context
+         * @description The quote with the text around it on the stored copy. `found` is false when the stored
+         *     text no longer has the quote: the copy was pruned, or the quote matched the page's HTML.
+         */
+        get: operations["evidence-read_evidence_context"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/review-items": {
         parameters: {
             query?: never;
@@ -245,7 +349,7 @@ export interface paths {
         };
         /**
          * List Review Items
-         * @description The items, open ones by default, oldest first.
+         * @description A page of items, open ones by default, oldest first, each with its entity's name.
          */
         get: operations["review-list_review_items"];
         put?: never;
@@ -405,7 +509,7 @@ export interface paths {
         };
         /**
          * List Runs
-         * @description Every run, newest first.
+         * @description Every run, newest first, each with its progress and cost.
          */
         get: operations["runs-list_runs"];
         put?: never;
@@ -526,7 +630,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Assignments */
+        /**
+         * List Assignments
+         * @description A page of assignments by creation, oldest first unless `order` is `desc`, with their
+         *     subjects named.
+         */
         get: operations["runs-list_assignments"];
         put?: never;
         post?: never;
@@ -563,9 +671,30 @@ export interface paths {
         /**
          * Read Assignment Events
          * @description Everything the agent saw, said and did, in order: the prompt, its words, its tool calls
-         *     and their results, and the videos when recorded.
+         *     and their results, and the videos when recorded, each with a short-lived link to play it.
          */
         get: operations["runs-read_assignment_events"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/assignments/{assignment_id}/findings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Assignment Findings
+         * @description What the assignment saved: every quote it recorded, with the entity the quote is for and
+         *     a link to the stored page.
+         */
+        get: operations["runs-read_assignment_findings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -632,6 +761,16 @@ export interface components {
              */
             expected_institution_types: string[];
         };
+        /** AliasOutput */
+        AliasOutput: {
+            /** Text */
+            text: string;
+            /** Language */
+            language: string;
+            /** Is Acronym */
+            is_acronym: boolean;
+            entered_by: components["schemas"]["EnteredBy"];
+        };
         /** ApproveInput */
         ApproveInput: {
             /** Note */
@@ -657,6 +796,7 @@ export interface components {
              * Format: uuid
              */
             subject_id: string;
+            subject?: components["schemas"]["SubjectOutput"] | null;
             status: components["schemas"]["AssignmentStatus"];
             result: components["schemas"]["AssignmentResult"] | null;
             /** Budget Requests */
@@ -709,6 +849,7 @@ export interface components {
              * Format: uuid
              */
             subject_id: string;
+            subject?: components["schemas"]["SubjectOutput"] | null;
             status: components["schemas"]["AssignmentStatus"];
             result: components["schemas"]["AssignmentResult"] | null;
             /** Budget Requests */
@@ -815,10 +956,21 @@ export interface components {
             assignment_ids: string[];
         };
         /**
+         * EnteredBy
+         * @description How a row got here. On every entity and every evidence row.
+         * @enum {string}
+         */
+        EnteredBy: "manual" | "script" | "agent";
+        /**
          * EntityKind
          * @enum {string}
          */
         EntityKind: "place" | "institution" | "source" | "domain" | "homepage";
+        /**
+         * EntityStatus
+         * @enum {string}
+         */
+        EntityStatus: "candidate" | "verified" | "rejected" | "needs_review";
         /** EvalRunDetail */
         EvalRunDetail: {
             /**
@@ -848,6 +1000,13 @@ export interface components {
             started_at: string;
             /** Finished At */
             finished_at: string | null;
+            /**
+             * Summary
+             * @default {}
+             */
+            summary: {
+                [key: string]: components["schemas"]["TypeSummary"];
+            };
             /** Scores */
             scores: components["schemas"]["EvalScoreOutput"][];
         };
@@ -880,6 +1039,13 @@ export interface components {
             started_at: string;
             /** Finished At */
             finished_at: string | null;
+            /**
+             * Summary
+             * @default {}
+             */
+            summary: {
+                [key: string]: components["schemas"]["TypeSummary"];
+            };
         };
         /** EvalScoreOutput */
         EvalScoreOutput: {
@@ -932,9 +1098,21 @@ export interface components {
              * Format: date-time
              */
             at: string;
+            /** Video Url */
+            video_url?: string | null;
         };
         /** EvidenceOutput */
         EvidenceOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
             /** Quote */
             quote: string;
             /** Kind */
@@ -943,12 +1121,53 @@ export interface components {
             locator: number | null;
             /** Link Url */
             link_url: string | null;
+            /** Entered By */
+            entered_by: string;
+            /** Assignment Id */
+            assignment_id: string | null;
             /** Page Url */
             page_url: string;
+            /**
+             * Snapshot Id
+             * Format: uuid
+             */
+            snapshot_id: string;
             /**
              * Snapshot Url
              * @description A short-lived download link to the stored page or file; null once pruned.
              */
+            snapshot_url: string | null;
+        };
+        /**
+         * FindingOutput
+         * @description One thing the assignment saved, with the quote it gave for it.
+         */
+        FindingOutput: {
+            /**
+             * Evidence Id
+             * Format: uuid
+             */
+            evidence_id: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            entity_kind: components["schemas"]["EntityKind"];
+            entity_status: components["schemas"]["EntityStatus"];
+            /** Label */
+            label: string;
+            /** Institution Id */
+            institution_id: string | null;
+            /** Quote */
+            quote: string;
+            /** Kind */
+            kind: string;
+            /** Page Url */
+            page_url: string;
+            /** Link Url */
+            link_url: string | null;
+            /** Snapshot Url */
             snapshot_url: string | null;
         };
         /** HTTPValidationError */
@@ -960,6 +1179,135 @@ export interface components {
         Health: {
             /** Status */
             status: string;
+        };
+        /**
+         * HomepageOutput
+         * @description A homepage claim: every claim an institution made, verified or not.
+         */
+        HomepageOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Url */
+            url: string;
+            status: components["schemas"]["EntityStatus"];
+            entered_by: components["schemas"]["EnteredBy"];
+            /** Found On Url */
+            found_on_url: string | null;
+            /** Rejected Reason */
+            rejected_reason: string | null;
+            /** Trusted Path */
+            trusted_path: string | null;
+            /** Domain */
+            domain: string | null;
+            domain_status: components["schemas"]["EntityStatus"] | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** IdentifierOutput */
+        IdentifierOutput: {
+            /** Scheme */
+            scheme: string;
+            /** Value */
+            value: string;
+        };
+        /** InstitutionDetail */
+        InstitutionDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Institution Type */
+            institution_type: string;
+            /** Suggested Type */
+            suggested_type: string | null;
+            status: components["schemas"]["EntityStatus"];
+            entered_by: components["schemas"]["EnteredBy"];
+            place: components["schemas"]["PlaceRef"];
+            /** Parent Institution Id */
+            parent_institution_id: string | null;
+            procurement_handled_by: components["schemas"]["ProcurementHandledBy"];
+            /** Homepage Id */
+            homepage_id: string | null;
+            /** Homepage Url */
+            homepage_url: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Aliases */
+            aliases: components["schemas"]["AliasOutput"][];
+            /** Identifiers */
+            identifiers: components["schemas"]["IdentifierOutput"][];
+            /** Metrics */
+            metrics: components["schemas"]["MetricOutput"][];
+            /** Places */
+            places: components["schemas"]["PlaceRef"][];
+            parent: components["schemas"]["InstitutionRef"] | null;
+            /** Children */
+            children: components["schemas"]["InstitutionRef"][];
+            /** Served Places */
+            served_places: components["schemas"]["PlaceRef"][];
+            /** Homepages */
+            homepages: components["schemas"]["HomepageOutput"][];
+            /** Sources */
+            sources: components["schemas"]["SourceOutput"][];
+            /** Evidence */
+            evidence: components["schemas"]["EvidenceOutput"][];
+        };
+        /**
+         * InstitutionOutput
+         * @description An institution as the table lists it.
+         */
+        InstitutionOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Institution Type */
+            institution_type: string;
+            /** Suggested Type */
+            suggested_type: string | null;
+            status: components["schemas"]["EntityStatus"];
+            entered_by: components["schemas"]["EnteredBy"];
+            place: components["schemas"]["PlaceRef"];
+            /** Parent Institution Id */
+            parent_institution_id: string | null;
+            procurement_handled_by: components["schemas"]["ProcurementHandledBy"];
+            /** Homepage Id */
+            homepage_id: string | null;
+            /** Homepage Url */
+            homepage_url: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** InstitutionRef */
+        InstitutionRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Institution Type */
+            institution_type: string;
+            status: components["schemas"]["EntityStatus"];
         };
         /** InstitutionTypeInput */
         InstitutionTypeInput: {
@@ -1028,6 +1376,15 @@ export interface components {
              */
             into_id: string;
         };
+        /** MetricOutput */
+        MetricOutput: {
+            /** Name */
+            name: string;
+            /** Year */
+            year: number;
+            /** Value */
+            value: string;
+        };
         /**
          * NamingRules
          * @description How the country writes its public bodies' names, in its languages. A government's name is
@@ -1057,6 +1414,143 @@ export interface components {
              */
             and_words: string[];
         };
+        /** Page[AssignmentOutput] */
+        Page_AssignmentOutput_: {
+            /** Items */
+            items: components["schemas"]["AssignmentOutput"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[EvalRunOutput] */
+        Page_EvalRunOutput_: {
+            /** Items */
+            items: components["schemas"]["EvalRunOutput"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[InstitutionOutput] */
+        Page_InstitutionOutput_: {
+            /** Items */
+            items: components["schemas"]["InstitutionOutput"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[PlaceOutput] */
+        Page_PlaceOutput_: {
+            /** Items */
+            items: components["schemas"]["PlaceOutput"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[ReviewItemRow] */
+        Page_ReviewItemRow_: {
+            /** Items */
+            items: components["schemas"]["ReviewItemRow"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** Page[RunDetail] */
+        Page_RunDetail_: {
+            /** Items */
+            items: components["schemas"]["RunDetail"][];
+            /** Total */
+            total: number;
+            /** Limit */
+            limit: number;
+            /** Offset */
+            offset: number;
+        };
+        /** PlaceDetail */
+        PlaceDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Country Code */
+            country_code: string;
+            /** Administrative Level */
+            administrative_level: string;
+            /** Parent Place Id */
+            parent_place_id: string | null;
+            /** Government Institution Id */
+            government_institution_id: string | null;
+            status: components["schemas"]["EntityStatus"];
+            entered_by: components["schemas"]["EnteredBy"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Parents */
+            parents: components["schemas"]["PlaceRef"][];
+            government: components["schemas"]["InstitutionRef"] | null;
+        };
+        /** PlaceOutput */
+        PlaceOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Country Code */
+            country_code: string;
+            /** Administrative Level */
+            administrative_level: string;
+            /** Parent Place Id */
+            parent_place_id: string | null;
+            /** Government Institution Id */
+            government_institution_id: string | null;
+            status: components["schemas"]["EntityStatus"];
+            entered_by: components["schemas"]["EnteredBy"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** PlaceRef */
+        PlaceRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Administrative Level */
+            administrative_level: string;
+        };
+        /**
+         * ProcurementHandledBy
+         * @description Whether an institution buys on its own account or its parent buys for it.
+         * @enum {string}
+         */
+        ProcurementHandledBy: "self" | "parent";
         /**
          * Progress
          * @description How far a run has got and what it has spent.
@@ -1072,6 +1566,24 @@ export interface components {
             };
             /** Cost */
             cost: string;
+        };
+        /** QuoteContextOutput */
+        QuoteContextOutput: {
+            /**
+             * Evidence Id
+             * Format: uuid
+             */
+            evidence_id: string;
+            /** Found */
+            found: boolean;
+            /** Before */
+            before: string;
+            /** Quote */
+            quote: string;
+            /** After */
+            after: string;
+            /** Page */
+            page: number | null;
         };
         /**
          * ReleaseInput
@@ -1158,6 +1670,40 @@ export interface components {
             decided_at: string | null;
             /** Note */
             note: string | null;
+        };
+        /**
+         * ReviewItemRow
+         * @description An item as the queue lists it: with what to recognise its entity by.
+         */
+        ReviewItemRow: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Entity Id
+             * Format: uuid
+             */
+            entity_id: string;
+            /** Rule */
+            rule: string;
+            /** Question */
+            question: {
+                [key: string]: unknown;
+            };
+            /** Kind */
+            kind: string | null;
+            status: components["schemas"]["ReviewStatus"];
+            /** Raised By Assignment Id */
+            raised_by_assignment_id: string | null;
+            /** Decided At */
+            decided_at: string | null;
+            /** Note */
+            note: string | null;
+            entity_kind: components["schemas"]["EntityKind"];
+            /** Label */
+            label: string;
         };
         /**
          * ReviewStatus
@@ -1247,38 +1793,36 @@ export interface components {
          * @enum {string}
          */
         RunMode: "step" | "auto";
-        /** RunOutput */
-        RunOutput: {
+        /**
+         * RunStatus
+         * @enum {string}
+         */
+        RunStatus: "active" | "paused" | "stopped";
+        /**
+         * SourceAccess
+         * @enum {string}
+         */
+        SourceAccess: "public" | "login";
+        /** SourceOutput */
+        SourceOutput: {
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /** Name */
-            name: string;
-            /** Country Code */
-            country_code: string;
-            mode: components["schemas"]["RunMode"];
-            status: components["schemas"]["RunStatus"];
-            /** Filter */
-            filter: {
-                [key: string]: unknown;
-            };
-            /** Is Eval */
-            is_eval: boolean;
-            /** Record Video */
-            record_video: boolean;
+            /** Url */
+            url: string;
+            /** Source Type */
+            source_type: string;
+            access: components["schemas"]["SourceAccess"];
+            status: components["schemas"]["EntityStatus"];
+            entered_by: components["schemas"]["EnteredBy"];
             /**
              * Created At
              * Format: date-time
              */
             created_at: string;
         };
-        /**
-         * RunStatus
-         * @enum {string}
-         */
-        RunStatus: "active" | "paused" | "stopped";
         /** SourceTypeInput */
         SourceTypeInput: {
             /** Name */
@@ -1297,6 +1841,33 @@ export interface components {
              * Format: uuid
              */
             subject_id: string;
+        };
+        /**
+         * SubjectOutput
+         * @description The place or institution an assignment works on, by name.
+         */
+        SubjectOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["EntityKind"];
+            /** Name */
+            name: string;
+        };
+        /**
+         * TypeSummary
+         * @description One assignment type's scores over the subjects of a run: how many subjects were judged
+         *     on it, and the mean of their recall and precision (unweighted: each subject counts once).
+         */
+        TypeSummary: {
+            /** Subjects */
+            subjects: number;
+            /** Mean Recall */
+            mean_recall: number | null;
+            /** Mean Precision */
+            mean_precision: number | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -1319,6 +1890,7 @@ export interface components {
     pathItems: never;
 }
 export type AdministrativeLevelInput = components['schemas']['AdministrativeLevelInput'];
+export type AliasOutput = components['schemas']['AliasOutput'];
 export type ApproveInput = components['schemas']['ApproveInput'];
 export type AssignmentDetail = components['schemas']['AssignmentDetail'];
 export type AssignmentOutput = components['schemas']['AssignmentOutput'];
@@ -1330,35 +1902,59 @@ export type CountryOutput = components['schemas']['CountryOutput'];
 export type CountrySettingsInput = components['schemas']['CountrySettingsInput'];
 export type DecisionInput = components['schemas']['DecisionInput'];
 export type DecisionOutput = components['schemas']['DecisionOutput'];
+export type EnteredBy = components['schemas']['EnteredBy'];
 export type EntityKind = components['schemas']['EntityKind'];
+export type EntityStatus = components['schemas']['EntityStatus'];
 export type EvalRunDetail = components['schemas']['EvalRunDetail'];
 export type EvalRunOutput = components['schemas']['EvalRunOutput'];
 export type EvalScoreOutput = components['schemas']['EvalScoreOutput'];
 export type EventKind = components['schemas']['EventKind'];
 export type EventOutput = components['schemas']['EventOutput'];
 export type EvidenceOutput = components['schemas']['EvidenceOutput'];
+export type FindingOutput = components['schemas']['FindingOutput'];
 export type HttpValidationError = components['schemas']['HTTPValidationError'];
 export type Health = components['schemas']['Health'];
+export type HomepageOutput = components['schemas']['HomepageOutput'];
+export type IdentifierOutput = components['schemas']['IdentifierOutput'];
+export type InstitutionDetail = components['schemas']['InstitutionDetail'];
+export type InstitutionOutput = components['schemas']['InstitutionOutput'];
+export type InstitutionRef = components['schemas']['InstitutionRef'];
 export type InstitutionTypeInput = components['schemas']['InstitutionTypeInput'];
 export type KindApproveInput = components['schemas']['KindApproveInput'];
 export type KindDecisionInput = components['schemas']['KindDecisionInput'];
 export type KindDecisionOutput = components['schemas']['KindDecisionOutput'];
 export type KindOutput = components['schemas']['KindOutput'];
 export type MergeInput = components['schemas']['MergeInput'];
+export type MetricOutput = components['schemas']['MetricOutput'];
 export type NamingRules = components['schemas']['NamingRules'];
+export type PageAssignmentOutput = components['schemas']['Page_AssignmentOutput_'];
+export type PageEvalRunOutput = components['schemas']['Page_EvalRunOutput_'];
+export type PageInstitutionOutput = components['schemas']['Page_InstitutionOutput_'];
+export type PagePlaceOutput = components['schemas']['Page_PlaceOutput_'];
+export type PageReviewItemRow = components['schemas']['Page_ReviewItemRow_'];
+export type PageRunDetail = components['schemas']['Page_RunDetail_'];
+export type PlaceDetail = components['schemas']['PlaceDetail'];
+export type PlaceOutput = components['schemas']['PlaceOutput'];
+export type PlaceRef = components['schemas']['PlaceRef'];
+export type ProcurementHandledBy = components['schemas']['ProcurementHandledBy'];
 export type Progress = components['schemas']['Progress'];
+export type QuoteContextOutput = components['schemas']['QuoteContextOutput'];
 export type ReleaseInput = components['schemas']['ReleaseInput'];
 export type ReviewItemDetail = components['schemas']['ReviewItemDetail'];
 export type ReviewItemOutput = components['schemas']['ReviewItemOutput'];
+export type ReviewItemRow = components['schemas']['ReviewItemRow'];
 export type ReviewStatus = components['schemas']['ReviewStatus'];
 export type RunDetail = components['schemas']['RunDetail'];
 export type RunFilter = components['schemas']['RunFilter'];
 export type RunInput = components['schemas']['RunInput'];
 export type RunMode = components['schemas']['RunMode'];
-export type RunOutput = components['schemas']['RunOutput'];
 export type RunStatus = components['schemas']['RunStatus'];
+export type SourceAccess = components['schemas']['SourceAccess'];
+export type SourceOutput = components['schemas']['SourceOutput'];
 export type SourceTypeInput = components['schemas']['SourceTypeInput'];
 export type SpawnOutput = components['schemas']['SpawnOutput'];
+export type SubjectOutput = components['schemas']['SubjectOutput'];
+export type TypeSummary = components['schemas']['TypeSummary'];
 export type ValidationError = components['schemas']['ValidationError'];
 export type $defs = Record<string, never>;
 export interface operations {
@@ -1385,7 +1981,10 @@ export interface operations {
     "health-read_health_db": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1398,6 +1997,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Health"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -1425,7 +2033,10 @@ export interface operations {
     "countries-list_countries": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1440,12 +2051,24 @@ export interface operations {
                     "application/json": components["schemas"]["CountrySettingsInput"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     "countries-read_country": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 country_code: string;
             };
@@ -1476,7 +2099,10 @@ export interface operations {
     "countries-put_country_settings": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 country_code: string;
             };
@@ -1511,7 +2137,10 @@ export interface operations {
     "countries-put_administrative_level": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 country_code: string;
                 name: string;
@@ -1547,7 +2176,10 @@ export interface operations {
     "countries-delete_administrative_level": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 country_code: string;
                 name: string;
@@ -1577,7 +2209,10 @@ export interface operations {
     "countries-put_country_institution_type": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 country_code: string;
                 institution_type: string;
@@ -1613,7 +2248,10 @@ export interface operations {
     "countries-delete_country_institution_type": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 country_code: string;
                 institution_type: string;
@@ -1643,7 +2281,10 @@ export interface operations {
     "countries-list_institution_types": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1658,12 +2299,24 @@ export interface operations {
                     "application/json": components["schemas"]["InstitutionTypeInput"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     "countries-put_institution_type": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 name: string;
             };
@@ -1698,7 +2351,10 @@ export interface operations {
     "countries-delete_institution_type": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 name: string;
             };
@@ -1727,7 +2383,10 @@ export interface operations {
     "countries-list_source_types": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1742,12 +2401,24 @@ export interface operations {
                     "application/json": components["schemas"]["SourceTypeInput"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     "countries-put_source_type": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 name: string;
             };
@@ -1782,7 +2453,10 @@ export interface operations {
     "countries-delete_source_type": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 name: string;
             };
@@ -1808,15 +2482,25 @@ export interface operations {
             };
         };
     };
-    "review-list_review_items": {
+    "graph-list_institutions": {
         parameters: {
             query?: {
-                status?: components["schemas"]["ReviewStatus"] | null;
-                kind?: string | null;
+                q?: string | null;
+                country_code?: string | null;
+                place_id?: string | null;
+                administrative_level?: string | null;
+                institution_type?: string | null;
+                status?: components["schemas"]["EntityStatus"] | null;
+                parent_institution_id?: string | null;
+                sort?: "name" | "institution_type" | "status" | "created_at" | "place";
+                order?: "asc" | "desc";
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1828,7 +2512,186 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReviewItemOutput"][];
+                    "application/json": components["schemas"]["Page_InstitutionOutput_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "graph-read_institution": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                institution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstitutionDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "graph-list_places": {
+        parameters: {
+            query?: {
+                q?: string | null;
+                country_code?: string | null;
+                administrative_level?: string | null;
+                parent_place_id?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_PlaceOutput_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "graph-read_place": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                place_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "evidence-read_evidence_context": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                evidence_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuoteContextOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-list_review_items": {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["ReviewStatus"] | null;
+                kind?: string | null;
+                rule?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_ReviewItemRow_"];
                 };
             };
             /** @description Validation Error */
@@ -1845,7 +2708,10 @@ export interface operations {
     "review-list_review_kinds": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1860,12 +2726,24 @@ export interface operations {
                     "application/json": components["schemas"]["KindOutput"][];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     "review-approve_review_kind": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1898,7 +2776,10 @@ export interface operations {
     "review-reject_review_kind": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -1931,7 +2812,10 @@ export interface operations {
     "review-read_review_item": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 review_item_id: string;
             };
@@ -1962,7 +2846,10 @@ export interface operations {
     "review-approve_review_item": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 review_item_id: string;
             };
@@ -1997,7 +2884,10 @@ export interface operations {
     "review-reject_review_item": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 review_item_id: string;
             };
@@ -2032,7 +2922,10 @@ export interface operations {
     "review-merge_review_item": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 review_item_id: string;
             };
@@ -2070,7 +2963,10 @@ export interface operations {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2082,7 +2978,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RunOutput"][];
+                    "application/json": components["schemas"]["Page_RunDetail_"];
                 };
             };
             /** @description Validation Error */
@@ -2099,7 +2995,10 @@ export interface operations {
     "runs-create_run": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2132,7 +3031,10 @@ export interface operations {
     "runs-read_run": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -2163,7 +3065,10 @@ export interface operations {
     "runs-pause_run": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -2194,7 +3099,10 @@ export interface operations {
     "runs-resume_run": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -2225,7 +3133,10 @@ export interface operations {
     "runs-stop_run": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -2256,7 +3167,10 @@ export interface operations {
     "runs-release_assignments": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 run_id: string;
             };
@@ -2293,12 +3207,17 @@ export interface operations {
             query?: {
                 run_id?: string | null;
                 status?: components["schemas"]["AssignmentStatus"] | null;
+                result?: components["schemas"]["AssignmentResult"] | null;
                 type?: components["schemas"]["AssignmentType"] | null;
                 subject_id?: string | null;
+                order?: string;
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2310,7 +3229,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AssignmentOutput"][];
+                    "application/json": components["schemas"]["Page_AssignmentOutput_"];
                 };
             };
             /** @description Validation Error */
@@ -2327,7 +3246,10 @@ export interface operations {
     "runs-read_assignment": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 assignment_id: string;
             };
@@ -2358,7 +3280,10 @@ export interface operations {
     "runs-read_assignment_events": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 assignment_id: string;
             };
@@ -2386,13 +3311,50 @@ export interface operations {
             };
         };
     };
+    "runs-read_assignment_findings": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FindingOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     "evals-list_eval_runs": {
         parameters: {
             query?: {
                 limit?: number;
                 offset?: number;
             };
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2404,7 +3366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["EvalRunOutput"][];
+                    "application/json": components["schemas"]["Page_EvalRunOutput_"];
                 };
             };
             /** @description Validation Error */
@@ -2421,7 +3383,10 @@ export interface operations {
     "evals-read_eval_run": {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
             path: {
                 eval_run_id: string;
             };

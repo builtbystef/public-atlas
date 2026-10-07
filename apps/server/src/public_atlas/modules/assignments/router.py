@@ -3,22 +3,35 @@ a mode, pause, resume and stop it, release held assignments, and read a run's pr
 cost; list assignments with filters and read one with its events, spend and result."""
 
 import uuid
+from collections.abc import Sequence
 from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from public_atlas.dependencies import ResourcesDep, SessionDep
+from public_atlas.dependencies import ObjectStoreDep, ResourcesDep, SessionDep, SettingsDep
+from public_atlas.modules.agent.models import EventKind
 from public_atlas.modules.assignments import service
-from public_atlas.modules.assignments.models import AssignmentStatus, AssignmentType
+from public_atlas.modules.assignments.models import (
+    Assignment,
+    AssignmentResult,
+    AssignmentStatus,
+    AssignmentType,
+)
 from public_atlas.modules.assignments.schemas import (
     AssignmentDetail,
     AssignmentOutput,
     EventOutput,
+    FindingOutput,
     ReleaseInput,
     RunDetail,
     RunInput,
     RunOutput,
+    SubjectOutput,
 )
+from public_atlas.modules.evidence import service as evidence
+from public_atlas.modules.graph import service as graph
+from public_atlas.modules.graph.models import Homepage, Source
+from public_atlas.shared.pagination import Page
 
 router = APIRouter(tags=["runs"])
 
@@ -30,15 +43,37 @@ async def _detail(session: SessionDep, run_id: uuid.UUID) -> RunDetail:
     )
 
 
+async def _outputs(session: SessionDep, rows: Sequence[Assignment]) -> list[AssignmentOutput]:
+    """The assignments with their subjects named."""
+    subjects = await service.subjects_of(session, rows)
+    outputs: list[AssignmentOutput] = []
+    for row in rows:
+        output = AssignmentOutput.model_validate(row)
+        subject = subjects.get(row.subject_id)
+        if subject is not None:
+            output.subject = SubjectOutput(id=subject.id, kind=subject.kind, name=subject.name)
+        outputs.append(output)
+    return outputs
+
+
 @router.get("/runs")
 async def list_runs(
     session: SessionDep,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[RunOutput]:
-    """Every run, newest first."""
-    runs = await service.list_runs(session, limit=limit, offset=offset)
-    return [RunOutput.model_validate(run) for run in runs]
+) -> Page[RunDetail]:
+    """Every run, newest first, each with its progress and cost."""
+    runs, total = await service.list_runs(session, limit=limit, offset=offset)
+    progress = await service.progress_many(session, [run.id for run in runs])
+    return Page(
+        items=[
+            RunDetail(**RunOutput.model_validate(run).model_dump(), progress=progress[run.id])
+            for run in runs
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.post("/runs", status_code=201)
@@ -103,7 +138,7 @@ async def release_assignments(
         assignment_ids=body.assignment_ids,
     )
     await session.commit()
-    return [AssignmentOutput.model_validate(assignment) for assignment in released]
+    return await _outputs(session, released)
 
 
 @router.get("/assignments")
@@ -111,39 +146,97 @@ async def list_assignments(  # noqa: PLR0913, PLR0917 - one argument per filter
     session: SessionDep,
     run_id: Annotated[uuid.UUID | None, Query()] = None,
     status: Annotated[AssignmentStatus | None, Query()] = None,
+    result: Annotated[AssignmentResult | None, Query()] = None,
     type: Annotated[AssignmentType | None, Query()] = None,  # noqa: A002 - the column's name
     subject_id: Annotated[uuid.UUID | None, Query()] = None,
+    order: Annotated[str, Query(pattern="^(asc|desc)$")] = "asc",
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[AssignmentOutput]:
+) -> Page[AssignmentOutput]:
+    """A page of assignments by creation, oldest first unless `order` is `desc`, with their
+    subjects named."""
+    filters = {
+        "run_id": run_id,
+        "status": status,
+        "result": result,
+        "assignment_type": type,
+        "subject_id": subject_id,
+    }
     rows = await service.list_assignments(
-        session,
-        run_id=run_id,
-        status=status,
-        assignment_type=type,
-        subject_id=subject_id,
+        session, newest_first=order == "desc", limit=limit, offset=offset, **filters
+    )
+    return Page(
+        items=await _outputs(session, rows),
+        total=await service.count_assignments(session, **filters),
         limit=limit,
         offset=offset,
     )
-    return [AssignmentOutput.model_validate(row) for row in rows]
 
 
 @router.get("/assignments/{assignment_id}")
 async def read_assignment(assignment_id: uuid.UUID, session: SessionDep) -> AssignmentDetail:
     assignment = await service.get_assignment(session, assignment_id)
+    (output,) = await _outputs(session, [assignment])
     return AssignmentDetail(
-        **AssignmentOutput.model_validate(assignment).model_dump(),
-        cost=await service.assignment_cost(session, assignment.id),
+        **output.model_dump(), cost=await service.assignment_cost(session, assignment.id)
     )
 
 
 @router.get("/assignments/{assignment_id}/events")
 async def read_assignment_events(
-    assignment_id: uuid.UUID, session: SessionDep
+    assignment_id: uuid.UUID, session: SessionDep, store: ObjectStoreDep, settings: SettingsDep
 ) -> list[EventOutput]:
     """Everything the agent saw, said and did, in order: the prompt, its words, its tool calls
-    and their results, and the videos when recorded."""
+    and their results, and the videos when recorded, each with a short-lived link to play it."""
     await service.get_assignment(session, assignment_id)
-    return [
-        EventOutput.model_validate(row) for row in await service.events_of(session, assignment_id)
-    ]
+    outputs: list[EventOutput] = []
+    for row in await service.events_of(session, assignment_id):
+        output = EventOutput.model_validate(row)
+        key = row.content.get("key") if row.kind is EventKind.VIDEO else None
+        if key:
+            output.video_url = await store.download_url(
+                str(key), f"session-{row.session}-{row.position}.webm", settings.storage_url_ttl
+            )
+        outputs.append(output)
+    return outputs
+
+
+@router.get("/assignments/{assignment_id}/findings")
+async def read_assignment_findings(
+    assignment_id: uuid.UUID, session: SessionDep, store: ObjectStoreDep, settings: SettingsDep
+) -> list[FindingOutput]:
+    """What the assignment saved: every quote it recorded, with the entity the quote is for and
+    a link to the stored page."""
+    await service.get_assignment(session, assignment_id)
+    rows = await evidence.findings_of(session, assignment_id)
+    details = {
+        detail.id: detail
+        for detail in await evidence.evidence_details(
+            session, store, {row.entity_id for row in rows}, url_ttl=settings.storage_url_ttl
+        )
+    }
+    findings: list[FindingOutput] = []
+    for row in rows:
+        entity = await graph.entity_by_id(session, row.entity_id)
+        detail = details.get(row.id)
+        if entity is None or detail is None:  # pragma: no cover - the keys hold both
+            continue
+        institution_id = (
+            entity.institution_id if isinstance(entity, Homepage | Source) else entity.id
+        )
+        findings.append(
+            FindingOutput(
+                evidence_id=row.id,
+                entity_id=entity.id,
+                entity_kind=entity.kind,
+                entity_status=entity.status,
+                label=await graph.label_of(session, entity),
+                institution_id=institution_id if entity.kind != "place" else None,
+                quote=row.quote,
+                kind=row.kind.value,
+                page_url=detail.page_url,
+                link_url=row.link_url,
+                snapshot_url=detail.snapshot_url,
+            )
+        )
+    return findings

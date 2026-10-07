@@ -9,6 +9,7 @@ from fastapi import APIRouter, Query
 from public_atlas.dependencies import SessionDep
 from public_atlas.modules.evals import service
 from public_atlas.modules.evals.schemas import EvalRunDetail, EvalRunOutput
+from public_atlas.shared.pagination import Page
 
 router = APIRouter(prefix="/eval-runs", tags=["evals"])
 
@@ -18,9 +19,10 @@ async def list_eval_runs(
     session: SessionDep,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[EvalRunOutput]:
+) -> Page[EvalRunOutput]:
     """Every eval run, newest first."""
-    return await service.list_eval_runs(session, limit=limit, offset=offset)
+    items, total = await service.list_eval_runs(session, limit=limit, offset=offset)
+    return Page(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.get("/{eval_run_id}")

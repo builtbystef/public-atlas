@@ -11,6 +11,7 @@ from pathlib import Path
 
 from pydantic import Field, HttpUrl, PostgresDsn, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import make_url
 
 from public_atlas.integrations.parse import ParseProvider
 from public_atlas.integrations.search import SearchProvider
@@ -143,3 +144,20 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env", env_prefix="PUBLIC_ATLAS_", env_ignore_empty=True
     )
+
+    @property
+    def database_name(self) -> str | None:
+        return make_url(str(self.database_url)).database
+
+    @property
+    def has_eval_database(self) -> bool:
+        """Whether the eval database is a database of its own: the eval harness refuses to run
+        on the main one, and the API offers the switch only when there is one to switch to."""
+        return self.database_name != self.eval_database_name
+
+    def eval_settings(self) -> Settings:
+        """The same settings on the eval database (spec section 10)."""
+        url = make_url(str(self.database_url)).set(database=self.eval_database_name)
+        return self.model_copy(
+            update={"database_url": PostgresDsn(url.render_as_string(hide_password=False))}
+        )

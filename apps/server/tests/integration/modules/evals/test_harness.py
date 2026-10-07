@@ -439,10 +439,17 @@ def test_results_are_recorded_and_read_back(
     }
     assert by_type[FIND_SOURCES].precision is None  # nothing saved, nothing wrong
     listed = client.get("/eval-runs").json()
-    assert [row["id"] for row in listed] == [str(eval_run_id)]
+    assert [row["id"] for row in listed["items"]] == [str(eval_run_id)]
     assert [entry["bucket"] for entry in by_type[FIND_HOMEPAGE].misses] == ["institution not found"]
     page = client.get(f"/eval-runs/{eval_run_id}").json()
     assert len(page["scores"]) == 3
+    # The per-type means the console shows, on the list and the detail alike.
+    assert page["summary"]["find_institutions"] == {
+        "subjects": 1,
+        "mean_recall": 0.0,
+        "mean_precision": None,
+    }
+    assert listed["items"][0]["summary"] == page["summary"]
     assert client.get(f"/eval-runs/{uuid.uuid4()}").status_code == 404
 
 
@@ -579,7 +586,8 @@ def test_an_eval_run_end_to_end_records_its_scores_and_cost(
     assert second.eval_run_id != first.eval_run_id
 
     async def listed(session: AsyncSession) -> list[uuid.UUID]:
-        return [row.id for row in await evals.list_eval_runs(session)]
+        rows, _ = await evals.list_eval_runs(session)
+        return [row.id for row in rows]
 
     assert in_session(listed) == [second.eval_run_id, first.eval_run_id]
 

@@ -41,6 +41,7 @@ from public_atlas.modules.graph.models import EnteredBy
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from fastapi.testclient import TestClient
     from tests.integration.conftest import Database, InlineConnector
     from tests.integration.modules.conftest import Build, Script, World
 
@@ -524,6 +525,7 @@ def test_finishing_spawns_the_homepage_searches_and_prunes_uncited_pages(
 
 
 def test_a_recording_run_stores_the_videos_and_notes_them(
+    client: TestClient,
     db: Database,
     world: World,
     object_store: MemoryObjectStore,
@@ -562,3 +564,8 @@ def test_a_recording_run_stores_the_videos_and_notes_them(
     # The recording directory is gone with its files.
     assert not recording.exists()
     shutil.rmtree(tmp_path, ignore_errors=True)
+    # The API links the video to play it, and nothing else.
+    listed = client.get(f"/assignments/{assignment.id}/events").json()
+    played = [event for event in listed if event["video_url"] is not None]
+    assert [event["kind"] for event in played] == ["video"]
+    assert played[0]["video_url"].startswith("memory://videos/")

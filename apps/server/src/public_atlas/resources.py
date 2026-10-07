@@ -30,12 +30,22 @@ if TYPE_CHECKING:
 KEY = "resources"
 
 
+class EvalDatabaseUnavailableError(LookupError):
+    """The eval database is the main database, so there is nothing to switch to."""
+
+    def __init__(self) -> None:
+        super().__init__("no eval database is configured apart from the main one")
+
+
 @dataclass(frozen=True, slots=True)
 class Resources:
     settings: Settings
     engine: AsyncEngine
     # Tests swap in a factory whose sessions join one transaction.
     session_factory: Callable[[], AsyncSession]
+    # Sessions on the eval database (spec section 10), for the console to read the graph an eval
+    # run built; None when the eval database is the main one. Connects on first use.
+    eval_session_factory: Callable[[], AsyncSession] | None
     object_store: ObjectStore
     # The job queue: `defer` queues through it and the worker serves it.
     jobs: App
@@ -49,6 +59,12 @@ class Resources:
     def session(self) -> AsyncSession:
         """A new session. One per request or job run; commit explicitly."""
         return self.session_factory()
+
+    def eval_session(self) -> AsyncSession:
+        """A new session on the eval database. Raises when there is none."""
+        if self.eval_session_factory is None:
+            raise EvalDatabaseUnavailableError
+        return self.eval_session_factory()
 
 
 @asynccontextmanager
@@ -67,8 +83,11 @@ async def build_resources(  # noqa: PLR0913 - one argument per double
     their own."""
     engine = create_engine(settings)
     jobs = create_app(settings, connector=jobs_connector)
+    eval_engine = create_engine(settings.eval_settings()) if settings.has_eval_database else None
     async with AsyncExitStack() as stack:
         stack.push_async_callback(engine.dispose)
+        if eval_engine is not None:
+            stack.push_async_callback(eval_engine.dispose)
         if object_store is None:
             object_store = await stack.enter_async_context(create_object_store(settings))
         await stack.enter_async_context(jobs.open_async())
@@ -77,6 +96,11 @@ async def build_resources(  # noqa: PLR0913 - one argument per double
             engine=engine,
             # Attributes stay readable after commit; async code cannot lazy-reload them.
             session_factory=async_sessionmaker(engine, expire_on_commit=False),
+            eval_session_factory=(
+                async_sessionmaker(eval_engine, expire_on_commit=False)
+                if eval_engine is not None
+                else None
+            ),
             object_store=object_store,
             jobs=jobs,
             searcher=searcher if searcher is not None else create_searcher(settings),
@@ -96,4 +120,11 @@ def resources_of(context: JobContext) -> Resources:
     return found
 
 
-__all__ = ["KEY", "Resources", "build_resources", "resources_of", "worker_context"]
+__all__ = [
+    "KEY",
+    "EvalDatabaseUnavailableError",
+    "Resources",
+    "build_resources",
+    "resources_of",
+    "worker_context",
+]

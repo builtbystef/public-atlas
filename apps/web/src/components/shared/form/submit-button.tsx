@@ -14,7 +14,7 @@ export function SubmitButton({
   requireChanges = false,
 }: {
   children: ReactNode;
-  className?: string;
+  className?: string | undefined;
   /** Beyond "while submitting": when the form can no longer succeed. */
   disabled?: boolean;
   /** For edit forms: there is nothing to save until a value differs from the record. */

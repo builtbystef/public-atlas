@@ -34,4 +34,14 @@ test("API_URL overrides the base URL for every request", async () => {
   expect(data).toEqual({ status: "ok" });
   const request = fetch.mock.calls[0]?.[0] as Request | undefined;
   expect(request?.url).toBe("https://api.example.test/health");
+  expect(request?.headers.get("x-database")).toBe("main");
+});
+
+test("the chosen database goes in the X-Database header", async () => {
+  const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json({ status: "ok" }));
+
+  await createApi(fetch, "eval").GET("/health/db");
+
+  const request = fetch.mock.calls[0]?.[0] as Request | undefined;
+  expect(request?.headers.get("x-database")).toBe("eval");
 });

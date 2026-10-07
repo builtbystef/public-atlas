@@ -88,13 +88,13 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 6: console
 
-- [ ] Regenerate the API client from the new routes.
-- [ ] Runs list and detail: create, pause, stop, release held, progress by status, cost.
-- [ ] Assignments list and detail: filters, the event timeline, video playback, findings, spend, result.
-- [ ] Institutions table with search and filters; institution detail with aliases, parent, homepage, sources by type, evidence quotes linked to presigned snapshot downloads.
-- [ ] Review queue: items with snapshot and highlighted quote; approve, reject, merge; kinds decided together.
-- [ ] Countries pages: country settings, administrative levels, institution types, source types, a country's expected sources per type.
-- [ ] Evals page: runs over time, scores per type, cost.
+- [x] Regenerate the API client from the new routes.
+- [x] Runs list and detail: create, pause, stop, release held, progress by status, cost.
+- [x] Assignments list and detail: filters, the event timeline, video playback, findings, spend, result.
+- [x] Institutions table with search and filters; institution detail with aliases, parent, homepage, sources by type, evidence quotes linked to presigned snapshot downloads.
+- [x] Review queue: items with snapshot and highlighted quote; approve, reject, merge; kinds decided together.
+- [x] Countries pages: country settings, administrative levels, institution types, source types, a country's expected sources per type.
+- [x] Evals page: runs over time, scores per type, cost.
 
 **Done when** every page works against the live database and the eval database, and `vp run check` and `vp run test` pass.
 

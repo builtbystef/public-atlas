@@ -53,5 +53,12 @@ export default defineConfig({
   },
   run: {
     cache: true,
+    tasks: {
+      // A task, not a script, so it can opt out of caching for good: the runner traces a
+      // cached command's file reads with a preloaded library, which Chromium's sandboxed
+      // renderers crash on, and the browser tests then find their tab closed. The suite
+      // reads a database and starts a browser, so a cache would not be right anyway.
+      "test:py": { command: "uv run pytest", cache: false },
+    },
   },
 });

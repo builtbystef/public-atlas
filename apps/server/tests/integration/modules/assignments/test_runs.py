@@ -87,7 +87,8 @@ def test_the_filter_bounds_what_a_run_seeds(db: Database, world: World, queue: I
 
     async def stop_it() -> None:
         async with db.session() as session:
-            for run in await service.list_runs(session):
+            runs, _ = await service.list_runs(session)
+            for run in runs:
                 if run.status is not RunStatus.STOPPED:
                     await service.stop_run(session, run)
             await session.commit()
@@ -343,7 +344,9 @@ def test_the_runs_api_creates_controls_and_reads_runs(
     assert run["progress"] == {"by_status": {"held": 3}, "by_result": {}, "cost": "0"}
 
     listed = client.get("/assignments", params={"run_id": run["id"], "status": "held"}).json()
-    assert len(listed) == 3
+    assert listed["total"] == 3
+    assert len(listed["items"]) == 3
+    assert {row["subject"]["kind"] for row in listed["items"]} == {"institution"}
     released = client.post(
         f"/runs/{run['id']}/release", json={"limit": 1, "assignment_type": "find_sources"}
     ).json()
@@ -378,7 +381,9 @@ def test_the_runs_api_creates_controls_and_reads_runs(
         "cancelled": 2,
         "finished": 1,
     }
-    assert next(row["id"] for row in client.get("/runs").json()) == run["id"]
+    runs = client.get("/runs").json()
+    assert runs["items"][0]["id"] == run["id"]
+    assert runs["items"][0]["progress"]["by_status"] == {"cancelled": 2, "finished": 1}
     assert client.get(f"/runs/{uuid.uuid7()}").status_code == 404
 
 

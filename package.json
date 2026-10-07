@@ -14,7 +14,6 @@
     "check:py:fix": "uv run ruff check --fix . && uv run ruff format . && uv run ty check",
     "test": "vp run test:ts && vp run test:py",
     "test:ts": "vp test",
-    "test:py": "uv run pytest",
     "build": "vp run -r build",
     "infra:up": "cd apps/server && docker compose up --detach --wait",
     "infra:down": "cd apps/server && docker compose down",

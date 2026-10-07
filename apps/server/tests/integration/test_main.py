@@ -7,23 +7,29 @@ if TYPE_CHECKING:
     from fastapi.testclient import TestClient
 
 
-def test_the_app_has_the_health_countries_review_runs_and_evals_routes(client: TestClient):
+def test_the_app_has_the_health_countries_graph_review_runs_and_evals_routes(client: TestClient):
     schema = client.get("/openapi.json").json()
     assert sorted(schema["paths"]) == [
         "/assignments",
         "/assignments/{assignment_id}",
         "/assignments/{assignment_id}/events",
+        "/assignments/{assignment_id}/findings",
         "/countries",
         "/countries/{country_code}",
         "/countries/{country_code}/administrative-levels/{name}",
         "/countries/{country_code}/institution-types/{institution_type}",
         "/eval-runs",
         "/eval-runs/{eval_run_id}",
+        "/evidence/{evidence_id}/context",
         "/health",
         "/health/db",
         "/health/storage",
         "/institution-types",
         "/institution-types/{name}",
+        "/institutions",
+        "/institutions/{institution_id}",
+        "/places",
+        "/places/{place_id}",
         "/review-items",
         "/review-items/kinds",
         "/review-items/kinds/approve",

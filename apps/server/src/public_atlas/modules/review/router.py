@@ -24,8 +24,10 @@ from public_atlas.modules.review.schemas import (
     MergeInput,
     ReviewItemDetail,
     ReviewItemOutput,
+    ReviewItemRow,
     SpawnOutput,
 )
+from public_atlas.shared.pagination import Page
 
 router = APIRouter(prefix="/review-items", tags=["review"])
 
@@ -83,16 +85,33 @@ async def _kind_decision(
 
 
 @router.get("")
-async def list_review_items(
+async def list_review_items(  # noqa: PLR0913, PLR0917 - one argument per filter
     session: SessionDep,
     status: Annotated[ReviewStatus | None, Query()] = ReviewStatus.OPEN,
     kind: Annotated[str | None, Query(max_length=300)] = None,
+    rule: Annotated[str | None, Query(max_length=100)] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> list[ReviewItemOutput]:
-    """The items, open ones by default, oldest first."""
-    items = await service.list_items(session, status=status, kind=kind, limit=limit, offset=offset)
-    return [ReviewItemOutput.model_validate(item) for item in items]
+) -> Page[ReviewItemRow]:
+    """A page of items, open ones by default, oldest first, each with its entity's name."""
+    items, total = await service.list_items(
+        session, status=status, kind=kind, rule=rule, limit=limit, offset=offset
+    )
+    labels = await service.labels_of(session, items)
+    kinds = {item.id: await service.entity_kind_of(session, item) for item in items}
+    return Page(
+        items=[
+            ReviewItemRow(
+                **ReviewItemOutput.model_validate(item).model_dump(),
+                entity_kind=kinds[item.id],
+                label=labels[item.id],
+            )
+            for item in items
+        ],
+        total=total,
+        limit=limit,
+        offset=offset,
+    )
 
 
 # Declared before `/{review_item_id}`, or "kinds" would be read as an id.
@@ -149,15 +168,7 @@ async def read_review_item(
         names=detail.names,
         entity=detail.entity,
         evidence=[
-            EvidenceOutput(
-                quote=row.quote,
-                kind=row.kind,
-                locator=row.locator,
-                link_url=row.link_url,
-                page_url=row.page_url,
-                snapshot_url=row.snapshot_url,
-            )
-            for row in detail.evidence
+            EvidenceOutput.model_validate(row, from_attributes=True) for row in detail.evidence
         ],
     )
 

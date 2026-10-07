@@ -35,6 +35,26 @@
         "summary": "Read Health Db",
         "description": "Readiness: the database answers.",
         "operationId": "health-read_health_db",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -42,6 +62,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -78,17 +108,47 @@
         ],
         "summary": "List Countries",
         "operationId": "countries-list_countries",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/CountrySettingsInput"
                   },
-                  "type": "array",
                   "title": "Response Countries-List Countries"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -113,6 +173,24 @@
               "type": "string",
               "title": "Country Code"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -154,6 +232,24 @@
               "type": "string",
               "title": "Country Code"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -216,6 +312,24 @@
               "type": "string",
               "title": "Name"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -276,6 +390,24 @@
               "type": "string",
               "title": "Name"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -321,6 +453,24 @@
               "type": "string",
               "title": "Institution Type"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -381,6 +531,24 @@
               "type": "string",
               "title": "Institution Type"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -408,17 +576,47 @@
         "summary": "List Institution Types",
         "description": "Global: one `hospital` for every country.",
         "operationId": "countries-list_institution_types",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/InstitutionTypeInput"
                   },
-                  "type": "array",
                   "title": "Response Countries-List Institution Types"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -443,6 +641,24 @@
               "type": "string",
               "title": "Name"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -494,6 +710,24 @@
               "type": "string",
               "title": "Name"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -520,17 +754,47 @@
         ],
         "summary": "List Source Types",
         "operationId": "countries-list_source_types",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/SourceTypeInput"
                   },
-                  "type": "array",
                   "title": "Response Countries-List Source Types"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -555,6 +819,24 @@
               "type": "string",
               "title": "Name"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -606,11 +888,582 @@
               "type": "string",
               "title": "Name"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/institutions": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "List Institutions",
+        "description": "A page of institutions. `q` matches a name or an alias; `place_id` admits the place and\nevery place under it.",
+        "operationId": "graph-list_institutions",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "country_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country Code"
+            }
+          },
+          {
+            "name": "place_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Place Id"
+            }
+          },
+          {
+            "name": "administrative_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Administrative Level"
+            }
+          },
+          {
+            "name": "institution_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Institution Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EntityStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "parent_institution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parent Institution Id"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "institution_type",
+                "status",
+                "created_at",
+                "place"
+              ],
+              "type": "string",
+              "default": "name",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Order"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_InstitutionOutput_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/institutions/{institution_id}": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Read Institution",
+        "description": "The institution with its aliases, its place and the places above, its parent and the\nbodies under it, every homepage claim, its sources, and every quote for any of them with a\nlink to the stored copy it was found on.",
+        "operationId": "graph-read_institution",
+        "parameters": [
+          {
+            "name": "institution_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Institution Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstitutionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "List Places",
+        "description": "A page of places by name; `q` matches a name or an alias.",
+        "operationId": "graph-list_places",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "country_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country Code"
+            }
+          },
+          {
+            "name": "administrative_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Administrative Level"
+            }
+          },
+          {
+            "name": "parent_place_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Parent Place Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PlaceOutput_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/places/{place_id}": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Read Place",
+        "description": "The place with the places above it and its government.",
+        "operationId": "graph-read_place",
+        "parameters": [
+          {
+            "name": "place_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Place Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evidence/{evidence_id}/context": {
+      "get": {
+        "tags": [
+          "evidence"
+        ],
+        "summary": "Read Evidence Context",
+        "description": "The quote with the text around it on the stored copy. `found` is false when the stored\ntext no longer has the quote: the copy was pruned, or the quote matched the page's HTML.",
+        "operationId": "evidence-read_evidence_context",
+        "parameters": [
+          {
+            "name": "evidence_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Evidence Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteContextOutput"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -631,7 +1484,7 @@
           "review"
         ],
         "summary": "List Review Items",
-        "description": "The items, open ones by default, oldest first.",
+        "description": "A page of items, open ones by default, oldest first, each with its entity's name.",
         "operationId": "review-list_review_items",
         "parameters": [
           {
@@ -669,6 +1522,23 @@
             }
           },
           {
+            "name": "rule",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rule"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -690,6 +1560,24 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -698,11 +1586,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ReviewItemOutput"
-                  },
-                  "title": "Response Review-List Review Items"
+                  "$ref": "#/components/schemas/Page_ReviewItemRow_"
                 }
               }
             }
@@ -728,17 +1612,47 @@
         "summary": "List Review Kinds",
         "description": "The open items grouped by the question they share; one call on a kind decides them all.",
         "operationId": "review-list_review_kinds",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
+                  "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/KindOutput"
                   },
-                  "type": "array",
                   "title": "Response Review-List Review Kinds"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -754,15 +1668,35 @@
         "summary": "Approve Review Kind",
         "description": "Approve every open item of the kind. A `new_type` kind gives its bodies the type named,\nby default the suggested type as a type name; the type must exist.",
         "operationId": "review-approve_review_kind",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/KindApproveInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -796,15 +1730,35 @@
         "summary": "Reject Review Kind",
         "description": "Reject every open item of the kind.",
         "operationId": "review-reject_review_kind",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/KindDecisionInput"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "200": {
@@ -848,6 +1802,24 @@
               "format": "uuid",
               "title": "Review Item Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -892,6 +1864,24 @@
               "format": "uuid",
               "title": "Review Item Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -945,6 +1935,24 @@
               "format": "uuid",
               "title": "Review Item Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -999,6 +2007,24 @@
               "format": "uuid",
               "title": "Review Item Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -1041,7 +2067,7 @@
           "runs"
         ],
         "summary": "List Runs",
-        "description": "Every run, newest first.",
+        "description": "Every run, newest first, each with its progress and cost.",
         "operationId": "runs-list_runs",
         "parameters": [
           {
@@ -1066,6 +2092,24 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1074,11 +2118,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RunOutput"
-                  },
-                  "title": "Response Runs-List Runs"
+                  "$ref": "#/components/schemas/Page_RunDetail_"
                 }
               }
             }
@@ -1102,6 +2142,26 @@
         "summary": "Create Run",
         "description": "Start a run: the work due for the subjects in its filter is created, held in step mode\nand queued in auto mode.",
         "operationId": "runs-create_run",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1154,6 +2214,24 @@
               "format": "uuid",
               "title": "Run Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1198,6 +2276,24 @@
               "format": "uuid",
               "title": "Run Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1241,6 +2337,24 @@
               "format": "uuid",
               "title": "Run Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1285,6 +2399,24 @@
               "format": "uuid",
               "title": "Run Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1329,6 +2461,24 @@
               "format": "uuid",
               "title": "Run Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "requestBody": {
@@ -1375,6 +2525,7 @@
           "runs"
         ],
         "summary": "List Assignments",
+        "description": "A page of assignments by creation, oldest first unless `order` is `desc`, with their\nsubjects named.",
         "operationId": "runs-list_assignments",
         "parameters": [
           {
@@ -1411,6 +2562,22 @@
             }
           },
           {
+            "name": "result",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AssignmentResult"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Result"
+            }
+          },
+          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -1444,6 +2611,17 @@
             }
           },
           {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(asc|desc)$",
+              "default": "asc",
+              "title": "Order"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -1465,6 +2643,24 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1473,11 +2669,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AssignmentOutput"
-                  },
-                  "title": "Response Runs-List Assignments"
+                  "$ref": "#/components/schemas/Page_AssignmentOutput_"
                 }
               }
             }
@@ -1512,6 +2704,24 @@
               "format": "uuid",
               "title": "Assignment Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1544,7 +2754,7 @@
           "runs"
         ],
         "summary": "Read Assignment Events",
-        "description": "Everything the agent saw, said and did, in order: the prompt, its words, its tool calls\nand their results, and the videos when recorded.",
+        "description": "Everything the agent saw, said and did, in order: the prompt, its words, its tool calls\nand their results, and the videos when recorded, each with a short-lived link to play it.",
         "operationId": "runs-read_assignment_events",
         "parameters": [
           {
@@ -1556,6 +2766,24 @@
               "format": "uuid",
               "title": "Assignment Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1569,6 +2797,72 @@
                     "$ref": "#/components/schemas/EventOutput"
                   },
                   "title": "Response Runs-Read Assignment Events"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assignments/{assignment_id}/findings": {
+      "get": {
+        "tags": [
+          "runs"
+        ],
+        "summary": "Read Assignment Findings",
+        "description": "What the assignment saved: every quote it recorded, with the entity the quote is for and\na link to the stored page.",
+        "operationId": "runs-read_assignment_findings",
+        "parameters": [
+          {
+            "name": "assignment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Assignment Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FindingOutput"
+                  },
+                  "title": "Response Runs-Read Assignment Findings"
                 }
               }
             }
@@ -1617,6 +2911,24 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1625,11 +2937,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/EvalRunOutput"
-                  },
-                  "title": "Response Evals-List Eval Runs"
+                  "$ref": "#/components/schemas/Page_EvalRunOutput_"
                 }
               }
             }
@@ -1665,6 +2973,24 @@
               "format": "uuid",
               "title": "Eval Run Id"
             }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
           }
         ],
         "responses": {
@@ -1736,6 +3062,33 @@
         ],
         "title": "AdministrativeLevelInput"
       },
+      "AliasOutput": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "is_acronym": {
+            "type": "boolean",
+            "title": "Is Acronym"
+          },
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "language",
+          "is_acronym",
+          "entered_by"
+        ],
+        "title": "AliasOutput"
+      },
       "ApproveInput": {
         "properties": {
           "note": {
@@ -1787,6 +3140,16 @@
             "type": "string",
             "format": "uuid",
             "title": "Subject Id"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubjectOutput"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
             "$ref": "#/components/schemas/AssignmentStatus"
@@ -1952,6 +3315,16 @@
             "type": "string",
             "format": "uuid",
             "title": "Subject Id"
+          },
+          "subject": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubjectOutput"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "status": {
             "$ref": "#/components/schemas/AssignmentStatus"
@@ -2272,6 +3645,16 @@
         ],
         "title": "DecisionOutput"
       },
+      "EnteredBy": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "script",
+          "agent"
+        ],
+        "title": "EnteredBy",
+        "description": "How a row got here. On every entity and every evidence row."
+      },
       "EntityKind": {
         "type": "string",
         "enum": [
@@ -2282,6 +3665,16 @@
           "homepage"
         ],
         "title": "EntityKind"
+      },
+      "EntityStatus": {
+        "type": "string",
+        "enum": [
+          "candidate",
+          "verified",
+          "rejected",
+          "needs_review"
+        ],
+        "title": "EntityStatus"
       },
       "EvalRunDetail": {
         "properties": {
@@ -2329,6 +3722,17 @@
               }
             ],
             "title": "Finished At"
+          },
+          "summary": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TypeSummary"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/AssignmentType"
+            },
+            "type": "object",
+            "title": "Summary",
+            "default": {}
           },
           "scores": {
             "items": {
@@ -2398,6 +3802,17 @@
               }
             ],
             "title": "Finished At"
+          },
+          "summary": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/TypeSummary"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/AssignmentType"
+            },
+            "type": "object",
+            "title": "Summary",
+            "default": {}
           }
         },
         "type": "object",
@@ -2527,6 +3942,17 @@
             "type": "string",
             "format": "date-time",
             "title": "At"
+          },
+          "video_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Video Url"
           }
         },
         "type": "object",
@@ -2543,6 +3969,16 @@
       },
       "EvidenceOutput": {
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
           "quote": {
             "type": "string",
             "title": "Quote"
@@ -2573,9 +4009,30 @@
             ],
             "title": "Link Url"
           },
+          "entered_by": {
+            "type": "string",
+            "title": "Entered By"
+          },
+          "assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assignment Id"
+          },
           "page_url": {
             "type": "string",
             "title": "Page Url"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Snapshot Id"
           },
           "snapshot_url": {
             "anyOf": [
@@ -2592,14 +4049,105 @@
         },
         "type": "object",
         "required": [
+          "id",
+          "entity_id",
           "quote",
           "kind",
           "locator",
           "link_url",
+          "entered_by",
+          "assignment_id",
           "page_url",
+          "snapshot_id",
           "snapshot_url"
         ],
         "title": "EvidenceOutput"
+      },
+      "FindingOutput": {
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Evidence Id"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "entity_status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "institution_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Id"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "page_url": {
+            "type": "string",
+            "title": "Page Url"
+          },
+          "link_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Url"
+          },
+          "snapshot_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "entity_id",
+          "entity_kind",
+          "entity_status",
+          "label",
+          "institution_id",
+          "quote",
+          "kind",
+          "page_url",
+          "link_url",
+          "snapshot_url"
+        ],
+        "title": "FindingOutput",
+        "description": "One thing the assignment saved, with the quote it gave for it."
       },
       "HTTPValidationError": {
         "properties": {
@@ -2626,6 +4174,421 @@
           "status"
         ],
         "title": "Health"
+      },
+      "HomepageOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
+          },
+          "found_on_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found On Url"
+          },
+          "rejected_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected Reason"
+          },
+          "trusted_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trusted Path"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "domain_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "status",
+          "entered_by",
+          "found_on_url",
+          "rejected_reason",
+          "trusted_path",
+          "domain",
+          "domain_status",
+          "created_at"
+        ],
+        "title": "HomepageOutput",
+        "description": "A homepage claim: every claim an institution made, verified or not."
+      },
+      "IdentifierOutput": {
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "title": "Scheme"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scheme",
+          "value"
+        ],
+        "title": "IdentifierOutput"
+      },
+      "InstitutionDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "institution_type": {
+            "type": "string",
+            "title": "Institution Type"
+          },
+          "suggested_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
+          },
+          "place": {
+            "$ref": "#/components/schemas/PlaceRef"
+          },
+          "parent_institution_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Institution Id"
+          },
+          "procurement_handled_by": {
+            "$ref": "#/components/schemas/ProcurementHandledBy"
+          },
+          "homepage_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Id"
+          },
+          "homepage_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "aliases": {
+            "items": {
+              "$ref": "#/components/schemas/AliasOutput"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
+          "identifiers": {
+            "items": {
+              "$ref": "#/components/schemas/IdentifierOutput"
+            },
+            "type": "array",
+            "title": "Identifiers"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricOutput"
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "places": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceRef"
+            },
+            "type": "array",
+            "title": "Places"
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstitutionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "children": {
+            "items": {
+              "$ref": "#/components/schemas/InstitutionRef"
+            },
+            "type": "array",
+            "title": "Children"
+          },
+          "served_places": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceRef"
+            },
+            "type": "array",
+            "title": "Served Places"
+          },
+          "homepages": {
+            "items": {
+              "$ref": "#/components/schemas/HomepageOutput"
+            },
+            "type": "array",
+            "title": "Homepages"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceOutput"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceOutput"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "institution_type",
+          "suggested_type",
+          "status",
+          "entered_by",
+          "place",
+          "parent_institution_id",
+          "procurement_handled_by",
+          "homepage_id",
+          "homepage_url",
+          "created_at",
+          "aliases",
+          "identifiers",
+          "metrics",
+          "places",
+          "parent",
+          "children",
+          "served_places",
+          "homepages",
+          "sources",
+          "evidence"
+        ],
+        "title": "InstitutionDetail"
+      },
+      "InstitutionOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "institution_type": {
+            "type": "string",
+            "title": "Institution Type"
+          },
+          "suggested_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
+          },
+          "place": {
+            "$ref": "#/components/schemas/PlaceRef"
+          },
+          "parent_institution_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Institution Id"
+          },
+          "procurement_handled_by": {
+            "$ref": "#/components/schemas/ProcurementHandledBy"
+          },
+          "homepage_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Id"
+          },
+          "homepage_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "institution_type",
+          "suggested_type",
+          "status",
+          "entered_by",
+          "place",
+          "parent_institution_id",
+          "procurement_handled_by",
+          "homepage_id",
+          "homepage_url",
+          "created_at"
+        ],
+        "title": "InstitutionOutput",
+        "description": "An institution as the table lists it."
+      },
+      "InstitutionRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "institution_type": {
+            "type": "string",
+            "title": "Institution Type"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "institution_type",
+          "status"
+        ],
+        "title": "InstitutionRef"
       },
       "InstitutionTypeInput": {
         "properties": {
@@ -2827,6 +4790,30 @@
         ],
         "title": "MergeInput"
       },
+      "MetricOutput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "value": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "year",
+          "value"
+        ],
+        "title": "MetricOutput"
+      },
       "NamingRules": {
         "properties": {
           "designators": {
@@ -2870,6 +4857,382 @@
         "title": "NamingRules",
         "description": "How the country writes its public bodies' names, in its languages. A government's name is\na place name with a designator around it (\"Township of Elmwood\", \"Elmwood, Township of\");\nknowing the designators lets the checks find the place name and tell a township from the\ncity of the same name."
       },
+      "Page_AssignmentOutput_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentOutput"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[AssignmentOutput]"
+      },
+      "Page_EvalRunOutput_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EvalRunOutput"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[EvalRunOutput]"
+      },
+      "Page_InstitutionOutput_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InstitutionOutput"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[InstitutionOutput]"
+      },
+      "Page_PlaceOutput_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceOutput"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[PlaceOutput]"
+      },
+      "Page_ReviewItemRow_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewItemRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[ReviewItemRow]"
+      },
+      "Page_RunDetail_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RunDetail"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[RunDetail]"
+      },
+      "PlaceDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "country_code": {
+            "type": "string",
+            "title": "Country Code"
+          },
+          "administrative_level": {
+            "type": "string",
+            "title": "Administrative Level"
+          },
+          "parent_place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Place Id"
+          },
+          "government_institution_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Government Institution Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "parents": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceRef"
+            },
+            "type": "array",
+            "title": "Parents"
+          },
+          "government": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstitutionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "country_code",
+          "administrative_level",
+          "parent_place_id",
+          "government_institution_id",
+          "status",
+          "entered_by",
+          "created_at",
+          "parents",
+          "government"
+        ],
+        "title": "PlaceDetail"
+      },
+      "PlaceOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "country_code": {
+            "type": "string",
+            "title": "Country Code"
+          },
+          "administrative_level": {
+            "type": "string",
+            "title": "Administrative Level"
+          },
+          "parent_place_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Place Id"
+          },
+          "government_institution_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Government Institution Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "country_code",
+          "administrative_level",
+          "parent_place_id",
+          "government_institution_id",
+          "status",
+          "entered_by",
+          "created_at"
+        ],
+        "title": "PlaceOutput"
+      },
+      "PlaceRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "administrative_level": {
+            "type": "string",
+            "title": "Administrative Level"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "administrative_level"
+        ],
+        "title": "PlaceRef"
+      },
+      "ProcurementHandledBy": {
+        "type": "string",
+        "enum": [
+          "self",
+          "parent"
+        ],
+        "title": "ProcurementHandledBy",
+        "description": "Whether an institution buys on its own account or its parent buys for it."
+      },
       "Progress": {
         "properties": {
           "by_status": {
@@ -2906,6 +5269,52 @@
         ],
         "title": "Progress",
         "description": "How far a run has got and what it has spent."
+      },
+      "QuoteContextOutput": {
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Evidence Id"
+          },
+          "found": {
+            "type": "boolean",
+            "title": "Found"
+          },
+          "before": {
+            "type": "string",
+            "title": "Before"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "after": {
+            "type": "string",
+            "title": "After"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "found",
+          "before",
+          "quote",
+          "after",
+          "page"
+        ],
+        "title": "QuoteContextOutput"
       },
       "ReleaseInput": {
         "properties": {
@@ -3146,6 +5555,101 @@
         ],
         "title": "ReviewItemOutput"
       },
+      "ReviewItemRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Entity Id"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "question": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Question"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "raised_by_assignment_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raised By Assignment Id"
+          },
+          "decided_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided At"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_id",
+          "rule",
+          "question",
+          "kind",
+          "status",
+          "raised_by_assignment_id",
+          "decided_at",
+          "note",
+          "entity_kind",
+          "label"
+        ],
+        "title": "ReviewItemRow",
+        "description": "An item as the queue lists it: with what to recognise its entity by."
+      },
       "ReviewStatus": {
         "type": "string",
         "enum": [
@@ -3302,39 +5806,46 @@
         ],
         "title": "RunMode"
       },
-      "RunOutput": {
+      "RunStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "paused",
+          "stopped"
+        ],
+        "title": "RunStatus"
+      },
+      "SourceAccess": {
+        "type": "string",
+        "enum": [
+          "public",
+          "login"
+        ],
+        "title": "SourceAccess"
+      },
+      "SourceOutput": {
         "properties": {
           "id": {
             "type": "string",
             "format": "uuid",
             "title": "Id"
           },
-          "name": {
+          "url": {
             "type": "string",
-            "title": "Name"
+            "title": "Url"
           },
-          "country_code": {
+          "source_type": {
             "type": "string",
-            "title": "Country Code"
+            "title": "Source Type"
           },
-          "mode": {
-            "$ref": "#/components/schemas/RunMode"
+          "access": {
+            "$ref": "#/components/schemas/SourceAccess"
           },
           "status": {
-            "$ref": "#/components/schemas/RunStatus"
+            "$ref": "#/components/schemas/EntityStatus"
           },
-          "filter": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Filter"
-          },
-          "is_eval": {
-            "type": "boolean",
-            "title": "Is Eval"
-          },
-          "record_video": {
-            "type": "boolean",
-            "title": "Record Video"
+          "entered_by": {
+            "$ref": "#/components/schemas/EnteredBy"
           },
           "created_at": {
             "type": "string",
@@ -3345,25 +5856,14 @@
         "type": "object",
         "required": [
           "id",
-          "name",
-          "country_code",
-          "mode",
+          "url",
+          "source_type",
+          "access",
           "status",
-          "filter",
-          "is_eval",
-          "record_video",
+          "entered_by",
           "created_at"
         ],
-        "title": "RunOutput"
-      },
-      "RunStatus": {
-        "type": "string",
-        "enum": [
-          "active",
-          "paused",
-          "stopped"
-        ],
-        "title": "RunStatus"
+        "title": "SourceOutput"
       },
       "SourceTypeInput": {
         "properties": {
@@ -3406,6 +5906,68 @@
         ],
         "title": "SpawnOutput",
         "description": "Work the decision asks for; the assignments module queues it."
+      },
+      "SubjectOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name"
+        ],
+        "title": "SubjectOutput",
+        "description": "The place or institution an assignment works on, by name."
+      },
+      "TypeSummary": {
+        "properties": {
+          "subjects": {
+            "type": "integer",
+            "title": "Subjects"
+          },
+          "mean_recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Recall"
+          },
+          "mean_precision": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Precision"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subjects",
+          "mean_recall",
+          "mean_precision"
+        ],
+        "title": "TypeSummary",
+        "description": "One assignment type's scores over the subjects of a run: how many subjects were judged\non it, and the mean of their recall and precision (unweighted: each subject counts once)."
       },
       "ValidationError": {
         "properties": {
