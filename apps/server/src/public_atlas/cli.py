@@ -4,10 +4,12 @@ place, with asgi.py and the worker, that reads the environment."""
 
 import argparse
 import asyncio
+import json
 import sys
 import uuid
 from collections.abc import Sequence
 from dataclasses import fields
+from pathlib import Path
 
 from public_atlas.config import Settings
 from public_atlas.jobs import QUEUES, Queue
@@ -16,7 +18,9 @@ from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.assignments.models import AssignmentType, Run, RunMode
 from public_atlas.modules.assignments.schemas import Progress, RunFilter
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import SEEDS
+from public_atlas.modules.countries.seeds import SEEDS, canada
+from public_atlas.modules.evals import dataset
+from public_atlas.modules.evals import service as evals
 from public_atlas.modules.imports import service as imports
 from public_atlas.modules.imports.files import ListFileError
 from public_atlas.modules.imports.lists import LISTS
@@ -172,6 +176,85 @@ def run_run(args: argparse.Namespace) -> None:
         sys.exit(f"run {args.action}: {exc}")
 
 
+# --- eval ---
+
+
+def run_eval(args: argparse.Namespace) -> None:
+    settings = Settings()
+    try:
+        match args.action:
+            case "validate":
+                sys.exit(eval_validate(args))
+            case "evidence":
+                sys.exit(asyncio.run(eval_evidence(args)))
+            case "score":
+                asyncio.run(eval_score(settings, args))
+            case "run":
+                asyncio.run(eval_run(settings, args))
+    except (AppError, ValueError) as exc:
+        sys.exit(f"eval {args.action}: {exc}")
+
+
+def eval_validate(args: argparse.Namespace) -> int:
+    """Schema and cross-reference checks against the seed's rules; the number of errors as the
+    exit status."""
+    files = dataset.files_named(args.subject or [], lists_by_default=True)
+    rules = countries.rules_from_seed(canada.SEED)
+    errors = dataset.validate_files(files, rules)
+    for error in errors:
+        print(error)  # noqa: T201
+    print(f"{len(files)} file(s), {len(errors)} error(s)")  # noqa: T201
+    return 1 if errors else 0
+
+
+async def eval_evidence(args: argparse.Namespace) -> int:
+    files = dataset.files_named(args.subject or [], lists_by_default=False)
+    tally = await dataset.check_evidence(files, print)
+    print(" ".join(f"{k}={v}" for k, v in sorted(tally.items())))  # noqa: T201
+    return 1 if tally.get("missing") or tally.get("invalid") else 0
+
+
+def _write_json(path: Path | None, document: dict[str, object]) -> None:
+    if path is not None:
+        path.write_text(json.dumps(document, indent=2, default=str) + "\n")
+        print(f"\nwritten: {path}")  # noqa: T201
+
+
+async def eval_score(settings: Settings, args: argparse.Namespace) -> None:
+    files = dataset.files_named(args.subject or [], lists_by_default=True)
+    async with build_resources(settings) as resources:
+        report = await evals.score_database(resources, files, eval_database=args.evals)
+    print(report.render(details=args.details))  # noqa: T201
+    _write_json(args.json, report.as_json())
+
+
+async def eval_run(settings: Settings, args: argparse.Namespace) -> None:
+    # A places file queues a `find_homepage` for every government it lists (25 for Ontario), so a
+    # run takes one only when it is named.
+    files = dataset.files_named(args.subject or [], lists_by_default=False)
+    if args.types:
+        types = [AssignmentType(name) for name in args.types]
+    elif all(path.parent == dataset.PLACES for path in files):
+        # A places file alone is scored on homepages; its governments' discovery would be a run
+        # of its own.
+        types = [AssignmentType.FIND_HOMEPAGE]
+    else:
+        types = list(AssignmentType)
+    async with build_resources(settings) as resources:
+        report = await evals.run_eval(
+            resources,
+            files,
+            types=types,
+            keep=args.keep,
+            serve=not args.no_worker,
+            queues=args.queues,
+            name=args.name,
+            report=print,
+        )
+    print(report.render(details=args.details))  # noqa: T201
+    _write_json(args.json, report.as_json())
+
+
 # --- worker ---
 
 
@@ -276,6 +359,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_command.set_defaults(run=run_run)
 
+    add_eval_command(commands)
+
     worker = commands.add_parser("worker", help="run queued jobs, as public-atlas-worker does")
     worker.add_argument(
         "--queues",
@@ -285,6 +370,75 @@ def build_parser() -> argparse.ArgumentParser:
     )
     worker.set_defaults(run=run_worker)
     return parser
+
+
+def add_eval_command(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
+    """`public-atlas eval validate|evidence|score|run`."""
+    eval_command = commands.add_parser(
+        "eval", help="the evals (spec section 10): validate the dataset, score, run"
+    )
+    eval_actions = eval_command.add_subparsers(dest="action", required=True)
+
+    def chooses_files(sub: argparse.ArgumentParser) -> None:
+        sub.add_argument(
+            "--subject",
+            action="append",
+            metavar="SLUG",
+            help="a dataset file by its stem (repeatable; default: every subject file)",
+        )
+
+    def reports(sub: argparse.ArgumentParser) -> None:
+        sub.add_argument("--details", action="store_true", help="one line per entity")
+        sub.add_argument("--json", type=Path, metavar="FILE", help="write the numbers as JSON")
+
+    validate = eval_actions.add_parser(
+        "validate", help="schema and cross-reference checks on the dataset files"
+    )
+    chooses_files(validate)
+    evidence = eval_actions.add_parser(
+        "evidence", help="fetch each evidence URL and check that its quote is on the page"
+    )
+    chooses_files(evidence)
+    score = eval_actions.add_parser(
+        "score", help="score a database against the dataset without running anything"
+    )
+    chooses_files(score)
+    score.add_argument(
+        "--evals",
+        action="store_true",
+        help="score the eval database an eval run left (and record the scores on that run) "
+        "instead of the main database",
+    )
+    reports(score)
+    running = eval_actions.add_parser(
+        "run", help="reset and seed the eval database, work the subjects, score and record"
+    )
+    chooses_files(running)
+    running.add_argument(
+        "--types",
+        nargs="+",
+        metavar="TYPE",
+        choices=[kind.value for kind in AssignmentType],
+        help="the assignment types the run works (default: every type; a places file alone: "
+        "find_homepage)",
+    )
+    running.add_argument("--name", help="what to call the run (default: the subjects' names)")
+    running.add_argument("--keep", action="store_true", help="do not reset the eval database")
+    running.add_argument(
+        "--no-worker",
+        action="store_true",
+        help="seed and queue only; serve the eval database's queues yourself and score with "
+        "`eval score --evals`",
+    )
+    running.add_argument(
+        "--queues",
+        type=_queues,
+        metavar="NAME[,NAME...]",
+        help=f"queues to serve in this process, out of {', '.join(QUEUES)} "
+        f"(default: {', '.join(evals.default_queues())})",
+    )
+    reports(running)
+    eval_command.set_defaults(run=run_eval)
 
 
 def main(argv: Sequence[str] | None = None) -> None:

@@ -1,0 +1,808 @@
+subject:
+  kind: place
+  name: Regional Municipality of Waterloo
+  level: region
+  place: Regional Municipality of Waterloo
+  parent: Ontario
+  tier: upper
+  official_code: "3530" # Statistics Canada census division, verified 2026-09-29 on the 2021 Census Profile (DGUID 2021A00033530, "Waterloo, Regional municipality (RM) [Census division], Ontario")
+  institution: regional-municipality-of-waterloo
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, regionofwaterloo.ca]
+
+institutions:
+  - key: regional-municipality-of-waterloo
+    type: regional_government
+    names:
+      - { text: Regional Municipality of Waterloo, lang: en }
+      - { text: Region of Waterloo, lang: en }
+    homepage: https://www.regionofwaterloo.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/about-us/
+      quote: "The Regional Municipality of Waterloo was officially established on January 1, 1973."
+
+  - key: grand-river-transit
+    type: transit_agency
+    names:
+      - { text: Grand River Transit, lang: en }
+      - { text: GRT, lang: en, is_acronym: true }
+    homepage: https://www.grt.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/programs-and-services/roads-and-transportation/transit-and-transportation/grand-river-transit-and-ion/
+      quote: "Grand River Transit (GRT) provides transit service in Waterloo Region."
+      kind: links_to
+      link_target: https://www.grt.ca/
+    notes: >-
+      Internal service of the Region (Transit Services, in the Transportation Services department)
+      that presents under its own name and domain, so it gets a row under rule 3(b). ION light rail
+      and ION bus are GRT service lines ("GRT operates conventional buses, ION light rail trains
+      ..."), not a separate body: see out_of_scope. grt.ca is on the same Govstack CMS as
+      regionofwaterloo.ca and its footer links back to the Region, but it is not in
+      trusted_at_start, so it needs find_homepage.
+    parent:
+      institution: regional-municipality-of-waterloo
+      label: our Region's transit system
+      evidence:
+        url: https://www.regionofwaterloo.ca/news-public-notices-and-council-info/posts/grt-celebrates-transit-team-appreciation-day/
+        quote: Many thanks to all the people who work tirelessly to make our Region’s transit system run each and every day,
+
+  - key: waterloo-regional-police-service
+    type: police_service
+    names:
+      - { text: Waterloo Regional Police Service, lang: en }
+      - { text: WRPS, lang: en, is_acronym: true }
+      - { text: Waterloo Regional Police, lang: en }
+      - { text: Waterloo Regional Police Service Board, lang: en }
+    homepage: https://wrps.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/programs-and-services/emergency-services-and-preparedness/police-services/
+      quote: "Waterloo Regional Police Service (WRPS) provides policing services for the Region of Waterloo"
+      kind: links_to
+      link_target: http://www.wrps.on.ca/
+    notes: >-
+      The Region links to http://www.wrps.on.ca/, which redirects to https://wrps.ca/ (curl reports
+      the effective URL as https://wrps.ca:443/). One row for the service and its governing
+      Waterloo Regional Police Service Board: the board has no separate site or procurement (its
+      pages are wrps.ca/about-us/police-service-board and its eSCRIBE portal), and police_service
+      already carries board_meeting as a source type. An agent that saves the board as a second
+      police_service row should be reviewed, not necessarily penalised. "Waterloo Regional Police"
+      is the wrps.ca page-title name. "Waterloo Regional Police Service Board" is in names under
+      README rule 5 (wrps.ca/about-us/police-service-board and the Region's Boards and Foundations
+      page both use it); checked 2026-10-01.
+    parent:
+      institution: regional-municipality-of-waterloo
+      label: Its budget is the responsibility of Regional Council
+      evidence:
+        url: https://www.regionofwaterloo.ca/government-and-council/committees/boards-and-foundations/
+        quote: Its budget is the responsibility of Regional Council and met through the Regional levy.
+
+  - key: region-of-waterloo-library
+    type: library
+    expected: review
+    names:
+      - { text: Region of Waterloo Library, lang: en }
+      - { text: RWL, lang: en, is_acronym: true }
+    homepage: https://www.rwlibrary.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/culture-and-experiences/arts-and-culture/libraries/
+      quote: "The Region of Waterloo operates 12 library branches in the four townships."
+      kind: links_to
+      link_target: https://www.rwlibrary.ca/
+    notes: >-
+      A Region service (Cultural Services, in Planning, Development and Legislative Services)
+      that presents under its own name and domain, so it gets a row under rule 3(b). canada.yaml
+      lists library under municipality only, so this is the README rule 1 case: the agent should
+      save it as a library and it should land in review (rule type_level). Its governing Library
+      Committee (a committee of Regional Council chaired by a township mayor) folds into this row
+      under rule 5. rwlibrary.ca is on the same Govstack CMS as regionofwaterloo.ca and its
+      footer links back to the Region, but it is not in trusted_at_start, so it needs
+      find_homepage.
+    parent:
+      institution: regional-municipality-of-waterloo
+      label: operates
+      evidence:
+        url: https://www.regionofwaterloo.ca/culture-and-experiences/arts-and-culture/libraries/
+        quote: The Region of Waterloo operates 12 library branches in the four townships.
+
+  - key: region-of-waterloo-public-health
+    type: public_health_unit
+    names:
+      - { text: Region of Waterloo Public Health, lang: en }
+    homepage: https://www.regionofwaterloo.ca/programs-and-services/public-health/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/programs-and-services/public-health/
+      quote: "Region of Waterloo Public Health operates out of three main clinic spaces."
+    notes: >-
+      The health unit for Waterloo Region, a Region division (Public Health, in the Public Health
+      and Paramedic Services department) that presents under its own name, so it gets a row under
+      rule 3(b). Its board of health is Regional Council itself ("Region of Waterloo Council serves
+      as the Board of Health for this region"), so there is no separate board row; under rule 5 the
+      Board of Health meetings are this row's board_meeting source. No site of its own.
+    parent:
+      institution: regional-municipality-of-waterloo
+      label: reports to the Board of Health
+      evidence:
+        url: https://www.regionofwaterloo.ca/government-and-council/committees/boards-and-foundations/
+        quote: Region of Waterloo Public Health reports to the Board of Health.
+
+  - key: waterloo-region-housing
+    type: municipal_corporation
+    names:
+      - { text: Waterloo Region Housing, lang: en }
+      - { text: WRH, lang: en, is_acronym: true }
+    homepage: https://www.regionofwaterloo.ca/programs-and-services/housing-and-shelter/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/programs-and-services/housing-and-shelter/apply-for-community-housing/living-in-community-housing/
+      quote: "As a tenant of Waterloo Region Housing rent payments can be made online, in-person or by mail."
+    notes: >-
+      Judgement call. The Region's own community housing (more than 2,700 units), which the Region
+      owns and operates directly through Housing Services rather than through a separate local
+      housing corporation, but which presents to tenants under its own name (Waterloo Region
+      Housing, WRH: rent payee, revitalization plan, its own ten-year capital section in the budget
+      book). A municipal_corporation row under rule 3(b): not a separately constituted body, but a
+      Region division that runs a business of its own (community housing: tenants, rents, property
+      managers) under its own name, the same call as the airport; the type names community housing
+      (housing_corporation was folded into municipal_corporation on 2026-10-01). No site of its
+      own: homepage is the Region's Housing and Shelter section, whose pages (Living in
+      Community Housing, the WRH Revitalization Plan) carry it. Reviewer may prefer out_of_scope as
+      a service of the Region.
+    parent:
+      institution: regional-municipality-of-waterloo
+      label: owns and operates
+      evidence:
+        url: https://www.regionofwaterloo.ca/programs-and-services/housing-and-shelter/apply-for-community-housing/living-in-community-housing/
+        quote: The Region owns and operates more than 2,700 community housing units in Waterloo Region.
+
+  - key: region-of-waterloo-international-airport
+    type: municipal_corporation
+    names:
+      - { text: Region of Waterloo International Airport, lang: en }
+      - { text: YKF, lang: en, is_acronym: true }
+    homepage: https://www.waterlooairport.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/culture-and-experiences/airport/
+      quote: "The Region of Waterloo International Airport (YKF) is a full-service, customer-friendly facility"
+      kind: links_to
+      link_target: "https://www.waterlooairport.ca/#"
+    notes: >-
+      Judgement call. Not a separately constituted corporation: the airport is a Region division
+      (a chapter of Planning, Development and Legislative Services in the budget book) that runs a
+      business of its own (airlines, 44 tenant businesses, rates and fees, parking) under its own
+      name and domain, so it gets a municipal_corporation row under rule 3(b); the type names an
+      airport. The Region's Airport page links the site only as "https://www.waterlooairport.ca/#"
+      (Learn More), so that is the link_target. Reviewer may prefer out_of_scope as a Region
+      service.
+    parent:
+      institution: regional-municipality-of-waterloo
+      label: owned and operated by
+      evidence:
+        url: https://www.regionofwaterloo.ca/news-public-notices-and-council-info/posts/region-of-waterloo-international-airport-ykf-propels-economic-growth/
+        quote: YKF is owned and operated by the Regional Municipality of Waterloo, Ontario (Canada).
+
+  - key: grand-river-conservation-authority
+    type: conservation_authority
+    names:
+      - { text: Grand River Conservation Authority, lang: en }
+      - { text: GRCA, lang: en, is_acronym: true }
+    homepage: https://www.grandriver.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/committees/boards-and-foundations/
+      quote: "The Grand River Conservation Authority is established under the Conservation Authorities Act."
+      kind: links_to
+      link_target: http://www.grandriver.ca/
+    notes: >-
+      Shared body (rule 4): 38 watershed municipalities, 22 of them participating municipalities
+      that appoint its 26-member board. One row in the whole eval dataset, here: it is headquartered in
+      Cambridge, inside the Region (400 Clyde Road, per the Region's Boards and Foundations page),
+      and the Region appoints board members (the GRCA contact page lists eight "Region of Waterloo"
+      members). Other subject files (kitchener) leave it without a row. The Grand River Source
+      Protection Authority is the same board under the Clean Water Act, not a separate row.
+
+sources:
+  # --- Regional Municipality of Waterloo ---
+  - institution: regional-municipality-of-waterloo
+    source_type: procurement
+    url: https://www.regionofwaterloo.ca/business-and-development/bids-and-tenders/
+    evidence:
+      url: https://www.regionofwaterloo.ca/business-and-development/bids-and-tenders/
+      quote: "Procurement is responsible for purchasing all goods and services for all divisions within the Region."
+    notes: >-
+      Also tells suppliers where to register ("You may register and download bid opportunities
+      at"). Supplier registration is not a source type (vendor_portal was dropped 2026-10-01).
+
+  - institution: regional-municipality-of-waterloo
+    source_type: tender
+    url: https://regionofwaterloo.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://regionofwaterloo.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://regionofwaterloo.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Region of Waterloo Bid Opportunities Website"
+    notes: >-
+      Linked from the trusted procurement page ("View Current Bid Opportunities"). Covers every
+      Region division, including Grand River Transit. Vendor registration (Create Account) is on
+      the same portal.
+
+  - institution: regional-municipality-of-waterloo
+    source_type: budget
+    url: https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/our-plan-and-budget/
+    alternates:
+      - https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/our-plan-and-budget/
+      quote: "Our Plan and Budget is how we make investments in things that matter guided by our Growing with Care"
+    notes: >-
+      Lists the 2027 budget meeting schedule, the current (2026) Final Budget Book and past budget
+      books. The 2026 book includes the Waterloo Regional Police Service and Transit Services
+      budgets.
+
+  - institution: regional-municipality-of-waterloo
+    source_type: capital_plan
+    url: https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/our-plan-and-budget/
+    alternates:
+      - https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/2026-annual-review-of-asset-management-planning-progress/
+    evidence:
+      url: https://www.regionofwaterloo.ca/media/ynro4cd2/2026_final_budget_book.pdf
+      quote: "2026 Operating Budget & 2026-2035 Capital Budget Summaries"
+      locator: "pdf page 2 (table of contents)"
+      manual_check: "pdftotext 2026-09-29"
+    notes: >-
+      Judgement call. The Region has no separate capital plan page: the ten-year capital program
+      (2026-2035 Capital Budget and Forecast) is published only inside the Final Budget Book
+      linked from Our Plan and Budget (served on media-003-ca.cdn.govstack.com; the same file is
+      at the regionofwaterloo.ca/media path used for evidence). The asset management planning
+      page, which reports on "the ten-year capital program", is accepted as an alternate.
+      Evidence is a PDF, so the evidence check reports it as unchecked.
+
+  - institution: regional-municipality-of-waterloo
+    source_type: council_meeting
+    url: https://www.regionofwaterloo.ca/government-and-council/council/council-calendar/
+    alternates:
+      - https://www.regionofwaterloo.ca/government-and-council/council/agendas-minutes-and-webcasts/
+      - https://www.regionofwaterloo.ca/government-and-council/council/
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/council/council-calendar/
+      quote: "Download a PDF version of the 2026 Council & Committee Meeting Schedule Calendar"
+    notes: >-
+      The Council Calendar page embeds the eSCRIBE portal in an iframe (recorded separately
+      below). An older calendar for 2017 to May 2022 is at https://calendar.regionofwaterloo.ca/council
+      (archive only, not a separate dataset entry).
+
+  - institution: regional-municipality-of-waterloo
+    source_type: council_meeting
+    url: https://pub-regionofwaterloo.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-regionofwaterloo.escribemeetings.com/
+      quote: "Board of Health (Regional Council)"
+    notes: Embedded (iframe) on the trusted Council Calendar page; meeting types include Council Meeting, Committee of the Whole and Strategic Planning and Budget Committee.
+
+  - institution: regional-municipality-of-waterloo
+    source_type: strategic_plan
+    url: https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/strategic-plan-2023-2027/
+    alternates:
+      - https://www.regionofwaterloo.ca/media-manager/media-pages/plans-budget-and-performance-documents/strategic-plan-growing-with-care-2023-2027/
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/strategic-plan-2023-2027/
+      quote: "It’s all about caring for people and the land we share, and it serves as the Region of Waterloo's Strategic Plan."
+
+  - institution: regional-municipality-of-waterloo
+    source_type: meeting_video
+    url: https://www.youtube.com/channel/UCgeIpH-3_AjIgxKJJBMdwDA
+    alternates:
+      - https://www.regionofwaterloo.ca/government-and-council/council/agendas-minutes-and-webcasts/live-webcast/
+      - https://www.regionofwaterloo.ca/government-and-council/council/agendas-minutes-and-webcasts/
+      - https://www.youtube.com/@regionofwaterloocouncil683
+      - https://www.youtube.com/@regionofwaterloocouncil683/streams
+    platform: youtube.com
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/council/agendas-minutes-and-webcasts/
+      quote: "You can subscribe to our YouTube channel, where you will find both live video and past meeting recordings"
+      kind: links_to
+      link_target: https://www.youtube.com/channel/UCgeIpH-3_AjIgxKJJBMdwDA
+    notes: >-
+      "Region of Waterloo Council" channel, dedicated to Council and committee meetings. The Media Room links its
+      /streams tab ("Council videos on YouTube"). youtube.com is a listed platform.
+      The government's page that links here only points to it, so it is an alternate.
+
+  - institution: regional-municipality-of-waterloo
+    source_type: news
+    url: https://www.regionofwaterloo.ca/news-public-notices-and-council-info/
+    alternates:
+      - https://www.regionofwaterloo.ca/news-public-notices-and-council-info/news-releases/
+      - https://www.regionofwaterloo.ca/news-public-notices-and-council-info/public-notices/
+      - https://www.regionofwaterloo.ca/government-and-council/news-and-updates/
+    evidence:
+      url: https://www.regionofwaterloo.ca/government-and-council/news-and-updates/media-room/
+      quote: "A searchable list of news posts, notices and alerts from across the Region of Waterloo."
+      kind: links_to
+      link_target: https://www.regionofwaterloo.ca/news-public-notices-and-council-info/
+    notes: >-
+      "News, Public Notices and Council Info": every post (news releases, public notices, Public Health news) with
+      category filters. The News Releases and Public Notices category pages and the News and Updates hub ("View all
+      News Releases") are alternates. The page has no static intro text, so the evidence is the Media Room's link.
+
+  # --- Grand River Transit ---
+  - institution: grand-river-transit
+    source_type: capital_plan
+    url: https://www.grt.ca/about-grt/plans-and-projects/grt-business-plan/
+    alternates:
+      - https://www.grt.ca/about-grt/plans-and-projects/
+    evidence:
+      url: https://www.grt.ca/about-grt/plans-and-projects/grt-business-plan/
+      quote: "Grand River Transit's business plan will provide a roadmap to guide future transit service expansion and investments over the next 10 years and beyond."
+    notes: >-
+      Judgement call. The GRT Business Plan is a ten-year service and investment plan (fleet
+      growth, stations, frequent network); coverage reports put its major transit capital
+      projects at $798M for 2025-2035, so it counts as the capital plan as well as the strategic
+      plan (one URL, two source types). The Transit capital program itself sits in the Region's
+      budget book (Grand River Transit Bus Services, Ten Year Capital Budget and Forecast).
+  - institution: grand-river-transit
+    source_type: strategic_plan
+    url: https://www.grt.ca/about-grt/plans-and-projects/grt-business-plan/
+    alternates:
+      - https://www.grt.ca/about-grt/plans-and-projects/
+    evidence:
+      url: https://www.grt.ca/about-grt/plans-and-projects/grt-business-plan/
+      quote: "Grand River Transit's business plan will provide a roadmap to guide future transit service expansion and investments over the next 10 years and beyond."
+    notes: The ten-year business plan is GRT's strategic plan; see the capital_plan entry.
+
+  # --- Waterloo Regional Police Service ---
+  - institution: waterloo-regional-police-service
+    source_type: procurement
+    url: https://wrps.bidsandtenders.ca/Module/Tenders/en
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://wrps.bidsandtenders.ca/Module/Tenders/en
+      quote: "The Waterloo Regional Police Service intends to participate in one or more procurements conducted by the following cooperative buying groups."
+    notes: >-
+      Judgement call: WRPS has no purchasing page on wrps.ca (tried /purchasing, /procurement,
+      /bids-and-tenders: 404). The site nav's "Bid and Tenders" link and the legacy page
+      https://www.wrps.on.ca/en/about-us/bids-and-tenders.aspx both go straight to this portal,
+      which carries WRPS's purchasing notices (cooperative buying groups, contacts). The Board's
+      purchasing by-law is a document (https://wrps.ca/resource/bylaw-24-02-purchasing), not a
+      landing page. Same URL as the tender source. A real WRPS source, not covered_by the Region:
+      wrps.bidsandtenders.ca is the Police Service's own portal (its own logo, "Waterloo Regional
+      Police Service Bid Opportunities Website", WRPS bids only), separate from the Region's
+      regionofwaterloo.bidsandtenders.ca; checked 2026-09-29.
+
+  - institution: waterloo-regional-police-service
+    source_type: tender
+    url: https://wrps.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://www.wrps.on.ca/en/about-us/bids-and-tenders.aspx
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://wrps.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Waterloo Regional Police Service Bid Opportunities Website"
+    notes: >-
+      Linked from wrps.ca nav ("Bid and Tenders"); the legacy wrps.on.ca page redirects here. A
+      WRPS-specific portal on bids&tenders, not the Region's portal duplicated (see procurement).
+
+  - institution: waterloo-regional-police-service
+    source_type: strategic_plan
+    url: https://wrps.ca/resource/2024-2027-wrps-strategic-business-plan
+    alternates:
+      - https://wrps.ca/about-us/police-service-board
+    evidence:
+      url: https://wrps.ca/resource/2024-2027-wrps-strategic-business-plan
+      quote: "2024-2027 WRPS Strategic Business Plan"
+    notes: >-
+      Not a police_service source type in canada.yaml; recorded under the floor rule (README, "The
+      type's list is a floor"). The resource page holds the current 2024-2027 Strategic Business
+      Plan PDF; the Police Service Board page links it twice ("Review the 2024-2027 Strategic
+      Business Plan") and is an alternate. Checked 2026-10-01.
+
+  - institution: waterloo-regional-police-service
+    source_type: budget
+    url: https://wrps.ca/about-us/budget
+    evidence:
+      url: https://wrps.ca/about-us/budget
+      quote: "Each year, the WRPS develops its budget under the guidance of the Police Services Board"
+    notes: Lists budget presentations and information packages, 2021 to 2026. The police budget is also a chapter of the Region's budget book.
+
+  - institution: waterloo-regional-police-service
+    source_type: board_meeting
+    url: https://wrps.ca/police-service-board-meetings
+    evidence:
+      url: https://wrps.ca/police-service-board-meetings
+      quote: "The Police Service Board meets regularly with the Chief and Deputy Chiefs of the Service."
+    notes: >-
+      Embeds the eSCRIBE portal (below) and lists archived agendas and minutes to February 2026.
+      The linked historical archive (https://wrps.ca/front-page/police-service-board-meetings-archive)
+      returned HTTP 403 to curl.
+
+  - institution: waterloo-regional-police-service
+    source_type: board_meeting
+    url: https://pub-wrps.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-wrps.escribemeetings.com/
+      quote: "Waterloo Regional Police Service Board Open Meeting"
+    notes: The board's meeting system since February 2026, embedded (iframe) on wrps.ca/police-service-board-meetings.
+
+  # --- Region of Waterloo Library ---
+  - institution: region-of-waterloo-library
+    source_type: board_meeting
+    url: https://www.rwlibrary.ca/about-the-library/library-committee/
+    alternates:
+      - https://www.regionofwaterloo.ca/government-and-council/council/agendas-minutes-and-webcasts/
+      - https://www.regionofwaterloo.ca/government-and-council/council/council-calendar/
+      - https://pub-regionofwaterloo.escribemeetings.com/
+    evidence:
+      url: https://www.rwlibrary.ca/about-the-library/library-committee/
+      quote: "Committee Agendas and Meeting Minutes"
+    notes: >-
+      The library has no board of its own: the Library Committee of Regional Council governs it.
+      The committee page lists the members and, under "Committee Agendas and Meeting Minutes",
+      links to the Region's agendas, minutes and webcasts page, whose Council Calendar (the
+      eSCRIBE portal) lists "Library Committee" as a meeting type. A section of a general page,
+      per the README; the Region pages are alternates.
+
+  - institution: region-of-waterloo-library
+    source_type: strategic_plan
+    url: https://www.rwlibrary.ca/about-the-library/policies-reports/
+    alternates:
+      - https://www.rwlibrary.ca/about-the-library/library-committee/
+      - https://www.regionofwaterloo.ca/media-manager/media-pages/plans-budget-and-performance-documents/region-of-waterloo-library-service-delivery-plan-2026-2029/
+    evidence:
+      url: https://www.rwlibrary.ca/about-the-library/policies-reports/
+      quote: "2026-2029 RWLibrary Service Delivery Plan"
+    notes: >-
+      Not a library source type in canada.yaml; recorded under the floor rule (README, "The
+      type's list is a floor"). The 2026-2029 Service Delivery Plan is the library's strategic
+      plan, listed under Reports on the Policies and Reports page and under Reports and Plans on
+      the Library Committee page; the Region also hosts it on its own plans page. The
+      https://www.rwlibrary.ca/service-delivery-plan/ URL the Region's news release gives
+      returns 404.
+
+  # --- Region of Waterloo Public Health ---
+  - institution: region-of-waterloo-public-health
+    source_type: board_meeting
+    url: https://pub-regionofwaterloo.escribemeetings.com/
+    alternates:
+      - https://www.regionofwaterloo.ca/government-and-council/council/council-calendar/
+      - https://www.regionofwaterloo.ca/government-and-council/council/agendas-minutes-and-webcasts/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-regionofwaterloo.escribemeetings.com/
+      quote: "Board of Health (Regional Council)"
+    notes: >-
+      Regional Council sits as the Board of Health; its Board of Health meetings are a meeting
+      type of the Region's eSCRIBE portal, embedded on the trusted Council Calendar page (an
+      alternate, with the agendas page). The same portal is the Region's council_meeting source:
+      one platform page serving several bodies, per the README.
+
+  # --- Waterloo Region Housing ---
+  - institution: waterloo-region-housing
+    source_type: capital_plan
+    url: https://www.regionofwaterloo.ca/programs-and-services/housing-and-shelter/housing-planning-and-research/waterloo-region-housing-revitalization-plan/
+    alternates:
+      - https://www.regionofwaterloo.ca/media-manager/media-pages/plans-budget-and-performance-documents/waterloo-region-housing-revitalization-plan-2020-2040/
+      - https://www.regionofwaterloo.ca/government-and-council/plans-budget-and-performance/our-plan-and-budget/
+    evidence:
+      url: https://www.regionofwaterloo.ca/programs-and-services/housing-and-shelter/housing-planning-and-research/waterloo-region-housing-revitalization-plan/
+      quote: "The Waterloo Region Housing Revitalization Plan maps out the vision for Waterloo Region Housing (WRH) communities over the next two decades"
+    notes: >-
+      Judgement call. The Revitalization Plan is WRH's multi-year building plan (638 new units on
+      five WRH properties, keep all WRH buildings in good repair). The ten-year capital figures sit
+      in the Region's 2026 Final Budget Book ("Waterloo Region Housing & Housing Services Ten Year
+      Capital Budget & Forecast", pdf page 24), linked from Our Plan and Budget, an alternate.
+
+  # --- Region of Waterloo International Airport: no sources of its own (see absent_sources) ---
+
+  # --- Grand River Conservation Authority ---
+  - institution: grand-river-conservation-authority
+    source_type: procurement
+    url: https://www.grandriver.ca/who-we-are/public-tenders-and-requests-for-proposals/
+    evidence:
+      url: https://www.grandriver.ca/who-we-are/public-tenders-and-requests-for-proposals/
+      quote: "We are committed to a fair and transparent procurement process."
+    notes: Explains how the GRCA buys (Biddingo for tenders, RFPs and RFQs) and the kinds of opportunities it posts.
+
+  - institution: grand-river-conservation-authority
+    source_type: tender
+    url: https://www.biddingo.com/grca
+    alternates:
+      - https://www.grandriver.ca/who-we-are/public-tenders-and-requests-for-proposals/
+    platform: biddingo.com
+    evidence:
+      url: https://www.grandriver.ca/who-we-are/public-tenders-and-requests-for-proposals/
+      quote: "We use Biddingo to manage our Public Tenders and Requests for Proposals (RFPs)."
+      kind: links_to
+      link_target: https://www.biddingo.com/grca
+    notes: >-
+      The GRCA's Biddingo page ("Current Opportunities"), linked from its tenders page (an
+      alternate, one click up). The Biddingo page is JS-only, so the evidence is the GRCA page
+      that links it.
+
+  - institution: grand-river-conservation-authority
+    source_type: budget
+    url: https://www.grandriver.ca/who-we-are/governance/budget-and-financial-statements/
+    evidence:
+      url: https://www.grandriver.ca/who-we-are/governance/budget-and-financial-statements/
+      quote: "Our budget reflects our commitment to providing excellent watershed programs and services to our participating municipalities"
+    notes: Links the 2026 Budget package and the 2025 Audited Financial Statements.
+
+  - institution: grand-river-conservation-authority
+    source_type: board_meeting
+    url: https://www.grandriver.ca/who-we-are/board-meetings/
+    alternates:
+      - https://events.grandriver.ca/directors/
+    evidence:
+      url: https://www.grandriver.ca/who-we-are/board-meetings/
+      quote: "The board agendas, reports and minutes for General Membership and Source Protection Authority meetings are available on our"
+    notes: The agendas, reports and minutes themselves are on the linked Board Meeting Calendar (events.grandriver.ca/directors), an alternate.
+
+absent_sources:
+  - institution: grand-river-transit
+    source_type: procurement
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      GRT buys through the Region: "Procurement is responsible for purchasing all goods and
+      services for all divisions within the Region" (regionofwaterloo.ca bids-and-tenders page).
+      grt.ca sitemap (307 URLs on 2026-10-01) and About GRT menu have no procurement, supplier or bids page.
+  - institution: grand-river-transit
+    source_type: tender
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      No GRT-specific bid portal: GRT tenders are posted on the Region's portal
+      (regionofwaterloo.bidsandtenders.ca). No bidsandtenders subdomain or bids page linked from
+      grt.ca (sitemap and navigation checked).
+  - institution: grand-river-transit
+    source_type: budget
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      GRT's operating budget is the Transit Services chapter of the Region's budget book (recorded
+      under the Region). The grt.ca sitemap has no budget page; the old
+      grt.ca/en/about-grt/2026-budget-and-transit.aspx page now returns 404.
+  - institution: grand-river-transit
+    source_type: board_meeting
+    note: >-
+      GRT has no board: it is a Region service governed by Regional Council, whose meetings are
+      recorded under the Region. No board, commission or committee page on grt.ca (sitemap and
+      About GRT menu checked). No covered_by: the Region's meetings are council_meeting, a
+      different source type from board_meeting.
+  - institution: region-of-waterloo-library
+    source_type: procurement
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      The library buys through the Region: "Procurement is responsible for purchasing all goods
+      and services for all divisions within the Region" (regionofwaterloo.ca bids-and-tenders
+      page), and RWL is a Region division (staff email libhq@regionofwaterloo.ca; a chapter of
+      the Region's budget book). rwlibrary.ca sitemap (99 URLs on 2026-10-01) and About the Library menu
+      have no procurement, supplier or bids page.
+  - institution: region-of-waterloo-library
+    source_type: tender
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      No library bid portal: tenders for every Region division are posted on
+      regionofwaterloo.bidsandtenders.ca. No bids page linked from rwlibrary.ca (sitemap and
+      navigation checked).
+  - institution: region-of-waterloo-library
+    source_type: budget
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      The library's operating budget is the "Region of Waterloo Library" chapter of the Region's
+      2026 Final Budget Book (table of contents, under Planning, Development and Legislative
+      Services), recorded under the Region. rwlibrary.ca has no budget page; its Policies and
+      Reports page lists policies, report cards and the service delivery plan only.
+  - institution: region-of-waterloo-public-health
+    source_type: procurement
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      Public Health buys through the Region: "Procurement is responsible for purchasing all goods
+      and services for all divisions within the Region" (regionofwaterloo.ca bids-and-tenders page).
+      The Public Health section and its menu have no procurement, supplier or bids page.
+  - institution: region-of-waterloo-public-health
+    source_type: budget
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      The Public Health budget is the Public Health & Paramedic Services chapter of the Region's
+      2026 Final Budget Book (from pdf page 123), recorded under the Region; the Board of Health
+      budget is approved by Regional Council. No budget page in the Public Health section.
+  - institution: waterloo-region-housing
+    source_type: procurement
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      WRH is housing the Region owns and operates, and buys through it: "Procurement is
+      responsible for purchasing all goods and services for all divisions within the Region"
+      (regionofwaterloo.ca bids-and-tenders page). No procurement page in the Housing and Shelter
+      section (sitemap checked 2026-10-01).
+  - institution: waterloo-region-housing
+    source_type: tender
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      No WRH bid portal: WRH revitalization and renewal work is tendered on the Region's portal
+      (regionofwaterloo.bidsandtenders.ca), recorded under the Region.
+  - institution: waterloo-region-housing
+    source_type: annual_report
+    note: >-
+      No WRH annual report found: the Housing and Shelter section (sitemap, 2026-10-01) and the
+      Region's progress-and-performance and plans media pages have none. The "2021 Annual Report"
+      and "2020 Annual Report" on the Housing Planning and Research page report on the Region's
+      10-Year Housing and Homelessness Plan (the Region as service manager), not on WRH. WRH figures
+      sit only in the Region's budget book and consolidated financial statements.
+  - institution: waterloo-region-housing
+    source_type: board_meeting
+    note: >-
+      WRH has no board: it is housing the Region owns and operates, governed by Regional Council,
+      whose meetings are recorded under the Region (council_meeting, a different source type). No
+      board or committee page in the Housing and Shelter section (sitemap checked 2026-10-01).
+  - institution: region-of-waterloo-international-airport
+    source_type: procurement
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      The airport buys through the Region: "Procurement is responsible for purchasing all goods and
+      services for all divisions within the Region" (regionofwaterloo.ca bids-and-tenders page).
+      waterlooairport.ca sitemap (200 URLs on 2026-10-01) and About YKF menu have no procurement,
+      supplier or bids page.
+  - institution: region-of-waterloo-international-airport
+    source_type: tender
+    covered_by: regional-municipality-of-waterloo
+    note: >-
+      No airport bid portal: tenders for every Region division are posted on
+      regionofwaterloo.bidsandtenders.ca. No bids page linked from waterlooairport.ca (sitemap and
+      navigation checked).
+  - institution: region-of-waterloo-international-airport
+    source_type: annual_report
+    note: >-
+      No annual report found: waterlooairport.ca sitemap (200 URLs on 2026-10-01; About YKF,
+      Airport Information, Business at YKF) and the Region's sitemap (1,286 URLs, including the
+      progress-and-performance media pages) have none. Yearly passenger results appear only as
+      news releases. The airport's budget is a chapter of the Region's budget book.
+  - institution: region-of-waterloo-international-airport
+    source_type: board_meeting
+    note: >-
+      The airport has no board: it is a Region division governed by Regional Council, whose
+      meetings are recorded under the Region (council_meeting, a different source type). No
+      board page on waterlooairport.ca (sitemap checked 2026-10-01).
+
+candidate_domains:
+  - domain: grt.ca
+    institution: grand-river-transit
+    expected: confirm
+    reason: GRT's own domain, linked as "Grand River Transit services" from the Region's GRT and ION page; the site footer links back to regionofwaterloo.ca.
+  - domain: wrps.ca
+    institution: waterloo-regional-police-service
+    expected: confirm
+    reason: WRPS's current domain; the Region links http://www.wrps.on.ca/, which redirects here.
+  - domain: wrps.on.ca
+    institution: waterloo-regional-police-service
+    expected: reject
+    reason: >-
+      Legacy WRPS domain, still linked by the Region and used for board email addresses (board@wrps.on.ca), but it
+      only redirects to wrps.ca and serves no page of its own: domain_moved closes it as rejected and wrps.ca is the
+      one to confirm (2026-10-01).
+  - domain: engagewr.ca
+    institution: regional-municipality-of-waterloo
+    expected: reject
+    reason: >-
+      EngageWR, a shared public-consultation site that Social PinPoint runs on behalf of the Region,
+      Cambridge, Kitchener, Waterloo and the townships (its privacy policy); the Region's budget page
+      links it for budget engagement. Not any institution's home domain. Trap; matches kitchener.yaml.
+  - domain: aroundtheregion.ca
+    institution: regional-municipality-of-waterloo
+    expected: reject
+    reason: The Region's "Around the Region" newsletter/stories microsite, linked from the home page. Trap.
+  - domain: waterlooairport.ca
+    institution: region-of-waterloo-international-airport
+    expected: confirm
+    reason: >-
+      The airport's own domain, linked ("Learn More") from the Region's Airport page; the site is on
+      the same Govstack CMS as regionofwaterloo.ca and its title is "Region of Waterloo International
+      Airport". The airport is now a municipal_corporation row (was a reject trap while no type fit).
+  - domain: grandriver.ca
+    institution: grand-river-conservation-authority
+    expected: confirm
+    reason: The GRCA's own domain, linked as "Grand River Conservation Authority" from the Region's Boards and Foundations page.
+  - domain: rwlibrary.ca
+    institution: region-of-waterloo-library
+    expected: confirm
+    reason: The library's own domain, linked as "Region of Waterloo Library" from the Region's Libraries page; the site footer links back to regionofwaterloo.ca and its contact email is on the Region's domain.
+  - domain: grteasygofarecard.ca
+    institution: grand-river-transit
+    expected: confirm
+    reason: >-
+      GRT's own second domain: the EasyGO fare-card account site (linked as "My EasyGO" from the Region home page and
+      "Reload a fare card online" from grt.ca), whose footer reads "© 2026 Region of Waterloo Grand River Transit" and
+      gives GRT's address (browser 2026-10-01; curl meets a Cloudflare check). Built by GHD Digital, run for GRT.
+  - domain: waterloocrimestoppers.com
+    institution: waterloo-regional-police-service
+    expected: reject
+    reason: Waterloo Regional Crime Stoppers, a separate charity linked from wrps.ca ("Submit an Anonymous Tip"). Trap.
+
+out_of_scope:
+  - name: ION (ION light rail and ION bus rapid transit)
+    url: https://www.regionofwaterloo.ca/programs-and-services/roads-and-transportation/transit-and-transportation/grand-river-transit-and-ion/
+    reason: >-
+      Service lines of Grand River Transit, not a separate body ("GRT operates conventional buses,
+      ION light rail trains and specialized vehicles"). Stage 2 ION is a Region capital project.
+      Saving ION as its own transit_agency is a false positive.
+  - name: GrandLinq
+    reason: Private consortium that built and operates/maintains ION light rail under contract to the Region; not a public body.
+  - name: Kiwanis Transit
+    url: https://www.grt.ca/mobilityplus/specialized-transit-services-for-township-residents/
+    reason: Independent non-profit providing specialized transit in Wellesley, Wilmot and Woolwich, funded by the Region; not controlled or owned by it.
+  - name: Region of Waterloo Water and Wastewater Services
+    url: https://www.regionofwaterloo.ca/programs-and-services/water-and-wastewater/
+    reason: >-
+      Judgement call. public_utility is a region-level type, but water and wastewater is an
+      internal service area of the Engineering and Environmental Services department with no own
+      brand, site or procurement (Region Procurement buys for all divisions), so it fails rule
+      3(b). Reviewer may prefer a public_utility row.
+  - name: Region of Waterloo Museums
+    url: https://www.regionofwaterloomuseums.ca/
+    reason: >-
+      Judgement call. Cultural service of the Region (Cultural Services, with its own site) that
+      runs museums and archives as a public program funded through the levy, not a corporation,
+      authority or board running a business of its own, so not a municipal_corporation; no other
+      type covers museums. Reviewer may prefer a municipal_corporation row (a venue).
+  - name: Waterloo Region Economic Development Corporation
+    url: http://www.techtriangle.com/
+    reason: >-
+      A not-for-profit the Region funds but does not control: the Region's words are "an
+      independent non-profit corporation governed by a board of directors" whose board "includes
+      municipal representatives and other public sectors, but mainly represents business". Not a
+      municipal_corporation, which needs ownership or control.
+  - name: Region of Waterloo Arts Fund
+    url: https://artsfund.ca/
+    reason: >-
+      Arm's-length granting body created by Regional Council; it only gives grants and runs no
+      business of its own, so it is not a municipal_corporation, and no other type covers it.
+  - name: Waterloo Regional Heritage Foundation
+    url: http://www.wrhf.org/
+    reason: A funding foundation for local heritage groups; foundations are out of scope (README rule 2), and it runs no business of its own.
+  - name: Grand River Conservation Foundation
+    url: https://www.grandriver.ca/who-we-are/grcf/
+    reason: The GRCA's charitable fundraising foundation (donations, grants, scholarships), not the conservation authority itself; foundations are out of scope (README rule 2).
+  - name: Region of Waterloo Paramedic Services
+    url: https://www.regionofwaterloo.ca/programs-and-services/emergency-services-and-preparedness/ambulance-and-paramedic-services/
+    reason: >-
+      A department of the Regional Municipality of Waterloo, which buys and budgets for it; the
+      country file has no paramedic type (dropped 2026-10-01, README rule 2).
+  - name: University of Waterloo and Wilfrid Laurier University (Boards of Governors)
+    reason: Regional Council appoints a representative, but universities are province-level types, scored under Ontario.
+  - name: Ontario Provincial Police, Cambridge Detachment
+    url: https://www.opp.ca/
+    reason: Polices provincial highways in the region; a provincial service, not the Region's.
+  - name: Waterloo Region District School Board and Waterloo Catholic District School Board
+    reason: >-
+      School boards named for the region but not controlled by it; school_board is a
+      province-level type, scored under Ontario (README rule 2). Matches kitchener.yaml.
+
+notes: >-
+  Scope: at region level the country file lists regional_government, transit_agency,
+  police_service, public_utility, and conservation_authority, public_health_unit and
+  municipal_corporation. Found two bodies of the first four types besides the Region: Grand River
+  Transit (division with own name and domain) and Waterloo Regional Police Service (with its board
+  folded into one row), plus the Region of Waterloo Library, a library at a level the YAML does
+  not list it under, recorded with expected: review. Of the three later types: Region of Waterloo
+  Public Health (Regional Council is its Board of Health), Waterloo Region Housing and the Region
+  of Waterloo International Airport are Region divisions under their own names (rule 3(b); housing
+  and the airport are judgement calls, both municipal_corporation rows since housing_corporation
+  was folded into it on 2026-10-01), and the Grand River Conservation Authority is a shared body
+  whose one row in the eval dataset is here (rule 4; headquartered in Cambridge, Region-appointed
+  board members). Region of Waterloo Paramedic Services is out_of_scope: the paramedic type was
+  dropped on 2026-10-01, as a department the Region buys and budgets for. Museums, the arts and
+  heritage funds and the economic development corporation stay out_of_scope with reasons. No regional body presents as a public utility under
+  its own name; the Region's Water and Wastewater Services is out_of_scope as a judgement call. Both regionofwaterloo.ca and
+  grt.ca moved to Govstack in 2025-26; old .aspx URLs mostly 404 or redirect. No relationship with
+  a City of Kitchener body is stated on a Region page (the Mayor of Kitchener sits on Regional
+  Council, but that is a place link, not an institution relationship), so no cross-file
+  ref is used. The WRPS strategic plan is recorded under the floor rule. Supplier
+  registration pages are not recorded: vendor_portal was dropped as a source type on
+  2026-10-01 (how to register to bid is not a buying signal).

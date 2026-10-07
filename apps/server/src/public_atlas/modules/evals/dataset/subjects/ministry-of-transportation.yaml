@@ -1,0 +1,797 @@
+# Eval dataset slice for the Ontario Ministry of Transportation (MTO) and the provincial agencies that report to it.
+subject:
+  kind: institution
+  name: Ministry of Transportation
+  level: province_territory
+  place: Ontario
+  parent: null
+  tier: null
+  official_code: null
+  institution: ministry-of-transportation
+  government_homepage: https://www.ontario.ca/
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+trusted_at_start: [ontario.ca, pas.gov.on.ca]
+
+institutions:
+  - key: ministry-of-transportation
+    type: ministry
+    names:
+      - { text: Ministry of Transportation, lang: en }
+      - { text: MTO, lang: en, is_acronym: true }
+      - { text: Ministère des Transports, lang: fr }
+    homepage: https://www.ontario.ca/page/ministry-transportation
+    homepage_alternates:
+      - https://www.ontario.ca/fr/page/ministere-des-transports
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.ontario.ca/page/ministry-transportation
+      quote: "Ministry of Transportation Moving people and goods safely, efficiently and sustainably across Ontario"
+    notes: >-
+      Official name confirmed on ontario.ca (page title and breadcrumb "Ministries > Ministry of Transportation").
+      French twin: https://www.ontario.ca/fr/page/ministere-des-transports. The legacy domain
+      http://www.mto.gov.on.ca/english/ (still linked from several ontario.ca pages) redirects to this page.
+
+  - key: metrolinx
+    type: agency
+    names:
+      - { text: Metrolinx, lang: en }
+      - { text: Metrolinx, lang: fr }
+    homepage: https://www.metrolinx.com/en
+    homepage_alternates:
+      - https://www.metrolinx.com/fr
+    homepage_host: own_domain
+    evidence:
+      url: https://www.ontario.ca/page/ministry-transportation
+      quote: "The ministry is affiliated with the following independent agencies: Metrolinx"
+      kind: links_to
+      link_target: http://www.metrolinx.com/en/
+    notes: >-
+      ontario.ca links http://www.metrolinx.com/en/, which redirects to https://www.metrolinx.com/en.
+      Its own footer: "Metrolinx, an agency of the Ontario Government under the Metrolinx Act, 2006".
+      Typed agency (ontario.ca and its own pages say "agency"); it is a Crown agency without share capital,
+      so crown_corporation is arguable. GO Transit, UP Express and PRESTO are Metrolinx divisions (see out_of_scope).
+    parent:
+      institution: ministry-of-transportation
+      label: The ministry is affiliated with the following independent agencies
+      evidence:
+        url: https://www.ontario.ca/page/ministry-transportation
+        quote: "The ministry is affiliated with the following independent agencies: Metrolinx Owen Sound Transportation Company Ontario Northland Transportation Commission"
+
+  - key: ontario-northland-transportation-commission
+    type: agency
+    names:
+      - { text: Ontario Northland Transportation Commission, lang: en }
+      - { text: Ontario Northland, lang: en }
+      - { text: ONTC, lang: en, is_acronym: true }
+      - { text: Commission de transport Ontario Northland, lang: fr }
+      - { text: CTON, lang: fr, is_acronym: true }
+    homepage: https://www.ontarionorthland.ca/en
+    homepage_alternates:
+      - https://www.ontarionorthland.ca/fr
+    homepage_host: own_domain
+    evidence:
+      url: https://www.ontario.ca/page/ministry-transportation
+      quote: "Ontario Northland Transportation Commission"
+      kind: links_to
+      link_target: http://www.ontarionorthland.ca/en
+    notes: >-
+      Currently reports to MTO (older lists, e.g. the MGS classified agencies PDF, put it under Northern
+      Development and Mines). Its governance page: "Ontario Northland is an agency of the Province of Ontario
+      that reports to the Ministry of Transportation." Typed agency per ontario.ca wording; it is a commercial
+      operational enterprise often called a Crown corporation, so crown_corporation is arguable.
+      The Public Appointments Secretariat lists its URL as www.ontc.on.ca, which (http only) redirects here.
+    parent:
+      institution: ministry-of-transportation
+      label: The ministry is affiliated with the following independent agencies
+      evidence:
+        url: https://www.ontario.ca/page/ministry-transportation
+        quote: "The ministry is affiliated with the following independent agencies: Metrolinx Owen Sound Transportation Company Ontario Northland Transportation Commission"
+
+  - key: owen-sound-transportation-company
+    type: agency
+    names:
+      - { text: Owen Sound Transportation Company, lang: en }
+      - { text: "Owen Sound Transportation Company, Limited", lang: en }
+      - { text: OSTC, lang: en, is_acronym: true }
+    homepage: https://www.ontarioferries.com/
+    homepage_alternates:
+      - https://www.ontarioferries.com/fr/accueil/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.ontario.ca/page/ministry-transportation
+      quote: "Owen Sound Transportation Company"
+      kind: links_to
+      link_target: https://www.ontarioferries.com/
+    notes: >-
+      Own site: "Owen Sound Transportation Company is an operational enterprise agency of the Province of Ontario."
+      Incorporated under the Business Corporations Act with the Minister as sole shareholder (per the Public
+      Appointments Secretariat), so crown_corporation is arguable; typed agency per ontario.ca wording.
+      The French pages use the English name only. "Owen Sound Transportation Company, Limited" is the
+      form in the MTO-OSTC MOU posted on its Corporate & Governance page; the Public Appointments
+      Secretariat writes "Owen Sound Transportation Company Limited" (checked 2026-10-01).
+    parent:
+      institution: ministry-of-transportation
+      label: The ministry is affiliated with the following independent agencies
+      evidence:
+        url: https://www.ontario.ca/page/ministry-transportation
+        quote: "The ministry is affiliated with the following independent agencies: Metrolinx Owen Sound Transportation Company Ontario Northland Transportation Commission"
+
+  - key: go-transit
+    type: transit_agency
+    expected: review
+    names:
+      - { text: GO Transit, lang: en }
+      - { text: GO Transit, lang: fr }
+    homepage: https://www.gotransit.com/en
+    homepage_alternates:
+      - https://www.gotransit.com/fr
+    homepage_host: own_domain
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-transportation
+      quote: "The agency is responsible for the operation of the GO Transit system"
+    notes: >-
+      Moved from out_of_scope on 2026-10-01. GO Transit is an operating division of Metrolinx, not a
+      separate body, but it presents under its own name and domain and its work is transit, so
+      README rule 3(b) gives it a row (like OC Transpo). transit_agency is listed under region and
+      municipality only, so this is the README rule 1 case: save it as transit_agency and it lands in
+      review. It buys, tenders, budgets, plans and reports through Metrolinx (its Vendor Information
+      page: "Metrolinx procurement strategies and practices..."); its "Our Management Team" page only
+      sends readers to the Metrolinx Senior Management Team. No ontario.ca page found that links
+      gotransit.com, so the evidence is appears_on. gotransit.com also says plain "GO" (About GO), left
+      out of names: ontario.ca marks GO up as <abbr title="Government of Ontario">, so it would collide.
+    parent:
+      institution: metrolinx
+      label: A division of Metrolinx
+      evidence:
+        url: https://www.gotransit.com/en/about-go
+        quote: A division of Metrolinx, GO Transit is the regional public transit service for the Greater Toronto and Hamilton Area
+
+  - key: up-express
+    type: transit_agency
+    expected: review
+    names:
+      - { text: UP Express, lang: en }
+      - { text: Union Pearson Express, lang: en }
+      - { text: UP Express, lang: fr }
+      - { text: Union Pearson Express, lang: fr }
+    homepage: https://www.upexpress.com/en
+    homepage_alternates:
+      - https://www.upexpress.com/fr
+    homepage_host: own_domain
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-transportation
+      quote: "the PRESTO fare card payment system, the Union–Pearson (UP) Express"
+    notes: >-
+      Moved from out_of_scope on 2026-10-01, for the same reason as go-transit: a Metrolinx operating
+      division (airport rail link) that presents under its own name and domain, so rule 3(b) gives it a
+      row and rule 1 sends transit_agency at the province level to review. Judgement call: a reviewer
+      may see the airport rail link as a service line rather than a transit agency. upexpress.com has
+      no procurement, plan or governance page of its own (checked the 453 URLs in its sitemap-0.xml);
+      all of it runs through Metrolinx.
+    parent:
+      institution: metrolinx
+      label: A division of Metrolinx
+      evidence:
+        url: https://www.upexpress.com/en/about-up
+        quote: A division of Metrolinx, an agency of the Ontario Government, UP Express connects Toronto Pearson International Airport and Union Station
+
+sources:
+  # --- Ministry of Transportation -------------------------------------------------
+  - institution: ministry-of-transportation
+    source_type: procurement
+    url: https://www.raqs.merx.com/public/main/home.jsf
+    alternates:
+      - https://www.raqs.merx.com/
+      - https://www.raqs.merx.com/public/main/home.jsf?language=FRENCH
+    platform: merx.com
+    evidence:
+      url: https://www.raqs.merx.com/public/main/home.jsf
+      quote: "If you have questions or need technical assistance, please contact the RAQS Help Desk"
+    notes: >-
+      MTO's Registry, Appraisal and Qualification System (RAQS) on MERX: contractor registration,
+      qualification procedures, forms and help desk for highway construction and maintenance contracts.
+      Linked from tcp.mto.gov.on.ca; ontario.ca/page/ontarios-highway-programs links its Contract Bulletin.
+      MTO's own procurement page, so the government-wide "Doing business with the Government of
+      Ontario" page (ontario.ca/page/doing-business-government-ontario) is not recorded here: it is
+      the procurement source of ministry-of-public-and-business-service-delivery-and-procurement,
+      which owns it (README, government-wide Ontario pages). No covered_by, since MTO has its own
+      procurement source.
+  - institution: ministry-of-transportation
+    source_type: tender
+    url: https://www.raqs.merx.com/public/bulletin/bulletin.jsf
+    alternates:
+      - https://www.raqs.merx.com/public/contract/contractsByRegionMap.jsf
+      # MTO also posts non-construction solicitations on the government-wide Ontario Tenders
+      # Portal (a Supply Ontario source), so saving it for MTO is accepted, not a false positive.
+      - https://ontariotenders.app.jaggaer.com/
+      - https://ontariotenders.app.jaggaer.com/esop/nac-host/public/web/login.html
+    platform: merx.com
+    evidence:
+      url: https://www.raqs.merx.com/public/bulletin/bulletin.jsf
+      quote: "Tenders Under Call"
+    notes: >-
+      RAQS Contract Bulletin: MTO Capital and Regional construction contracts under call. Linked from
+      ontario.ca/page/ontarios-highway-programs as "MERX - information about past and future tenders".
+      MTO's goods and services calls go on the government-wide Ontario Tenders Portal
+      (ontariotenders.app.jaggaer.com), which is recorded once, as the tender source of
+      ministry-of-public-and-business-service-delivery-and-procurement:supply-ontario (which runs
+      it). It is not an MTO source, and MTO has its own tender pages, so there is no covered_by.
+  - institution: ministry-of-transportation
+    source_type: tender
+    url: https://www.raqsesp.merx.com/
+    platform: merx.com
+    evidence:
+      url: https://www.raqsesp.merx.com/
+      quote: "an electronic procurement portal for Engineering Service Providers in the areas of Planning, Engineering and Construction Administration"
+    notes: >-
+      RAQS Engineering Services portal: open solicitations for MTO engineering/consulting work. Linked from the RAQS home page.
+  - institution: ministry-of-transportation
+    source_type: contract_award
+    url: https://www.raqs.merx.com/public/contract/contractHistoryList.jsf
+    platform: merx.com
+    evidence:
+      url: https://www.raqs.merx.com/public/contract/contractHistoryList.jsf
+      quote: "Note: MTO Capital Contracts awarded after February 21, 2012 are available on RAQS/MERX."
+    notes: >-
+      RAQS 5 Year Contract History: each contract shows status (Awarded / Non-Award / Completed) and the
+      bidders list with prices. No ontario.ca page publishes MTO contract awards; the government-wide
+      data.ontario.ca consulting contracts dataset was not counted as an MTO source.
+  - institution: ministry-of-transportation
+    source_type: budget
+    url: https://www.ontario.ca/page/expenditure-estimates-ministry-transportation-2026-2027
+    alternates:
+      - https://www.ontario.ca/fr/page/ministere-des-transports-budget-des-depenses-2026-2027
+      - https://www.ontario.ca/page/expenditure-estimates-volume-1-table-contents-2026-2027
+    evidence:
+      url: https://www.ontario.ca/page/expenditure-estimates-ministry-transportation-2026-2027
+      quote: "The 2026–2027 Expenditure Estimates set out details of the operating and capital spending requirements of the Ministry of Transportation for the fiscal year commencing April 1, 2026."
+    notes: >-
+      Current fiscal year (2026-27, published April 22, 2026). The 2025-26 page
+      (/page/expenditure-estimates-ministry-transportation-2025-26) is the previous year.
+  - institution: ministry-of-transportation
+    source_type: strategic_plan
+    url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-transportation
+    alternates:
+      - https://www.ontario.ca/fr/page/publication-des-plans-dactivites-et-rapports-annuels-de-2025-2026-ministere-des-transports
+      - https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-transportation
+      quote: "2025-26 Strategic plan Delivery of key transit projects and programs"
+    notes: >-
+      Latest published plan and annual report; the 2026-2027 edition is not yet published (404 on 2026-09-29).
+  - institution: ministry-of-transportation
+    source_type: leadership
+    url: https://www.infogo.gov.on.ca/infogo/home.html#orgProfile/1713/en
+    alternates:
+      - http://www.infogo.gov.on.ca/infogo/home.html#orgProfile/1713/en
+      - https://www.infogo.gov.on.ca/org?id=1713
+    evidence:
+      url: https://www.infogo.gov.on.ca/infogo/home.html
+      quote: "INFO-GO - Employee and organization directory"
+    notes: >-
+      INFO-GO, the Ontario government employee and organization directory, linked from the ministry page as
+      "Employee directory". JavaScript-rendered (curl only gets the shell), and on infogo.gov.on.ca, an Ontario
+      government domain that is NOT ontario.ca: unreachable unless that domain is verified (candidate_domains, confirm).
+      The #orgProfile/1713 fragment selects MTO, so this is MTO's own entry and a real source, not a
+      government-wide page. The current React app serves the same entry at /org?id=1713 (the URL form the
+      sibling ministry file uses); its API (GetOrganizationById, orgId=1713) returns "Ministry of" /
+      "Transportation", acronym MTO (checked 2026-10-01).
+  - institution: ministry-of-transportation
+    source_type: leadership
+    url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-transportation
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-transportation
+      quote: "Ministry organization chart June 2025 Deputy Minister — Doug Jones"
+    notes: >-
+      The published plan carries the ministry organization chart (Deputy Minister, ADMs and directors); the
+      only leadership listing on a trusted domain.
+  - institution: ministry-of-transportation
+    source_type: capital_plan
+    url: https://www.ontario.ca/page/ontarios-highway-programs
+    alternates:
+      - https://www.ontario.ca/fr/page/programmes-des-routes-de-lontario
+    evidence:
+      url: https://www.ontario.ca/page/ontarios-highway-programs
+      quote: "From April 2026 to March 2027, the Ontario government is committing about $5.4 billion to repair and expand provincial highways and bridges."
+    notes: >-
+      Added 2026-10-01. The Ontario Highways Program: highway expansion and rehabilitation projects planned
+      or underway, as an interactive map and the Southern and Northern Highways Program tables (PDFs on the
+      page; the summer 2026 southern table lists projects with start years through 2028-2029 and later).
+      capital_plan is not in the ministry type's list; recorded under the floor rule (README, Sources).
+  - institution: ministry-of-transportation
+    source_type: news
+    url: https://news.ontario.ca/mto/en
+    alternates:
+      - https://news.ontario.ca/mto/fr
+    evidence:
+      url: https://www.ontario.ca/page/ministry-transportation
+      quote: "Media contacts Ministry news"
+      kind: links_to
+      link_target: https://news.ontario.ca/mto/en
+    notes: >-
+      Added 2026-10-01. The ministry's Ontario Newsroom listing ("Transportation", news releases and
+      bulletins, newest first), linked as "Ministry news" from the ministry page. news.ontario.ca is
+      under the trusted ontario.ca. The page is JavaScript-rendered (curl gets only the app shell),
+      so the evidence is the link; the listing was read in Chromium. The government-wide newsroom
+      (news.ontario.ca/newsroom/en) is not the ministry's own list.
+  - institution: metrolinx
+    source_type: procurement
+    url: https://www.metrolinx.com/en/about-us/doing-business-with-metrolinx
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/faire-des-affaires-avec-metrolinx
+      - https://www.metrolinx.com/en/about-us/doing-business-with-metrolinx/tenders
+    evidence:
+      url: https://www.metrolinx.com/en/about-us/doing-business-with-metrolinx
+      quote: "As a public sector entity, Metrolinx maximizes the use of competitive processes to obtain goods and services for the corporation."
+    notes: >-
+      /doing-business-with-metrolinx/tenders (linked as "Metrolinx tenders" from GO Transit's Vendor
+      Information page) redirects here.
+  - institution: metrolinx
+    source_type: tender
+    url: https://www.metrolinx.merx.com/
+    alternates:
+      - https://www.metrolinx.merx.com/public/solicitations/open
+    platform: merx.com
+    evidence:
+      url: https://www.metrolinx.merx.com/
+      quote: "Metrolinx - List of Open Solicitations"
+    notes: >-
+      Linked from the Doing Business page as "Merx e-tendering website". The Procurement Pipeline page
+      (/en/about-us/doing-business-with-metrolinx/procurement-pipeline) lists planned, not open, procurements.
+  - institution: metrolinx
+    source_type: contract_award
+    url: https://www.metrolinx.merx.com/public/solicitations/awarded
+    platform: merx.com
+    evidence:
+      url: https://www.metrolinx.merx.com/public/solicitations/awarded
+      quote: "Awarded Solicitations"
+    notes: >-
+      Added 2026-10-01. The "Awarded Solicitations" tab of Metrolinx's MERX portal (1,135 awards listed on
+      2026-10-01, with award dates). contract_award is not in the agency type's list; recorded under the
+      floor rule (README, Sources).
+  - institution: metrolinx
+    source_type: annual_report
+    url: https://www.metrolinx.com/en/about-us/annual-reports
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/rapports-annuels
+    evidence:
+      url: https://www.metrolinx.com/en/about-us/annual-reports
+      quote: "Metrolinx produces an Annual Report that outlines the major highlights and milestones from the fiscal period April 1 to March 31."
+  - institution: metrolinx
+    source_type: strategic_plan
+    url: https://www.metrolinx.com/en/about-us/annual-reports
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/rapports-annuels
+    evidence:
+      url: https://www.metrolinx.com/en/about-us/annual-reports
+      quote: "Guided by the Metrolinx Five Year Strategy, the Metrolinx Business Plan is produced annually and presents priorities for the year"
+    notes: >-
+      Added 2026-10-01. The page is titled "Annual Reports and Corporate Plans" and lists the annual Business
+      Plans (2026-2027 is the latest) and the Five Year Strategies. Same page as annual_report.
+      strategic_plan is not in the agency type's list; recorded under the floor rule. The ministry's
+      published plan links this page as "Metrolinx Annual Reports and Corporate Plans".
+  - institution: metrolinx
+    source_type: budget
+    url: https://www.metrolinx.com/en/about-us/annual-reports
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/rapports-annuels
+    evidence:
+      url: https://assets.metrolinx.com/image/upload/v1786730425/Documents/corporate/2026-27_Metrolinx_Business_Plan_EN.pdf
+      quote: "Metrolinx’s operating budget plan reflects planned revenues and expenses as presented to the Government of Ontario"
+      locator: "pdf page 15 (printed 14)"
+      manual_check: "pdftotext 2026-10-01"
+    notes: >-
+      Added 2026-10-01. Metrolinx has no budget page; the 2026-2027 Business Plan on this page carries
+      "3.1 Operating Budget Summary". budget is not in the agency type's list; recorded under the floor rule,
+      and so that go-transit and up-express can point here with covered_by.
+  - institution: metrolinx
+    source_type: capital_plan
+    url: https://www.metrolinx.com/en/about-us/annual-reports
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/rapports-annuels
+    evidence:
+      url: https://assets.metrolinx.com/image/upload/v1786730425/Documents/corporate/2026-27_Metrolinx_Business_Plan_EN.pdf
+      quote: "Metrolinx is projecting a capital budget of approximately $11.6 billion in 2026-27"
+      locator: "pdf page 16 (printed 15)"
+      manual_check: "pdftotext 2026-10-01"
+    notes: >-
+      Added 2026-10-01. The 2026-2027 Business Plan's "3.2 Capital Budget Summary" (GO Expansion, subways,
+      LRT, state of good repair). A one-year capital budget inside the business plan rather than a
+      multi-year capital plan; a reviewer may prefer an absence. Recorded under the floor rule, and so that
+      go-transit and up-express can point here with covered_by. The project pages under
+      /en/projects-and-programs describe individual projects, not a plan.
+  - institution: metrolinx
+    source_type: board_meeting
+    url: https://www.metrolinx.com/en/about-us/the-board/board-meetings
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/le-conseil/reunions-du-conseil-d%E2%80%99-administration
+    evidence:
+      url: https://www.metrolinx.com/en/about-us/the-board/board-meetings
+      quote: "Board materials, including meeting agenda, minutes, comments received by the Board, and videos, are posted promptly further down this page."
+  - institution: metrolinx
+    source_type: leadership
+    url: https://www.metrolinx.com/en/about-us/senior-management-team
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/equipe-de-haute-direction
+    evidence:
+      url: https://www.metrolinx.com/en/about-us/senior-management-team
+      quote: "Michael Lindsay, President and CEO"
+  - institution: metrolinx
+    source_type: leadership
+    url: https://www.metrolinx.com/en/about-us/the-board
+    alternates:
+      - https://www.metrolinx.com/fr/a-propos-de-nous/le-conseil
+    evidence:
+      url: https://www.metrolinx.com/en/about-us/the-board
+      quote: "The Board of Directors is governed by the Minister of Transportation."
+
+  # --- Ontario Northland Transportation Commission ----------------------------------
+  - institution: ontario-northland-transportation-commission
+    source_type: procurement
+    url: https://www.ontarionorthland.ca/en/company/doing-business-ontc
+    alternates:
+      - https://www.ontarionorthland.ca/fr/entreprise/faire-affaire-avec-cton
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company/doing-business-ontc
+      quote: "Ontario Northland is committed to acquiring goods and services through procurement processes that are fair, open, and transparent"
+  - institution: ontario-northland-transportation-commission
+    source_type: tender
+    url: https://www.ontarionorthland.ca/en/company/doing-business-ontc
+    alternates:
+      - https://www.ontarionorthland.ca/fr/entreprise/faire-affaire-avec-cton
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company/doing-business-ontc
+      quote: "These open competitive opportunities are posted on this page and on MERX."
+    notes: >-
+      Same page as procurement: it lists the open RFQs/RFPs ("Sales and Tenders" in the footer). Bids are
+      submitted on MERX, but the page links only the generic merx.com open-solicitations list, not an ONTC page.
+  - institution: ontario-northland-transportation-commission
+    source_type: annual_report
+    url: https://www.ontarionorthland.ca/en/company/document-centre
+    alternates:
+      - https://www.ontarionorthland.ca/fr/entreprise/centre-documentation
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company/document-centre
+      quote: "2024 - 2025 Annual Report"
+  - institution: ontario-northland-transportation-commission
+    source_type: strategic_plan
+    url: https://www.ontarionorthland.ca/en/company/document-centre
+    alternates:
+      - https://www.ontarionorthland.ca/en/company/document-centre?category=56
+      - https://www.ontarionorthland.ca/fr/entreprise/centre-documentation
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company/document-centre?category=56
+      quote: "2026-2027 Business Plan"
+    notes: >-
+      Added 2026-10-01. The Document Centre's "Business Plan" category (category=56) lists the annual
+      business plans, 2026-2027 the latest. Same page as annual_report; the scorer ignores the query.
+      strategic_plan is not in the agency type's list; recorded under the floor rule (README, Sources).
+  - institution: ontario-northland-transportation-commission
+    source_type: contract_award
+    url: https://www.ontarionorthland.ca/en/company/procurement-results-awards
+    alternates:
+      - https://www.ontarionorthland.ca/fr/entreprise/resultats-du-processus
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company/procurement-results-awards
+      quote: "Procurement Results and Awards Status of Procurement 2026"
+    notes: >-
+      Added 2026-10-01. Linked from the Doing Business page; a table of awarded contracts with successful
+      proponent and value, plus yearly PDFs. contract_award is not in the agency type's list; recorded
+      under the floor rule.
+  - institution: ontario-northland-transportation-commission
+    source_type: leadership
+    url: https://www.ontarionorthland.ca/en/company
+    alternates:
+      - https://www.ontarionorthland.ca/fr/entreprise
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company
+      quote: "Chad Evans - Chief Executive Officer"
+  - institution: ontario-northland-transportation-commission
+    source_type: leadership
+    url: https://www.ontarionorthland.ca/en/company/governance
+    alternates:
+      - https://www.ontarionorthland.ca/fr/entreprise/gouvernance
+    evidence:
+      url: https://www.ontarionorthland.ca/en/company/governance
+      quote: "The Board, also known as the Ontario Northland Transportation Commission, is appointed by the Lieutenant Governor in Council"
+
+  # --- Owen Sound Transportation Company --------------------------------------------
+  - institution: owen-sound-transportation-company
+    source_type: annual_report
+    url: https://www.ontarioferries.com/corporate-governance/
+    alternates:
+      - https://www.ontarioferries.com/en/corporate-governance
+      - https://www.ontarioferries.com/fr/gouvernance-de-lentreprise/
+    evidence:
+      url: https://www.ontarioferries.com/corporate-governance/
+      quote: "All non-advisory classified agencies are required to post their most recently tabled Annual Report."
+    notes: >-
+      The footer link /en/corporate-governance redirects to /corporate-governance/. Same page also holds
+      business plans, the MOU with MTO and board expenses.
+  - institution: owen-sound-transportation-company
+    source_type: leadership
+    url: https://www.ontarioferries.com/corporate-governance/
+    alternates:
+      - https://www.ontarioferries.com/en/corporate-governance
+      - https://www.ontarioferries.com/fr/gouvernance-de-lentreprise/
+    evidence:
+      url: https://www.ontarioferries.com/corporate-governance/
+      quote: "Meet the Board of Directors Chair: James Colliver"
+    notes: >-
+      Board of directors only; no executive/management page found ("Meet The Team" in the footer is not a link).
+  - institution: owen-sound-transportation-company
+    source_type: strategic_plan
+    url: https://www.ontarioferries.com/corporate-governance/
+    alternates:
+      - https://www.ontarioferries.com/en/corporate-governance
+      - https://www.ontarioferries.com/fr/gouvernance-de-lentreprise/
+    evidence:
+      url: https://www.ontarioferries.com/corporate-governance/
+      quote: "The annual Business Plan encompasses the agency’s strategic direction and upcoming activities for the next three fiscal years."
+    notes: >-
+      Added 2026-10-01. The "Annual Business Plans" section of the same page (2026/2027 the latest).
+      strategic_plan is not in the agency type's list; recorded under the floor rule (README, Sources).
+
+  # --- GO Transit (Metrolinx division) ---------------------------------------------
+  - institution: go-transit
+    source_type: procurement
+    url: https://www.gotransit.com/en/partner-with-us/vendor-information-resources
+    alternates:
+      - https://www.gotransit.com/fr/ressources-informatives/fournisseurs
+    evidence:
+      url: https://www.gotransit.com/en/partner-with-us/vendor-information-resources
+      quote: "Metrolinx procurement strategies and practices are designed to ensure the protection of public interest"
+    notes: >-
+      GO Transit's own Vendor Information Resources page: Metrolinx's procurement principles, MERX, and a
+      link to the Metrolinx tenders page. A page on GO's own site, so a source for GO rather than covered_by;
+      a reviewer may prefer covered_by metrolinx.
+
+absent_sources:
+  - institution: ontario-northland-transportation-commission
+    source_type: board_meeting
+    note: >-
+      No agendas or minutes published. Checked the Company and Governance pages, the Document Centre
+      (annual reports, business plans, financial statements, executive expenses, business cases only),
+      and all 515 URLs in https://www.ontarionorthland.ca/sitemap.xml for minute/agenda/meeting pages.
+  - institution: owen-sound-transportation-company
+    source_type: procurement
+    note: >-
+      No purchasing or doing-business page. Checked the header/footer navigation, the HTML sitemap
+      (/en/sitemap) and page-sitemap.xml/post-sitemap.xml for tender/bid/procure/vendor/supplier URLs.
+      The only hit is a single 2023 news post, /winter-air-service-bid-invitation/ (an individual call, not a landing page).
+  - institution: owen-sound-transportation-company
+    source_type: tender
+    note: >-
+      No open-bids listing on ontarioferries.com (same search as procurement); no OSTC portal on MERX or
+      bids&tenders found by web search. The 2023 post /winter-air-service-bid-invitation/ is a single closed call.
+  - institution: owen-sound-transportation-company
+    source_type: board_meeting
+    note: >-
+      No agendas or minutes. The Corporate & Governance page lists the board, MOU, letters of direction,
+      business plans, annual reports and expenses only; sitemaps have no meeting pages.
+
+  # GO Transit and UP Express are Metrolinx divisions: one board, one procurement, one business plan.
+  # Checked gotransit.com (768 URLs in sitemap-0.xml, About GO, Partner with us) and upexpress.com
+  # (453 URLs in sitemap-0.xml, About UP, footer) for tender, budget, plan and board pages on 2026-10-01.
+  - institution: go-transit
+    source_type: tender
+    covered_by: metrolinx
+    note: >-
+      GO's Vendor Information page sends bidders to the Metrolinx MERX portal ("Merx website") and the
+      Metrolinx tenders page; GO has no bid listing of its own.
+  - institution: go-transit
+    source_type: budget
+    covered_by: metrolinx
+    note: >-
+      No GO budget page. GO's operating budget is part of Metrolinx's (2026-2027 Business Plan, "3.1
+      Operating Budget Summary", on the Metrolinx Annual Reports and Corporate Plans page).
+  - institution: go-transit
+    source_type: capital_plan
+    covered_by: metrolinx
+    note: >-
+      No GO capital plan page. GO Expansion and GO Extensions are categories of the Metrolinx capital budget
+      (2026-2027 Business Plan, "3.2 Capital Budget Summary"). "The Future & GO" (/en/the-future-and-go)
+      holds construction notices and service changes, not a plan.
+  - institution: go-transit
+    source_type: board_meeting
+    covered_by: metrolinx
+    note: >-
+      GO has no board; the Metrolinx Board governs it ("Our Management Team": "The Board provides business
+      direction to staff"). Board meetings are on metrolinx.com.
+  - institution: go-transit
+    source_type: strategic_plan
+    covered_by: metrolinx
+    note: >-
+      No GO plan page; the Metrolinx Business Plan covers "all operating divisions" (Metrolinx Annual Reports
+      and Corporate Plans page).
+  - institution: up-express
+    source_type: procurement
+    covered_by: metrolinx
+    note: >-
+      No purchasing or vendor page on upexpress.com (navigation, footer, sitemap). UP buys through Metrolinx.
+  - institution: up-express
+    source_type: tender
+    covered_by: metrolinx
+    note: No bid listing on upexpress.com; Metrolinx posts calls on its MERX portal.
+  - institution: up-express
+    source_type: budget
+    covered_by: metrolinx
+    note: No UP budget page; UP's operating budget is part of the Metrolinx Business Plan.
+  - institution: up-express
+    source_type: capital_plan
+    covered_by: metrolinx
+    note: No UP capital plan page; capital sits in the Metrolinx Business Plan's capital budget summary.
+  - institution: up-express
+    source_type: board_meeting
+    covered_by: metrolinx
+    note: UP has no board; the Metrolinx Board governs it and its meetings are on metrolinx.com.
+  - institution: up-express
+    source_type: strategic_plan
+    covered_by: metrolinx
+    note: No UP plan page; the Metrolinx Business Plan covers all operating divisions.
+
+candidate_domains:
+  - domain: metrolinx.com
+    institution: metrolinx
+    expected: confirm
+    reason: Metrolinx's own site, linked from the MTO page on ontario.ca.
+  - domain: ontarionorthland.ca
+    institution: ontario-northland-transportation-commission
+    expected: confirm
+    reason: ONTC's own site, linked from the MTO page on ontario.ca.
+  - domain: ontarioferries.com
+    institution: owen-sound-transportation-company
+    expected: confirm
+    reason: OSTC's own site, linked from the MTO page on ontario.ca under "Owen Sound Transportation Company".
+  - domain: mto.gov.on.ca
+    institution: ministry-of-transportation
+    expected: confirm
+    reason: >-
+      MTO's legacy domain, still linked from ontario.ca pages ("Ministry of Transportation" -> http://www.mto.gov.on.ca/english/,
+      which redirects to ontario.ca) and from the RAQS header ("MINISTRY HOME"). Hosts MTO's technical publications
+      library (www.library.mto.gov.on.ca) and the MTO Technical Consultation Portal (tcp.mto.gov.on.ca), both live
+      on 2026-10-01. An Ontario government domain other than ontario.ca.
+  - domain: infogo.gov.on.ca
+    institution: ministry-of-transportation
+    expected: confirm
+    reason: >-
+      INFO-GO, the Government of Ontario employee directory, linked from the MTO page as "Employee directory".
+      An Ontario government host other than ontario.ca, so a confirm candidate (README, Candidate domains).
+      Untrusted at start, so the leadership source on it is unreachable until it is confirmed.
+  - domain: ontarioferries.net
+    institution: owen-sound-transportation-company
+    expected: reject
+    reason: >-
+      Trap: lookalike named by OSTC as a fraudulent site impersonating it (as are ontarioferries.org,
+      ontarioferries.blog and on-ferries.com), per ontarioferries.com/fradulentwebsitedetected/. On
+      2026-10-01 it serves a "domain for sale" page (porkbun.com).
+  - domain: 407etr.com
+    institution: ministry-of-transportation
+    expected: reject
+    reason: >-
+      Trap: Highway 407 ETR is run by the private concessionaire 407 International Inc., not by MTO or a provincial agency.
+  - domain: 511on.ca
+    institution: ministry-of-transportation
+    expected: confirm
+    reason: >-
+      Ontario 511, linked from the MTO page ("Get the latest on highway closures ... on Ontario 511"). Its
+      About page (511on.ca/about/about511): "Ontario 511 is a bilingual digital traveller information service
+      provided by the Ontario Ministry of Transportation." MTO's own service site, so confirm for MTO; the
+      service itself is not an institution (out_of_scope). Checked 2026-10-01.
+  - domain: highway407east.com
+    institution: ministry-of-transportation
+    expected: reject
+    reason: >-
+      Trap: ontario.ca's Highway 407 East environmental assessment page (proponent: Ministry of
+      Transportation) links it as "Proponent website", but on 2026-10-01 it redirects to an unrelated
+      gambling site (pragmatic4da.top). Lapsed project domain; nothing on it belongs to MTO.
+  - domain: gotransit.com
+    institution: go-transit
+    expected: confirm
+    reason: >-
+      GO Transit's own site, linked from metrolinx.com; its About GO page: "A division of Metrolinx, GO
+      Transit is the regional public transit service for the Greater Toronto and Hamilton Area."
+  - domain: upexpress.com
+    institution: up-express
+    expected: confirm
+    reason: >-
+      UP Express's own site, linked from metrolinx.com; its footer: "A division of Metrolinx, an agency of
+      the Ontario Government, UP Express connects Toronto Pearson International Airport and Union Station".
+
+out_of_scope:
+  # GO Transit and UP Express were here; moved to institutions (expected: review) on 2026-10-01 under
+  # README rules 1 and 3(b): named divisions whose work matches transit_agency.
+  - name: PRESTO
+    url: https://www.prestocard.ca/en
+    reason: Metrolinx's fare-card division, not a separate body, and a fare system matches no YAML type (rule 3(b)).
+  - name: Nipissing Central Railway
+    reason: >-
+      Wholly owned subsidiary of ONTC (per ONTC's Document Centre); no procurement of its own found, so no
+      row under README rule 3.
+  - name: Pelee Island Transportation Service
+    reason: MTO ferry service whose vessels OSTC manages under contract; a service, not a body.
+  - name: Greater Toronto Airports Authority
+    url: https://www.torontopearson.com/
+    reason: >-
+      Federal not-for-profit airport authority. The Public Appointments Secretariat lists it under MTO only
+      because Ontario nominates a director; not a provincial agency. www.gtaa.com 301-redirects to
+      torontopearson.com (checked 2026-10-01).
+  - name: Ottawa Macdonald-Cartier International Airport Authority
+    reason: Federal airport authority; Ontario nominates a director (PAS lists it under MTO). Not a provincial agency.
+  - name: Greater London International Airport Authority
+    reason: Federal airport authority; Ontario nominates a director (PAS lists it under MTO). Not a provincial agency.
+  - name: Thunder Bay International Airports Authority Inc.
+    reason: Federal airport authority; Ontario nominates a director (PAS lists it under MTO). Not a provincial agency.
+  - name: Hamilton-Oshawa Port Authority
+    reason: Federal Canada Port Authority; Ontario appoints one director (PAS "Port Authority Board of Directors - Hamilton-Oshawa"). Not provincial.
+  - name: Thunder Bay Port Authority
+    reason: Federal Canada Port Authority; Ontario appoints one director (PAS lists it under MTO). Not provincial.
+  - name: Toronto Port Authority (PortsToronto)
+    reason: Federal Canada Port Authority; Ontario appoints one director (PAS lists it under MTO). Not provincial.
+  - name: Windsor Port Authority
+    reason: Federal Canada Port Authority; Ontario appoints one director (PAS lists it under MTO). Not provincial.
+  - name: Niagara Falls Bridge Commission
+    url: https://www.niagarafallsbridges.com
+    reason: Binational commission incorporated under US law; Ontario appoints four members (PAS lists it under MTO). Not a provincial agency.
+  - name: St. Lawrence Seaway Management Corporation
+    url: https://www.greatlakes-seaway.com
+    reason: Federal not-for-profit corporation; Ontario's minister appoints one member who elects a director. Not provincial.
+  - name: Infrastructure Ontario (Ontario Infrastructure and Lands Corporation)
+    reason: >-
+      Crown agency of the Ministry of Infrastructure. It co-delivers MTO highway and transit projects and appears in
+      MTO's estimates as a consolidation adjustment, but it does not report to MTO.
+  - name: Ontario Motor Vehicle Industry Council
+    reason: Delegated administrative authority under the Ministry of Public and Business Service Delivery and Procurement, not MTO; DAAs match no YAML type.
+  - name: Licence Appeal Tribunal
+    reason: Hears appeals of MTO licence decisions but is part of Tribunals Ontario (Ministry of the Attorney General).
+  - name: DriveTest
+    reason: Driver examination centres run for MTO under contract by a private operator; a contracted service, not a public body.
+  - name: Ontario 511
+    url: https://511on.ca/
+    reason: MTO traveller information service (a website and app), not a body.
+  - name: Ontario Highway Transport Board
+    reason: >-
+      Former MTO adjudicative agency for intercity bus licensing, dissolved on July 1, 2021 when the
+      Ontario Highway Transport Board Act was repealed (Bill 213, Better for People, Smarter for Business
+      Act, 2020). Still named in older MTO pages; not on the current PAS list.
+  - name: 407 ETR Concession Company Limited (Highway 407 ETR)
+    url: https://www.407etr.com/
+    reason: >-
+      Private toll-highway concessionaire (owned by 407 International Inc.), not a provincial body. The
+      provincially owned Highway 407 East is a highway, not an institution.
+  - name: Oversight and Agency Governance Division
+    reason: MTO internal division (ADM-led), no YAML type. Divisions are not institutions (README rule 3).
+  - name: Transit Division
+    reason: MTO internal division; no YAML type (transit_agency is municipal/regional and this division runs no service).
+  - name: Integrated Policy and Planning Division
+    reason: MTO internal division; no YAML type.
+  - name: Transportation Infrastructure Management Division
+    reason: MTO internal division; no YAML type.
+  - name: Transportation Safety Division
+    reason: MTO internal division; no YAML type.
+  - name: Operations Division
+    reason: MTO internal division; no YAML type.
+  - name: Commercial Transportation Safety and Enforcement Division
+    reason: MTO internal division; no YAML type.
+  - name: Corporate Services Division
+    reason: MTO internal division (shared Land and Resources Cluster); no YAML type.
+
+notes: >-
+  Agency list: the ontario.ca MTO page ("affiliated with the following independent agencies") and the
+  2025-26 published plan (Oversight and Agency Governance Program: "Metrolinx, Owen Sound Transportation
+  Company (OSTC), and Ontario Northland Transportation Commission (ONTC)") agree on three agencies. ontario.ca's
+  "Agencies, boards and commissions" page sends readers to the Public Appointments Secretariat
+  (pas.gov.on.ca/Home/Agencies-list), the official list by ministry, trusted at start beside ontario.ca (an
+  anchor domain in data/canada/country.yaml since 2026-10-01). It lists 13 bodies under MTO (checked 2026-10-01, SelectedMinistryId=26); the other
+  10 are federal or binational bodies where Ontario only makes appointments (out_of_scope). No MTO advisory
+  boards or delegated administrative authorities were found. GO Transit and UP Express, Metrolinx divisions
+  under their own names and domains, are transit_agency rows with expected: review (README rules 1 and 3(b)).
+  Sources of types the institution's type does not list (MTO capital_plan; agencies'
+  strategic_plan, contract_award, Metrolinx budget and capital_plan) are recorded under the floor rule.
+  Sources on raqs.merx.com / raqsesp.merx.com / metrolinx.merx.com are merx.com platform pages.
+  Government-wide pages (Doing business with the Government of Ontario, the Ontario Tenders Portal) are
+  recorded in ministry-of-public-and-business-service-delivery-and-procurement, not here; MTO has its own
+  RAQS procurement and tender pages, so none of its source types needs covered_by.

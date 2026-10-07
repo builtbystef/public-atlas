@@ -65,6 +65,7 @@ __all__ = [
     "pause_run",
     "progress",
     "queue_job",
+    "queue_spawns",
     "record_usage",
     "release",
     "requeue",
@@ -122,10 +123,14 @@ async def create_run(  # noqa: PLR0913
     filter: RunFilter | None = None,  # noqa: A002 - the column's name
     record_video: bool = False,
     is_eval: bool = False,
+    run_id: uuid.UUID | None = None,
     seed: bool = True,
+    hold: bool = False,
 ) -> Run:
-    """A run, seeded with the work due for the subjects in its filter unless `seed` is off (the
-    eval harness seeds its own). Flushed, not committed."""
+    """A run, seeded with the work due for the subjects in its filter unless `seed` is off, held
+    whatever the mode when `hold` (the eval harness seeds the country held and queues its
+    subjects' work itself). `run_id` is given when the same run is recorded in two databases.
+    Flushed, not committed."""
     run = Run(
         name=name,
         country_code=country_code,
@@ -134,21 +139,29 @@ async def create_run(  # noqa: PLR0913
         record_video=record_video,
         is_eval=is_eval,
     )
+    if run_id is not None:
+        run.id = run_id
     session.add(run)
     await session.flush()
     if seed:
-        await seed_run(session, jobs, run)
+        await seed_run(session, jobs, run, hold=hold)
     return run
 
 
-async def seed_run(session: AsyncSession, jobs: App, run: Run) -> list[Assignment]:
+async def seed_run(
+    session: AsyncSession, jobs: App, run: Run, *, hold: bool = False
+) -> list[Assignment]:
     """The work due for every place and institution the run's filter covers, skipping what a
-    finished assignment settled already. Safe to call again: open work is never doubled."""
+    finished assignment settled already; created held whatever the mode when `hold`. Safe to
+    call again: open work is never doubled."""
     wanted = run_filter(run)
     created: list[Assignment] = []
+    start_as = AssignmentStatus.HELD if hold else None
     for subject in await _subjects_in_scope(session, run.country_code, wanted):
         spawns = await due_work(session, subject)
-        created.extend(await spawn(session, jobs, run, spawns, skip_settled=True))
+        created.extend(
+            await spawn(session, jobs, run, spawns, skip_settled=True, start_as=start_as)
+        )
     logger.info("Run %s (%s) seeded with %d assignments", run.name, run.id, len(created))
     return created
 
@@ -340,7 +353,7 @@ async def progress(session: AsyncSession, run: Run) -> Progress:
 # --- Spawning ---
 
 
-async def spawn(  # noqa: PLR0913
+async def spawn(  # noqa: C901, PLR0913 - one rule per line
     session: AsyncSession,
     jobs: App,
     run: Run,
@@ -348,15 +361,21 @@ async def spawn(  # noqa: PLR0913
     *,
     parent: Assignment | None = None,
     skip_settled: bool = False,
+    start_as: AssignmentStatus | None = None,
 ) -> list[Assignment]:
     """Turn what a status change asked for into assignments of `run`: held in step mode, queued
-    with a job in auto mode. Work outside the run's filter, on a subject with that type open
-    already, or (with `skip_settled`) done by a finished assignment is not created; nor is
-    anything in a stopped run. Flushed, not committed."""
+    with a job in auto mode, or `start_as` (held or queued) whatever the mode. Work outside the
+    run's filter, on a subject with that type open already, or (with `skip_settled`) done by a
+    finished assignment is not created; nor is anything in a stopped run. Flushed, not
+    committed."""
     if run.status is RunStatus.STOPPED:
         if spawns:
             logger.info("Run %s is stopped: %d spawns dropped", run.id, len(spawns))
         return []
+    if start_as is None:
+        start_as = AssignmentStatus.HELD if run.mode is RunMode.STEP else AssignmentStatus.QUEUED
+    elif start_as not in (AssignmentStatus.HELD, AssignmentStatus.QUEUED):
+        raise ConflictError(f"an assignment cannot start {start_as.value}")
     wanted = run_filter(run)
     created: list[Assignment] = []
     for asked in dict.fromkeys(spawns):
@@ -365,9 +384,9 @@ async def spawn(  # noqa: PLR0913
             continue
         if await _open(session, asked) is not None:
             continue
-        if skip_settled and await _settled(session, asked):
+        if skip_settled and await _settled(session, asked) is not None:
             continue
-        assignment = await _insert(session, run, asked, parent)
+        assignment = await _insert(session, run, asked, parent, start_as)
         if assignment is None:
             continue
         if assignment.status is AssignmentStatus.QUEUED:
@@ -422,31 +441,36 @@ async def _open(session: AsyncSession, asked: Spawn) -> Assignment | None:
     )
 
 
-async def _settled(session: AsyncSession, asked: Spawn) -> bool:
-    found = await session.scalar(
-        select(Assignment.id)
+async def _settled(session: AsyncSession, asked: Spawn) -> Assignment | None:
+    """The newest finished assignment that settled this work, if any."""
+    return await session.scalar(
+        select(Assignment)
         .where(
             Assignment.subject_id == asked.subject_id,
             Assignment.type == asked.type,
             Assignment.status == AssignmentStatus.FINISHED,
             Assignment.result.in_(SETTLED_RESULTS),
         )
+        .order_by(Assignment.created_at.desc(), Assignment.id.desc())
         .limit(1)
     )
-    return found is not None
 
 
 async def _insert(
-    session: AsyncSession, run: Run, asked: Spawn, parent: Assignment | None
+    session: AsyncSession,
+    run: Run,
+    asked: Spawn,
+    parent: Assignment | None,
+    status: AssignmentStatus,
 ) -> Assignment | None:
-    """The row, held or queued by the run's mode. Two workers may ask for the same work at once;
-    the partial unique index lets one in, and the loser takes nothing."""
+    """The row, in `status`. Two workers may ask for the same work at once; the partial unique
+    index lets one in, and the loser takes nothing."""
     budget = descriptor_for(asked.type).budget
     assignment = Assignment(
         run_id=run.id,
         type=asked.type,
         subject_id=asked.subject_id,
-        status=AssignmentStatus.HELD if run.mode is RunMode.STEP else AssignmentStatus.QUEUED,
+        status=status,
         budget_requests=budget.requests,
         budget_tokens=budget.tokens,
         parent_assignment_id=parent.id if parent is not None else None,
@@ -459,6 +483,36 @@ async def _insert(
         logger.info("%s on %s was queued by another worker", asked.type.value, asked.subject_id)
         return None
     return assignment
+
+
+async def queue_spawns(
+    session: AsyncSession,
+    jobs: App,
+    run: Run,
+    spawns: Sequence[Spawn],
+    *,
+    parent: Assignment | None = None,
+) -> list[Assignment]:
+    """The assignments for `spawns`, queued now whatever the run's mode: one held on the subject
+    is released, one queued, running or finished with its work settled is returned as it is,
+    and a missing one is created queued. How the eval harness starts a subject's work in a run
+    seeded held, and starts it once. The run's filter still applies. Flushed, not committed."""
+    queued: list[Assignment] = []
+    for asked in dict.fromkeys(spawns):
+        found = await _open(session, asked) or await _settled(session, asked)
+        if found is None:
+            queued.extend(
+                await spawn(
+                    session, jobs, run, [asked], parent=parent, start_as=AssignmentStatus.QUEUED
+                )
+            )
+            continue
+        if found.status is AssignmentStatus.HELD:
+            lifecycle.queue(found)
+            await queue_job(session, jobs, found)
+        queued.append(found)
+    await session.flush()
+    return queued
 
 
 async def spawn_on_finish(

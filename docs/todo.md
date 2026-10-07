@@ -78,11 +78,11 @@ is `product-and-tech-spec.md`. Code to port lives in
 
 ## Phase 5: evals
 
-- [ ] Port the dataset, its schema, validator and README. Add `parent` labels in place of relationship labels.
-- [ ] Port the scorer; score parent links from `parent_institution_id`.
-- [ ] The harness: an eval run is a run with `is_eval`, a separate graph database from the same settings object, seeds through the real loader with hold as a parameter, serves the queues in process, starts a parse worker, scores, prices, writes `eval_runs` and `eval_scores`.
-- [ ] `public-atlas eval run --subject ... --json` and `eval score`.
-- [ ] Unit tests for the scorer from v1.
+- [x] Port the dataset, its schema, validator and README. Add `parent` labels in place of relationship labels.
+- [x] Port the scorer; score parent links from `parent_institution_id`.
+- [x] The harness: an eval run is a run with `is_eval`, a separate graph database from the same settings object, seeds through the real loader with hold as a parameter, serves the queues in process, starts a parse worker, scores, prices, writes `eval_runs` and `eval_scores`.
+- [x] `public-atlas eval run --subject ... --json` and `eval score`.
+- [x] Unit tests for the scorer from v1.
 
 **Done when** one full eval run over the twelve subjects finishes, its scores and cost are rows in the main database, and a second run appears beside it.
 
@@ -95,7 +95,6 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [ ] Review queue: items with snapshot and highlighted quote; approve, reject, merge; kinds decided together.
 - [ ] Countries pages: country settings, administrative levels, institution types, source types, a country's expected sources per type.
 - [ ] Evals page: runs over time, scores per type, cost.
-- [ ] Web tests for the list state, formatting and error handling that the pages use.
 
 **Done when** every page works against the live database and the eval database, and `vp run check` and `vp run test` pass.
 

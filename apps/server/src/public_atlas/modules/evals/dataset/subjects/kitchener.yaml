@@ -1,0 +1,624 @@
+subject:
+  kind: place
+  name: City of Kitchener
+  level: municipality
+  place: City of Kitchener
+  parent: Regional Municipality of Waterloo
+  tier: lower
+  official_code: "3530013" # verified: StatCan 2021 Census Profile DGUID 2021A00053530013 = "Kitchener, City (CY) [Census subdivision], Ontario"
+  institution: city-of-kitchener
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, kitchener.ca, regionofwaterloo.ca]
+
+institutions:
+  - key: city-of-kitchener
+    type: municipal_government
+    names:
+      - { text: City of Kitchener, lang: en }
+      - { text: Corporation of the City of Kitchener, lang: en }
+    homepage: https://www.kitchener.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.kitchener.ca/
+      quote: "City of Kitchener 200 King Street West, Kitchener, Ontario N2G 4G7"
+    notes: >-
+      "The Corporation of the City of Kitchener" is the legal name on kitchener.ca (website policy; Vendor invoices and
+      payments: "Full Legal Name – The Corporation of the City of Kitchener must be on all invoices").
+
+  - key: kitchener-fire-department
+    type: fire_service
+    names:
+      - { text: Kitchener Fire Department, lang: en }
+      - { text: Kitchener Fire, lang: en }
+    homepage: https://www.kitchener.ca/living-in-kitchener/kitchener-fire-department/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.kitchener.ca/living-in-kitchener/kitchener-fire-department/about-kitchener-fire/
+      quote: "Kitchener Fire provides emergency response, fire prevention and education to residents, visitors and businesses in Kitchener."
+    notes: >-
+      Internal division (Community Services department) that presents itself under its own name (README scope rule 3b).
+      No own domain (kitchenerfire.ca / kitchenerfire.com do not resolve). Its Fire Master Plan page covers 2017-2022 only
+      and no successor plan is published (checked 2026-10-01), so it is not recorded as a current strategic_plan.
+    parent:
+      institution: city-of-kitchener
+      label: Community services includes these services
+      evidence:
+        url: https://www.kitchener.ca/council-and-city-administration/city-departments/
+        quote: inclusion and support services Kitchener Fire Department
+
+  - key: kitchener-utilities
+    type: public_utility
+    names:
+      - { text: Kitchener Utilities, lang: en }
+      - { text: City of Kitchener Utilities, lang: en }
+    homepage: https://www.kitchenerutilities.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.kitchener.ca/taxes-utilities-and-finance/utilities/
+      quote: "Our locally owned gas and water utility is a division of the City of Kitchener."
+      kind: links_to
+      link_target: https://www.kitchenerutilities.ca/en/index.aspx
+    notes: >-
+      City division (gas, water, sewer, stormwater, rental water heaters) with its own brand and domain (rule 3b).
+      The kitchener.ca link targets the legacy /en/index.aspx URL, which redirects to https://www.kitchenerutilities.ca/.
+      kitchener.ca home page also links "Kitchener Utilities" -> https://www.kitchenerutilities.ca/.
+    parent:
+      institution: city-of-kitchener
+      label: a division of the City of Kitchener
+      evidence:
+        url: https://www.kitchener.ca/taxes-utilities-and-finance/utilities/
+        quote: Our locally owned gas and water utility is a division of the City of Kitchener.
+
+  - key: kitchener-public-library
+    type: library
+    names:
+      - { text: Kitchener Public Library, lang: en }
+      - { text: KPL, lang: en, is_acronym: true }
+      - { text: Kitchener Public Library Board, lang: en }
+    homepage: https://www.kpl.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.kitchener.ca/living-in-kitchener/in-your-neighbourhood/kitchener-public-library/
+      quote: "Kitchener Public Library (KPL) has more than 638,000 items in its collections"
+      kind: links_to
+      link_target: https://www.kpl.org/
+    notes: Separately constituted public library board under the Public Libraries Act, members appointed by Kitchener council.
+    parent:
+      institution: city-of-kitchener
+      label: Boards
+      evidence:
+        url: https://www.kitchener.ca/council-and-city-administration/civic-engagement/advisory-committees-and-boards/
+        quote: The Kitchener Public Library (KPL) board, which is established under provincial legislation, is responsible for the management and control of our local public libraries.
+
+  - key: enova-power-corp
+    type: public_utility
+    names:
+      - { text: Enova Power Corp., lang: en }
+      - { text: Enova Power, lang: en }
+      - { text: Enova, lang: en }
+    homepage: https://enovapower.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.kitchener.ca/living-in-kitchener/moving-to-kitchener/
+      quote: "Enova Power for electricity"
+      kind: links_to
+      link_target: https://enovapower.com/
+    notes: >-
+      Shared body (README scope rule 4). Electricity distributor formed 2022 from Kitchener-Wilmot Hydro Inc. and
+      Waterloo North Hydro Inc.; wholly owned subsidiary of Enova Energy Corporation, which is owned by Kitchener (53.4%),
+      Waterloo (30.8%), Woolwich (8.5%), Wilmot (4.5%) and Wellesley (2.8%). Labelled here because Kitchener is the majority
+      owner and the Kitchener office (301 Victoria Street South) is its main office; none of the other owners is a dataset subject.
+      Row is the operating company (Enova Power Corp.), not the holding company, since the brief and the city's pages name
+      Enova Power as the utility; Enova Energy Corporation is in out_of_scope.
+
+  - key: centre-in-the-square-inc
+    type: municipal_corporation
+    names:
+      - { text: Centre In The Square, lang: en }
+      - { text: The Centre In The Square Inc., lang: en }
+      - { text: Centre In The Square Inc., lang: en }
+      - { text: CITS, lang: en, is_acronym: true }
+    homepage: https://centreinthesquare.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.kitchener.ca/council-and-city-administration/civic-engagement/advisory-committees-and-boards/
+      quote: "is a not-for-profit arts corporation, which operates and maintains the city-owned venue known as the Centre In The Square (CITS)"
+      kind: links_to
+      link_target: https://centreinthesquare.com/
+    notes: >-
+      Not-for-profit corporation that runs the city-owned concert hall (a venue, so municipal_corporation, README rule 1).
+      Controlled by the city (rule 3a), not only funded: its board is "a 14-member board, which includes the mayor, three
+      City of Kitchener councillors, and eight citizens appointed by Kitchener City Council" (centreinthesquare.com
+      Governance), it is listed under "Boards" on the city's Advisory committees and boards page, and the city's financial
+      report consolidates it "based upon control exercised by the City" (2024 financial report, note 1a, pdf page 36
+      (printed 34): "The following boards, municipal enterprises and utilities have been included in the consolidated
+      financial statements: ... The Centre in the Square Inc."). Was out of scope (no type) before the type was added.
+    parent:
+      institution: city-of-kitchener
+      label: Boards
+      evidence:
+        url: https://www.kitchener.ca/council-and-city-administration/civic-engagement/advisory-committees-and-boards/
+        quote: operates and maintains the city-owned venue known as the Centre In The Square (CITS)
+
+sources:
+  # --- City of Kitchener ---
+  - institution: city-of-kitchener
+    source_type: procurement
+    url: https://www.kitchener.ca/business-in-kitchener/procurement/
+    alternates:
+      - https://www.kitchener.ca/en/business-in-kitchener/procurement.aspx
+    evidence:
+      url: https://www.kitchener.ca/business-in-kitchener/procurement/
+      quote: "We are committed to procurement decisions that are fair and transparent."
+
+  - institution: city-of-kitchener
+    source_type: tender
+    url: https://kitchener.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://kitchener.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://kitchener.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the City of Kitchener Bid Opportunities Website"
+    notes: Linked as "Current bid opportunities" from the city's procurement page. The bid list itself is loaded by JavaScript.
+
+  - institution: city-of-kitchener
+    source_type: budget
+    url: https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/2026-budget/
+    alternates:
+      - https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/
+    evidence:
+      url: https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/2026-budget/
+      quote: "The budget is our annual financial plan and sets the direction for the work to be completed over the upcoming year."
+    notes: >-
+      No 2027 budget page yet (checked 2026-10-01; the 2026 page still shows its Dec. 11 final-approval date); past years
+      are under /past-budgets/.
+
+  - institution: city-of-kitchener
+    source_type: capital_plan
+    url: https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/2026-budget/
+    alternates:
+      - https://media-003-ca.cdn.govstack.com/kitchener-ca/media/jdfoxheh/cok_fin_budget_2026_appendix-c_capital-budget.pdf
+      - https://kitchener.openbook.questica.com/
+    evidence:
+      url: https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/2026-budget/
+      quote: "Appendix C - Capital Budget"
+    notes: >-
+      The multi-year capital budget and forecast is Appendix C on the budget page (same landing page as the budget source).
+      Alternates: the Appendix C PDF and Kitchener's OpenBook (Questica OpenBook, JavaScript-rendered, linked as
+      "Get more details on capital projects - Kitchener's OpenBook"); questica.com is on platforms, so the OpenBook page is fetchable.
+
+  - institution: city-of-kitchener
+    source_type: capital_plan
+    url: https://www.kitchener.ca/strategic-plans-and-projects/plans/asset-management/
+    evidence:
+      url: https://www.kitchener.ca/strategic-plans-and-projects/plans/asset-management/
+      quote: "The Corporate Asset Management Plan covers the assets that provide City services, how the services are provided, what funds are required over a 10-year planning period, and what risks need to be managed."
+    notes: Corporate Asset Management Plan (10-year funding forecast for all city assets, including the gas and water utilities).
+
+  - institution: city-of-kitchener
+    source_type: council_meeting
+    url: https://calendar.kitchener.ca/council
+    alternates:
+      - https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/
+    evidence:
+      url: https://calendar.kitchener.ca/council
+      quote: "Council and Citizen Committees"
+    notes: >-
+      Council and committee calendar (calendar.kitchener.ca, a city subdomain); each meeting row links its agenda, HTML
+      minutes and video on the city's eSCRIBE portal (separate entry below).
+
+  - institution: city-of-kitchener
+    source_type: council_meeting
+    url: https://pub-kitchener.escribemeetings.com/
+    alternates:
+      - https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/current-agendas-and-reports/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-kitchener.escribemeetings.com/
+      quote: "eSCRIBE Published Meetings"
+    notes: >-
+      The city's eSCRIBE portal (meeting types include "Council Meeting", "Special Council Meeting" and the standing
+      committees). The kitchener.ca "Current agendas and reports" page embeds it as an iframe
+      (pub-kitchener.escribemeetings.com/?FillWidth=1), so that page is an alternate; the council calendar links each
+      meeting's agenda and minutes here.
+
+  - institution: city-of-kitchener
+    source_type: council_meeting
+    url: https://lf.kitchener.ca/WebLinkExt/Browse.aspx?dbid=0&cr=1
+    alternates:
+      - https://lf.kitchener.ca/WebLinkExt/Browse.aspx?dbid=0
+    evidence:
+      url: https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/
+      quote: "Find minutes for council and committee meetings on Laserfiche."
+      kind: links_to
+      link_target: https://lf.kitchener.ca/WebLinkExt/Browse.aspx?dbid=0&cr=1
+    notes: >-
+      Laserfiche WebLink archive of council minutes and staff reports. It requires cookies, so curl gets an error page;
+      evidence is the link from the council meetings page. Laserfiche WebLink is a shared product (candidate for the platform list), here on a kitchener.ca subdomain.
+
+  - institution: city-of-kitchener
+    source_type: strategic_plan
+    url: https://www.kitchener.ca/strategic-plans-and-projects/strategic-plan/
+    alternates:
+      - https://www.kitchener.ca/strategic-plans-and-projects/strategic-plan/2023-2026-strategic-plan-progress/
+      - https://www.kitchener.ca/strategic-plans-and-projects/strategic-plan/2027-2030-strategic-plan/
+    evidence:
+      url: https://www.kitchener.ca/strategic-plans-and-projects/strategic-plan/
+      quote: "In August 2023, city council approved our 2023-2026 strategic goals"
+    notes: Current plan is 2023-2026; the 2027-2030 plan is in consultation (its page is an alternate).
+
+  - institution: city-of-kitchener
+    source_type: meeting_video
+    url: https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/watch-a-meeting/
+    alternates:
+      - https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/
+    evidence:
+      url: https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/watch-a-meeting/
+      quote: "All council and committee meetings are livestreamed, where possible."
+    notes: >-
+      Lists each meeting with a "watch here" link to its video on the eSCRIBE portal (some 2026 meetings on YouTube), and
+      under "Past years" the YouTube playlists for 2012-2025.
+
+  - institution: city-of-kitchener
+    source_type: meeting_video
+    url: https://pub-kitchener.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-kitchener.escribemeetings.com/
+      quote: "View Live Stream"
+    notes: >-
+      Same portal as the council_meeting entry; meetings carry live stream and recorded video links (ISI player). The
+      watch-a-meeting page links each meeting's video here.
+
+  - institution: city-of-kitchener
+    source_type: meeting_video
+    url: https://www.youtube.com/cityofkitchener
+    alternates:
+      - https://www.youtube.com/@cityofkitchener
+      - https://www.youtube.com/channel/UCvVcPb65YNELRQn9HocI71A
+    platform: youtube.com
+    evidence:
+      url: https://www.kitchener.ca/council-and-city-administration/council-and-committee-meetings/watch-a-meeting/
+      quote: "Earlier meetings are available on YouTube with closed captioning."
+      kind: links_to
+      link_target: http://www.youtube.com/cityofkitchener
+    notes: >-
+      The City's general channel, which holds the council and committee meeting playlists by year ("2024 - City of
+      Kitchener Council/committee meetings") and some 2026 live streams. The watch page links the year playlists under
+      the quote and the channel in its footer. youtube.com is a listed platform.
+
+  - institution: city-of-kitchener
+    source_type: news
+    url: https://www.kitchener.ca/news/
+    alternates:
+      - https://www.kitchener.ca/news/categories/news/
+    evidence:
+      url: https://www.kitchener.ca/news/
+      quote: "Welcome to our newsfeed!"
+    notes: >-
+      Newsfeed of releases and notices, with category feeds (news, key decisions of council, facility notices, public
+      consultations); the "news" category feed is an alternate.
+
+  # --- Kitchener Public Library ---
+  - institution: kitchener-public-library
+    source_type: procurement
+    url: https://www.kpl.org/your-library/request-for-proposal
+    evidence:
+      url: https://www.kpl.org/your-library/request-for-proposal
+      quote: "Deadline for Submissions"
+    notes: KPL's own RFP/RFQ page with open calls and the procurement contact (Director, Business Services & Infrastructure). One URL, two source types (see the tender entry).
+
+  - institution: kitchener-public-library
+    source_type: tender
+    url: https://www.kpl.org/your-library/request-for-proposal
+    evidence:
+      url: https://www.kpl.org/your-library/request-for-proposal
+      quote: "Deadline for Submissions"
+    notes: The same page lists the open calls, so it is also the tender source.
+
+  - institution: kitchener-public-library
+    source_type: board_meeting
+    url: https://www.kpl.org/your-library/library-board
+    evidence:
+      url: https://www.kpl.org/your-library/library-board
+      quote: "Members of the public are welcome to attend and speak at Board meetings."
+
+  - institution: kitchener-public-library
+    source_type: strategic_plan
+    url: https://www.kpl.org/your-library/strategic-plan
+    evidence:
+      url: https://www.kpl.org/your-library/strategic-plan
+      quote: "will help guide the library over the next four years"
+    notes: >-
+      Strategic Plan 2025-2028 ("Creating a Better Future Together"). strategic_plan is not a library source type in the
+      country file, but the type list is a floor (README, Sources), so the page is recorded.
+
+  # --- Centre In The Square Inc. ---
+  - institution: centre-in-the-square-inc
+    source_type: annual_report
+    url: https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/audited-financial-statements/
+    evidence:
+      url: https://www.kitchener.ca/taxes-utilities-and-finance/budget-and-financial-reports/audited-financial-statements/
+      quote: "Separate financial statements for local boards, gas utility enterprise and government business enterprises"
+    notes: >-
+      The city's annual financial report has a section of its own for The Centre In The Square Inc. (its KPMG-audited
+      statements, 2024 report pdf page 116 (printed 114) onward; the 2025 report lists it in its contents too), so the
+      landing page is a real source for CITS (README, Sources: a page with a section of its own per body). CITS publishes
+      no annual report on centreinthesquare.com (page sitemap and WordPress search for "annual report" and "financial
+      statements" checked 2026-10-01). A reviewer may prefer the absence.
+
+  - institution: centre-in-the-square-inc
+    source_type: leadership
+    url: https://centreinthesquare.com/about/governance/
+    evidence:
+      url: https://centreinthesquare.com/about/governance/
+      quote: "The Centre In The Square is governed by a 14-member board, which includes the mayor, three City of Kitchener councillors, and eight citizens appointed by Kitchener City Council."
+    notes: Board of directors list. leadership is not a municipal_corporation source type; recorded as the list is a floor (README, Sources).
+
+absent_sources:
+  - institution: kitchener-fire-department
+    source_type: procurement
+    covered_by: city-of-kitchener
+    note: >-
+      Kitchener Fire is a city division; it buys through the city's procurement page and bids&tenders site. No fire-specific
+      purchasing page in the kitchener.ca sitemap, the Kitchener Fire Department section, or the fire safety section.
+  - institution: kitchener-fire-department
+    source_type: budget
+    covered_by: city-of-kitchener
+    note: >-
+      No separate fire budget page; fire is funded in the city's operating budget (2026 budget, Appendix B). Checked the Kitchener
+      Fire Department section (About, Fire Master Plan 2017-2022, public education) and the budget pages.
+  - institution: kitchener-utilities
+    source_type: procurement
+    covered_by: city-of-kitchener
+    note: >-
+      No purchasing page on kitchenerutilities.ca (sitemap, About, Builders/developers/contractors pages checked). Purchasing
+      goes through the city's procurement page. The "Builder, developer, contractor login" (kuvendorportal.esolutionsgroup.ca)
+      is for gas/water service requests, not procurement. The "Gas vendor resources" page (/gas-vendor-resources/) is for
+      natural gas direct-purchase marketers (contract request forms, heat values), not for suppliers bidding to the utility.
+  - institution: kitchener-utilities
+    source_type: tender
+    covered_by: city-of-kitchener
+    note: No tender listing on kitchenerutilities.ca; utility tenders appear on the city's kitchener.bidsandtenders.ca site.
+  - institution: kitchener-utilities
+    source_type: capital_plan
+    covered_by: city-of-kitchener
+    note: >-
+      No utility-specific capital plan page on kitchenerutilities.ca (sitemap, Water, Sewer, Stormwater and About pages checked).
+      Gas/water/sewer/stormwater capital is in the city's 2026 capital budget (Appendix C) and the Corporate Asset Management
+      Plan, both city sources. The sewer page's Integrated Sanitary Master Plan anchor and the story map are not capital plans.
+  - institution: kitchener-utilities
+    source_type: board_meeting
+    note: Kitchener Utilities is a city division with no board of its own; it is governed by Kitchener city council (see city council_meeting).
+  - institution: kitchener-public-library
+    source_type: budget
+    covered_by: city-of-kitchener
+    note: >-
+      No budget page on kpl.org (site search for "budget", sitemap.xml, Library Board, Governance Policies, Strategic Plan,
+      Departments pages checked). Budget material appears only as individual Finance Committee agenda PDFs on the Library
+      Board page. The KPL operating grant is set in the city budget ("Boards and Grants include the Centre in the Square
+      (CITS) and the Kitchener Public Library (KPL)", 2026 Budget Summary PDF page 28, linked from the 2026 budget page),
+      so covered_by the city, as for the Oakville and Greater Sudbury libraries.
+  - institution: enova-power-corp
+    source_type: procurement
+    note: >-
+      No procurement/supplier page on enovapower.com: page sitemap (215 URLs), WordPress search API for "procurement",
+      "supplier", "tender", "bid", Corporate Information menu, and web search all checked. enovapower.bidsandtenders.ca returns 404.
+  - institution: enova-power-corp
+    source_type: tender
+    note: No bid opportunities on enovapower.com or on bids&tenders/MERX found (same searches as procurement).
+  - institution: enova-power-corp
+    source_type: capital_plan
+    note: >-
+      No standalone capital plan or Distribution System Plan page. The Regulatory Information page lists OEB rate applications
+      (2027 IRM with an Incremental Capital Module request, as PDFs); judged regulatory filings, not a capital plan landing page.
+  - institution: enova-power-corp
+    source_type: board_meeting
+    note: >-
+      Private corporation (OBCA) board; no public agendas or minutes. The Leadership Team page lists directors of Enova Power Corp.
+      and Enova Energy Corporation but no meeting materials.
+  - institution: centre-in-the-square-inc
+    source_type: procurement
+    note: >-
+      No purchasing or supplier page on centreinthesquare.com: page sitemap (about 120 pages), WordPress search for
+      "procurement", "tender", "rfp", "request for proposal", "supplier" and "bid", and the About, Governance, Careers and
+      Rentals menus checked 2026-10-01. Not recorded as covered_by the city: no page says CITS buys through the city's
+      procurement (it sets its own operating budget, per the city's Boards page).
+  - institution: centre-in-the-square-inc
+    source_type: tender
+    note: No open calls for bids on centreinthesquare.com (same searches as procurement).
+  - institution: centre-in-the-square-inc
+    source_type: board_meeting
+    note: >-
+      The board meets monthly at the Centre (city Boards page) but publishes no agendas or minutes: the Governance page
+      lists directors only, and WordPress search for "minutes" and "agenda" and the page sitemap found none (2026-10-01).
+      Its meetings are not on the city's eSCRIBE portal or council calendar.
+
+candidate_domains:
+  - domain: kitchenerutilities.ca
+    institution: kitchener-utilities
+    expected: confirm
+    reason: Kitchener Utilities' own site, linked from kitchener.ca home and utilities pages; footer "© 2026 City of Kitchener Utilities".
+  - domain: kpl.org
+    institution: kitchener-public-library
+    expected: confirm
+    reason: Kitchener Public Library's own site, linked from the city's library page.
+  - domain: enovapower.com
+    institution: enova-power-corp
+    expected: confirm
+    reason: Enova Power Corp.'s own site, linked from kitchener.ca "Moving to Kitchener"; legacy kwhydro.on.ca and wnhydro.com redirect here.
+  - domain: engagewr.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      Shared consultation site ("one-stop site for online engagement opportunities across Waterloo Region", with projects
+      from Kitchener, Cambridge, North Dumfries and the Region), linked from kitchener.ca's footer and budget page; not any
+      institution's homepage. Matches region-of-waterloo.yaml.
+  - domain: kuvendorportal.esolutionsgroup.ca
+    institution: kitchener-utilities
+    expected: reject
+    reason: eSolutions Group builder/contractor service-request login linked from Kitchener Utilities; not the utility's website and not a procurement portal.
+  - domain: kitchenerhousinginc.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      Kitchener Housing Inc., a non-profit housing corporation linked from the city/regional services page ("Social Housing -
+      Kitchener Housing"). Sponsored by the city at its founding but not controlled by it (not among the bodies the city's
+      financial report consolidates), so a not-for-profit out of scope, not a housing_corporation of Kitchener's.
+  - domain: downtownkitchener.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      The city's own downtown destination microsite (footer "© 2026 Downtown Kitchener" with the City Hall address and
+      info@kitchener.ca, on the same Govstack CMS); a campaign microsite, not the city's official domain. It is not the
+      BIA's site (checked 2026-10-01).
+  - domain: downtownkitchenerbia.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: Downtown Kitchener BIA site, linked from the city's Advisory committees and boards page; BIAs are out of scope.
+  - domain: kitchenerlive.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: City-run events microsite ("Kitchener Live"), linked from the kitchener.ca home page; not an institution's official domain.
+  - domain: kitchenercemeteries.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      Kitchener Cemeteries, a city division with its own site (linked from the City departments page). A division, not a
+      separately constituted corporation, authority or board, so not a municipal_corporation, and cemeteries match no other
+      type; not the city's official domain.
+  - domain: kitchenermarket.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      Kitchener Market, a city division with its own site (linked from the City departments page). A division, not a
+      separately constituted corporation, authority or board, so not a municipal_corporation; not the city's official domain.
+  - domain: explorewaterloo.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: Explore Waterloo Region, the regional tourism organization, linked from kitchener.ca; out of scope.
+  - domain: centreinthesquare.com
+    institution: centre-in-the-square-inc
+    expected: confirm
+    reason: >-
+      The Centre In The Square Inc.'s own site, linked from the city's Advisory committees and boards page; the
+      city-controlled corporation that runs the city-owned venue (municipal_corporation). Was a reject trap before the type existed.
+  - domain: grt.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      Grand River Transit is the Region of Waterloo's transit service, not Kitchener's; it is confirmed for
+      region-of-waterloo:grand-river-transit in that file.
+  - domain: wrps.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      Waterloo Regional Police Service is regional (linked as "Police" under Region of Waterloo on the city's services
+      page); it is confirmed for region-of-waterloo:waterloo-regional-police-service in that file.
+  - domain: wrps.on.ca
+    institution: city-of-kitchener
+    expected: reject
+    reason: >-
+      The legacy police domain the city's services page actually links ("Police" -> http://www.wrps.on.ca/, which
+      redirects to wrps.ca); regional, confirmed for region-of-waterloo:waterloo-regional-police-service in that file.
+
+out_of_scope:
+  - name: Grand River Transit
+    url: https://www.grt.ca/
+    reason: >-
+      Transit is a Region of Waterloo responsibility ("Transit" under Region of Waterloo on kitchener.ca/city-and-regional-services);
+      labelled as region-of-waterloo:grand-river-transit.
+  - name: Waterloo Regional Police Service
+    url: https://wrps.ca/
+    reason: Police are a Region of Waterloo responsibility; labelled as region-of-waterloo:waterloo-regional-police-service.
+  - name: Region of Waterloo Paramedic Services
+    reason: >-
+      Ambulance is regional ("Police, Ambulance" under Region of Waterloo on the city and regional services page). A body of
+      the upper tier met on the lower tier's site (README rule 2); it belongs to region-of-waterloo.yaml.
+  - name: Region of Waterloo Public Health
+    reason: >-
+      Public health unit of the Region of Waterloo (Regional Council is the Board of Health). A body of the upper tier met on
+      the lower tier's site (README rule 2); it belongs to region-of-waterloo.yaml.
+  - name: Enova Energy Corporation
+    url: https://enovapower.com/corporate-information/about-us/
+    reason: >-
+      Holding company owned by Kitchener, Waterloo, Woolwich, Wilmot and Wellesley; parent of Enova Power Corp. No website or
+      procurement of its own; the utility row is Enova Power Corp. (reviewer: confirm this choice of row).
+  - name: Alliance Metering Solutions
+    url: https://alliancemetering.com/
+    reason: >-
+      Commercial sub-metering subsidiary of Enova Energy Corporation; not a public utility in the YAML sense, and a
+      subsidiary of the holding company rather than a body the city owns directly, so not a municipal_corporation (README rule 6).
+  - name: Enova Energy Services
+    reason: >-
+      Streetlight-maintenance subsidiary of Enova Energy Corporation (formerly Kitchener Energy Services Inc.). A subsidiary of
+      the holding company with no procurement of its own found, so no row (README rules 3 and 6).
+  - name: Grand River Energy Solutions Corp.
+    reason: >-
+      Energy-transition investment subsidiary of Enova Energy Corporation. A subsidiary of the holding company with no
+      procurement of its own found, so no row (README rules 3 and 6).
+  - name: Kitchener-Wilmot Hydro Inc.
+    url: http://www.kwhydro.on.ca/
+    reason: Merged into Enova Power Corp. in September 2022; domain redirects to enovapower.com. Saving it as a separate institution is a false positive.
+  - name: Kitchener Housing Inc.
+    url: https://kitchenerhousinginc.ca/
+    reason: >-
+      Non-profit housing corporation, incorporated 1986 "sponsored by the City of Kitchener" (its About us page; two
+      councillors sit on its board), but not controlled by the city: it is not among the boards and enterprises the city's
+      financial report consolidates "based upon control exercised by the City" (2024 report, note 1a), and it is "funded in
+      part by the Region of Waterloo". A not-for-profit the city does not control (README rule 2), not a housing_corporation.
+  - name: Downtown Kitchener Business Improvement Area
+    url: https://downtownkitchenerbia.ca/
+    reason: "BIA (README: out of scope)."
+  - name: Belmont Village Business Improvement Area
+    url: https://www.belmont-village.ca/
+    reason: "BIA (README: out of scope)."
+  - name: Kitchener Cemeteries
+    url: https://www.kitchenercemeteries.ca/
+    reason: >-
+      City division with its own site. A division, not a separately constituted corporation, authority or board, so not a
+      municipal_corporation (README rule 3); cemeteries match no other type.
+  - name: Kitchener Market
+    url: https://www.kitchenermarket.ca/
+    reason: >-
+      City division (Development services) with its own site. A division, not a separately constituted corporation,
+      authority or board, so not a municipal_corporation (README rule 3).
+  - name: Committee of Adjustment
+    reason: Quasi-judicial planning committee of council; council committees and tribunals are out of scope (README rule 2).
+  - name: Kitchener Generation Corporation
+    reason: >-
+      OBCA corporation, 100% owned by the city since 2012, that holds the solar roof on the Kitchener Operations Facility
+      (2024 financial report, note 9). A city subsidiary with no webpage and no procurement of its own, so no row (README
+      rule 3: a subsidiary gets its own row only when it runs its own procurement).
+  - name: Waterloo Region District School Board
+    reason: School board; province-level type, scored under Ontario.
+  - name: Waterloo Catholic District School Board
+    reason: School board; province-level type, scored under Ontario.
+  - name: WRHN (Waterloo Regional Health Network)
+    reason: Hospital; province-level type, scored under Ontario.
+  - name: Grand River Cooperative Procurement Group
+    reason: >-
+      Purchasing co-operative the city belongs to (listed on the procurement page); a buying arrangement among public
+      bodies, not a body the city owns or controls (README rule 3).
+  - name: Explore Waterloo Region
+    url: https://explorewaterloo.ca/
+    reason: Regional tourism organization, a not-for-profit the area municipalities fund but do not control (README rule 2).
+
+notes: >-
+  Lower-tier city in the Region of Waterloo. Transit, police, paramedics and public health are regional (see out_of_scope).
+  In-scope bodies: Kitchener Fire Department and Kitchener Utilities (city divisions with their own names), Kitchener Public
+  Library (separate board), Enova Power Corp. (shared utility, majority-owned by Kitchener, labelled here), and The Centre In
+  The Square Inc. (city-controlled corporation running the city-owned concert hall, municipal_corporation). Grand River
+  Conservation Authority is a shared body labelled in region-of-waterloo.yaml (README rule 4), so it has no row here.
+  Kitchener has no housing corporation of its own: social housing is the Region's, and Kitchener Housing Inc. is a
+  non-profit the city does not control (see out_of_scope). The city's joint
+  services with Waterloo (fire dispatch, cooperative purchasing) are service agreements, not separate bodies.
+  City-run division and event sites (downtownkitchener.ca, kitchenerlive.ca, kitchenercemeteries.ca, kitchenermarket.ca)
+  are reject traps, as campaign microsites and no-type division sites are in the other subject files. The city's council
+  agendas and minutes live on its eSCRIBE portal (pub-kitchener.escribemeetings.com), which the calendar and the
+  "Current agendas and reports" page lead to; Laserfiche holds the minutes archive.

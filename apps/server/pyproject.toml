@@ -26,12 +26,19 @@ dependencies = [
   "psycopg[binary]>=3.3.5,<4",
   "pydantic-ai-slim[openai]>=2.40,<3",
   "pydantic-settings>=2.13.1,<3",
+  # The eval dataset: hand-labelled YAML files, the only YAML in the project (spec section 10).
+  "pyyaml>=6.0.3,<7",
   "sqlalchemy[asyncio]>=2.0.52,<2.1",
 ]
 
 [dependency-groups]
 # Starlette >= 1.6 TestClient warns unless httpx2 is installed.
-dev = ["httpx2>=2.12,<3", "types-aiobotocore-s3>=3.9,<4", "types-openpyxl>=3.1.5,<4"]
+dev = [
+  "httpx2>=2.12,<3",
+  "types-aiobotocore-s3>=3.9,<4",
+  "types-openpyxl>=3.1.5,<4",
+  "types-pyyaml>=6.0.12,<7",
+]
 # Docling, for the parse worker only. One group per PyTorch build: `parse-cpu` for the parse
 # image, `parse-cu130` for a dev machine with an NVIDIA GPU (CUDA 13 driver), which also takes
 # the GPU ONNX Runtime and so names rapidocr directly. A plain `uv sync` drops the group again;

@@ -1,0 +1,427 @@
+subject:
+  kind: institution
+  name: Ministry of Public and Business Service Delivery and Procurement
+  level: province_territory
+  place: Ontario
+  parent: null
+  tier: null
+  official_code: null
+  institution: ministry-of-public-and-business-service-delivery-and-procurement
+  government_homepage: https://www.ontario.ca/
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+trusted_at_start: [ontario.ca, pas.gov.on.ca]
+
+notes: >-
+  Name confirmed on ontario.ca on 2026-10-01: still "Ministry of Public and Business Service
+  Delivery and Procurement" (page updated 2026-09-29; the French link carries
+  utm_campaign=ministry-government-services, a leftover of the old MGCS name), and the same in
+  the ontario.ca ministries list, the PAS ministry filter and INFO-GO (org 1102, MPBSDP).
+  Agency directory: the ontario.ca "Agencies, boards and commissions" page only links out to
+  the Public Appointments Secretariat list (pas.gov.on.ca, trusted at start). That list files 14
+  bodies under this ministry, but 12 are the delegated administrative authorities and 2 are
+  advisory appointments; the only provincial agency is Centralized Supply Chain Ontario
+  (Supply Ontario). The ministry's own 2025-26 published plan on ontario.ca confirms this: its
+  "AGENCIES, BOARDS AND COMMISSIONS (ABCS)" section lists Supply Ontario alone, and the
+  administrative authorities are listed in a separate section. No 2026-27 published plan was
+  on ontario.ca on 2026-10-01 (the 2026-2027 URL pattern returns 404, and the "All published
+  plans and annual reports" index stops at 2025-2026). Re-checked 2026-10-01: PAS still lists
+  the same 14 bodies; the administrative authority PAS calls "Ontario One Call" now operates as
+  Ontario Dig Authority (the ministry page links it under that name).
+
+institutions:
+  - key: ministry-of-public-and-business-service-delivery-and-procurement
+    type: ministry
+    names:
+      - { text: Ministry of Public and Business Service Delivery and Procurement, lang: en }
+      - { text: MPBSDP, lang: en, is_acronym: true }
+      - {
+          text: "Ministère des Services au public et aux entreprises et de l’Approvisionnement",
+          lang: fr,
+        }
+    homepage: https://www.ontario.ca/page/ministry-public-and-business-service-delivery-and-procurement
+    homepage_alternates:
+      - https://www.ontario.ca/fr/page/ministere-des-services-au-public-et-aux-entreprises-et-de-lapprovisionnement
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.ontario.ca/page/ministry-public-and-business-service-delivery-and-procurement
+      quote: "provide Ontario government ministries and employees with procurement, finance and business services"
+    notes: >-
+      French page: https://www.ontario.ca/fr/page/ministere-des-services-au-public-et-aux-entreprises-et-de-lapprovisionnement.
+      Acronym MPBSDP is used on the doing-business and Buy Ontario directive pages.
+
+  - key: supply-ontario
+    type: agency
+    names:
+      - { text: Supply Ontario, lang: en }
+      - { text: Centralized Supply Chain Ontario, lang: en }
+      - { text: ApprovisiOntario, lang: fr }
+      - { text: "Gestion centralisée de la chaîne d’approvisionnement Ontario", lang: fr }
+    homepage: https://www.supplyontario.ca/
+    homepage_alternates:
+      - https://www.supplyontario.ca/fr/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.ontario.ca/page/buy-ontario
+      quote: Supporting materials and training information are available on Supply Ontario
+      kind: links_to
+      link_target: https://www.supplyontario.ca/
+    notes: >-
+      Board-governed provincial agency ("a Crown agency established by regulation (O. Reg 612/20)"
+      per its governance page), so typed agency, not crown_corporation (it is not a commercial
+      enterprise). Legal name Centralized Supply Chain Ontario. http://approvisiontario.ca
+      redirects (301) to https://www.supplyontario.ca/ (https on that domain did not connect on
+      2026-10-01). French site at /fr/.
+    parent:
+      institution: ministry-of-public-and-business-service-delivery-and-procurement
+      label: oversight of the Supply Ontario agency
+      evidence:
+        url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+        quote: Provided strategic leadership in modernizing public sector procurement and oversight of the Supply Ontario agency
+
+sources:
+  # --- ministry ---
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: procurement
+    url: https://www.ontario.ca/page/doing-business-government-ontario
+    alternates:
+      - https://www.ontario.ca/fr/page/faire-affaire-avec-le-gouvernement-de-lontario
+    evidence:
+      url: https://www.ontario.ca/page/doing-business-government-ontario
+      quote: Find out how to sell your goods and services to the Ontario government as a vendor or buy products and services if you work for the Ontario Public Service or broader public sector.
+    notes: >-
+      "Doing business with the Government of Ontario", linked from the ministry page. Points
+      vendors to Supply Ontario (vendor registration, VOR arrangements) and the Ontario Tenders
+      Portal; bid disputes go to the ministry's Supply Chain Policy and Oversight Division.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: contract_award
+    url: https://data.ontario.ca/dataset/enterprise-vendor-of-record-arrangements
+    evidence:
+      url: https://data.ontario.ca/dataset/enterprise-vendor-of-record-arrangements
+      quote: The Government of Ontario's enterprise-wide Vendor of Record (VOR) Program provides goods and services commonly acquired by government ministries.
+    notes: >-
+      Judgement call. Ontario has no central contract-award disclosure page: award notices sit
+      inside individual opportunities on the Ontario Tenders Portal (its Past Opportunities list
+      shows expired calls, not awards). This open-data record (filed under the ministry on
+      data.ontario.ca) lists awarded enterprise VOR arrangements with qualified vendors and dates
+      but no values; its CSV is live (served from doingbusiness.mgs.gov.on.ca, an Ontario
+      government domain other than ontario.ca, regenerated daily: the 2026-10-01 copy is stamped
+      202609302340). data.ontario.ca is a subdomain of ontario.ca, so trusted. Supply Ontario's own
+      list of the same arrangements is recorded as Supply Ontario's contract_award source (it
+      establishes the arrangements), no longer as an alternate here.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: contract_award
+    url: https://data.ontario.ca/dataset/consulting-services-contracts
+    evidence:
+      url: https://data.ontario.ca/dataset/consulting-services-contracts
+      quote: This data represents government ministries consulting services contracts related to management, information technology, technical, research and development, policy and communication.
+    notes: >-
+      Supplier and ceiling price for every ministry's consulting contracts (ministry contact
+      MPBSDP), but stale: latest file covers 2017-18, last validated 2022-02-03. Kept because it
+      is the only award list with values; a reviewer may prefer to drop it.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: budget
+    url: https://www.ontario.ca/page/expenditure-estimates-ministry-public-and-business-service-delivery-and-procurement-2026-2027
+    alternates:
+      - https://www.ontario.ca/fr/page/ministere-des-services-au-public-et-aux-entreprises-et-de-lapprovisionnement-budget-depenses-2026-2027
+      - https://www.ontario.ca/page/expenditure-estimates-volume-1-table-contents-2026-2027
+    evidence:
+      url: https://www.ontario.ca/page/expenditure-estimates-ministry-public-and-business-service-delivery-and-procurement-2026-2027
+      quote: The 2026–2027 Expenditure Estimates set out details of the operating and capital spending requirements of the Ministry of Public and Business Service Delivery and Procurement for the fiscal year commencing April 1, 2026.
+    notes: Includes the transfer payment to Supply Ontario (vote 1811-42). URL changes every fiscal year.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: strategic_plan
+    url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+    alternates:
+      - https://www.ontario.ca/fr/page/publication-des-plans-dactivites-et-rapports-annuels-de-2025-2026-ministere-des-services-au-public-et-aux-entreprises-et-approvisionnement
+      - https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+      quote: Plans for 2025–2026, and results and outcomes of all provincial programs delivered by the Ministry of Public and Business Service Delivery and Procurement in 2024–2025.
+    notes: >-
+      Latest published plan (2025-26 strategic plan plus 2024-25 annual report). The 2026-27
+      edition was not published as of 2026-10-01; when it appears, the URL changes.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: annual_report
+    url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+    alternates:
+      - https://www.ontario.ca/fr/page/publication-des-plans-dactivites-et-rapports-annuels-de-2025-2026-ministere-des-services-au-public-et-aux-entreprises-et-approvisionnement
+      - https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+      quote: Plans for 2025–2026, and results and outcomes of all provincial programs delivered by the Ministry of Public and Business Service Delivery and Procurement in 2024–2025.
+    notes: >-
+      Same page as the strategic_plan source: its 2024-25 annual report half (results and
+      outcomes, with interim actuals). annual_report is not on the ministry type's list; recorded
+      because the type list is a floor (README, Sources) and one URL may be several source types.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: leadership
+    url: https://www.infogo.gov.on.ca/org?id=1102
+    alternates:
+      - https://www.infogo.gov.on.ca/org?id=1103
+    evidence:
+      url: https://www.infogo.gov.on.ca/org?id=1102
+      quote: INFO-GO - Employee and organization directory
+    notes: >-
+      INFO-GO, the Ontario government's employee and organization directory, linked from the
+      ministry page as "Employee directory" (id=1102) and "Minister's office" (id=1103). Domain
+      infogo.gov.on.ca is an Ontario government domain other than ontario.ca, so NOT trusted at
+      start (confirm candidate). The org page is this ministry's own entry, so it is a real source
+      for the ministry, not a government-wide page. The page is JavaScript-rendered (a React app): curl gets only the page title, so the
+      quote is the <title> text and names and roles could not be checked by curl.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: leadership
+    url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+    evidence:
+      url: https://www.ontario.ca/page/published-plans-and-annual-reports-2025-2026-ministry-public-and-business-service-delivery-and-procurement
+      quote: Ministry organization chart Hon. Stephen Crawford — Minister Deputy Minister — Samantha Poisson
+    notes: >-
+      Same page as the strategic_plan source: its "Ministry organization chart" section names
+      the minister, deputy minister and every ADM. It is the only leadership list on ontario.ca
+      (trusted) and may be out of date between editions.
+
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: news
+    url: https://news.ontario.ca/mpbsdp/en
+    alternates:
+      - https://news.ontario.ca/mspea/fr
+    evidence:
+      url: https://www.ontario.ca/page/ministry-public-and-business-service-delivery-and-procurement
+      quote: Media contacts Ministry news
+      kind: links_to
+      link_target: https://news.ontario.ca/mpbsdp/en
+    notes: >-
+      The ministry's Ontario Newsroom listing ("Public and Business Service Delivery and
+      Procurement", news releases and bulletins), linked as "Ministry news" from the ministry page.
+      news.ontario.ca is under the trusted ontario.ca. JavaScript-rendered (curl gets only the app
+      shell), so the evidence is the link; the listing was read in Chromium on 2026-10-01. The
+      French twin uses another acronym (/mspea/fr; /mpbsdp/fr renders empty).
+
+  # --- Supply Ontario ---
+  - institution: supply-ontario
+    source_type: procurement
+    url: https://www.supplyontario.ca/become-a-vendor/
+    alternates:
+      - https://www.supplyontario.ca/fr/devenir-un-fournisseur/
+    evidence:
+      url: https://www.supplyontario.ca/become-a-vendor/
+      quote: The process of becoming a Vendor of Record (VOR) for the government includes several steps, including where to find VOR arrangements and bidding requirements.
+    notes: >-
+      Supply Ontario runs government purchasing, so its vendor page is its purchasing page
+      (competition thresholds, VOR arrangements, the Ontario Tenders Portal). Buyer-side pages
+      (/buy-for-the-government/, /registered-buyers/) are for public-sector buyers, not suppliers.
+
+  - institution: supply-ontario
+    source_type: tender
+    url: https://ontariotenders.app.jaggaer.com/esop/nac-host/public/web/login.html
+    alternates:
+      - https://ontariotenders.app.jaggaer.com/
+      - https://ontariotenders.app.jaggaer.com/esop/guest/go/public/opportunity/current?locale=en_CA&customLoginPage=/esop/nac-host/public/web/login.html&customGuest=
+    platform: jaggaer.com
+    evidence:
+      url: https://ontariotenders.app.jaggaer.com/esop/nac-host/public/web/login.html
+      quote: Looking for new business with Ontario Public Sector? Register for FREE to receive email alerts and bid for opportunities tailored to your business.
+    notes: >-
+      Ontario Tenders Portal, the government's single portal for open competitive procurements.
+      Recorded here because Supply Ontario runs it: "Vendors can find the government's open
+      competitive procurements on Supply Ontario's Ontario Tenders Portal" (ontario.ca
+      doing-business page, which links to the login.html URL), and Supply Ontario's
+      become-a-vendor page links to it ("VOR arrangements are established through requests for
+      bids posted on the Ontario Tenders Portal"). Hosted on JAGGAER (jaggaer.com, on
+      platforms). The public "Current Opportunities" list needs no sign-in (guest
+      session); bidding needs supplier registration. Other ministries record it through covered_by
+      (README, government-wide Ontario pages).
+
+  - institution: supply-ontario
+    source_type: contract_award
+    url: https://www.supplyontario.ca/vendors-of-record-arrangements/
+    alternates:
+      - https://www.supplyontario.ca/fr/entente-relative-aux-fournisseurs-attitres/
+      - https://www.supplyontario.ca/procurement-bulletins/
+      - https://www.supplyontario.ca/fr/bulletins-portant-sur-lapprovisionnement/
+    evidence:
+      url: https://www.supplyontario.ca/vendors-of-record-arrangements/
+      quote: delivers procurement arrangements that allow one or more vendors to provide goods or services to OPS and BPS entities for a defined period of time
+    notes: >-
+      List of awarded enterprise-wide VOR arrangements and VLAs (tender number, description,
+      expiry), each with a details page naming the qualified vendors; no contract values. The
+      procurement bulletins page ("Supply Ontario (SO) has established a new Vendor of Record (VOR)
+      arrangement ...") announces each new award and is accepted as an alternate. Supply Ontario
+      establishes the arrangements, so this is its source; the ministry keeps the open-data CSV
+      of the same program.
+
+  - institution: supply-ontario
+    source_type: strategic_plan
+    url: https://www.supplyontario.ca/corporate-reporting/
+    alternates:
+      - https://www.supplyontario.ca/fr/rapports-organisationnels-2/
+    evidence:
+      url: https://www.supplyontario.ca/corporate-reporting/
+      quote: Read our 2026/27 to 2028/29 Business Plan (pdf)
+    notes: >-
+      Same page as the annual_report source: it publishes the annual three-year business plans
+      (2026/27 to 2028/29 is current) and the minister's annual letter of direction.
+      strategic_plan is not on the agency type's list; recorded because the list is a floor.
+
+  - institution: supply-ontario
+    source_type: annual_report
+    url: https://www.supplyontario.ca/corporate-reporting/
+    alternates:
+      - https://www.supplyontario.ca/fr/rapports-organisationnels-2/
+    evidence:
+      url: https://www.supplyontario.ca/corporate-reporting/
+      quote: Supply Ontario prepares an annual report outlining its activities throughout the fiscal year, including performance on key deliverables, financial statements and appointees.
+    notes: >-
+      Corporate reporting page: annual reports 2021-22 to 2024-25 (PDFs), business plans, the
+      annual letter of direction, and the MOU with the minister.
+
+  - institution: supply-ontario
+    source_type: leadership
+    url: https://www.supplyontario.ca/about-supply-ontario/senior-leadership-team/
+    alternates:
+      - https://www.supplyontario.ca/fr/a-propos-dapprovisiontario/direction/
+    evidence:
+      url: https://www.supplyontario.ca/about-supply-ontario/senior-leadership-team/
+      quote: Jamie Wallace Chief Executive Officer
+    notes: Executive leadership team.
+
+  - institution: supply-ontario
+    source_type: leadership
+    url: https://www.supplyontario.ca/about-supply-ontario/board-of-directors/
+    alternates:
+      - https://www.supplyontario.ca/fr/a-propos-dapprovisiontario/conseil-dadministration/
+    evidence:
+      url: https://www.supplyontario.ca/about-supply-ontario/board-of-directors/
+      quote: Supply Ontario has a Board of up to 13 members appointed by the Lieutenant Governor in Council
+    notes: Board of Directors and Committees (names, roles, terms).
+
+absent_sources:
+  - institution: ministry-of-public-and-business-service-delivery-and-procurement
+    source_type: tender
+    covered_by: supply-ontario
+    note: >-
+      The ministry posts its calls on the government-wide Ontario Tenders Portal
+      (ontariotenders.app.jaggaer.com), which ontario.ca calls "Supply Ontario's Ontario Tenders
+      Portal" and which is recorded under supply-ontario. The ministry page and its doing-business
+      page link only to that portal; no ministry-specific bid listing.
+
+  - institution: supply-ontario
+    source_type: board_meeting
+    note: >-
+      No board agendas or minutes published. Checked the site navigation (About us > Governance,
+      Board of Directors and Committees, Corporate reporting) and the site search
+      (?s=minutes, ?s=agenda, ?s=board+meeting: hits were only news items and expense
+      disclosures), and the page sitemap, re-checked 2026-10-01. The board page lists members,
+      terms and committees only.
+
+candidate_domains:
+  - domain: supplyontario.ca
+    institution: supply-ontario
+    expected: confirm
+    reason: Supply Ontario's own site; linked from ontario.ca (Buy Ontario and doing-business pages) and listed as its URL by the Public Appointments Secretariat.
+  - domain: infogo.gov.on.ca
+    institution: ministry-of-public-and-business-service-delivery-and-procurement
+    expected: confirm
+    reason: >-
+      INFO-GO, the Government of Ontario staff directory (leadership source), linked from the
+      ministry page as "Employee directory". An Ontario government host other than ontario.ca, so a
+      confirm candidate (README, Candidate domains).
+  - domain: doingbusiness.mgs.gov.on.ca
+    institution: ministry-of-public-and-business-service-delivery-and-procurement
+    expected: confirm
+    reason: >-
+      Legacy "Doing Business with the Ontario Government" site of the former Ministry of Government
+      Services, this ministry's predecessor. Its home page now says "We have Moved!" to
+      SupplyOntario.ca, but it still serves the buyer login linked from ontario.ca and the live
+      enterprise VOR CSV. An old ministry domain, so confirm (README, Candidate domains).
+  - domain: ontariotenders.ca
+    institution: ministry-of-public-and-business-service-delivery-and-procurement
+    expected: reject
+    reason: Lookalike trap. A parked domain ("Parked Domain | easyDNS", re-checked 2026-10-01), unrelated to the Ontario Tenders Portal.
+  - domain: archives.gov.on.ca
+    institution: ministry-of-public-and-business-service-delivery-and-procurement
+    expected: confirm
+    reason: >-
+      Archives of Ontario, a division of this ministry (out_of_scope as an institution), linked
+      from the ministry page. An Ontario government host other than ontario.ca, so a confirm
+      candidate for the ministry it serves (README, Candidate domains). Behind a Radware bot wall
+      for curl on 2026-10-01.
+  - domain: forms.mgcs.gov.on.ca
+    institution: ministry-of-public-and-business-service-delivery-and-procurement
+    expected: confirm
+    reason: >-
+      Central Forms Repository on the ministry's old MGCS domain; the doing-business page links its
+      "complaint form" (form 002-5205, "Complaint Regarding an Ontario Government Procurement",
+      which names this ministry). An Ontario government host other than ontario.ca, so confirm.
+
+out_of_scope:
+  - name: Bereavement Authority of Ontario (BAO)
+    url: https://www.thebao.ca/
+    reason: Delegated administrative authority (not-for-profit) overseen by the ministry, not a provincial agency; the ministry lists it under "Administrative authorities", apart from its ABCs. No YAML type fits.
+  - name: Condominium Authority of Ontario (CAO)
+    url: https://www.condoauthorityontario.ca/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO). Runs the Condominium Authority Tribunal.
+  - name: Condominium Management Regulatory Authority of Ontario (CMRAO)
+    url: https://cmrao.ca/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO).
+  - name: Electrical Safety Authority (ESA)
+    url: http://www.esasafe.com/
+    reason: Delegated administrative authority ("self-funded, not-for-profit corporation" per PAS), not a provincial agency (same reason as BAO).
+  - name: Home Construction Regulatory Authority (HCRA)
+    url: http://www.hcraontario.ca/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO).
+  - name: Ontario Dig Authority
+    url: https://ontariodigauthority.ca/
+    reason: >-
+      Administrative authority listed by the ministry, not a provincial agency (same reason as
+      BAO). Formerly Ontario One Call (the name PAS still uses); ontarioonecall.ca, which the
+      ministry page links, redirects here ("Ontario One Call is now operating as Ontario Dig
+      Authority", 2026-10-01).
+  - name: Ontario Motor Vehicle Industry Council (OMVIC)
+    url: https://www.omvic.ca/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO).
+  - name: Real Estate Council of Ontario (RECO)
+    url: http://www.reco.on.ca/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO).
+  - name: Tarion Warranty Corporation
+    url: https://www.tarion.com/
+    reason: Administrative authority (new-home warranty), not a provincial agency (same reason as BAO).
+  - name: Technical Standards and Safety Authority (TSSA)
+    url: http://www.tssa.org/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO).
+  - name: Travel Industry Council of Ontario (TICO)
+    url: http://www.tico.ca/
+    reason: Delegated administrative authority, not a provincial agency (same reason as BAO).
+  - name: Vintners Quality Alliance Ontario (Ontario Wine Appellation Authority)
+    url: http://www.vqaontario.ca
+    reason: Administrative authority listed by the ministry, not a provincial agency (same reason as BAO).
+  - name: Data Authority Implementation Team
+    url: https://www.pas.gov.on.ca/Home/Agency/740
+    reason: Minister-appointed expert advisory body on the PAS list (term to Nov 2024 with possible extension), not a provincial agency, and not in the ministry's ABC list. No sources.
+  - name: Special Advisor on Consumer Protection Service Delivery Modernization
+    url: https://www.pas.gov.on.ca/Home/Agency/741
+    reason: A single advisory appointment on the PAS list, not an institution.
+  - name: ServiceOntario
+    url: https://www.ontario.ca/page/serviceontario
+    reason: Ministry division (program/business line). No YAML type fits and it has no separate procurement.
+  - name: Archives of Ontario
+    url: https://www.archives.gov.on.ca/en/index.aspx
+    reason: Ministry division (Policy, Archives and Data program) on its own Ontario government domain; not a separately constituted body, and no YAML type fits.
+  - name: Consumer Protection Ontario
+    url: https://www.ontario.ca/page/consumer-protection-ontario
+    reason: Awareness program of the ministry and the administrative authorities, not an institution.
+  - name: Ontario Infrastructure and Lands Corporation (Infrastructure Ontario)
+    url: https://www.infrastructureontario.ca/
+    reason: Trap. It appears as a consolidation adjustment in this ministry's estimates, but it is an agency of the Ministry of Infrastructure. (EQAO and FSRA appear the same way.)
+  - name: OECM
+    url: https://oecm.ca/
+    reason: Trap. A not-for-profit sourcing partner for the broader public sector that posts on the same Ontario Tenders Portal; not controlled by the ministry.

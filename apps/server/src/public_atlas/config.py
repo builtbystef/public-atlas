@@ -126,6 +126,12 @@ class Settings(BaseSettings):
     # --- Runs ---
     # A worker that picks up an assignment of a paused run puts the job back for this long.
     paused_run_delay: timedelta = timedelta(seconds=30)
+
+    # --- Evals ---
+    # The database an eval run builds its graph in (spec section 10): on the same server as
+    # `database_url`, created and reset by `public-atlas eval run`. Never the main database or the
+    # tests' one. The scores and the cost go to the main database.
+    eval_database_name: str = Field("public_atlas_evals", min_length=1)
     # The recorded videos of an assignment are deleted this many days after it finished; its
     # events say so. The events themselves go after `events_keep_days`. Findings, usage and the
     # summary are never purged.

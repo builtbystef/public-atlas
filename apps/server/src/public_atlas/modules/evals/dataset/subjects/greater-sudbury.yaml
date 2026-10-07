@@ -1,0 +1,942 @@
+subject:
+  kind: place
+  name: City of Greater Sudbury
+  level: municipality
+  place: City of Greater Sudbury
+  parent: Ontario
+  tier: single
+  official_code: "3553005" # verified: StatCan 2021 census profile, CSD 3553005 "Greater Sudbury / Grand Sudbury, City (CV)"
+  institution: city-of-greater-sudbury
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, greatersudbury.ca]
+
+institutions:
+  - key: city-of-greater-sudbury
+    type: municipal_government
+    names:
+      - { text: City of Greater Sudbury, lang: en }
+      - { text: Greater Sudbury, lang: en }
+      - { text: Ville du Grand Sudbury, lang: fr }
+      - { text: Grand Sudbury, lang: fr }
+    homepage: https://www.greatersudbury.ca/
+    homepage_alternates:
+      - https://www.grandsudbury.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.greatersudbury.ca/
+      quote: "The City of Greater Sudbury is located on the Traditional Territory of Atikameksheng Anishnawbek and Wahnapitae First Nation"
+    notes: >-
+      The French site is a separate domain, www.grandsudbury.ca (footer "© 2026 Ville du Grand Sudbury"), linked as
+      "Français" from every greatersudbury.ca page; it is in candidate_domains (confirm). French twins of source pages
+      are recorded as alternates. No acronym (e.g. "CGS") is used in page text, only in PDF file names, so none is listed.
+
+  - key: gova-transit
+    type: transit_agency
+    names:
+      - { text: GOVA Transit, lang: en }
+      - { text: GOVA, lang: en }
+      - { text: Greater Sudbury Transit, lang: en }
+      - { text: Transit GOVA, lang: fr }
+      - { text: Transport en commun GOVA, lang: fr }
+    homepage: https://www.greatersudbury.ca/live/transit/
+    homepage_alternates:
+      - https://www.grandsudbury.ca/vivre/transit/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/transit/
+      quote: "GOVA Transit is enhancing public safety by installing automated external defibrillators on all conventional and specialized transit buses."
+    notes: >-
+      Internal division (Transit Services, Planning and Growth Department) that presents itself under its own brand, so it
+      gets a row under README rule 3(b). No board of its own; Council has a Transit Committee (on eSCRIBE).
+      "Greater Sudbury Transit" is the main-office name on /live/transit/contact-transit/.
+      French twin of the home page: https://www.grandsudbury.ca/vivre/transit/
+    parent:
+      institution: city-of-greater-sudbury
+      label: oversees
+      evidence:
+        url: https://www.greatersudbury.ca/city-hall/departments-and-services/
+        quote: The department oversees Planning Services, Building Services, Economic Development, Transit Services and Corporate Security and Bylaw Services.
+
+  - key: greater-sudbury-police-service
+    type: police_service
+    names:
+      - { text: Greater Sudbury Police Service, lang: en }
+      - { text: GSPS, lang: en, is_acronym: true }
+      - { text: Service de police du Grand Sudbury, lang: fr }
+      - { text: SPGS, lang: fr, is_acronym: true }
+      - { text: Greater Sudbury Police Service Board, lang: en }
+      - { text: Greater Sudbury Police Services Board, lang: en }
+      - { text: GSPSB, lang: en, is_acronym: true }
+    homepage: https://www.gsps.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/emergency-services/police/
+      quote: "is the 12th largest Municipal Police Service in Ontario"
+      kind: links_to
+      link_target: http://www.gsps.ca/en/
+    notes: >-
+      The city links to http://www.gsps.ca/en/, which now returns 404; the site home is https://www.gsps.ca/ (Govstack).
+      The police service and its board (Community Safety and Policing Act board; gsps.ca says "Police Service Board",
+      greatersudbury.ca says "Police Services Board (GSPSB)") are one row: the board is the service's governing body and
+      has no separate site. The board's names are listed here so a saved board matches this row. gsps.ca has no French
+      pages; the French names come from https://www.grandsudbury.ca/vivre/services-durgence/services-policiers/.
+    parent:
+      institution: city-of-greater-sudbury
+      label: including
+      evidence:
+        url: https://www.greatersudbury.ca/do-business/purchasing-section-and-procurement-opportunities/procurement-opportunities-and-contract-awards/
+        quote: the City of Greater Sudbury, including Pioneer Manor, Greater Sudbury Fire Services, Greater Sudbury Paramedic Services, the Greater Sudbury Police Services Board, Greater Sudbury Public Library Board
+
+  - key: greater-sudbury-fire-services
+    type: fire_service
+    names:
+      - { text: Greater Sudbury Fire Services, lang: en }
+      - { text: Services d’incendie du Grand Sudbury, lang: fr }
+    homepage: https://www.greatersudbury.ca/live/emergency-services/fire-services/
+    homepage_alternates:
+      - https://www.grandsudbury.ca/vivre/services-durgence/services-d-incendie/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/emergency-services/fire-services/about-us/
+      quote: "Greater Sudbury Fire Services is a dedicated team of career and volunteer firefighters committed to delivering comprehensive fire protection services across the City of Greater Sudbury."
+    notes: >-
+      Internal division (Community Services Department) presenting under its own name: README rule 3(b).
+      French twin: https://www.grandsudbury.ca/vivre/services-durgence/services-d-incendie/
+      The French name is from /vivre/services-durgence/services-d-incendie/a-notre-sujet/. The
+      /live/emergency-services/emergency-services-strategic-plan/ page is the 2014 Emergency Services
+      (fire, paramedic, emergency management) plan "over the next five years": expired, so not recorded
+      as a current strategic_plan (checked 2026-10-01).
+    parent:
+      institution: city-of-greater-sudbury
+      label: oversees
+      evidence:
+        url: https://www.greatersudbury.ca/city-hall/departments-and-services/
+        quote: The department oversees Parks and Recreation Services, Fire Services, Facilities and Fleet Services, and Housing Operations.
+
+  - key: greater-sudbury-public-library
+    type: library
+    names:
+      - { text: Greater Sudbury Public Library, lang: en }
+      - { text: GSPL, lang: en, is_acronym: true }
+      - { text: Greater Sudbury Public Library Board, lang: en }
+      - { text: Bibliothèque publique du Grand Sudbury, lang: fr }
+      - { text: BPGS, lang: fr, is_acronym: true }
+    homepage: https://www.sudburylibraries.ca/
+    homepage_alternates:
+      - https://www.sudburylibraries.ca/fr/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.greatersudbury.ca/play/libraries/
+      quote: "The Greater Sudbury Public Library strives to enrich the lives of individuals and the spirit of the community"
+      kind: links_to
+      link_target: http://www.sudburylibraries.ca
+    notes: >-
+      Public Libraries Act board ("constituted as a corporation"), members appointed by Council. The city links to
+      http://www.sudburylibraries.ca, which redirects to https://www.sudburylibraries.ca/. French home:
+      https://www.sudburylibraries.ca/fr/ (uses "Bibliothèque publique du Grand Sudbury" and "L’application de la BPGS").
+    parent:
+      institution: city-of-greater-sudbury
+      label: duly appointed by the Council of the City of Greater Sudbury
+      evidence:
+        url: https://www.greatersudbury.ca/city-hall/get-involved/volunteerism/join-a-local-board-committee-or-advisory-panel/local-boards-and-corporations/greater-sudbury-public-library-board/
+        quote: The Board consists of nine members, duly appointed by the Council of the City of Greater Sudbury
+
+  - key: greater-sudbury-hydro-inc
+    type: public_utility
+    names:
+      - { text: Greater Sudbury Hydro Inc., lang: en }
+      - { text: Greater Sudbury Hydro, lang: en }
+      - { text: GSH, lang: en, is_acronym: true }
+      - { text: Hydro du Grand Sudbury Inc., lang: fr }
+      - { text: Greater Sudbury Utilities Inc., lang: en }
+      - { text: Greater Sudbury Utilities, lang: en }
+      - { text: GSU, lang: en, is_acronym: true }
+      - { text: Services Publics du Grand Sudbury Inc., lang: fr }
+    homepage: https://sudburyhydro.com/
+    homepage_alternates:
+      - https://gsuinc.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/environment-and-sustainability1/earthcare-sudbury/earthcare-sudbury/community-partners/
+      quote: "Greater Sudbury Housing Corporation Greater Sudbury Hydro Inc."
+      kind: links_to
+      link_target: http://www.sudburyhydro.com/
+    notes: >-
+      Operating utility (README scope rule 6): Greater Sudbury Hydro Inc. (GSH), the OEB-licensed electricity
+      distributor, a subsidiary of the holding company Greater Sudbury Utilities Inc. (GSU, wholly owned by the City).
+      The city's EarthCare partners page links "Greater Sudbury Hydro Inc." to http://www.sudburyhydro.com/ (redirects to
+      https://sudburyhydro.com/); the city's local boards page says "Greater Sudbury Hydro Inc. (GSH) is a subsidiary of
+      Greater Sudbury Utilities Inc.". GSU is folded into this row's names, not given its own row or out_of_scope: the
+      hydro's own pages present themselves under GSU (sudburyhydro.com: menu "About > Greater Sudbury Utilities", "Login
+      to GSU MyAccount", customerservice@gsuinc.ca, "Greater Sudbury Utilities' core capabilities"), and gsuinc.ca serves
+      the same customer pages (billing, outages, projects, regulatory affairs) from the same WordPress install, so
+      https://gsuinc.ca/ is a webpage alternate. GSU keeps no row of its own: neither company publishes procurement (no
+      procurement/tender/supplier page in either site's page-sitemap.xml; WordPress search for tender/procurement/rfp
+      "Nothing Found" on both). The city names "Greater Sudbury Utilities" as a member of the Sudbury Regional Buying
+      Group, but that is the group's shared membership, not a separate published procurement function. Other GSU
+      subsidiaries (Hydro Plus, Agilis Networks, @home Energy, ConverGen) are not the operating utility: out_of_scope.
+      French names from the GSU consolidated statements ("Greater Sudbury Hydro lnc./Hydro du Grand Sudbury Inc.", sic;
+      "Greater Sudbury Utilities Inc. / Services Publics du Grand Sudbury Inc."); sudburyhydro.com has no French pages
+      (only a Translate widget).
+    parent:
+      institution: city-of-greater-sudbury
+      label: appointed by Council
+      evidence:
+        url: https://www.greatersudbury.ca/city-hall/get-involved/volunteerism/join-a-local-board-committee-or-advisory-panel/local-boards-and-corporations/greater-sudbury-utilities-inc-and-subsidiary-boards/
+        quote: "Greater Sudbury Hydro Inc. Board: Membership includes the three Council Members who sit on the GSU Board of Directors and four independent directors appointed by Council."
+
+  - key: greater-sudbury-housing-corporation
+    type: municipal_corporation
+    names:
+      - { text: Greater Sudbury Housing Corporation, lang: en }
+      - { text: GSHC, lang: en, is_acronym: true }
+      - { text: Société de logement du Grand Sudbury, lang: fr }
+      - { text: SLGS, lang: fr, is_acronym: true }
+    homepage: https://www.greatersudbury.ca/live/community-housing/housing-operations/
+    homepage_alternates:
+      - https://www.grandsudbury.ca/vivre/logement-communautaire/societe-de-logement-du-grand-sudbury-slgs/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/community-housing/housing-operations/
+      quote: "Housing Operations acts as the landlord for Greater Sudbury Housing Corporation (GSHC) properties."
+    notes: >-
+      City-owned corporation (README rule 3(a)): "The City of Greater Sudbury is the sole shareholder for the
+      corporation with the Board of Directors being comprised of the entirety of City Council" (local boards page), and
+      it is consolidated in the City's 2025 financial statements. 1,848 rent-geared-to-income units. It has no site of
+      its own: the City's Housing Operations section is its webpage (the French twin is titled "Société de logement du
+      Grand Sudbury (SLGS)"). The old sudburyhousing.org (contact email domain) is now a one-page stub that says GSHC
+      information "can now be found on the city's website" and links there; the City pages do not link it, so it is
+      not a candidate domain. Was out_of_scope before housing_corporation was added to the country file; that type
+      was folded into municipal_corporation (community housing) on 2026-10-01.
+    parent:
+      institution: city-of-greater-sudbury
+      label: sole shareholder
+      evidence:
+        url: https://www.greatersudbury.ca/city-hall/get-involved/volunteerism/join-a-local-board-committee-or-advisory-panel/local-boards-and-corporations/greater-sudbury-housing-corporation-board-of-directors/
+        quote: The City of Greater Sudbury is the sole shareholder for the corporation with the Board of Directors being comprised of the entirety of City Council.
+
+  - key: conservation-sudbury
+    type: conservation_authority
+    names:
+      - { text: Conservation Sudbury, lang: en }
+      - { text: Nickel District Conservation Authority, lang: en }
+      - { text: NDCA, lang: en, is_acronym: true }
+      - { text: Conservation Sudbury, lang: fr }
+    homepage: https://www.conservationsudbury.ca/
+    homepage_alternates:
+      - https://www.conservationsudbury.ca/fr/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/environment-and-sustainability1/lake-health/shoreline-development/
+      quote: "The Nickel District Conservation Authority (NDCA) also known as Conservation Sudbury, regulates development"
+      kind: links_to
+      link_target: https://conservationsudbury.ca/en/permits-planning.html
+    notes: >-
+      Conservation authority under the Conservation Authorities Act; its only member municipality is the City
+      ("its sole municipal partner, the City of Greater Sudbury", conservationsudbury.ca Municipal Agreements), which
+      appoints all seven General Board members (city's Conservation Sudbury General Board page). Not consolidated by
+      the City (its statements list it among entities "not under the control of Council"), but conservation_authority
+      is a type of its own. The member_of relationship follows the authority's own words ("its member municipality,
+      the City of Greater Sudbury"), though the City is its only member. One row in the eval dataset, here. The city's pages link old URLs (nickeldistrict.ca,
+      conservationsudbury.ca/en/...) that redirect to https://www.conservationsudbury.ca/. The French site
+      (/fr/) also uses "Conservation Sudbury". Was out_of_scope before conservation_authority was added.
+
+  - key: public-health-sudbury-and-districts
+    type: public_health_unit
+    names:
+      - { text: Public Health Sudbury & Districts, lang: en }
+      - { text: Board of Health for Public Health Sudbury & Districts, lang: en }
+      - { text: Sudbury & District Health Unit, lang: en }
+      - { text: Santé publique Sudbury et districts, lang: fr }
+    homepage: https://www.phsd.ca/
+    homepage_alternates:
+      - https://www.phsd.ca/fr/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.greatersudbury.ca/live/environment-and-sustainability1/lake-health/shoreline-development/
+      quote: "Public Health Sudbury and District (PHSD) is responsible for administering Section 8 of the Ontario Building Code"
+      kind: links_to
+      link_target: https://www.phsd.ca/health-topics-programs/sewage-systems/
+    notes: >-
+      Shared body (README rule 4): the Board of Health "is comprised of 11 municipal members and up to 10 members
+      appointed by the Lieutenant Governor in Council"; seven of the municipal members are "Appointed by: City of
+      Greater Sudbury", the rest by the district municipalities (phsd.ca Board members page, browser 2026-10-01). Head
+      office 1300 Paris Street, Sudbury, so its one row is here. Not consolidated by the City (statements: "Board of
+      Health for the Sudbury & District Health Unit" is "not under the control of Council"). "Sudbury & District Health
+      Unit" is the legal/former name, still used in older motions on phsd.ca. phsd.ca sits behind a Cloudflare
+      challenge (curl gets 403), so its pages were read in a browser. Was out_of_scope before public_health_unit was
+      added.
+
+  - key: sudbury-airport-community-development-corporation
+    type: municipal_corporation
+    names:
+      - { text: Sudbury Airport Community Development Corporation, lang: en }
+      - { text: SACDC, lang: en, is_acronym: true }
+      - { text: Greater Sudbury Airport, lang: en }
+    homepage: https://flysudbury.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.greatersudbury.ca/play/getting-around/airport/
+      quote: "The Greater Sudbury Airport is managed by the Sudbury Airport Community Development Corporation (SACDC)."
+      kind: links_to
+      link_target: http://www.flysudbury.ca/
+    notes: >-
+      Airport corporation (municipal_corporation: an airport). Controlled by the City (README rule 3(a)): the City's
+      2025 consolidated financial statements (note 1(a)(iii)) account for it as one of the City's two Government
+      Business Enterprises with GSU ("Government Business Enterprises (GBE) include the Greater Sudbury Utilities
+      Inc./Services Publics du Grand Sudbury Inc. (GSU), and the Sudbury Airport Community Development Corporation
+      (SACDC)"), the City budget lists it as a service partner, and airport jobs are posted by the City
+      (flysudbury.ca Working at YSB). Judgment: the City appoints only two of eleven directors, but GBE status means
+      control under PSAS, so it is promoted, not left as a funded not-for-profit. The city links http://www.flysudbury.ca/
+      (redirects to https://flysudbury.ca/). No relationship row: no page states the City's control in words an
+      agent would quote (the GBE note is in a PDF). greatersudburyairport.com is the airport's employee permit portal.
+
+sources:
+  # --- City of Greater Sudbury ---
+  - institution: city-of-greater-sudbury
+    source_type: procurement
+    url: https://www.greatersudbury.ca/do-business/purchasing-section-and-procurement-opportunities/
+    alternates:
+      - https://www.grandsudbury.ca/faire-des-affaires/section-des-achats-et-opportunites-de-marches/
+      - https://www.greatersudbury.ca/do-business/purchasing-section-and-procurement-opportunities/procurement-opportunities-and-contract-awards/
+      - https://www.grandsudbury.ca/faire-des-affaires/section-des-achats-et-opportunites-de-marches/opportunites-dapprovisionnement-et-attribution-de-contrats/
+    evidence:
+      url: https://www.greatersudbury.ca/do-business/purchasing-section-and-procurement-opportunities/
+      quote: "The Purchasing Section is responsible for the coordination of fair and transparent procurement processes for the acquisition of goods, services and construction in support of the operations of the City"
+
+  - institution: city-of-greater-sudbury
+    source_type: tender
+    url: https://greatersudbury.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://greatersudbury.bidsandtenders.ca/
+      - https://greatersudbury.bidsandtenders.ca/Module/Tenders/fr
+      - https://www.greatersudbury.ca/do-business/purchasing-section-and-procurement-opportunities/procurement-opportunities-and-contract-awards/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://greatersudbury.bidsandtenders.ca/Module/Tenders/en
+      quote: "Public tenders, bids and request for proposals are posted on this website."
+    notes: >-
+      Linked from the trusted purchasing page ("Bids&tenders City of Greater Sudbury's portal"). The same portal also
+      serves as the contract-award search ("Awarded" filter). The city page states its open procurement opportunities are
+      "exclusively posted on bids&tenders".
+
+  - institution: city-of-greater-sudbury
+    source_type: budget
+    url: https://www.greatersudbury.ca/city-hall/budget-and-finance/2026-budget/
+    alternates:
+      - https://www.grandsudbury.ca/hotel-de-ville/budget-et-finances/budget-municipal/
+      - https://www.greatersudbury.ca/city-hall/budget-and-finance/
+      - https://www.grandsudbury.ca/hotel-de-ville/budget-et-finances/
+      - https://www.greatersudbury.ca/city-hall/budget-and-finance/2026-2027-budget/approved-2026-budget/
+      - https://www.grandsudbury.ca/hotel-de-ville/budget-et-finances/budget-2026-2027/budget-2026-approuve/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/budget-and-finance/2026-budget/
+      quote: "Greater Sudbury City Council approved the 2026 municipal budget on December 3, 2025"
+    notes: >-
+      "Municipal Budget" page (the slug says 2026-budget). The "Approved 2026 Budget" page one level down is an
+      equivalent landing page. The 2026-2027 section landing (/city-hall/budget-and-finance/2026-2027-budget/) returns
+      404 "Content Off-Line", so it is not an alternate.
+
+  - institution: city-of-greater-sudbury
+    source_type: capital_plan
+    url: https://www.greatersudbury.ca/city-hall/budget-and-finance/2026-2027-budget/proposed-budget/
+    alternates:
+      - https://www.grandsudbury.ca/hotel-de-ville/budget-et-finances/budget-2026-2027/budget-propose/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/budget-and-finance/2026-2027-budget/proposed-budget/
+      quote: "The proposed budget includes an operating budget for 2026 and 2027, and an update to the capital plan for 2026 to 2027."
+    notes: >-
+      No stand-alone capital budget page; the multi-year capital plan is in the budget document linked here. Council
+      "readopted" the capital budget for 2026-2027 (Approved 2026 Budget page).
+
+  - institution: city-of-greater-sudbury
+    source_type: capital_plan
+    url: https://www.greatersudbury.ca/city-hall/budget-and-finance/financial-reports-and-plans/
+    alternates:
+      - https://www.grandsudbury.ca/hotel-de-ville/budget-et-finances/rapports-financiers-et-plan-financier/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/budget-and-finance/financial-reports-and-plans/
+      quote: "Enterprise Asset Management Plan 2026"
+    notes: >-
+      Lists the Enterprise Asset Management Plan 2026 with per-asset appendices (roads, water/wastewater, fleet,
+      buildings...) and the Long-Term Financial Plan 2018-2027. Borderline capital_plan (asset management rather than a
+      capital budget); kept because it is the city's multi-year infrastructure plan.
+
+  - institution: city-of-greater-sudbury
+    source_type: council_meeting
+    url: https://www.greatersudbury.ca/city-hall/mayor-and-council/meetings-agendas-and-minutes/
+    alternates:
+      - https://www.greatersudbury.ca/agendas
+      - https://www.grandsudbury.ca/hotel-de-ville/maire-et-conseil/ordres-du-jour-en-ligne/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/mayor-and-council/meetings-agendas-and-minutes/
+      quote: "Meetings are open to residents, media and members of Council for attendance in-person."
+    notes: >-
+      Embeds the eSCRIBE portal in an iframe (id MeetingsFrame). www.greatersudbury.ca/agendas redirects here.
+
+  - institution: city-of-greater-sudbury
+    source_type: council_meeting
+    url: https://pub-greatersudbury.escribemeetings.com/
+    alternates:
+      - https://pub-greatersudbury.escribemeetings.com/?FillWidth=1
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-greatersudbury.escribemeetings.com/
+      quote: "Special City Council Meeting"
+    notes: >-
+      eSCRIBE portal with City Council and all committees (including the Transit Committee and Finance and
+      Administration Committee), agendas in English and French. Older records (pre-2019) are on the retired
+      agendasonline.greatersudbury.ca.
+
+  - institution: city-of-greater-sudbury
+    source_type: strategic_plan
+    url: https://www.greatersudbury.ca/city-hall/reports-studies-policies-and-plans/
+    alternates:
+      - https://www.grandsudbury.ca/hotel-de-ville/rapports-etudes-politiques-et-plans/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/reports-studies-policies-and-plans/
+      quote: "Strategic planning is a valuable tool for performance measurement and can help define where the city is going and evaluate outcomes for success."
+    notes: >-
+      Links "City of Greater Sudbury Strategic Plan 2019-2027- Revised 2023" (PDF). The former HTML section
+      /city-hall/mayor-and-council/city-of-greater-sudbury-2019-2027-strategic-plan/ now returns 404 "Content Off-Line"
+      though its goal sub-pages still exist. The page says strategic plans are produced in English only.
+
+  - institution: city-of-greater-sudbury
+    source_type: meeting_video
+    url: https://pub-greatersudbury.escribemeetings.com/
+    alternates:
+      - https://www.greatersudbury.ca/city-hall/mayor-and-council/meetings-agendas-and-minutes/
+      - https://www.greatersudbury.ca/agendas
+      - https://www.grandsudbury.ca/hotel-de-ville/maire-et-conseil/ordres-du-jour-en-ligne/
+      - https://pub-greatersudbury.escribemeetings.com/?FillWidth=1
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-greatersudbury.escribemeetings.com/
+      quote: "View Live Stream"
+    notes: >-
+      Same portal as the council_meeting entry; meetings carry "View Live Stream" links to the eSCRIBE video player
+      (VideoStream.aspx).
+      The government's page that links here only points to it, so it is an alternate.
+
+  - institution: city-of-greater-sudbury
+    source_type: news
+    url: https://www.greatersudbury.ca/city-hall/news-and-public-notices/
+    alternates:
+      - https://www.grandsudbury.ca/hotel-de-ville/nouvelles-et-avis-au-public/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/news-and-public-notices/
+      quote: "Welcome to the City of Greater Sudbury's newsroom."
+    notes: News releases and public notices, searchable; the list itself loads by JavaScript.
+
+  # --- GOVA Transit ---
+  - institution: gova-transit
+    source_type: capital_plan
+    url: https://www.greatersudbury.ca/live/transit/riding-gova-transit/gova-projects-enhancing-your-transit-experience/
+    alternates:
+      - https://www.grandsudbury.ca/vivre/transit/transport-en-commun/projets-gova-ameliorer-votre-experience-de-transport/
+    evidence:
+      url: https://www.greatersudbury.ca/live/transit/riding-gova-transit/gova-projects-enhancing-your-transit-experience/
+      quote: "GOVA Transit is investing in projects that improve comfort, accessibility, and reliability"
+    notes: >-
+      Borderline: a list of capital projects (farebox upgrade, bus stops, shelter renewal program), not a costed
+      multi-year plan. Transit capital is otherwise inside the city's capital budget. Reviewer may prefer absent.
+
+  # --- Greater Sudbury Police Service ---
+  - institution: greater-sudbury-police-service
+    source_type: board_meeting
+    url: https://www.gsps.ca/about-gsps/greater-sudbury-police-service-board/board-meetings/
+    alternates:
+      - https://www.gsps.ca/about-gsps/greater-sudbury-police-service-board/
+    evidence:
+      url: https://www.gsps.ca/about-gsps/greater-sudbury-police-service-board/board-meetings/
+      quote: "All meetings are held in the 5th floor boardroom at GSPS Headquarters (190 Brady Street) unless otherwise noted."
+    notes: Agendas, minutes, recordings and budget presentations by year.
+
+  - institution: greater-sudbury-police-service
+    source_type: strategic_plan
+    url: https://www.gsps.ca/about-gsps/strategic-direction/
+    evidence:
+      url: https://www.gsps.ca/about-gsps/strategic-direction/
+      quote: "Strategic Direction that outlines organizational priorities, goals and objectives."
+    notes: >-
+      Not a police_service source type in canada.yaml; recorded under the floor rule (README, "The type's list is a
+      floor"). Vision, mission and values, linking the Strategic Direction 2024-2027 PDF. Found in the gsps.ca sitemap
+      (/sitemap/) under About GSPS, checked 2026-10-01.
+
+  # --- Greater Sudbury Public Library ---
+  - institution: greater-sudbury-public-library
+    source_type: board_meeting
+    url: https://www.sudburylibraries.ca/your-library/library-board-and-management
+    alternates:
+      - https://www.sudburylibraries.ca/fr/votre-bibliotheque/conseil-et-direction-de-la-bibliotheque
+    evidence:
+      url: https://www.sudburylibraries.ca/your-library/library-board-and-management
+      quote: "The library board meets throughout the year to discuss issues of library policy and governance."
+    notes: Board members plus minutes by year (PDFs); also links the 2026-2028 Strategic Plan and annual report.
+
+  - institution: greater-sudbury-public-library
+    source_type: strategic_plan
+    url: https://www.sudburylibraries.ca/your-library/our-strategic-plan
+    alternates:
+      - https://www.sudburylibraries.ca/fr/votre-bibliotheque/notre-plan-strategique
+    evidence:
+      url: https://www.sudburylibraries.ca/your-library/our-strategic-plan
+      quote: "The 2026-2028 Strategic Plan marks a new chapter for the Greater Sudbury Public Library and the community we serve"
+    notes: >-
+      Not a library source type in canada.yaml; recorded under the floor rule (README, "The type's list is a floor"),
+      as for the Region of Waterloo Library. "Our Strategic Plan" page, linked from the board page ("2026-2028 Strategic
+      Plan"); French twin linked as "FR". Checked 2026-10-01.
+
+  # --- Greater Sudbury Hydro ---
+  - institution: greater-sudbury-hydro-inc
+    source_type: capital_plan
+    url: https://sudburyhydro.com/projects/
+    alternates:
+      - https://sudburyhydro.com/regulatory/
+      - https://gsuinc.ca/projects/
+      - https://gsuinc.ca/regulatory-affairs/
+    evidence:
+      url: https://sudburyhydro.com/projects/
+      quote: "Greater Sudbury Hydro Southview Drive Capital Rebuild"
+    notes: >-
+      "Major Projects" (menu About > Major Projects): Greater Sudbury Hydro capital rebuilds and substations. The 5-year
+      Distribution System Plan is part of the 2025 Cost of Service Application (OEB EB-2024-0026), linked from the
+      Regulatory Affairs page ("From time to time, Greater Sudbury Hydro posts information for public review"), given
+      as an alternate. gsuinc.ca serves the same two pages. https://sudburyhydro.com/major-projects/ is an empty
+      shell (heading only), so it is not an alternate.
+
+  # --- Conservation Sudbury ---
+  - institution: conservation-sudbury
+    source_type: procurement
+    url: https://www.conservationsudbury.ca/notices/
+    alternates:
+      - https://www.conservationsudbury.ca/fr/notices/
+    evidence:
+      url: https://www.conservationsudbury.ca/notices/
+      quote: "Please visit Bids&Tenders for more information."
+    notes: >-
+      No purchasing page of its own; the "Tenders" section of the Notices page says how it buys (through its
+      bids&tenders portal) and lists the open contracts. A section of a general page (README, "A section of a general
+      page counts"); a reviewer may prefer the absence. Searched the page-sitemap.xml (2026-10-01).
+
+  - institution: conservation-sudbury
+    source_type: tender
+    url: https://conservationsudbury.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://conservationsudbury.bidsandtenders.ca/
+      - https://www.conservationsudbury.ca/notices/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://conservationsudbury.bidsandtenders.ca/Module/Tenders/en
+      quote: "Public tenders, bids and request for proposals are posted on this website."
+    notes: Linked as "Bids&Tenders" from the Notices page (Contract 2026-01, Nolin Creek Culvert Concrete Repair, open 2026-10-01).
+
+  - institution: conservation-sudbury
+    source_type: budget
+    url: https://www.conservationsudbury.ca/governance/
+    alternates:
+      - https://www.conservationsudbury.ca/fr/governance/
+    evidence:
+      url: https://www.conservationsudbury.ca/governance/
+      quote: "2026 Approved Budget for Consultation Purposes (PDF)"
+    notes: >-
+      Governance page, "Administrative Documents": the 2026 budget PDF, the work plan and the audited statements.
+      Its "Current Year Budget (PDF)" link still points to budget-2022.pdf (checked 2026-10-01).
+
+  - institution: conservation-sudbury
+    source_type: board_meeting
+    url: https://www.conservationsudbury.ca/governance/board-meetings/
+    alternates:
+      - https://www.conservationsudbury.ca/fr/governance/board-meetings/
+      - https://www.conservationsudbury.ca/governance/
+    evidence:
+      url: https://www.conservationsudbury.ca/governance/board-meetings/
+      quote: "Public participation at the regular meetings of the General Board is allowed in accordance with By-law NDCA 2018-01"
+    notes: General Board meeting dates with agendas, and archive pages per year (2017 to 2025).
+
+  # --- Public Health Sudbury & Districts ---
+  - institution: public-health-sudbury-and-districts
+    source_type: procurement
+    url: https://www.phsd.ca/work-with-us/procurement/
+    evidence:
+      url: https://www.phsd.ca/work-with-us/procurement/
+      quote: "Public Health Sudbury & Districts takes part in competitive procurement and the purchasing department is responsible for the buying of goods and services."
+      manual_check: browser 2026-10-01
+    notes: Purchasing Department contact and the list of open "Tender and procurement opportunities" (one sub-page each).
+
+  - institution: public-health-sudbury-and-districts
+    source_type: tender
+    url: https://www.phsd.ca/work-with-us/procurement/
+    evidence:
+      url: https://www.phsd.ca/work-with-us/procurement/
+      quote: "Tender and procurement opportunities"
+      manual_check: browser 2026-10-01
+    notes: >-
+      Not a public_health_unit source type; recorded under the floor rule (README, "The type's list is a floor"). The
+      procurement page lists the open opportunities itself.
+
+  - institution: public-health-sudbury-and-districts
+    source_type: board_meeting
+    url: https://www.phsd.ca/about/board-of-health/meetings/
+    alternates:
+      - https://www.phsd.ca/about/board-of-health/
+    evidence:
+      url: https://www.phsd.ca/about/board-of-health/meetings/
+      quote: "Meeting packages (including meeting minutes)"
+      manual_check: browser 2026-10-01
+    notes: Meeting dates and one meeting package (PDF) per meeting, linked from the Board of Health page ("Meetings").
+
+  # --- Greater Sudbury Housing Corporation ---
+  - institution: greater-sudbury-housing-corporation
+    source_type: annual_report
+    url: https://www.greatersudbury.ca/city-hall/budget-and-finance/financial-reports-and-plans/
+    alternates:
+      - https://www.grandsudbury.ca/hotel-de-ville/budget-et-finances/rapports-financiers-et-plan-financier/
+    evidence:
+      url: https://www.greatersudbury.ca/city-hall/budget-and-finance/financial-reports-and-plans/
+      quote: "2025 Greater Sudbury Housing Corporation"
+    notes: >-
+      Judgement call, as for Simcoe County Housing Corporation: GSHC publishes no narrative annual report (no site of
+      its own; the Housing Operations section and its sub-pages have none, checked 2026-10-01). Its audited financial
+      statements by year (2009 to 2025) are on the City's Financial Reports and Plans page, under "Financial Statements
+      - Related Entities", a section per body, so a source of its own rather than covered_by. A reviewer may prefer
+      the absence. The same page is the city's capital_plan source.
+
+  # --- Sudbury Airport Community Development Corporation ---
+  - institution: sudbury-airport-community-development-corporation
+    source_type: annual_report
+    url: https://flysudbury.ca/corporate/annual-reports/
+    evidence:
+      url: https://flysudbury.ca/corporate/annual-reports/
+      quote: "Find our collections of Annual Reports for the Greater Sudbury Airport."
+    notes: 2024 and 2023 Annual Reports (PDF).
+
+absent_sources:
+  - institution: gova-transit
+    source_type: procurement
+    note: >-
+      No transit purchasing page. GOVA is a City division and buys through the City's Purchasing Section and
+      greatersudbury.bidsandtenders.ca (both recorded under city-of-greater-sudbury). Searched /live/transit/ and all its
+      sub-pages, the purchasing section and web search.
+    covered_by: city-of-greater-sudbury
+  - institution: gova-transit
+    source_type: tender
+    note: >-
+      Transit bids are posted on the City's bids&tenders portal (recorded under the city); no separate transit tender page.
+    covered_by: city-of-greater-sudbury
+  - institution: gova-transit
+    source_type: budget
+    note: >-
+      No separate transit budget page; transit is a line in the City's municipal budget (2026 budget pages). Searched the
+      transit section and the budget-and-finance section.
+    covered_by: city-of-greater-sudbury
+  - institution: gova-transit
+    source_type: board_meeting
+    note: >-
+      GOVA has no board. Council's Transit Committee meets on the city's eSCRIBE portal (recorded as a council_meeting
+      source of the city). An agent attaching the eSCRIBE portal to GOVA as board_meeting should be treated as wrong
+      under this labelling.
+  - institution: greater-sudbury-police-service
+    source_type: procurement
+    note: >-
+      No purchasing page on gsps.ca (sitemap at /sitemap/, site search, web search). The City's procurement notice
+      names the Greater Sudbury Police Services Board among the bodies covered by City procurement.
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-police-service
+    source_type: tender
+    note: >-
+      No bid listing on gsps.ca; no police bids&tenders subdomain (gsps.bidsandtenders.ca returns 404). Police bids go
+      through the City's bids&tenders portal.
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-police-service
+    source_type: budget
+    note: >-
+      No budget page on gsps.ca. Budget presentations are only attachments on the Board Meetings page; the police levy
+      is in the City's budget (Approved 2026 Budget: "2.3 per cent increase for Greater Sudbury Police Service").
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-fire-services
+    source_type: procurement
+    note: >-
+      City division; procures through the City's Purchasing Section (the City's procurement notice names Greater Sudbury
+      Fire Services). Searched the fire-services section and its sub-pages.
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-fire-services
+    source_type: budget
+    note: >-
+      No separate fire budget page; the fire budget is part of the City budget. Searched the fire-services and
+      budget-and-finance sections.
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-public-library
+    source_type: procurement
+    note: >-
+      No purchasing or tenders page on sudburylibraries.ca (navigation, footer, web search; site search is JS-only).
+      The City's procurement notice names the Greater Sudbury Public Library Board among the bodies covered by City
+      procurement; no library bids&tenders subdomain.
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-public-library
+    source_type: budget
+    note: >-
+      No budget page on sudburylibraries.ca. The library is a "service partner" in the City budget (service-partner budget
+      documents are on overtoyou.greatersudbury.ca). Documents on the board page are the strategic plan, long-term plan,
+      annual report and governance audit.
+    covered_by: city-of-greater-sudbury
+  - institution: greater-sudbury-hydro-inc
+    source_type: procurement
+    note: >-
+      No procurement, supplier or bids page on sudburyhydro.com or gsuinc.ca (page-sitemap.xml of both, WordPress search
+      for tender/procurement/rfp returned "Nothing Found", navigation, footer, web search). The city names "Greater
+      Sudbury Utilities" as a member of the Sudbury Regional Buying Group, but the utility does not buy through the City
+      (the City's notice of bodies covered by its purchasing does not list GSU or GSH), so no covered_by.
+  - institution: greater-sudbury-hydro-inc
+    source_type: tender
+    note: >-
+      No open-bids listing on sudburyhydro.com or gsuinc.ca; no bids&tenders subdomain (sudburyhydro, gsh,
+      greatersudburyhydro, gsuinc, gsu, greatersudburyutilities .bidsandtenders.ca all return 404). No covered_by: the
+      City's bids&tenders portal is the City's, not the utility's.
+  - institution: greater-sudbury-hydro-inc
+    source_type: board_meeting
+    note: >-
+      Board meetings are not public (OBCA corporations). https://sudburyhydro.com/corporate/ lists the GSU and GSH
+      board members, the GSH financial statements and the Annual Report to the Shareholder, but no agendas or minutes.
+
+  - institution: greater-sudbury-public-library
+    source_type: tender
+    covered_by: city-of-greater-sudbury
+    note: >-
+      No tenders page on sudburylibraries.ca (the procurement search above covered navigation,
+      footer and a web search). Library bids run through the City, recorded under the city.
+
+  - institution: gova-transit
+    source_type: strategic_plan
+    covered_by: city-of-greater-sudbury
+    note: >-
+      No transit plan page under greatersudbury.ca/live/transit/ (landing page and navigation
+      checked 2026-09-29; the projects page is the capital_plan source). The only transit plan is
+      the "Transit Action Plan Final Report 2019" (PDF), linked from the City's Reports, Studies,
+      Policies and Plans page, which is the city's strategic_plan source (checked 2026-10-01).
+
+  - institution: greater-sudbury-housing-corporation
+    source_type: procurement
+    covered_by: city-of-greater-sudbury
+    note: >-
+      No purchasing page of its own; the City's procurement notice names the "Greater Sudbury Housing Corporation" among
+      the bodies covered by City procurement. Searched /live/community-housing/ and its Housing Operations sub-pages
+      (2026-10-01).
+  - institution: greater-sudbury-housing-corporation
+    source_type: tender
+    covered_by: city-of-greater-sudbury
+    note: No tender listing of its own; GSHC bids go through the City's bids&tenders portal (recorded under the city).
+  - institution: greater-sudbury-housing-corporation
+    source_type: capital_plan
+    covered_by: city-of-greater-sudbury
+    note: >-
+      No capital plan of its own. GSHC capital is in the City's capital budget (2026-2027 Proposed Budget document,
+      "Minor Capital Replacements - Greater Sudbury Housing Corporation"), recorded as the city's capital_plan.
+  - institution: greater-sudbury-housing-corporation
+    source_type: board_meeting
+    note: >-
+      The Board of Directors is the whole of City Council; there are no separate GSHC board agendas or minutes. The
+      City's eSCRIBE portal lists no GSHC meeting type (Council and its committees only), and the local boards page
+      gives no meeting schedule (checked 2026-10-01).
+
+  - institution: public-health-sudbury-and-districts
+    source_type: budget
+    note: >-
+      No budget page on phsd.ca. The cost-shared operating budget is approved by Board motion ("2025 Cost-shared
+      Operating Budget (Motion #51-25)" on the Motions page) and sits in the meeting packages; the site search for
+      "budget" returns only motions and lessons; the Financial and Annual Reports page has year-end financial reports,
+      not budgets. The City's budget book has a PHSD summary as a service partner, but that is the City's levy, so no
+      covered_by. Checked in a browser 2026-10-01.
+
+  - institution: sudbury-airport-community-development-corporation
+    source_type: procurement
+    covered_by: city-of-greater-sudbury
+    note: >-
+      No procurement page on flysudbury.ca (page-sitemap.xml, navigation, 2026-10-01). The City's procurement notice
+      names the "Sudbury Airport Community Development Corporation" among the bodies covered by City procurement.
+  - institution: sudbury-airport-community-development-corporation
+    source_type: tender
+    covered_by: city-of-greater-sudbury
+    note: No tender listing on flysudbury.ca (page-sitemap.xml); airport bids go through the City (procurement notice).
+  - institution: sudbury-airport-community-development-corporation
+    source_type: board_meeting
+    note: >-
+      Board meetings are not public; flysudbury.ca has no board, agenda or minutes page (page-sitemap.xml, Corporate
+      menu, 2026-10-01). The city's SACDC Board page describes the board but publishes no meetings.
+
+candidate_domains:
+  - domain: grandsudbury.ca
+    institution: city-of-greater-sudbury
+    expected: confirm
+    reason: The City's French-language site, linked as "Français" from every greatersudbury.ca page; footer "Ville du Grand Sudbury".
+  - domain: gsps.ca
+    institution: greater-sudbury-police-service
+    expected: confirm
+    reason: Police service's own site, linked from the city's police page.
+  - domain: sudburylibraries.ca
+    institution: greater-sudbury-public-library
+    expected: confirm
+    reason: Library's own site, linked from the city's libraries page.
+  - domain: sudburyhydro.com
+    institution: greater-sudbury-hydro-inc
+    expected: confirm
+    reason: >-
+      Greater Sudbury Hydro's own site (footer "©2025 Greater Sudbury Hydro Inc."), linked as "Greater Sudbury Hydro
+      Inc." from the city's EarthCare community partners page.
+  - domain: gsuinc.ca
+    institution: greater-sudbury-hydro-inc
+    expected: confirm
+    reason: >-
+      Site of the holding company Greater Sudbury Utilities (folded into this row's names), linked from the city's local
+      boards and water bill pages; serves the same customer pages as sudburyhydro.com (billing, outages, projects).
+  - domain: agilisnet.com
+    institution: greater-sudbury-hydro-inc
+    expected: reject
+    reason: Agilis Networks, GSU's competitive broadband subsidiary; a commercial brand, not the utility's domain.
+  - domain: athomeenergy.ca
+    institution: greater-sudbury-hydro-inc
+    expected: reject
+    reason: "@home Energy (1627596 Ontario Inc.), GSU's competitive rental subsidiary; not the utility's domain."
+  - domain: investsudbury.ca
+    institution: city-of-greater-sudbury
+    expected: reject
+    reason: >-
+      Economic development site (Greater Sudbury Development Corporation / City Economic Development), linked from the city.
+      Not the City's official domain, and GSDC is out of scope.
+  - domain: movetosudbury.ca
+    institution: city-of-greater-sudbury
+    expected: reject
+    reason: Campaign microsite ("Move to Sudbury") linked from the city's navigation; not an institution's official domain.
+  - domain: downtownsudbury.com
+    institution: city-of-greater-sudbury
+    expected: reject
+    reason: Downtown Sudbury BIA site; BIAs are out of scope.
+  - domain: flysudbury.ca
+    institution: sudbury-airport-community-development-corporation
+    expected: confirm
+    reason: >-
+      The Sudbury Airport Community Development Corporation's own site (Greater Sudbury Airport), linked as
+      www.flysudbury.ca from the city's airport page; now in scope as a municipal_corporation (an airport).
+  - domain: conservationsudbury.ca
+    institution: conservation-sudbury
+    expected: confirm
+    reason: >-
+      Conservation Sudbury's own site, linked from the city's shoreline development and conservation areas pages; now
+      in scope as a conservation_authority.
+  - domain: nickeldistrict.ca
+    institution: conservation-sudbury
+    expected: reject
+    reason: >-
+      Old Nickel District Conservation Authority domain, linked from the city's Conservation Sudbury General Board
+      page; it is a bare redirect to conservationsudbury.ca (checked 2026-10-01), the domain to confirm.
+  - domain: phsd.ca
+    institution: public-health-sudbury-and-districts
+    expected: confirm
+    reason: >-
+      Public Health Sudbury & Districts' own site, linked as www.phsd.ca from the city's shoreline development page
+      (behind a Cloudflare challenge; read in a browser 2026-10-01).
+
+out_of_scope:
+  - name: Greater Sudbury Paramedic Services
+    url: https://www.greatersudbury.ca/live/emergency-services/paramedic-services/
+    reason: >-
+      A department of the City of Greater Sudbury (Community Development Department), which buys and budgets for it;
+      the country file has no paramedic type (dropped 2026-10-01, README rule 2).
+  - name: Pioneer Manor
+    url: https://www.greatersudbury.ca/live/long-term-care-pioneer-manor/
+    reason: Long-term care home run as a City department (Long-term Care Services); out of scope under README rule 2.
+  - name: Greater Sudbury Development Corporation (City of Greater Sudbury Community Development Corporation)
+    url: https://investsudbury.ca/
+    reason: >-
+      Not-for-profit economic development corporation (GSDC) that the City funds but does not control: the City's 2025
+      consolidated financial statements list "The City of Greater Sudbury Community Development Corporation" among the
+      entities "not under the control of Council" (with the conservation authority and the board of health), and the
+      City appoints only the Mayor and three councillors of its 18 directors (city's GSDC board page). So not a
+      municipal_corporation (README rule 3(a)); a not-for-profit the municipality only funds (rule 2). Its legal name,
+      used in the City's procurement notice and its audited statements, is The City of Greater Sudbury Community
+      Development Corporation (same mandate wording as the city's GSDC board page; checked 2026-10-01), so one entry,
+      not two.
+  - name: Water and Wastewater Services Division
+    url: https://www.greatersudbury.ca/live/water-wastewater-treatment-compliance/
+    reason: >-
+      City division ("The City of Greater Sudbury’s Water and Wastewater Services Division") under a generic service
+      name on the City site, with no brand, site or procurement of its own: README scope rule 8, as for Region of
+      Waterloo Water and Wastewater Services. Saving it as a public_utility is a false positive.
+  - name: Downtown Sudbury Business Improvement Area
+    url: https://downtownsudbury.com/
+    reason: BIA board of management; BIAs are out of scope.
+  - name: Flour Mill Business Improvement Area
+    reason: BIA board of management; BIAs are out of scope.
+  - name: Agilis Networks (Greater Sudbury Telecommunications Inc.)
+    url: https://agilisnet.com/
+    reason: >-
+      Competitive broadband subsidiary of GSU (sister of Greater Sudbury Hydro); not a public utility, and as a GSU
+      subsidiary with no public procurement of its own it gets no row (README rules 3 and 6), not even as a
+      municipal_corporation.
+  - name: "@home Energy (1627596 Ontario Inc.)"
+    url: https://athomeenergy.ca/
+    reason: >-
+      Competitive water-heater rental subsidiary of GSU (sister of Greater Sudbury Hydro); not a public utility, and a
+      GSU subsidiary with no procurement of its own gets no row (README rules 3 and 6).
+  - name: Greater Sudbury Hydro Plus Inc.
+    reason: GSU subsidiary named on the city's local boards page; not the operating utility (Greater Sudbury Hydro Inc. is).
+  - name: ConverGen Inc.
+    reason: >-
+      GSU landfill-gas energy subsidiary ("ConverGen, converts and stores energy from gas"); not a public utility, and
+      a GSU subsidiary with no procurement of its own gets no row (README rules 3 and 6).
+  - name: Sudbury Regional Buying Group
+    reason: >-
+      Cooperative purchasing group of the City, GSU, school boards, colleges, HSN and others; an arrangement among
+      separate institutions, not a body the City owns or controls (README rule 3).
+  - name: Rainbow District School Board
+    reason: School board (province-level type, scored under Ontario).
+  - name: Sudbury Catholic District School Board
+    url: https://www.sudburycatholicschools.ca/
+    reason: School board (province-level type).
+  - name: Conseil scolaire public du Grand Nord de l'Ontario
+    reason: French public school board (province-level type).
+  - name: Conseil scolaire catholique du Nouvel-Ontario
+    url: https://www.nouvelon.ca/
+    reason: French Catholic school board (province-level type).
+  - name: Health Sciences North
+    url: https://hsnsudbury.ca/en
+    reason: Hospital (province-level type).
+  - name: Laurentian University
+    url: https://laurentian.ca/
+    reason: University (province-level type).
+  - name: Cambrian College
+    url: https://cambriancollege.ca/
+    reason: College (province-level type).
+  - name: Collège Boréal
+    url: https://collegeboreal.ca/
+    reason: College (province-level type).
+  - name: Northern Ontario School of Medicine
+    reason: University (NOSM University; province-level type). Saved by the first crawl as a university.
+  - name: Science North
+    url: https://www.sciencenorth.ca/
+    reason: Provincial agency (province-level type), a member of the Sudbury Regional Buying Group.
+
+notes: >-
+  Structure: single-tier city (CSD 3553005). In scope: the city, two internal divisions with their own names (GOVA
+  Transit, Greater Sudbury Fire Services), two local boards on their own domains (Police Service and its board as one
+  row; Public Library) and the operating utility Greater Sudbury Hydro Inc. (holding company GSU folded into its names,
+  README scope rule 6). The city's procurement
+  notice says City procurement covers Fire, Paramedics, the Police Services Board, the Library Board, the Community
+  Development Corporation, the Housing Corporation and the Airport CDC, which is why their procurement/tender types are
+  absent (covered_by: city-of-greater-sudbury) rather than duplicated. Divisions (GOVA, Fire) have no source rows that
+  repeat the City's pages; the city's pages are recorded once, under city-of-greater-sudbury.
+  Moved from out_of_scope to institutions when types were added to the country file (2026-10-01): Greater Sudbury
+  Housing Corporation (City sole shareholder; housing_corporation, now municipal_corporation), Conservation
+  Sudbury (conservation_authority; the City is its only member municipality), Public Health Sudbury & Districts
+  (public_health_unit; shared board of health headquartered in Sudbury, one row here, rule 4) and the Sudbury Airport
+  Community Development Corporation (municipal_corporation; a City Government Business Enterprise). Later the same
+  day the country file folded housing_corporation into municipal_corporation and dropped paramedic_service, so
+  Greater Sudbury Paramedic Services, a City department, went back to out_of_scope. The Greater Sudbury Development
+  Corporation stays out (the City's statements say it is not under Council's control). Pioneer Manor stays out as a
+  long-term care home run as a department. The city's
+  local boards page lists its boards only through a script; its child pages were found by web search and read
+  directly (GSDC, GSU, Housing Corporation, Library, Conservation Sudbury, Airport CDC).

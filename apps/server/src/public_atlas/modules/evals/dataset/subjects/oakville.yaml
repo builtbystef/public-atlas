@@ -1,0 +1,870 @@
+subject:
+  kind: place
+  name: Town of Oakville
+  level: municipality
+  place: Town of Oakville
+  parent: Regional Municipality of Halton
+  tier: lower
+  official_code: "3524001" # Statistics Canada 2021 CSD "Oakville, Town (T)", DGUID 2021A00053524001 (checked)
+  institution: town-of-oakville
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, oakville.ca, halton.ca]
+
+institutions:
+  - key: town-of-oakville
+    type: municipal_government
+    names:
+      - { text: Town of Oakville, lang: en }
+      - { text: The Corporation of the Town of Oakville, lang: en }
+      - { text: Corporation of the Town of Oakville, lang: en }
+    homepage: https://www.oakville.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.oakville.ca/
+      quote: "The Corporation of the Town of Oakville. All Rights Reserved."
+
+  - key: oakville-transit
+    type: transit_agency
+    names:
+      - { text: Oakville Transit, lang: en }
+    homepage: https://www.oakvilletransit.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.oakville.ca/transportation-roads/oakville-transit/
+      quote: "Public transportation throughout the town is provided by Oakville Transit"
+      kind: links_to
+      link_target: https://www.oakvilletransit.ca/
+    notes: >-
+      A department of the Town's Community Infrastructure Commission, not a separate board or
+      corporation; in scope under rule 3(b) (own name, own domain). The Town page
+      https://www.oakville.ca/transportation-roads/oakville-transit/ is its section on the
+      trusted domain; the site footer on oakvilletransit.ca reads "Copyright © 2026 Town of Oakville".
+    parent:
+      institution: town-of-oakville
+      label: Departments
+      evidence:
+        url: https://www.oakville.ca/town-hall/mayor-council-administration/cao-administration/
+        quote: "Departments: Asset Management Oakville Transit Roads and Works Operations Transportation and Engineering"
+
+  - key: oakville-fire-department
+    type: fire_service
+    names:
+      - { text: Oakville Fire Department, lang: en }
+      - { text: Fire and Emergency Services, lang: en }
+    homepage: https://www.oakville.ca/home-environment/fire-safety/fire-department/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.oakville.ca/home-environment/fire-safety/fire-department/
+      quote: "The Oakville Fire Department provides fire protection services to our community."
+    notes: >-
+      Internal department ("Fire and Emergency Services" in the CAO org list) presenting itself as
+      "Oakville Fire Department"; rule 3(b). No site of its own. The Fire Master Plan is recorded
+      as its strategic_plan under the floor rule (see sources).
+    parent:
+      institution: town-of-oakville
+      label: the Town's fire department
+      evidence:
+        url: https://www.oakville.ca/home-environment/fire-safety/fire-department/
+        quote: The head of the Town's fire department is the director of emergency planning and fire services, also known as the Fire Chief.
+
+  - key: oakville-public-library
+    type: library
+    names:
+      - { text: Oakville Public Library, lang: en }
+      - { text: OPL, lang: en, is_acronym: true }
+      - { text: Oakville Public Library Board, lang: en }
+    homepage: https://opl.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.oakville.ca/community-events/oakville-public-library/
+      quote: "Visit the Oakville Public Library website"
+      kind: links_to
+      link_target: https://opl.ca/
+    notes: >-
+      A public library board under the Public Libraries Act (consolidated in the Town's financial
+      statements as "The Oakville Public Library Board"), also listed as a department of the
+      Community Services Commission. www.opl.ca 301-redirects to https://opl.ca/.
+    parent:
+      institution: town-of-oakville
+      label: Departments
+      evidence:
+        url: https://www.oakville.ca/town-hall/mayor-council-administration/cao-administration/
+        quote: "Departments: Facility Services Fire and Emergency Services Oakville Public Library Parks and Open Space Recreation and Culture"
+
+  - key: oakville-hydro
+    type: public_utility
+    names:
+      - { text: Oakville Hydro, lang: en }
+      - { text: Oakville Hydro Electricity Distribution Inc., lang: en }
+    homepage: https://www.oakvillehydro.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.oakville.ca/town-hall/contact-us/find-town-services/
+      quote: "Halton Regional Police Service Oakville Hydro Oakville Milton Humane Society"
+      kind: links_to
+      link_target: https://www.oakvillehydro.com/
+    notes: >-
+      Judgement call. The Town owns 90% of Oakville Enterprises Corporation (OEC, a holding
+      company; Enbridge holds 10%), and OEC wholly owns Oakville Hydro Electricity Distribution
+      Inc., the OEB-licensed local distribution company. The row goes to the LDC because it is the
+      body that matches public_utility and the one the Town links to; OEC is in out_of_scope.
+      Neither OEC (oec.ca) nor Oakville Hydro publishes a procurement or tender page, so rule 6's
+      "procurement run separately" test does not give OEC a row of its own (checked 2026-10-01:
+      oec.ca navigation and page-sitemap.xml, /procurement, /suppliers, /tenders, /bids all 404,
+      and a web search found no OEC or Oakville Hydro bid page).
+    parent:
+      institution: town-of-oakville
+      label: The Corporations’ subsidiary
+      evidence:
+        url: https://www.oakville.ca/getmedia/745020aa-b0ca-4b0e-b245-68e77faa04ed/town-hall-financial-statement-2025.pdf
+        quote: The Corporations’ subsidiary, Oakville Hydro Electricity Distribution Inc. has access to a revolving credit facility
+        locator: "PDF page 29 (printed page 23), note 6(d); ownership in note 6 on PDF page 25: 'Oakville Enterprises Corporation and its wholly owned subsidiaries ... is 90% (2024 - 90%) owned and controlled by the Town'"
+        manual_check: pdftotext 2026-09-29
+
+  - key: oakville-municipal-development-corporation
+    type: municipal_corporation
+    names:
+      - { text: Oakville Municipal Development Corporation, lang: en }
+      - { text: OakvilleMDC, lang: en }
+      - { text: Oakville MDC, lang: en }
+      - { text: Oakville Municipal Development Corp., lang: en }
+      - { text: MDC, lang: en, is_acronym: true }
+    homepage: https://www.oakvillemdc.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.oakville.ca/town-hall/news-notices/2025-planning-public-notices-archive/complete-application-statutory-public-meeting-for-proposed-opa-zba-2264-trafalgar-road/
+      quote: "The Town of Oakville has received a complete application by the Oakville Municipal Development Corporation (OakvilleMDC)."
+    notes: >-
+      Town-owned real estate corporation (municipal_corporation; was out of scope before the type
+      existed). Rule 3(a): "a wholly owned subsidiary of the Town of Oakville" (oakvillemdc.ca About
+      Us), governed by "a five-member Board of Directors appointed by town Council"; the Town's 2025
+      financial statements (note 4, PDF page 22) say MDC "is owned and controlled by the Town" and
+      account for it as a government business enterprise. No oakville.ca page links to
+      oakvillemdc.ca (checked the planning notice, the development application page and the Mayor's
+      page, which names it), so the evidence is appears_on. The "MDC" acronym is the Town's
+      (financial statements); "Oakville Municipal Development Corp." is the development
+      application page's form.
+    parent:
+      institution: town-of-oakville
+      label: a wholly owned subsidiary of the Town of Oakville
+      evidence:
+        url: https://www.oakvillemdc.ca/about-us/
+        quote: is a wholly owned subsidiary of the Town of Oakville
+
+  - key: halton-digital-access-services-corporation
+    type: municipal_corporation
+    names:
+      - { text: Halton Digital Access Services Corporation, lang: en }
+      - { text: Halton Digital Access Municipal Services Corporation, lang: en }
+      - { text: HDASC, lang: en, is_acronym: true }
+    homepage: https://www.halton.ca/the-region/projects-and-initiatives/halton-digital-access-msc
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.halton.ca/the-region/projects-and-initiatives/halton-digital-access-msc
+      quote: "the Region and Local Municipalities established the Halton Digital Access Services Corporation"
+    notes: >-
+      Judgement call. A corporation jointly owned (20% each) by Halton Region, Burlington, Halton
+      Hills, Milton and Oakville that runs a business of its own: it licenses space on about 80,000
+      streetlights and hydro poles to telecoms "for market rate fees" and pays dividends to its
+      owners (halton.ca page). The Town's statements carry it as a government business enterprise
+      (2025 financial statements, note 5). So municipal_corporation, a shared body under rule 4:
+      Halton Region, where it sits, is not a subject, so the row is here, with a member_of from the
+      Town. It has no site of its own: hdasc.ca is used only for e-mail (a parked registrar page,
+      see candidate_domains), so the Region's page about it, which carries its name and the General
+      Manager's contact, is its webpage on a trusted domain. Was out of scope as "no fitting type".
+
+  - key: conservation-halton
+    type: conservation_authority
+    names:
+      - { text: Conservation Halton, lang: en }
+      - { text: Halton Region Conservation Authority, lang: en }
+    homepage: https://www.conservationhalton.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.oakville.ca/home-environment/flooding/flood-protection/
+      quote: "Watch for alerts issued by Conservation Halton and Credit Valley Conservation"
+      kind: links_to
+      link_target: https://www.conservationhalton.ca/
+    notes: >-
+      Shared conservation authority (rule 4) whose watersheds include Sixteen Mile Creek, which
+      "drains parts of Halton Hills, Milton, Mississauga, and Oakville", and smaller watersheds in
+      Oakville (conservationhalton.ca Watersheds). Headquartered in Burlington, which is not a
+      subject, so the row is in this file. "Halton Region Conservation
+      Authority" is its legal name, used on its Governance page (by-laws). No member_of: its
+      participating municipalities appoint the board ("The municipalities located in the watershed
+      appoint representatives", Governance page), but no page found names the Town of Oakville as a
+      member (Oakville's seats come through Halton Region). Was out of scope before the type existed.
+
+  - key: credit-valley-conservation
+    type: conservation_authority
+    names:
+      - { text: Credit Valley Conservation, lang: en }
+      - { text: CVC, lang: en, is_acronym: true }
+      - { text: Credit Valley Conservation Authority, lang: en }
+    homepage: https://cvc.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.oakville.ca/home-environment/flooding/flood-protection/
+      quote: "Watch for alerts issued by Conservation Halton and Credit Valley Conservation"
+      kind: links_to
+      link_target: https://cvc.ca/
+    notes: >-
+      Shared conservation authority (rule 4) for the Credit River watershed, which takes in part of
+      Oakville. Headquartered in Mississauga, which is not a subject, and no other dataset file meets
+      it, so the row is in this file, the first subject that does: the Town's Flood Protection page
+      links it beside Conservation Halton. Its board lists a "Regional Councillor Ward 6, Town of
+      Oakville" (cvc.ca Governance), but appointments are by upper tier ("Representation on the
+      board is based on population of the municipality (upper tier)"), so no member_of from the
+      Town. "Credit Valley Conservation Authority" is the name on its budget documents.
+
+sources:
+  # --- Town of Oakville ---
+  - institution: town-of-oakville
+    source_type: procurement
+    url: https://www.oakville.ca/business-development/business/purchasing/
+    alternates:
+      - https://www.oakville.ca/business/tenders-quotes.html
+    evidence:
+      url: https://www.oakville.ca/business-development/business/purchasing/
+      quote: "The procurement of goods, services and construction for the town."
+
+  - institution: town-of-oakville
+    source_type: tender
+    url: https://oakville.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://oakville.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://oakville.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Town of Oakville’s Bid Opportunities Website"
+    notes: Linked from the Town's Purchasing page as "Current Bid Opportunities". Open bids load by JavaScript; the landing text is static.
+
+  - institution: town-of-oakville
+    source_type: budget
+    url: https://www.oakville.ca/town-hall/budget-finances/annual-budget/budget-documents/
+    alternates:
+      - https://www.oakville.ca/town-hall/budget-finances/annual-budget/
+    evidence:
+      url: https://www.oakville.ca/town-hall/budget-finances/annual-budget/budget-documents/
+      quote: "2026 Adopted Operating and Capital Budget"
+
+  - institution: town-of-oakville
+    source_type: capital_plan
+    url: https://www.oakville.ca/town-hall/budget-finances/annual-budget/budget-documents/
+    evidence:
+      url: https://www.oakville.ca/town-hall/budget-finances/annual-budget/budget-documents/
+      quote: "2026-2035 Capital Details"
+    notes: The ten-year capital forecast is published as "Capital Details" PDFs on the same Budget Documents page as the operating budget.
+
+  - institution: town-of-oakville
+    source_type: capital_plan
+    url: https://www.oakville.ca/town-hall/budget-finances/asset-management/
+    evidence:
+      url: https://www.oakville.ca/town-hall/budget-finances/asset-management/
+      quote: "2026 Corporate Asset Management Plan"
+    notes: >-
+      Judgement call: the Corporate Asset Management Plan is a long-term infrastructure investment
+      plan (inventory, condition, lifecycle strategies, "investments required"), counted as a
+      second capital_plan page.
+
+  - institution: town-of-oakville
+    source_type: council_meeting
+    url: https://www.oakville.ca/town-hall/mayor-council-administration/agendas-meetings/
+    evidence:
+      url: https://www.oakville.ca/town-hall/mayor-council-administration/agendas-meetings/
+      quote: "Agendas and minutes are available from 2010 to current."
+    notes: Embeds the eSCRIBE calendar (iframe to pub-oakville.escribemeetings.com/?meetingviewid=2).
+
+  - institution: town-of-oakville
+    source_type: council_meeting
+    url: https://pub-oakville.escribemeetings.com/?meetingviewid=2
+    alternates:
+      - https://pub-oakville.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-oakville.escribemeetings.com/?meetingviewid=2
+      quote: "Planning and Development Council"
+    notes: >-
+      Town view of the eSCRIBE portal. The bare portal URL lists every meeting type, including the
+      Oakville Public Library Board, so it is an alternate here and for the library board source.
+
+  - institution: town-of-oakville
+    source_type: strategic_plan
+    url: https://www.oakville.ca/town-hall/plans-strategies/council-s-strategic-plan/
+    alternates:
+      - https://www.oakville.ca/town-hall/town-studies-plans-projects/council-s-strategic-plan/
+      - https://www.oakville.ca/business-development/oakville-data-hub/council-strategic-plan-dashboard/
+    evidence:
+      url: https://www.oakville.ca/town-hall/plans-strategies/council-s-strategic-plan/
+      quote: "Council’s Long-Term Strategy and 2023-2026 Action Plan."
+
+  - institution: town-of-oakville
+    source_type: meeting_video
+    url: https://www.youtube.com/@townofoakville/playlists
+    alternates:
+      - https://www.oakville.ca/town-hall/mayor-council-administration/agendas-meetings/live-stream/
+      - https://www.oakville.ca/town-hall/mayor-council-administration/agendas-meetings/
+      - https://www.youtube.com/@townofoakville
+      - https://www.youtube.com/TownofOakvilleTV
+      - https://www.youtube.com/channel/UCGp-YWZV_7Urqx06v38D9QA
+    platform: youtube.com
+    evidence:
+      url: https://www.oakville.ca/town-hall/mayor-council-administration/agendas-meetings/live-stream/
+      quote: "All Town video content is hosted on the Town's YouTube channel"
+      kind: links_to
+      link_target: https://www.youtube.com/@townofoakville/playlists
+    notes: >-
+      The Town's general channel; its playlists include meetings by year ("Council 2026", "Planning and Development
+      Council", "Committee of Adjustment 2026"). The site footer links youtube.com/TownofOakvilleTV, the same channel.
+      youtube.com is a listed platform.
+      The government's page that links here only points to it, so it is an alternate.
+
+  - institution: town-of-oakville
+    source_type: meeting_video
+    url: https://pub-oakville.escribemeetings.com/?meetingviewid=2
+    alternates:
+      - https://pub-oakville.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-oakville.escribemeetings.com/?meetingviewid=2
+      quote: "View Live Stream"
+    notes: >-
+      Same portal as the council_meeting entry; meetings carry "View Live Stream" links to the eSCRIBE video player
+      (VideoStream.aspx).
+
+  - institution: town-of-oakville
+    source_type: news
+    url: https://www.oakville.ca/town-hall/news-notices/
+    evidence:
+      url: https://www.oakville.ca/town-hall/news-notices/
+      quote: "Keeping you informed on municipal issues with the latest news and happenings in the Town of Oakville."
+    notes: >-
+      News and Notices: latest news releases, public notices, planning notices and service disruptions, with category
+      tabs.
+
+  # --- Oakville Public Library ---
+  - institution: oakville-public-library
+    source_type: board_meeting
+    url: https://opl.ca/about-opl/library-board/board-agendas-and-minutes
+    alternates:
+      - https://opl.ca/About-OPL/Library-Board/Board-Agendas-and-Minutes
+    evidence:
+      url: https://opl.ca/about-opl/library-board/board-agendas-and-minutes
+      quote: "Please see below for the 2026 Board meetings schedule and refer to the agenda for location and time."
+    notes: Mixed-case path 301-redirects to the lower-case form. Embeds eSCRIBE meetingviewid=1.
+
+  - institution: oakville-public-library
+    source_type: board_meeting
+    url: https://pub-oakville.escribemeetings.com/?meetingviewid=1
+    alternates:
+      - https://pub-oakville.escribemeetings.com/?fillWidth=1&meetingviewid=1
+      - https://pub-oakville.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-oakville.escribemeetings.com/?meetingviewid=1
+      quote: "Oakville Public Library Board Oakville Public Library Board - Workshop Special Oakville Public Library Board"
+
+  - institution: oakville-public-library
+    source_type: strategic_plan
+    url: https://opl.ca/about-opl/publications/strategic-plan
+    alternates:
+      - https://opl.ca/About-OPL/Publications/Strategic-Plan
+      - https://opl.ca/about-opl/publications/plans-reports
+    evidence:
+      url: https://opl.ca/about-opl/publications/strategic-plan
+      quote: "OPL’s new Strategic Plan will guide how we address the digital divide"
+    notes: >-
+      OPL Strategic Plan 2022 – 2026, still current on 2026-10-01; linked from the opl.ca header
+      and from Plans and Reports (one click up, an alternate). Not a library source type in
+      canada.yaml; recorded under the floor rule (README, "The type's list is a floor"), as the
+      Region of Waterloo file does for its library.
+
+  # --- Oakville Fire Department ---
+  - institution: oakville-fire-department
+    source_type: strategic_plan
+    url: https://www.oakville.ca/town-hall/plans-strategies/fire-master-plan/
+    evidence:
+      url: https://www.oakville.ca/town-hall/plans-strategies/fire-master-plan/
+      quote: "The plan will guide the delivery of fire protection and emergency services over the next ten years"
+    notes: >-
+      The Fire Master Plan approved by Council on April 29, 2024 (ten-year plan); the fire
+      department page links to it. Not a fire_service source type in canada.yaml; recorded under
+      the floor rule. The plan documents themselves are on the eSCRIBE agenda the page links.
+
+  # --- Oakville Transit ---
+  - institution: oakville-transit
+    source_type: strategic_plan
+    url: https://www.oakvilletransit.ca/about-us/oakville-transit-five-year-business-plan/
+    alternates:
+      - https://pub-oakville.escribemeetings.com/filestream.ashx?DocumentId=76723
+    evidence:
+      url: https://www.oakvilletransit.ca/about-us/oakville-transit-five-year-business-plan/
+      quote: "The Oakville Transit Five-Year Business Plan provides a roadmap for where and how transit services are provided in the Town of Oakville"
+    notes: >-
+      The Five-Year Business Plan 2025-2029 is the transit strategic plan (a service plan, not a
+      capital plan: see the capital_plan absence). The PDF itself is on the Town's eSCRIBE
+      portal.
+
+  # --- Oakville Municipal Development Corporation ---
+  - institution: oakville-municipal-development-corporation
+    source_type: leadership
+    url: https://www.oakvillemdc.ca/board-of-directors/
+    evidence:
+      url: https://www.oakvillemdc.ca/board-of-directors/
+      quote: "the OakvilleMDC is governed by a five-member Board of Directors appointed by town Council"
+    notes: >-
+      Board of directors and officers. leadership is not a municipal_corporation source type;
+      recorded as the list is a floor (README, Sources).
+
+  # --- Conservation Halton ---
+  - institution: conservation-halton
+    source_type: procurement
+    url: https://www.conservationhalton.ca/about-us/tenders-rfps/
+    evidence:
+      url: https://www.conservationhalton.ca/about-us/tenders-rfps/
+      quote: "Conservation Halton uses the bidsandtenders.ca procurement platform."
+    notes: Tenders & RFPs page (About Us menu) with the bids&tenders link and the Purchasing Policy.
+
+  - institution: conservation-halton
+    source_type: tender
+    url: https://conservationhalton.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://conservationhalton.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://conservationhalton.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Conservation Halton Bid Opportunities Website"
+    notes: Linked from the Tenders & RFPs page as "Current Opportunities".
+
+  - institution: conservation-halton
+    source_type: budget
+    url: https://www.conservationhalton.ca/about-us/finances/
+    evidence:
+      url: https://www.conservationhalton.ca/about-us/finances/
+      quote: "Conservation Halton 2026 Budget & Business Plan | Approved: October 2025"
+    notes: Finances page; its "Annual Budgets" section lists each year's Budget & Business Plan PDF.
+
+  - institution: conservation-halton
+    source_type: board_meeting
+    url: https://www.conservationhalton.ca/governance/
+    evidence:
+      url: https://www.conservationhalton.ca/governance/
+      quote: "Members of the public who wish to observe the meeting are invited to attend in person at the Conservation Halton Administration Office"
+    notes: Governance page with the year's meeting schedule and the board's agenda and minutes PDFs.
+
+  # --- Credit Valley Conservation ---
+  - institution: credit-valley-conservation
+    source_type: tender
+    url: https://cvc.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://cvc.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://cvc.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Credit Valley Conservation Bid Opportunities Website"
+    notes: >-
+      CVC's bids&tenders site, found by web search. No cvc.ca page links to it (navigation, footer,
+      Governance, Jobs, Who We Are and Policies pages and the sitemap checked 2026-10-01), so an
+      agent may not reach it from cvc.ca; a reviewer may prefer the absence.
+
+  - institution: credit-valley-conservation
+    source_type: budget
+    url: https://cvc.ca/governance/budget/
+    evidence:
+      url: https://cvc.ca/governance/budget/
+      quote: "2023 Budget Approval – Board Resolution #28/23"
+    notes: >-
+      The Budget page under Governance (About Us). It lists budget notices and approvals up to 2023;
+      later budgets (2024 to the 2027 draft budget and business plan) are separate /document/ pages
+      in the sitemap, not linked from it.
+
+  - institution: credit-valley-conservation
+    source_type: board_meeting
+    url: https://cvc.ca/governance/board-meetings/
+    evidence:
+      url: https://cvc.ca/governance/board-meetings/
+      quote: "Persons addressing the board of directors shall confine their remarks to the stated business."
+    notes: Board Meetings page with agendas and minutes by year (links into the cvc.ca document search).
+
+absent_sources:
+  # --- Oakville Transit (a Town department) ---
+  - institution: oakville-transit
+    source_type: procurement
+    covered_by: town-of-oakville
+    note: >-
+      Searched the oakvilletransit.ca sitemap, About Us and "Doing Business" (covers only bus/shelter
+      advertising and charters) and the oakville.ca transit page. Transit buys through the Town's
+      Purchasing section and bids&tenders; no transit-specific purchasing page.
+  - institution: oakville-transit
+    source_type: tender
+    covered_by: town-of-oakville
+    note: >-
+      No transit bid page; transit procurements are posted on the Town's bids&tenders site
+      (oakville.bidsandtenders.ca), which is the Town's source. Checked oakvilletransit.ca sitemap.
+  - institution: oakville-transit
+    source_type: budget
+    covered_by: town-of-oakville
+    note: >-
+      No transit budget page on oakvilletransit.ca (sitemap, About Us). Transit's operating budget is
+      a section of the Town's budget book on oakville.ca Budget Documents.
+  - institution: oakville-transit
+    source_type: capital_plan
+    covered_by: town-of-oakville
+    note: >-
+      No transit capital plan page. The Five-Year Business Plan
+      (https://www.oakvilletransit.ca/about-us/oakville-transit-five-year-business-plan/) and Annual
+      Plan pages are service plans, not capital plans; fleet and facility capital sits in the Town's
+      2026-2035 Capital Details. Electric-bus page is news-style, not a plan.
+  - institution: oakville-transit
+    source_type: board_meeting
+    note: >-
+      No board: Oakville Transit is governed by Town Council. The eSCRIBE "Transit Advisory
+      Committee" meeting type is an advisory committee, not a board of directors.
+
+  # --- Oakville Fire Department (a Town department) ---
+  - institution: oakville-fire-department
+    source_type: procurement
+    covered_by: town-of-oakville
+    note: >-
+      Searched the Fire & Safety section, fire department page and oakville.ca sitemap; no fire
+      purchasing page. Fire buys through the Town's Purchasing / bids&tenders.
+  - institution: oakville-fire-department
+    source_type: budget
+    covered_by: town-of-oakville
+    note: >-
+      No fire budget page; the fire budget is part of the Town's budget book (Budget Documents).
+      Fire Master Plan page exists but is not a budget.
+
+  # --- Oakville Public Library ---
+  - institution: oakville-public-library
+    source_type: procurement
+    covered_by: town-of-oakville
+    note: >-
+      Searched opl.ca navigation and footer, About OPL, Policies, Library Board, Plans & Reports, and
+      a site:opl.ca web search for procurement/tender/RFP/purchasing. No purchasing page; the OPL
+      employee code of conduct points to the Town's Purchasing By-law and library bids run through
+      the Town's bids&tenders.
+  - institution: oakville-public-library
+    source_type: budget
+    covered_by: town-of-oakville
+    note: >-
+      No budget page on opl.ca (Plans & Reports has strategic plans and Reports to the Community
+      only). The library budget goes to the Board as eSCRIBE reports and is a section of the Town's
+      budget book.
+
+  # --- Oakville Hydro ---
+  - institution: oakville-hydro
+    source_type: procurement
+    note: >-
+      Searched the oakvillehydro.com navigation, footer and sitemap.xml (181 URLs; only a contractor
+      certificate-of-insurance page, which returns 404 on 2026-10-01), and the parent OEC site oec.ca
+      (navigation, page-sitemap.xml). No supplier or purchasing page.
+  - institution: oakville-hydro
+    source_type: tender
+    note: >-
+      No bid page on oakvillehydro.com or oec.ca; not on the Town's bids&tenders. Web search for
+      Oakville Hydro / OEC tenders found none.
+  - institution: oakville-hydro
+    source_type: capital_plan
+    note: >-
+      The Distribution System Plan is filed with the OEB only in cost-of-service applications; the
+      current 2027 application on Regulatory Affairs is an IRM filing, and the old
+      /projects-operations/distribution-system-plan URL in the sitemap returns 404. "System Renewal
+      & Expansion" (/generation-projects/grid-advancement/system-renewal-expansion) describes
+      investment but is not a multi-year plan, and "Asset Management"
+      (/accounts-customer-services/grid-advancement/asset-management, in the main navigation) is
+      one paragraph on its asset management approach with no plan or document (checked 2026-10-01).
+  - institution: oakville-hydro
+    source_type: board_meeting
+    note: >-
+      The Board of Directors page (/about-us/about-oakville-hydro/board-directors) lists members
+      only; a private OBCA corporation that publishes no agendas or minutes.
+
+  - institution: oakville-public-library
+    source_type: tender
+    covered_by: town-of-oakville
+    note: >-
+      No bid page on opl.ca (the procurement search above covered tender and RFP). Library bids go
+      through the Town's bids&tenders site, recorded under the town.
+
+  # --- Oakville Municipal Development Corporation ---
+  - institution: oakville-municipal-development-corporation
+    source_type: procurement
+    note: >-
+      oakvillemdc.ca has eleven pages (sitemap.xml: Home, About Us, Board of Directors and its
+      member pages, Development Opportunities and its property pages); no purchasing or supplier
+      page. Not covered_by the Town: no page says MDC buys through the Town's Purchasing.
+  - institution: oakville-municipal-development-corporation
+    source_type: tender
+    note: >-
+      No calls for bids on oakvillemdc.ca (same sitemap). Development Opportunities lists Town
+      properties for redevelopment (several "now sold"), not tenders.
+  - institution: oakville-municipal-development-corporation
+    source_type: annual_report
+    note: >-
+      No annual report on oakvillemdc.ca. Its Annual Report and Business Plan goes to Town Council
+      as an eSCRIBE report attachment (e.g. "Oakville Municipal Development Corporation Annual Report
+      2021", pub-oakville.escribemeetings.com/filestream.ashx?DocumentId=37395), a single file on the
+      Town's council portal rather than a landing page. A summary of its finances is note 4 of the
+      Town's financial statements.
+  - institution: oakville-municipal-development-corporation
+    source_type: board_meeting
+    note: >-
+      The Board of Directors page lists directors and officers only; no agendas or minutes on
+      oakvillemdc.ca (sitemap checked 2026-10-01).
+
+  # --- Halton Digital Access Services Corporation ---
+  - institution: halton-digital-access-services-corporation
+    source_type: procurement
+    note: >-
+      No site of its own (hdasc.ca is a parked registrar page; its e-mail runs on the domain). The
+      halton.ca page says "it outsources most of its services" but has no purchasing information;
+      a web search for the corporation found only Halton Region and Burlington/Oakville council
+      reports and a Halton careers posting (2026-10-01).
+  - institution: halton-digital-access-services-corporation
+    source_type: tender
+    note: No bid page found (same searches).
+  - institution: halton-digital-access-services-corporation
+    source_type: annual_report
+    note: >-
+      No annual report found (same searches). The Town's financial statements give a summary of its
+      results (2025, note 5).
+  - institution: halton-digital-access-services-corporation
+    source_type: board_meeting
+    note: >-
+      The halton.ca page says each owner and each local hydro has a representative on its board of
+      directors; no board agendas or minutes are published (same searches).
+
+  # --- Credit Valley Conservation ---
+  - institution: credit-valley-conservation
+    source_type: procurement
+    note: >-
+      No purchasing page on cvc.ca: the sitemap (no procurement, purchasing, tender or supplier
+      URL), the About Us menu, footer and Jobs page, and a web search of cvc.ca for procurement and
+      purchasing policy (2026-10-01). Its bids&tenders site is the tender source.
+
+candidate_domains:
+  - domain: oakvilletransit.ca
+    institution: oakville-transit
+    expected: confirm
+    reason: Oakville Transit's own site, linked from oakville.ca ("Go to the Oakville Transit website").
+  - domain: opl.ca
+    institution: oakville-public-library
+    expected: confirm
+    reason: Oakville Public Library's own site, linked from oakville.ca.
+  - domain: opl.on.ca
+    institution: oakville-public-library
+    expected: confirm
+    reason: >-
+      OPL's second domain, which hosts the program registration system at attend.opl.on.ca, linked
+      from opl.ca ("My Programs/Events"); the page is titled "attend--reserve - Oakville Public
+      Library". Judgement call: attend.opl.on.ca is a CNAME to Communico (lb1.communico.co, a
+      library events product), and on 2026-10-01 the bare opl.on.ca serves only a default IIS page
+      over http (its https certificate is for another host) while www.opl.on.ca times out. Kept
+      as confirm because the linked page is live and presents as OPL on OPL's own registered
+      domain; a run that judges only the bare home page would reject it as dead.
+  - domain: oakvillehydro.com
+    institution: oakville-hydro
+    expected: confirm
+    reason: Oakville Hydro's own site, linked from oakville.ca Find Town Services.
+  - domain: oakvilleoutages.ca
+    institution: oakville-hydro
+    expected: confirm
+    reason: Oakville Hydro's outage map, linked from its home page navigation.
+  - domain: oec.ca
+    institution: oakville-hydro
+    expected: reject
+    reason: Trap. The parent holding company OEC (out of scope), not Oakville Hydro's own site, although oakvillehydro.com links to it as "Corporate Site".
+  - domain: oecorp.ca
+    institution: oakville-hydro
+    expected: reject
+    reason: >-
+      Trap. The legacy OEC domain linked from a 2022 oakville.ca news release ("OEC, Oakville and
+      Enbridge enter strategic partnership"). It still resolves in DNS but refuses connections on
+      ports 80 and 443 (checked 2026-10-01), and it belongs to the holding company.
+  - domain: oakvillecentre.ca
+    institution: town-of-oakville
+    expected: reject
+    reason: >-
+      Trap. The Oakville Centre for the Performing Arts, a venue the Town runs as part of its
+      Recreation and Culture department: a division, not a separately constituted corporation,
+      authority or board, so not a municipal_corporation. It is not the Town's official domain.
+  - domain: oakvilledowntown.com
+    institution: town-of-oakville
+    expected: reject
+    reason: Trap. The Downtown Oakville BIA site.
+  - domain: visitoakville.com
+    institution: town-of-oakville
+    expected: reject
+    reason: >-
+      Trap. The tourism site (Visit Oakville), linked from oakville.ca's library page as the events
+      calendar. A not-for-profit the Town does not control (see out_of_scope).
+  - domain: oakvillemdc.ca
+    institution: oakville-municipal-development-corporation
+    expected: confirm
+    reason: >-
+      The Oakville Municipal Development Corporation's own site ("Copyright © 2026 Oakville Municipal
+      Development Corporation (OakvilleMDC)"), the Town-owned real estate corporation.
+  - domain: hdasc.ca
+    institution: halton-digital-access-services-corporation
+    expected: reject
+    reason: >-
+      Trap. The Halton Digital Access Services Corporation's e-mail domain (the halton.ca page gives
+      the General Manager's @hdasc.ca address), but the web host serves only a parked Rebel.com
+      registrar page over http and refuses https (checked 2026-10-01): nothing of the corporation's
+      on it to quote.
+  - domain: conservationhalton.ca
+    institution: conservation-halton
+    expected: confirm
+    reason: Conservation Halton's own site, linked from oakville.ca Flood Protection ("Watch for alerts issued by Conservation Halton").
+  - domain: cvc.ca
+    institution: credit-valley-conservation
+    expected: confirm
+    reason: Credit Valley Conservation's own site, linked from oakville.ca Flood Protection beside Conservation Halton.
+  - domain: oakvillecrm.my.site.com
+    institution: town-of-oakville
+    expected: review
+    reason: A Salesforce Experience Cloud (my.site.com) platform that hosts the ServiceOakville sign-in and "Report a problem" portal. It is a shared platform that is not on the list.
+  - domain: opl.bibliocommons.com
+    institution: oakville-public-library
+    expected: review
+    reason: >-
+      OPL's catalogue and "My OPL" account pages (Checked Out, On Hold), linked from the opl.ca
+      header. BiblioCommons is a shared library catalogue platform that many libraries use and that
+      is not on the platform list. It is not OPL's own domain.
+
+out_of_scope:
+  - name: Regional Municipality of Halton (Halton Region)
+    url: https://www.halton.ca/
+    reason: The upper-tier parent. It is a regional_government at level region, so it is scored under Halton or Ontario, not Oakville.
+  - name: Halton Regional Police Service
+    url: https://www.haltonpolice.ca/
+    reason: Policing in Oakville is regional. Halton Region's police service, governed by the Halton Police Board, is not Oakville's.
+  - name: Halton Region water and wastewater services
+    url: https://www.halton.ca/for-residents/water-and-wastewater-services
+    reason: Water, wastewater and fire hydrants in Oakville are Halton Region's (the Town's Fire Stations & Equipment page says "The Municipality of Halton Region is responsible for the fire hydrants in Oakville"). This is a regional service, not an Oakville utility.
+  - name: Halton Region Public Health
+    url: https://www.halton.ca/for-residents/public-health
+    reason: >-
+      A public health unit run by Halton Region, not the Town: a body of the upper tier met on a
+      lower tier's site belongs to the upper tier's file (README rule 2). Halton Region is not a
+      subject.
+  - name: Halton Region Paramedic Services
+    reason: >-
+      Ambulance service in Oakville is Halton Region's: a body of the upper tier met on a lower
+      tier's site belongs to the upper tier's file (README rule 2). Halton Region is not a subject.
+  - name: Halton Community Housing Corporation
+    reason: >-
+      Halton Region's housing corporation, not the Town's: a body of the upper tier belongs to the
+      upper tier's file (README rule 2). Halton Region is not a subject.
+  - name: Oakville Enterprises Corporation
+    url: https://oec.ca/
+    reason: >-
+      A holding company that is 90% Town-owned (Enbridge 10%) and a "government business
+      enterprise" in the Town's statements. It runs a commercial group of about 15 energy and
+      infrastructure contractors (Trans Power, El-Con, Planview and others). The utility function
+      sits in its subsidiary Oakville Hydro, which has the row. Under rule 6 the holding company of
+      a utility stays out (it is not a municipal_corporation row either), and would get a row only
+      if it ran procurement separately from Oakville Hydro; oec.ca
+      has no procurement, supplier or tender page (navigation and page-sitemap.xml checked
+      2026-10-01), so it stays out of scope.
+  - name: Halton Cooperative Purchasing Group (HCPG)
+    reason: A cooperative buying group listed on Oakville's bids&tenders page. It is a buying consortium, not an institution type.
+  - name: Halton District School Board
+    url: https://www.hdsb.ca/
+    reason: school_board is a province-level type, scored under Ontario.
+  - name: Halton Catholic District School Board
+    url: https://www.hcdsb.org/
+    reason: school_board is a province-level type, scored under Ontario.
+  - name: Conseil scolaire Viamonde
+    url: https://csviamonde.ca/
+    reason: A French-language public school board serving Oakville. school_board is a province-level type.
+  - name: Conseil scolaire catholique MonAvenir
+    url: https://cscmonavenir.ca/
+    reason: A French-language Catholic school board serving Oakville. school_board is a province-level type.
+  - name: Halton Healthcare (Oakville Trafalgar Memorial Hospital)
+    url: https://www.haltonhealthcare.on.ca/
+    reason: hospital is a province-level type, scored under Ontario.
+  - name: Sheridan College (Trafalgar Road Campus)
+    url: https://www.sheridancollege.ca/
+    reason: college is a province-level type, scored under Ontario.
+  - name: Metrolinx (GO Transit)
+    url: https://www.metrolinx.com/en
+    reason: A provincial agency that runs GO service at Oakville, Bronte and other stations. It is a transit body but provincial, not Oakville's.
+  - name: Downtown Oakville Business Improvement Area
+    url: https://www.oakvilledowntown.com/
+    reason: A BIA (consolidated in the Town's statements). BIAs are out of scope (README rule 2).
+  - name: Kerr Village Business Improvement Area
+    url: https://www.kerr-village.ca/
+    reason: A BIA. BIAs are out of scope (README rule 2).
+  - name: Bronte Business Improvement Area
+    reason: A BIA (Bronte Village BIA). BIAs are out of scope (README rule 2). No working website was found (brontevillage.com did not resolve).
+  - name: Oakville Centre for the Performing Arts
+    url: https://www.oakvillecentre.ca/
+    reason: >-
+      A Town-run theatre in the Recreation and Culture department: a division, not a separately
+      constituted corporation, authority or board, so not a municipal_corporation (rule 3).
+  - name: Oakville Museum
+    url: https://www.oakville.ca/parks-recreation-culture/arts-culture/oakville-museum/
+    reason: >-
+      A Town division (Recreation and Culture), not a separately constituted corporation or board,
+      so not a municipal_corporation (rule 3); museums match no other type.
+  - name: Oakville Galleries
+    url: https://www.oakvillegalleries.com/
+    reason: >-
+      A not-for-profit public art gallery, not a Town body: not among the bodies the Town's
+      financial statements consolidate, so a not-for-profit the Town does not control (README
+      rule 2).
+  - name: Oakville Milton Humane Society
+    url: https://hsomh.ca/
+    reason: A charity contracted for animal services, listed on Find Town Services as an "other organization". It is not a Town body.
+  - name: Visit Oakville
+    url: https://visitoakville.com/
+    reason: >-
+      A not-for-profit tourism organisation the Town does not control: "a volunteer board of
+      directors who represent the local tourism and business community", elected at its AGM
+      (visitoakville.com Board of Directors), and not among the bodies the Town's financial
+      statements consolidate. A not-for-profit the municipality only funds (README rule 2).
+  - name: Oakville Chamber of Commerce
+    url: https://oakvillechamber.com/
+    reason: A private membership organisation, not a public body.
+  - name: Committee of Adjustment
+    url: https://www.oakville.ca/town-hall/mayor-council-administration/committees/committee-of-adjustment/
+    reason: A tribunal of Council. Council committees and tribunals are out of scope (README rule 2).
+  - name: Accessibility Advisory Committee
+    url: https://www.oakville.ca/town-hall/accessibility-inclusion/accessibility-advisory-committee/
+    reason: An advisory committee of Council. Council committees are out of scope (README rule 2).
+  - name: Heritage Oakville Advisory Committee
+    url: https://www.oakville.ca/town-hall/mayor-council-administration/committees/heritage-oakville-advisory-committee/
+    reason: An advisory committee of Council. Council committees are out of scope (README rule 2).
+  - name: Transit Advisory Committee
+    reason: >-
+      An advisory committee of Council (an eSCRIBE meeting type). Council committees are out of
+      scope (README rule 2); not Oakville Transit's board (it has none).
+  - name: Halton Police Board
+    url: https://haltonpoliceboard.ca/
+    reason: >-
+      Governs the Halton Regional Police Service, so it folds into that service (rule 5), which is
+      Halton Region's and out of scope here.
+
+notes: >-
+  Hydro holding structure: Town -> OEC (90%, Enbridge 10%) -> Oakville Hydro Electricity
+  Distribution Inc. The LDC is the public_utility row and OEC is out of scope. Neither publishes
+  procurement (rechecked 2026-10-01 for the open question now in docs/todo.md; rule 6 keeps OEC out), so
+  all four utility source types are absent. Transit and fire are Town departments
+  with no procurement or budget pages of their own; their absent entries carry covered_by:
+  town-of-oakville, as do the library's (its bids run through the Town's bids&tenders and its
+  budget is a section of the Town's budget book).
+  The five types added on 2026-10-01 brought in the Oakville Municipal Development Corporation
+  (municipal_corporation, Town-owned), the Halton Digital Access Services Corporation
+  (municipal_corporation, jointly owned with the Region and the other three Halton towns; shared
+  row here under rule 4), and two shared conservation authorities: Conservation Halton (assigned
+  to this file) and Credit Valley Conservation (no other subject meets it; the Town's Flood
+  Protection page links both). Halton Region's public health, paramedics and housing corporation
+  stay out as the upper tier's bodies. The Town has no housing corporation, parking authority or
+  other local board of its own: its financial statements consolidate only the library board and
+  the three BIAs, and list MDC, HDASC and OEC as government business enterprises.

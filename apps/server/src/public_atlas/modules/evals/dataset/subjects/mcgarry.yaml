@@ -1,0 +1,508 @@
+subject:
+  kind: place
+  name: Township of McGarry
+  level: municipality
+  place: Township of McGarry
+  parent: Ontario
+  tier: single
+  official_code: "3554058"
+  institution: township-of-mcgarry
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, mcgarry.ca]
+
+institutions:
+  - key: township-of-mcgarry
+    type: municipal_government
+    names:
+      - { text: Township of McGarry, lang: en }
+      - { text: Corporation of the Township of McGarry, lang: en }
+      - { text: McGarry Township, lang: en }
+    homepage: https://mcgarry.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://mcgarry.ca/
+      quote: "The Corporation of the Township of McGarry 27 Webster Street, P.O. Box 99, Virginiatown, ON, P0K 1X0"
+    notes: >-
+      Own domain mcgarry.ca, but the site is built and hosted by the municipal website vendor Catalis
+      (footer "Government Websites by Catalis"). The vendor alias https://mcgarryon.web.catalisgov.ca/
+      301-redirects to mcgarry.ca, and the budget page links its financial statements on that alias, so
+      an agent will meet catalisgov.ca links from a trusted page. www.mcgarry.ca 301-redirects to
+      mcgarry.ca. Old eSolutions-style URLs (www.mcgarry.ca/en/....aspx) still show in search results
+      but now redirect to a 404 page.
+
+  - key: mcgarry-volunteer-fire-brigade
+    type: fire_service
+    names:
+      - { text: McGarry Volunteer Fire Brigade, lang: en }
+      - { text: Fire Department, lang: en }
+    homepage: https://mcgarry.ca/residents-visitorsfire-department
+    homepage_host: trusted_domain
+    evidence:
+      url: https://mcgarry.ca/index.asp?SEC=0A782192-FD21-4D84-A6E6-518EA255287A
+      quote: "McGarry Volunteer Fire Brigade 27 Webster Street"
+    notes: >-
+      Internal township department (volunteer crew, chief and council representative listed on the
+      Fire Department page). It gets a row under rule 3(b) because the township's Community Groups and
+      Organizations page lists it under its own name, "McGarry Volunteer Fire Brigade". The Fire
+      Department page itself only says "Fire Department". Judgement call for a reviewer.
+    parent:
+      institution: township-of-mcgarry
+      label: has a dedicated crew of volunteer firefighters
+      evidence:
+        url: https://mcgarry.ca/residents-visitorsfire-department
+        quote: The Township of McGarry has a dedicated crew of volunteer firefighters
+
+  - key: mcgarry-public-library
+    type: library
+    names:
+      - { text: McGarry Public Library, lang: en }
+    homepage: https://mcgarry.ca/residents-visitorslibrary
+    homepage_host: trusted_domain
+    evidence:
+      url: https://mcgarry.ca/residents-visitorslibrary
+      quote: "The McGarry Public Library is here to serve the community of the Township of McGarry"
+    notes: >-
+      Public library board (Public Libraries Act): the page lists a librarian, two council
+      representatives and three members, and links the board's agendas and minutes. No website of its
+      own was found. Web search (2026-10-01) shows a Facebook page (facebook.com/McGarryLibrary) and
+      211 directory listings, but no mcgarry.ca page links to them (the site footer's Facebook icon
+      points at the bare facebook.com), so the homepage stays the section of mcgarry.ca.
+    parent:
+      institution: township-of-mcgarry
+      label: Council Representatives
+      evidence:
+        url: https://mcgarry.ca/residents-visitorslibrary
+        quote: Council Representatives Councillor Elaine Fic Councillor Louanne Caza
+
+sources:
+  # --- Township of McGarry ---
+  - institution: township-of-mcgarry
+    source_type: procurement
+    url: https://mcgarry.ca/town-halltenders-rfp-s-and-tax-sales
+    evidence:
+      url: https://mcgarry.ca/town-halltenders-rfp-s-and-tax-sales
+      quote: "When required, staff will prepare a tender, request for proposal or other method of procurement. The Township encourages competition among suppliers in order to maximize savings for taxpayers."
+    notes: >-
+      The only purchasing page: how the township buys, tenders vs RFPs, tax and surplus land sales.
+      The procurement by-law ("2018-33 Adopt Procurement Policy", plus the older purchasing policies
+      2008-24 and 2004-47) is a single PDF in the By-Law Database document library
+      (index.asp?SEC=DB2FCCCF-6E13-4124-AEE3-B948929C932F, linked from By-Laws and Policies); it is a
+      file, not a landing page, so it is not a source.
+
+  - institution: township-of-mcgarry
+    source_type: tender
+    url: https://biddingo.com/mcgarry
+    alternates:
+      - https://portal.biddingo.com/landingpage/mcgarry
+      - https://biddingo.com/landingpage/mcgarry
+      - https://mcgarry.ca/town-halltenders-rfp-s-and-tax-sales
+    platform: biddingo.com
+    evidence:
+      url: https://biddingo.com/mcgarry
+      quote: "Welcome to the Purchasing Portal for Township of McGarry."
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      Biddingo is a listed third-party platform (platforms). The township page links https://portal.biddingo.com/landingpage/mcgarry, which
+      301-redirects to https://biddingo.com:443/landingpage/mcgarry (checked 2026-10-01); the app shows
+      the portal at https://biddingo.com/mcgarry. Biddingo's public API
+      (api.biddingo.com/restapi/setting/noauthorize/buyerlandingpageinfo/mcgarry) confirms the landing
+      page ("orgFullName":"Township of McGarry", "hasLandingpage":"Y"). The page is JavaScript-rendered: the quote and the bid
+      listing (RFPs for Community Centre Exterior Upgrades 2025, insurance 2022, audit services 2021,
+      surplus equipment sales) were read in Chrome, hence manual_check. No bid
+      was open on 2026-09-29. Trap: the township page frames Biddingo only as a place to "auction off
+      surplus equipment", but it carries the township's real RFPs. The township page's own "Tenders" and
+      "Bid Opportunities" accordions are empty; it is kept as an alternate because it is the page one
+      click up.
+
+  - institution: township-of-mcgarry
+    source_type: budget
+    url: https://mcgarry.ca/town-hallbudget-and-finances
+    evidence:
+      url: https://mcgarry.ca/town-hallbudget-and-finances
+      quote: "The Municipal Budget is prepared yearly to determine the Operating and Capital requirements for the year."
+    notes: >-
+      Links the "2026 Budget Report" (PDF, 5 pages, April 2026), budget decisions and staff report, plus
+      financial statements 2015-2025 served from the vendor alias mcgarryon.web.catalisgov.ca.
+
+  - institution: township-of-mcgarry
+    source_type: capital_plan
+    url: https://mcgarry.ca/town-hallasset-management
+    evidence:
+      url: https://mcgarry.ca/town-hallasset-management
+      quote: "Asset Management Plan - Non-Core Asset"
+    notes: >-
+      No capital plan or capital budget page of its own (capital lines sit inside the 2026 Budget
+      Report), so the asset management page is the capital_plan source (README, asset management
+      plans count as capital_plan).
+      Core and non-core asset management plans (PDFs created September 2024) and the strategic asset
+      management policy by-law. The Plans, Reports and Studies page also links an older Asset
+      Management Plan 2016-2025; that page is a grab-bag of reports and is not an alternate.
+
+  - institution: township-of-mcgarry
+    source_type: council_meeting
+    url: https://mcgarry.ca/index.asp?SEC=6DCA5258-2752-4AE7-AB4E-761227C5E7F5
+    alternates:
+      - https://mcgarry.ca/council-committees-regular-council-meetings-mid
+    evidence:
+      url: https://mcgarry.ca/index.asp?SEC=6DCA5258-2752-4AE7-AB4E-761227C5E7F5
+      quote: "Below you will find the Agendas and Minutes for past Regular Council meetings."
+    notes: >-
+      "Regular Council Meeting Database": a Catalis document library (Agendas, Minutes, Presentations
+      folders) that loads with JavaScript; the intro text is in the static HTML. It has no friendly URL,
+      only the index.asp?SEC= form (the sitemap lists it as /?SEC=...). Its folders, read
+      through the site's own JSON endpoint (/admin/dm/Public/GetFolderById/) on 2026-10-01: Agendas,
+      Minutes (yearly folders 2016-2026, the 2026 one updated 2026-09-16) and Presentations. It also
+      embeds an iframe from mcgarrytownship.allnetmeetings.com (Catalis Meeting Management), which
+      shows "No record found". The "VIDEO/AUDIO RECORDINGS OF MEETINGS" link above it goes to
+      index.asp?SEC=0BD6B9CC-CE0F-43F5-9275-9B77DC097FA5, a list of Google Drive recordings by
+      meeting date; recordings are not agendas or minutes, so it is the meeting_video source below.
+
+  - institution: township-of-mcgarry
+    source_type: council_meeting
+    url: https://mcgarry.ca/index.asp?SEC=4983BADA-4D8B-4B8B-A4E2-153024F71794
+    alternates:
+      - https://mcgarry.ca/council-committees-special-council-meetings-mid
+    evidence:
+      url: https://mcgarry.ca/index.asp?SEC=4983BADA-4D8B-4B8B-A4E2-153024F71794
+      quote: "Below you will find the Agendas and Minutes for past Special Committee meetings."
+    notes: >-
+      Special council meetings database, a separate page of the same type (the page heading says
+      "Special Committee Database", but it sits under Special Council Meetings). It is JavaScript-loaded
+      like the regular one.
+
+  - institution: township-of-mcgarry
+    source_type: strategic_plan
+    url: https://mcgarry.ca/town-hallplanning-and-development
+    alternates:
+      - https://mcgarry.ca/vertical/sites/%7B40397494-D39F-4891-BD59-6F55F34D917D%7D/uploads/McGarry-Strategic-Plan---Final.pdf
+    evidence:
+      url: https://mcgarry.ca/town-hallplanning-and-development
+      quote: "The Plan Review and Approval Process Strategic Plan"
+    notes: >-
+      "Township of McGarry Strategic Plan 2024-2029" (July 2024). Its only link is an accordion on the
+      Planning and Development page, not the Strategic Planning Committee page, which describes the plan
+      without linking it. The old URL www.mcgarry.ca/Zoning/McGarry-Strategic-Plan---Final.pdf that search
+      engines still show now redirects to /zoning. The PDF is kept as an alternate because the landing
+      page is weak. Evidence is appears_on, not links_to: the page's href for the PDF starts with a
+      newline ("&#xA; /vertical/..."), which makes dataset.py's links_to check crash (httpx InvalidURL). The
+      link to the PDF was checked by hand. The Official Plan (land use, approved 2025) is not counted as a strategic plan.
+
+  - institution: township-of-mcgarry
+    source_type: leadership
+    url: https://mcgarry.ca/council-committeescouncil-members-and-mayor
+    alternates:
+      - https://mcgarry.ca/council
+      - https://mcgarry.ca/townhall-council
+    evidence:
+      url: https://mcgarry.ca/council-committeescouncil-members-and-mayor
+      quote: "Mayor Bonita Culhane"
+    notes: >-
+      Not in the municipal_government list, but a real source under the floor rule (README, "the
+      type's list is a floor"). "Council Members and Mayor" names the mayor and three councillors.
+      The two Council pages (same text under Council & Committees and under Town Hall) name the mayor
+      and the Clerk-Treasurer, so they are alternates.
+
+  - institution: township-of-mcgarry
+    source_type: meeting_video
+    url: https://mcgarry.ca/index.asp?SEC=0BD6B9CC-CE0F-43F5-9275-9B77DC097FA5
+    alternates:
+      - https://mcgarry.ca/index.asp?SEC={0BD6B9CC-CE0F-43F5-9275-9B77DC097FA5}
+      - https://mcgarry.ca/index.asp?SEC=%7B0BD6B9CC-CE0F-43F5-9275-9B77DC097FA5%7D
+    evidence:
+      url: https://mcgarry.ca/index.asp?SEC=6DCA5258-2752-4AE7-AB4E-761227C5E7F5
+      quote: VIDEO/AUDIO RECORDINGS OF MEETINGS
+      kind: links_to
+      link_target: https://mcgarry.ca/index.asp?SEC={0BD6B9CC-CE0F-43F5-9275-9B77DC097FA5}
+    notes: >-
+      "VIDEO/AUDIO RECORDINGS OF MEETINGS": regular council meeting recordings by year and date
+      (2023 to 2026-09-08, often Part 1 / Part 2), each a Google Drive video (video/mp4). Reached
+      only from the link above the Regular Council Meeting Database (href with braces around the
+      SEC id); not in the sitemap. The recordings are single Drive files, with no Drive folder or
+      channel page, so there is no platform entry.
+
+  - institution: township-of-mcgarry
+    source_type: meeting_video
+    url: https://mcgarry.ca/index.asp?SEC=E22022EB-84B4-4FEF-ADA9-813605D9C23B
+    alternates:
+      - https://mcgarry.ca/index.asp?SEC={E22022EB-84B4-4FEF-ADA9-813605D9C23B}
+      - https://mcgarry.ca/index.asp?SEC=%7BE22022EB-84B4-4FEF-ADA9-813605D9C23B%7D
+    evidence:
+      url: https://mcgarry.ca/index.asp?SEC=4983BADA-4D8B-4B8B-A4E2-153024F71794
+      quote: VIDEO/AUDIO RECORDINGS OF MEETINGS
+      kind: links_to
+      link_target: https://mcgarry.ca/index.asp?SEC={E22022EB-84B4-4FEF-ADA9-813605D9C23B}
+    notes: >-
+      "SPECIAL VIDEO/AUDIO RECORDINGS OF MEETINGS" (page title): special council meeting recordings
+      (2023 to 2026-08-12) as Google Drive videos, a separate page of the same type, linked only
+      from the special council meetings database. The committee databases' "Agendas, Minutes &
+      Recordings" belong to council committees (out_of_scope) and are not counted.
+
+  - institution: township-of-mcgarry
+    source_type: news
+    url: https://mcgarry.ca/public-notices
+    alternates:
+      - https://mcgarry.ca/index.asp?SEC=D44C899C-02F2-46F5-BF2D-AAE100414A49
+      - https://mcgarry.ca/public-notices-newsletters
+    evidence:
+      url: https://mcgarry.ca/public-notices-newsletters
+      quote: "Posters for upcoming events, news, and other important announcements are also posted here."
+      kind: links_to
+      link_target: https://mcgarry.ca/public-notices
+    notes: >-
+      "Public Notices", the township's list of dated notices (elections, recycling, community
+      notices). The home page's "see all notices" link serves the same list under its index.asp
+      form; the "Public Notices & Newsletters" hub one level up is an alternate. Not counted: the
+      quarterly Newsletters page and the Road Closures, Water Main Breaks, Public Works and Hydro One
+      Power Outage notice pages, which are narrower operational notices.
+
+  # --- McGarry Volunteer Fire Brigade ---
+  - institution: mcgarry-volunteer-fire-brigade
+    source_type: leadership
+    url: https://mcgarry.ca/residents-visitorsfire-department
+    evidence:
+      url: https://mcgarry.ca/residents-visitorsfire-department
+      quote: "Deputy Chief Jason Bartlett"
+    notes: >-
+      Floor rule (fire_service does not list leadership). A section of the Fire Department page, which
+      is also the brigade's homepage: chief, deputy chief, captain, lieutenant, training
+      officer and the council representative. A reviewer may prefer to drop it.
+
+  # --- McGarry Public Library ---
+  - institution: mcgarry-public-library
+    source_type: board_meeting
+    url: https://mcgarry.ca/library-database
+    alternates:
+      - https://mcgarry.ca/residents-visitorslibrary
+    evidence:
+      url: https://mcgarry.ca/residents-visitorslibrary
+      quote: "AGENDAS AND MINUTES"
+      kind: links_to
+      link_target: https://mcgarry.ca/library-database
+    notes: >-
+      "Library Database" is a JavaScript-loaded Catalis document library (Agendas and Minutes folders,
+      seen in Chrome), so the evidence is the link from the library page. Read through the site's JSON
+      endpoint on 2026-10-01: one 2021 agenda and two 2022 minutes, nothing newer.
+
+  - institution: mcgarry-public-library
+    source_type: leadership
+    url: https://mcgarry.ca/residents-visitorslibrary
+    evidence:
+      url: https://mcgarry.ca/residents-visitorslibrary
+      quote: "Librarian Samantha Goulet"
+    notes: >-
+      Floor rule (library does not list leadership). A section of the library page, which is also the
+      library's homepage: the librarian, two council representatives and three board members.
+      A reviewer may prefer to drop it.
+
+absent_sources:
+  - institution: mcgarry-volunteer-fire-brigade
+    source_type: procurement
+    covered_by: township-of-mcgarry
+    note: >-
+      The brigade buys through the township. The Fire Department page, the sitemap (350 URLs) and the
+      township's tenders page show no fire-specific purchasing page.
+  - institution: mcgarry-volunteer-fire-brigade
+    source_type: budget
+    covered_by: township-of-mcgarry
+    note: >-
+      No separate fire budget page. Fire spending is part of the township budget (2026 Budget Report on
+      the Budget and Finances page, a scanned PDF: "FIRE DEPARTMENT 200", 2026 budget expense
+      $109,000.00, read as images 2026-10-01). Searched the Fire Department page, the sitemap and site search via
+      web search (site:mcgarry.ca).
+  - institution: mcgarry-public-library
+    source_type: procurement
+    note: >-
+      No purchasing page for the library. The library page on mcgarry.ca has only hours, board members
+      and the agendas/minutes link. No library website exists (web search for "McGarry Public Library").
+  - institution: mcgarry-public-library
+    source_type: budget
+    covered_by: township-of-mcgarry
+    note: >-
+      No library budget published separately. Searched the library page, the library database folders
+      (Agendas and Minutes only) and the sitemap. The library is budgeted through the township: the
+      2026 Budget Report (a scanned PDF, read as images) has a "LIBRARY 600" department with a 2026
+      budget of $28,446.00.
+
+  - institution: mcgarry-public-library
+    source_type: tender
+    note: >-
+      None. There is no library website, and the library page on mcgarry.ca links to no bids (see
+      procurement). Township bids are on Biddingo, recorded under the township.
+
+candidate_domains:
+  - domain: catalisgov.com
+    institution: township-of-mcgarry
+    expected: reject
+    reason: The vendor's corporate site, linked from the footer of every page ("Government Websites by Catalis").
+  - domain: vtownhistory.org
+    institution: township-of-mcgarry
+    expected: reject
+    reason: >-
+      Community history site, "Kearns & Virginiatown Ontario". Search surfaces it for the township's
+      villages, but it is not run by the township.
+  - domain: timiskaminghu.com
+    institution: township-of-mcgarry
+    expected: reject
+    reason: >-
+      The old Timiskaming Health Unit site, still linked from the Health and Wellness page ("Click here
+      for Timiskaming Health Unit webpage"). It belongs to another body (out of scope), which merged
+      into Northeastern Public Health (neph.ca) on 2025-01-01. On 2026-10-01 the host refused
+      connections (HTTPS) and timed out (HTTP), so it is also dead.
+  - domain: tembuild.com
+    institution: township-of-mcgarry
+    expected: reject
+    reason: >-
+      The Temiskaming Municipal Services Association site (building services; CBO email
+      cbo@tembuild.com), linked twice from the Planning and Development page. A shared service
+      association, not the township (out of scope).
+  - domain: circularmaterials.ca
+    institution: township-of-mcgarry
+    expected: reject
+    reason: >-
+      The recycling program operator's page for McGarry (circularmaterials.ca/resident-communities/mcgarry/),
+      linked from the Garbage and Recycling page. A private producer responsibility organization, not
+      the township.
+
+out_of_scope:
+  - name: Ontario Provincial Police (Kirkland Lake detachment)
+    url: https://www.opp.ca/
+    reason: >-
+      Polices the township. It is listed on the Community Groups page with a Kirkland Lake address. It is a
+      provincial police service, not a township police_service.
+  - name: Kirkland Lake O.P.P. Detachment Board
+    url: https://www.pas.gov.on.ca/Home/Agency/793
+    reason: >-
+      OPP detachment board under the Community Safety and Policing Act; McGarry Township appoints one
+      member (Public Appointments Secretariat page). It governs the OPP, which is provincial, so it is
+      out of scope (README rule 5).
+  - name: Community Policing Committee
+    url: https://mcgarry.ca/council-committeescommunity-policing-committee
+    reason: >-
+      Advisory committee of council (two councillors, reports at Regular Council Meetings) that works
+      with the OPP. It is not a police service or a police board; precision trap for police_service.
+  - name: Northeastern Public Health (formerly Timiskaming Health Unit)
+    url: https://www.neph.ca/
+    reason: >-
+      Public health unit. The township still calls it the Timiskaming Health Unit (Health and Wellness
+      page, linking the dead timiskaminghu.com) and the "Kirkland Lake District Health Unit" (Animal
+      Control page); it merged with the Porcupine Health Unit into Northeastern Public Health on
+      2025-01-01. It is a public_health_unit, but a district body shared by the municipalities of the
+      Timiskaming and Cochrane districts; the township does not own or control it (the Health and
+      Wellness page only links to it), so it gets no row in this file.
+  - name: Timiskaming Health Unit
+    url: https://www.timiskaminghu.com/
+    reason: >-
+      The former name of Northeastern Public Health (entry above), still used and linked on the Health
+      and Wellness page ("Click here for Timiskaming Health Unit webpage"). A district public health
+      unit the township does not control, and it no longer exists under this name. Precision trap.
+  - name: Township of McGarry Public Works (water, sewer and landfill)
+    url: https://mcgarry.ca/residents-visitorswater-and-sewer
+    reason: >-
+      The township runs water, wastewater and the landfill through Public Works, with no name or site
+      of its own (Water and Sewer, Garbage and Recycling pages). A service area, not a public_utility
+      (README rule 8).
+  - name: District of Timiskaming Social Services Administration Board
+    url: https://www.dtssab.com/
+    reason: >-
+      District social services board (social assistance, housing, child care, paramedics) for Timiskaming
+      municipalities. Its housing and paramedic work would fit housing_corporation or
+      paramedic_service, but it is a district board shared by the Timiskaming municipalities and
+      unorganized territory; the township does not own or control it, so it gets no row in this file.
+  - name: Ontario Clean Water Agency
+    url: https://www.ocwa.com/
+    reason: >-
+      Operates the township's wastewater lagoons and plant "through a contract" (Water and Sewer page).
+      It is a provincial agency and a contractor, not a township utility.
+  - name: Temiskaming Municipal Services Association (TMSA)
+    url: http://www.tembuild.com/
+    reason: >-
+      Provides building department services (Chief Building Official) for the township (Planning and
+      Development page). It is a shared service association of Timiskaming municipalities that the
+      township buys a service from; McGarry does not own or control it, and inspecting buildings for its
+      members is not a business of its own of the kind municipal_corporation covers.
+  - name: Hydro One
+    url: https://www.hydroone.com/
+    reason: >-
+      Electricity distributor for the area (the township site has a "Hydro One Power Outage" notices
+      page). It is provincially owned, so it is not a township public_utility. Precision trap.
+  - name: Centre de santé communautaire du Témiskaming
+    reason: >-
+      Community health centre in Virginiatown, listed on the Community Groups page. It is provincially
+      funded health care run by its own not-for-profit board, which the township does not own or
+      control. It is not a public health unit.
+  - name: District School Board Ontario North East
+    url: https://www.dsb1.ca/
+    reason: School board (province-level type), scored under Ontario, not the township.
+  - name: Northeastern Catholic District School Board
+    url: https://www.ncdsb.on.ca/
+    reason: School board (province-level type), scored under Ontario, not the township.
+  - name: Conseil scolaire catholique de district des Grandes Rivières
+    url: https://cscdgr.education/
+    reason: French Catholic school board (province-level type), scored under Ontario, not the township.
+  - name: Conseil scolaire public du Nord-Est de l'Ontario
+    url: https://www.cspne.ca/
+    reason: French public school board (province-level type), scored under Ontario, not the township.
+  - name: Strategic Planning Committee
+    url: https://mcgarry.ca/council-committeesstrategic-planning-committee
+    reason: >-
+      Advisory committee of council with its own agenda and minutes database. Council committees are out
+      of scope (README rule 2: they spend little and buy through the township), so they get no row; the
+      township's other committees are listed one by one below.
+  - name: Recreation Committee
+    url: https://mcgarry.ca/council-committeesrecreation-committee
+    reason: >-
+      Committee of council that organizes recreation "from the budget allocated to it by the Township of
+      McGarry". A council committee (README rule 2), not a municipal_corporation.
+  - name: Tourist Committee
+    url: https://mcgarry.ca/council-committeestourist-committee
+    reason: >-
+      Advises council on parks, recreation, culture and tourism and helps run the Tourist Centre. A council
+      committee (README rule 2), not an economic development municipal_corporation. Precision trap.
+  - name: Communication Committee
+    url: https://mcgarry.ca/council-committeescommunication-committee
+    reason: Standing committee of council (communications policies); council committees are out of scope (README rule 2).
+  - name: Emergency Management Program Committee
+    url: https://mcgarry.ca/council-committeesemergency-management-program-committee
+    reason: Committee of council required by the Emergency Management and Civil Protection Act; council committees are out of scope (README rule 2).
+  - name: Property Standards Committee
+    url: https://mcgarry.ca/council-committeesproperty-standards-committee
+    reason: >-
+      Quasi-judicial committee appointed by council to hear appeals of property standards orders (also
+      called the Appeals Committee). A tribunal, out of scope under README rule 2.
+  - name: Appeals Committee
+    url: https://mcgarry.ca/council-committeesappeals-committee
+    reason: >-
+      Same body as the Property Standards Committee ("Property Standards Committee / Appeals Committee are
+      the same committee"). A tribunal, out of scope under README rule 2.
+  - name: Circular Materials and GFL Environmental
+    url: https://mcgarry.ca/residents-visitorsgarbage-and-recycling
+    reason: Private recycling program operator and hauler (Garbage and Recycling page). They are contractors, not public institutions.
+
+notes: >-
+  Subject choice: the Township of McGarry (Timiskaming District, northeastern Ontario; villages
+  Virginiatown and Kearns; 2021 census population 579, CSD 3554058, single-tier because districts are
+  not municipalities). Considered: Hornepayne (968; eSolutions-hosted but a rich site with its own
+  purchasing and tenders pages, too easy); Head, Clara and Maria (lower-tier in Renfrew, about 270, thin
+  and split across headclaramaria.ca and townshipsofheadclaramaria.ca, but no library board); Evanturel
+  (Catalis-hosted too, thinner, no library found); Chamberlain (a nearly empty Wix site). McGarry was
+  picked because it combines a vendor-hosted site (Catalis, with a catalisgov.ca alias), real tenders
+  only on a third-party bid platform (Biddingo, now on the platform list), which the township's own page
+  mislabels as a surplus auction site, a volunteer fire brigade, a library board whose only presence is
+  a page and a JS-loaded minutes database on the township site, JS-rendered meeting databases with an
+  embedded Catalis meeting platform, and a strategic plan PDF reachable only from an unrelated page.
+  Trust: the township's own domain mcgarry.ca is trusted. The vendor domains catalisgov.ca (the
+  mcgarryon.web.catalisgov.ca alias serving the financial statement PDFs) and allnetmeetings.com
+  (the embedded meeting platform) are on platforms, like biddingo.com: fetchable, never
+  trusted, so pages there count only when a trusted mcgarry.ca page links to them, and that is
+  true for both. The government is therefore trusted_domain, not
+  platform. No conservation authority covers McGarry as far as found, so none is listed. For the five
+  types added to the country file (housing_corporation, conservation_authority, paramedic_service,
+  public_health_unit, municipal_corporation) the sitemap (2026-10-01) shows no township-controlled body:
+  housing and paramedics come from the District of Timiskaming Social Services Administration Board and
+  public health from Northeastern Public Health, both district bodies the township does not control
+  (out_of_scope); the marina and facility rentals are run by the township itself. No ontario.ca
+  page was needed as evidence.

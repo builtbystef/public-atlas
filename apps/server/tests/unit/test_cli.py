@@ -85,3 +85,50 @@ def test_worker_takes_the_queues_to_serve(capsys):
     with pytest.raises(SystemExit):
         build_parser().parse_args(["worker", "--queues", "mail"])
     assert "unknown queue: mail" in capsys.readouterr().err
+
+
+def test_eval_commands_take_their_choices(tmp_path):
+    args = build_parser().parse_args(["eval", "validate", "--subject", "mcgarry"])
+    assert (args.command, args.action, args.subject) == ("eval", "validate", ["mcgarry"])
+    args = build_parser().parse_args(["eval", "score", "--evals", "--details"])
+    assert (args.action, args.evals, args.details, args.json) == ("score", True, True, None)
+    out = tmp_path / "scores.json"
+    args = build_parser().parse_args(
+        [
+            "eval",
+            "run",
+            "--subject",
+            "mcgarry",
+            "--subject",
+            "oakville",
+            "--types",
+            "find_institutions",
+            "find_sources",
+            "--keep",
+            "--no-worker",
+            "--queues",
+            "assignment,default",
+            "--json",
+            str(out),
+        ]
+    )
+    assert args.subject == ["mcgarry", "oakville"]
+    assert args.types == ["find_institutions", "find_sources"]
+    assert (args.keep, args.no_worker, args.queues, args.json) == (
+        True,
+        True,
+        ["default", "assignment"],
+        out,
+    )
+    plain = build_parser().parse_args(["eval", "run"])
+    assert (plain.subject, plain.types, plain.keep, plain.no_worker, plain.queues) == (
+        None,
+        None,
+        False,
+        False,
+        None,
+    )
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["eval", "run", "--types", "find_castles"])
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["eval", "run", "--queues", "assignment,castles"])

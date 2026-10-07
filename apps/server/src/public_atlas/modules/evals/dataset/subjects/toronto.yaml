@@ -1,0 +1,1834 @@
+subject:
+  kind: place
+  name: City of Toronto
+  level: municipality
+  place: City of Toronto
+  parent: Ontario
+  tier: single
+  official_code: "3520005" # Statistics Canada 2021 CSD "Toronto, City (C)", DGUID 2021A00053520005 (verified)
+  institution: city-of-toronto
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+trusted_at_start: [ontario.ca, toronto.ca]
+
+institutions:
+  - key: city-of-toronto
+    type: municipal_government
+    names:
+      - { text: City of Toronto, lang: en }
+    homepage: https://www.toronto.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.ontario.ca/page/list-ontario-municipalities
+      quote: "A single-tier municipality (such as the City of Toronto, the City of Stratford or the County of Brant) is not part of an upper-tier municipality."
+
+  - key: toronto-transit-commission
+    type: transit_agency
+    names:
+      - { text: Toronto Transit Commission, lang: en }
+      - { text: TTC, lang: en, is_acronym: true }
+      - { text: TTC Board, lang: en }
+    homepage: https://www.ttc.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-transit-commission/
+      quote: "The Toronto Transit Commission (TTC) is a City agency that provides public transit services"
+      kind: links_to
+      link_target: http://www.ttc.ca/
+    notes: >-
+      Wheel-Trans is a TTC service, not a separate body. The TTC Board (10 members appointed by City
+      Council) is the TTC's governing board and is folded into this row. Subsidiaries Toronto Coach
+      Terminal Inc. and TTC Insurance Company are in out_of_scope.
+    parent:
+      institution: city-of-toronto
+      label: City agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-transit-commission/
+        quote: The Toronto Transit Commission (TTC) is a City agency
+
+  - key: toronto-police-service
+    type: police_service
+    names:
+      - { text: Toronto Police Service, lang: en }
+      - { text: TPS, lang: en, is_acronym: true }
+      - { text: Toronto Police Service Board, lang: en }
+      - { text: Toronto Police Services Board, lang: en }
+    homepage: https://www.tps.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-police-service/
+      quote: "The Toronto Police Service (TPS) is the police service for Toronto."
+      kind: links_to
+      link_target: http://torontopolice.on.ca/
+    notes: >-
+      The toronto.ca agency page links the legacy domain torontopolice.on.ca; the service's current
+      site is tps.ca (linked, logo only, from https://www.toronto.ca/community-people/public-safety-alerts/).
+      Both are behind a Cloudflare bot challenge that intermittently returns 403 to curl.
+      JUDGEMENT CALL: the Toronto Police Service Board (tpsb.ca) is the statutory body that governs the
+      service, employs its members and sets its budget; it is folded into this row (same pattern as the
+      TTC Board and TPL Board) so the police_service board_meeting source lives on tpsb.ca. An agent that
+      saves the Board as a separate police_service institution should be treated as a duplicate of this
+      row, not a new institution. The Board's names are in `names`: tpsb.ca says "Toronto Police Service
+      Board" and tps.ca's procurement page says "Toronto Police Services Board". Checked 2026-10-01: the
+      Cloudflare challenge answers curl with 403 but lets Python httpx through (as the evidence checker uses).
+    parent:
+      institution: city-of-toronto
+      label: service agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/
+        quote: Service agencies provide services such as public transit, library, police, parking and theatres.
+
+  - key: toronto-public-library
+    type: library
+    names:
+      - { text: Toronto Public Library, lang: en }
+      - { text: TPL, lang: en, is_acronym: true }
+      - { text: Toronto Public Library Board, lang: en }
+    homepage: https://tpl.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-public-library/
+      quote: "The Toronto Public Library operates the library system in Toronto, which is the largest public library system in Canada."
+      kind: links_to
+      link_target: https://www.torontopubliclibrary.ca/
+    notes: >-
+      toronto.ca links torontopubliclibrary.ca, which 301-redirects to https://tpl.ca/. The Toronto Public
+      Library Board governs the library and is folded into this row.
+    parent:
+      institution: city-of-toronto
+      label: established by City Council
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-public-library/
+        quote: The TPL Board was established by City Council in 1998 and is continued as a library board under the City of Toronto Act, 2006.
+
+  - key: toronto-hydro
+    type: public_utility
+    names:
+      - { text: Toronto Hydro, lang: en }
+      - { text: Toronto Hydro Corporation, lang: en }
+      - { text: Toronto Hydro-Electric System Limited, lang: en }
+    homepage: https://www.torontohydro.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-hydro/
+      quote: "is a holding company of the City of Toronto which, through its subsidiaries, distributes electricity"
+      kind: links_to
+      link_target: http://www.torontohydro.com/sites/electricsystem/Pages/foryourhome.aspx
+    notes: >-
+      Toronto Hydro Corporation (holding company, City sole shareholder) and its regulated distributor
+      Toronto Hydro-Electric System Limited are one row: torontohydro.com calls THESL "Toronto Hydro" and no
+      separate procurement function is published for either. Toronto Hydro Energy Services Inc. is in
+      out_of_scope. The toronto.ca link target redirects to https://www.torontohydro.com/for-home. torontohydro.com sets a cookie on a 302 first, so clients without a cookie jar loop on redirects.
+    parent:
+      institution: city-of-toronto
+      label: holding company of the City of Toronto; the City of Toronto is the sole shareholder
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-hydro/
+        quote: The City of Toronto is the sole shareholder.
+
+  - key: toronto-fire-services
+    type: fire_service
+    names:
+      - { text: Toronto Fire Services, lang: en }
+      - { text: TFS, lang: en, is_acronym: true }
+    homepage: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/fire-services/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/fire-services/
+      quote: "Toronto Fire Services is the largest fire service in Canada, and the fifth largest fire service in North America."
+    notes: City division presenting under its own name (README scope rule 3b).
+    parent:
+      institution: city-of-toronto
+      label: the City’s only all hazards emergency response organization
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/fire-services/
+        quote: Toronto Fire Services is the City’s only all hazards emergency response organization.
+
+  - key: toronto-water
+    type: public_utility
+    names:
+      - { text: Toronto Water, lang: en }
+    homepage: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/toronto-water/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/toronto-water/
+      quote: "Management of one of the largest municipal water, wastewater and stormwater utilities in North America"
+    notes: >-
+      JUDGEMENT CALL: a City division (not a separate corporation) that describes itself as a utility
+      and presents under its own name, so it gets a row under rule 3b. It has no board and buys through
+      the City's Purchasing & Materials Management Division, so most of its source types are absent.
+      Solid Waste Management Services was put in out_of_scope instead (see there).
+    parent:
+      institution: city-of-toronto
+      label: Division
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/toronto-water/
+        quote: The Division’s seven business sections manage a large number of facilities and assets across the city
+
+  - key: toronto-public-health
+    type: public_health_unit
+    names:
+      - { text: Toronto Public Health, lang: en }
+      - { text: TPH, lang: en, is_acronym: true }
+      - { text: Toronto Board of Health, lang: en }
+      - { text: Board of Health, lang: en }
+    homepage: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/toronto-public-health/
+    homepage_alternates:
+      - https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-public-health/
+      - https://www.toronto.ca/community-people/health-wellness-care/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-public-health/
+      quote: "The Toronto Board of Health, supported by Toronto Public Health (TPH), determines and sets public health policy"
+    notes: >-
+      The Board of Health (a local board of the City under the Health Protection and Promotion Act) and
+      Toronto Public Health, the City division that reports to it, are one row, as with police and
+      library boards (rule 5). TPH is listed both as a City division and among the City's service
+      agencies. It buys through the City; its budget is a City budget note and its board meets on TMMIS.
+    parent:
+      institution: city-of-toronto
+      label: local board of the City
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-public-health/
+        quote: The Board of Health is a local board of the City under the
+
+  - key: toronto-and-region-conservation-authority
+    type: conservation_authority
+    names:
+      - { text: Toronto and Region Conservation Authority, lang: en }
+      - { text: TRCA, lang: en, is_acronym: true }
+    homepage: https://trca.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-and-region-conservation-authority/
+      quote: "is one of Ontario’s 36 conservation authorities"
+      kind: links_to
+      link_target: https://trca.ca/
+    notes: >-
+      Shared body (rule 4): six participating municipalities (the City of Toronto, the Regions of Durham,
+      Peel and York, Adjala-Tosorontio and Mono). Its row lives in this file; only the City is a labelled
+      member, so one member_of relationship. toronto.ca lists it as a partnered agency.
+
+  - key: toronto-community-housing-corporation
+    type: municipal_corporation
+    names:
+      - { text: Toronto Community Housing Corporation, lang: en }
+      - { text: Toronto Community Housing, lang: en }
+      - { text: TCHC, lang: en, is_acronym: true }
+    homepage: https://torontohousing.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-community-housing/
+      quote: "is the largest social housing provider in Canada and the second-largest in North America."
+      kind: links_to
+      link_target: https://www.torontohousing.ca/
+    notes: toronto.ca links www.torontohousing.ca, which redirects to https://torontohousing.ca/.
+    parent:
+      institution: city-of-toronto
+      label: City of Toronto as its sole shareholder
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-community-housing/
+        quote: with the City of Toronto as its sole shareholder.
+
+  - key: toronto-seniors-housing-corporation
+    type: municipal_corporation
+    names:
+      - { text: Toronto Seniors Housing Corporation, lang: en }
+      - { text: Toronto Seniors Housing, lang: en }
+      - { text: TSHC, lang: en, is_acronym: true }
+    homepage: https://www.torontoseniorshousing.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-seniors-housing-corporation/
+      quote: "will provide subsidized rental housing in a state of good repair"
+      kind: links_to
+      link_target: https://www.torontoseniorshousing.ca/
+    notes: >-
+      Runs the 83 seniors buildings; its procurement is a shared service that TCHC performs on its
+      behalf, and capital repairs are planned with TCHC, so those sources are covered_by TCHC.
+    parent:
+      institution: city-of-toronto
+      label: City of Toronto as its sole shareholder
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-seniors-housing-corporation/
+        quote: with the City of Toronto as its sole shareholder.
+
+  - key: createto
+    type: municipal_corporation
+    names:
+      - { text: CreateTO, lang: en }
+    homepage: https://createto.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/createto/
+      quote: "is a City agency launched on January 1, 2018 to lead a new"
+      kind: links_to
+      link_target: https://createto.ca/
+    notes: >-
+      The City's real estate agency. Build Toronto and Toronto Port Lands Company are City corporations
+      run through service agreements with CreateTO (the MERX buyer is "CreateTO (Build Toronto, TPLC)"),
+      so they are in out_of_scope rather than rows of their own (rule 3, subsidiaries).
+    parent:
+      institution: city-of-toronto
+      label: City agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/createto/
+        quote: is a City agency launched on January 1, 2018
+
+  - key: exhibition-place
+    type: municipal_corporation
+    names:
+      - { text: Exhibition Place, lang: en }
+      - { text: Board of Governors of Exhibition Place, lang: en }
+    homepage: https://www.explace.on.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/exhibition-place/
+      quote: "an agency of the City of Toronto"
+      kind: links_to
+      link_target: https://www.explace.on.ca/
+    notes: Venue and trade-show grounds run by a City agency board (the Board of Governors), folded into one row.
+    parent:
+      institution: city-of-toronto
+      label: an agency of the City of Toronto
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/exhibition-place/
+        quote: (officially the Board of Governors of Exhibition Place), an agency of the City of Toronto.
+
+  - key: to-live
+    type: municipal_corporation
+    names:
+      - { text: TO Live, lang: en }
+    homepage: https://www.tolive.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/to-live/
+      quote: "is a City agency which manages and operates the City’s three major civic theatres"
+      kind: links_to
+      link_target: https://www.tolive.com/Meridian-Hall
+    notes: >-
+      Runs the City's three civic theatres (a venue). tolive.com is a JavaScript app (the raw HTML has
+      no text) and serves its home page at /Home-Page; its pages were read rendered in a browser.
+    parent:
+      institution: city-of-toronto
+      label: City agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/to-live/
+        quote: is a City agency which manages and operates the City’s three major civic theatres
+
+  - key: toronto-parking-authority
+    type: municipal_corporation
+    names:
+      - { text: Toronto Parking Authority, lang: en }
+      - { text: TPA, lang: en, is_acronym: true }
+      - { text: Green P, lang: en }
+    homepage: https://parking.greenp.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-parking-authority/
+      quote: "is a City agency that operates municipal on-street pay and display parking"
+      kind: links_to
+      link_target: https://parking.greenp.com/
+    notes: >-
+      Green P parking and Bike Share Toronto (a TPA programme, in out_of_scope). In November 2025 Council
+      replaced the TPA Board's members with City officials; the TPA is still a separate City agency.
+      www.greenp.com sits behind an Incapsula wall that answers scripts with an empty page at times.
+    parent:
+      institution: city-of-toronto
+      label: City agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-parking-authority/
+        quote: is a City agency that operates municipal on-street pay and display parking
+
+  - key: toronto-zoo
+    type: municipal_corporation
+    names:
+      - { text: Toronto Zoo, lang: en }
+      - { text: Board of Management of the Toronto Zoo, lang: en }
+    homepage: https://www.torontozoo.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-zoo/
+      quote: "is a City agency that operates, manages, and maintains the City of Toronto’s Zoo."
+      kind: links_to
+      link_target: http://www.torontozoo.com/
+    parent:
+      institution: city-of-toronto
+      label: City agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-zoo/
+        quote: is a City agency that operates, manages, and maintains the City of Toronto’s Zoo.
+
+  - key: sankofa-square
+    type: municipal_corporation
+    names:
+      - { text: Sankofa Square, lang: en }
+      - { text: Sankofa Square Board of Management, lang: en }
+      - { text: Yonge-Dundas Square Board of Management, lang: en }
+      - { text: Yonge-Dundas Square, lang: en }
+    homepage: https://www.sankofasquare.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/yonge-dundas-square/
+      quote: "is a City agency that manages, operates and maintains Sankofa Square"
+    notes: >-
+      JUDGEMENT CALL: a single-site board of management, but a City service agency (not a
+      community-based one like the arena boards and AOCCs) that runs a venue business: event
+      production, bookings of the Square for third-party and corporate events, sponsorship. It has its
+      own City budget note and 10-year capital plan. The toronto.ca page does not link sankofasquare.ca,
+      so the evidence is plain appears_on. No procurement, tender or annual report page was found.
+    parent:
+      institution: city-of-toronto
+      label: City agency
+      evidence:
+        url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/yonge-dundas-square/
+        quote: is a City agency that manages, operates and maintains Sankofa Square
+
+sources:
+  # --- City of Toronto -------------------------------------------------------------
+  - institution: city-of-toronto
+    source_type: procurement
+    url: https://www.toronto.ca/business-economy/doing-business-with-the-city/
+    alternates:
+      - https://www.toronto.ca/business-economy/doing-business-with-the-city/understanding-the-procurement-process/
+    evidence:
+      url: https://www.toronto.ca/business-economy/doing-business-with-the-city/
+      quote: "Learn how the City posts and receives bids for procurement opportunities."
+    notes: The hub page; "Understanding the Procurement Process" has the process detail and the supplychain@toronto.ca contact.
+  - institution: city-of-toronto
+    source_type: tender
+    url: https://www.toronto.ca/business-economy/doing-business-with-the-city/searching-bidding-on-city-contracts/toronto-bids-portal/
+    alternates:
+      - https://www.toronto.ca/business-economy/doing-business-with-the-city/searching-bidding-on-city-contracts/
+    evidence:
+      url: https://www.toronto.ca/business-economy/doing-business-with-the-city/searching-bidding-on-city-contracts/
+      quote: "View upcoming, active, pending and awarded solicitations, or subscribe to receive notifications about new competitive awards."
+    notes: >-
+      Toronto Bids Portal (TO Bids). The listing is rendered by JavaScript (raw HTML shows "Loading"), so
+      the evidence is from the page one level up that describes it. Selecting a posting leads to SAP Ariba.
+      Trap: https://www.merx.com/cityoftoronto exists but shows 0 open solicitations and is not linked from
+      toronto.ca; it is not a City tender source.
+  - institution: city-of-toronto
+    source_type: tender
+    url: https://www.toronto.ca/business-economy/doing-business-with-the-city/advance-notice-of-opportunities/
+    evidence:
+      url: https://www.toronto.ca/business-economy/doing-business-with-the-city/advance-notice-of-opportunities/
+      quote: "Current business opportunities for parks and recreation facilities, including Request For Proposal (RFP), and Request for Expressions of Interest (REOI) opportunities are posted here."
+    notes: "Business Opportunities for Parks & Recreation: RFPs/REOIs posted outside TO Bids."
+  - institution: city-of-toronto
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/
+    alternates:
+      - https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/
+      quote: "The 2026 rate and tax-supported operating and capital budgets were considered by City Council on February 10 and are now deemed adopted."
+  - institution: city-of-toronto
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    alternates:
+      - https://www.toronto.ca/city-government/budget-finances/city-budget/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Corporate Real Estate Management 10-year Capital Budget & Plan"
+    notes: The City has no separate capital budget landing page; the per-program "10-year Capital Budget & Plan" documents are listed on the budget notes page.
+  - institution: city-of-toronto
+    source_type: capital_plan
+    url: https://www.toronto.ca/business-economy/doing-business-with-the-city/upcoming-capital-projects/
+    evidence:
+      url: https://www.toronto.ca/business-economy/doing-business-with-the-city/upcoming-capital-projects/
+      quote: "The City shares information about capital projects expected to proceed to procurement to help industry plan capacity and resources."
+    notes: Capital project procurement pipeline (Engineering & Construction Services for Toronto Water, Transportation Services and Solid Waste). Judgement call to count it as capital_plan.
+  - institution: city-of-toronto
+    source_type: council_meeting
+    url: https://www.toronto.ca/city-government/council/council-committee-meetings/
+    evidence:
+      url: https://www.toronto.ca/city-government/council/council-committee-meetings/
+      quote: "Access the most current information on meetings of City Council and its Committees, Boards and Tribunals."
+  - institution: city-of-toronto
+    source_type: council_meeting
+    url: https://secure.toronto.ca/council/
+    alternates:
+      - https://secure.toronto.ca/council/#/highlights
+      - http://app.toronto.ca/tmmis/index.do
+      - https://secure.toronto.ca/tmmis/index.do
+    evidence:
+      url: https://www.toronto.ca/city-government/council/council-committee-meetings/
+      quote: "View Meeting Schedule, Agendas and Minutes"
+      kind: links_to
+      link_target: https://secure.toronto.ca/council/#/highlights
+    notes: >-
+      TMMIS (Toronto Meeting Management Information System), a JavaScript app that also returns 403 to
+      curl (Akamai bot block), so the evidence is the toronto.ca page linking to it.
+  - institution: city-of-toronto
+    source_type: strategic_plan
+    url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/corporate-strategic-plan/
+    alternates:
+      - https://www.toronto.ca/city-government/accountability-operations-customer-service/long-term-vision-plans-and-strategies/
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/corporate-strategic-plan/
+      quote: "Toronto Public Service’s Corporate Strategic Plan sets out our highest priorities"
+  - institution: city-of-toronto
+    source_type: annual_report
+    url: https://www.toronto.ca/city-government/budget-finances/city-finance/annual-financial-report/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-finance/annual-financial-report/
+      quote: "The 2025 Financial Statements were approved by Toronto City Council on July 29-30, 2026"
+    notes: Not in municipal_government's source list; recorded under the floor rule (README, Sources). Annual Financial Report and consolidated statements by year.
+  - institution: city-of-toronto
+    source_type: leadership
+    url: https://www.toronto.ca/city-government/council/members-of-council/
+    evidence:
+      url: https://www.toronto.ca/city-government/council/members-of-council/
+      quote: "25 Councillors who are elected in each ward across the city"
+    notes: Not in municipal_government's source list; recorded under the floor rule. The Mayor and the 25 Councillors.
+  - institution: city-of-toronto
+    source_type: leadership
+    url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/
+    evidence:
+      url: https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/
+      quote: "Understand the City of Toronto’s administrative structure by reviewing the Organizational Chart."
+    notes: >-
+      Floor rule. The administration's leadership: links the Organizational Chart PDF (City Manager,
+      Deputy City Managers, division heads) and each division's page with its head.
+  - institution: city-of-toronto
+    source_type: meeting_video
+    url: https://www.youtube.com/TorontoCityCouncilLive
+    alternates:
+      - https://www.toronto.ca/city-government/council/council-committee-meetings/watch-toronto-city-council-live/
+      - https://www.toronto.ca/city-government/council/council-committee-meetings/
+      - https://www.youtube.com/@TorontoCityCouncilLive
+      - https://www.youtube.com/channel/UCfe2rzOnQzgEDvNzRRPUJsA
+    platform: youtube.com
+    evidence:
+      url: https://www.toronto.ca/city-government/council/council-committee-meetings/watch-toronto-city-council-live/
+      quote: "Watch City Council Live"
+      kind: links_to
+      link_target: https://www.youtube.com/TorontoCityCouncilLive
+    notes: >-
+      The City Clerk's Office "Toronto City Council" channel: live streams and recordings of Council and committee
+      meetings. youtube.com is a listed platform.
+      The government's page that links here only points to it, so it is an alternate.
+  - institution: city-of-toronto
+    source_type: news
+    url: https://www.toronto.ca/news/
+    alternates:
+      - https://www.toronto.ca/home/media-room/news-releases-media-advisories/
+      - https://www.toronto.ca/home/media-room/
+    evidence:
+      url: https://www.toronto.ca/news/
+      quote: "A searchable list of City news releases, media advisories, backgrounders & fact sheets."
+    notes: >-
+      News Releases & Other Resources (Media Room). /home/media-room/news-releases-media-advisories/ redirects here; the
+      Media Room page is one click up.
+
+  # --- Toronto Transit Commission -------------------------------------------------------
+  - institution: toronto-transit-commission
+    source_type: procurement
+    url: https://www.ttc.ca/doing-business-with-the-ttc/Procurement-and-Category-Management
+    alternates:
+      - https://www.ttc.ca/doing-business-with-the-ttc
+      - https://www.ttc.ca/doing-business-with-the-ttc/Procurement-and-Category-Management/about-ttcs-Procurement-and-Category-Management-department/selling-to-the-ttc
+    evidence:
+      url: https://www.ttc.ca/doing-business-with-the-ttc/Procurement-and-Category-Management
+      quote: "All purchases of goods and services for the TTC are processed through the TTC’s Procurement and Category Management (PCM) Department."
+  - institution: toronto-transit-commission
+    source_type: tender
+    url: https://www.merx.com/ttc
+    alternates:
+      - https://www.merx.com/ttc/torontotransitcommission
+      - https://www.merx.com/ttc/ttcpurchasingandsales
+      - https://www.ttc.ca/doing-business-with-the-ttc/Procurement-and-Category-Management/solicitations-and-results
+    platform: merx.com
+    evidence:
+      url: https://www.merx.com/ttc
+      quote: "MERX : Toronto Transit Commission - solicitations"
+    notes: >-
+      TTC posts solicitations on MERX (two buyer accounts, PCM Capital and PCM Operating, both under
+      /ttc). ttc.ca's "Solicitations and Results" page says so but links only to www.merx.com, not to the
+      buyer page, so it is listed as an alternate.
+  - institution: toronto-transit-commission
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Transit Commission Budget Note"
+    notes: ttc.ca has no budget page (sitemap and navigation checked); the TTC operating budget is published as a City budget note. Board budget reports are on TMMIS.
+  - institution: toronto-transit-commission
+    source_type: capital_plan
+    url: https://www.ttc.ca/transparency-and-accountability
+    evidence:
+      url: https://www.ttc.ca/transparency-and-accountability
+      quote: "TTC Capital Investment Plan 2022-2036"
+    notes: Landing page for the TTC Capital Investment Plan PDF (and Real Estate Investment Plan).
+  - institution: toronto-transit-commission
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Transit Commission 10-year Capital Budget & Plan"
+  - institution: toronto-transit-commission
+    source_type: board_meeting
+    url: https://www.ttc.ca/Public-meetings/Board
+    alternates:
+      - https://www.ttc.ca/Public-meetings
+      - https://www.ttc.ca/All-public-meetings/board
+      - https://secure.toronto.ca/council/#/committees/2944
+      - https://www.ttc.ca/about-the-ttc/the-board
+    evidence:
+      url: https://www.ttc.ca/Public-meetings/Board
+      quote: "TTC Board and Committees of the Board materials will be housed and publicly available on the City’s"
+    notes: Since 2025 the agendas themselves are on the City's TMMIS (committee 2944); the ttc.ca page links each meeting there. The About the TTC "The Board" page links the current and archived meetings, so it is an alternate.
+  - institution: toronto-transit-commission
+    source_type: strategic_plan
+    url: https://www.ttc.ca/transparency-and-accountability/corporate-plan
+    evidence:
+      url: https://www.ttc.ca/transparency-and-accountability/corporate-plan
+      quote: "The TTC Corporate Plan 2024-2028 serves as the TTC’s guiding strategic document to support the achievement of the TTC’s mandate, Vision and Mission statements."
+    notes: The Corporate Plan 2024-2028 page, linked from Transparency & Accountability with its mid-year progress reports.
+  - institution: toronto-transit-commission
+    source_type: annual_report
+    url: https://www.ttc.ca/transparency-and-accountability/Annual-Reports
+    evidence:
+      url: https://www.ttc.ca/transparency-and-accountability/Annual-Reports
+      quote: "The Toronto Transit Commission’s Annual Report aims to provide our riders, the general public and our employees with a comprehensive overview of the year."
+    notes: Not in transit_agency's source list; recorded under the floor rule. The toronto.ca TTC agency page also links "the TTC’s latest Annual Report" (a TMMIS item).
+  - institution: toronto-transit-commission
+    source_type: leadership
+    url: https://www.ttc.ca/about-the-ttc/the-board
+    evidence:
+      url: https://www.ttc.ca/about-the-ttc/the-board
+      quote: "The TTC is overseen by a Board of Commissioners made up of elected City Councillors and private citizens."
+    notes: Floor rule. Lists the Board members; no separate executive team page was found on ttc.ca (About the TTC navigation checked).
+  - institution: toronto-transit-commission
+    source_type: contract_award
+    url: https://www.merx.com/ttc
+    alternates:
+      - https://www.merx.com/ttc/torontotransitcommission
+      - https://www.merx.com/ttc/ttcpurchasingandsales
+      - https://www.ttc.ca/doing-business-with-the-ttc/Procurement-and-Category-Management/solicitations-and-results
+    platform: merx.com
+    evidence:
+      url: https://www.ttc.ca/doing-business-with-the-ttc/Procurement-and-Category-Management/solicitations-and-results
+      quote: "Please visit www.Merx.com to register your organization with MERX and to view the TTC’s solicitations, results and contract awards."
+    notes: >-
+      Floor rule. ttc.ca says the TTC uses MERX to post "a listing of awarded solicitations"; the MERX
+      buyer pages carry an Awarded Solicitations tab beside the open ones, so the same URLs as the tender
+      source. Judgement call: TPS's MERX page has the same tab but tps.ca does not mention awards, so no
+      contract_award is recorded for TPS.
+
+  # --- Toronto Police Service -----------------------------------------------------------
+  - institution: toronto-police-service
+    source_type: procurement
+    url: https://www.tps.ca/services/do-business-service/
+    evidence:
+      url: https://www.tps.ca/services/do-business-service/
+      quote: "the Toronto Police Service's Procurement Services is responsible for the procurement of all goods and services required by the organization in an open, transparent and fair manner."
+      manual_check: "browser 2026-10-01 (tps.ca answers scripts with 403 at times)"
+    notes: tps.ca sits behind a Cloudflare challenge that intermittently returns 403 to curl.
+  - institution: toronto-police-service
+    source_type: tender
+    url: https://www.merx.com/torontopolice
+    alternates:
+      - https://www.tps.ca/services/do-business-service/
+    platform: merx.com
+    evidence:
+      url: https://www.merx.com/torontopolice
+      quote: "Toronto Police Service Bid Opportunities"
+    notes: The TPS "Business with Toronto Police" page says public bids over $50,000 are posted on MERX but links only to www.merx.com.
+  - institution: toronto-police-service
+    source_type: budget
+    url: https://www.tps.ca/budget/
+    evidence:
+      url: https://www.tps.ca/budget/
+      quote: "The Toronto Police Service budget is focused on serving the people who live, work and visit Canada's largest and most vibrant city."
+      manual_check: "browser 2026-10-01 (tps.ca answers scripts with 403 at times)"
+  - institution: toronto-police-service
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Police Service Budget Note"
+    notes: The same page also carries separate budget notes for the Toronto Police Service Board and the TPS Parking Enforcement Unit.
+  - institution: toronto-police-service
+    source_type: board_meeting
+    url: https://tpsb.ca/home/current-and-past-meetings/
+    alternates:
+      - https://tpsb.ca/home/board-meeting-schedule/
+    evidence:
+      url: https://tpsb.ca/home/current-and-past-meetings/
+      quote: "Meeting Agendas & Minutes (2026)"
+    notes: Toronto Police Service Board meetings (the Board is folded into the TPS row).
+  - institution: toronto-police-service
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Police Service 10-year Capital Budget & Plan"
+    notes: Not in police_service's source list; recorded under the floor rule, since the page has a section of its own for TPS.
+  - institution: toronto-police-service
+    source_type: annual_report
+    url: https://www.tps.ca/annual-report/
+    evidence:
+      url: https://www.tps.ca/annual-report/
+      quote: "2025 Toronto Police Service Chief's Annual Report"
+      manual_check: "browser 2026-10-01 (tps.ca answers scripts with 403 at times)"
+    notes: Floor rule. Linked as "Annual Report" in tps.ca's About TPS navigation.
+  - institution: toronto-police-service
+    source_type: leadership
+    url: https://www.tps.ca/chief/leadership-team/
+    evidence:
+      url: https://www.tps.ca/chief/leadership-team/
+      quote: "Our Leadership Team is comprised of many hardworking and professional individuals"
+    notes: Floor rule. The Chief and command team. The Board's members are on https://tpsb.ca/home/about/board-members/ (not recorded separately).
+  - institution: toronto-police-service
+    source_type: strategic_plan
+    url: https://tpsb.ca/home/about/strategic-plan/
+    evidence:
+      url: https://tpsb.ca/home/about/strategic-plan/
+      quote: "The Strategic Plan for Policing in Toronto"
+    notes: Floor rule. The Board's strategic plan for the service (the Board is folded into the TPS row).
+
+  # --- Toronto Public Library -----------------------------------------------------------
+  - institution: toronto-public-library
+    source_type: procurement
+    url: https://tpl.ca/about-the-library/business-with-the-library/
+    evidence:
+      url: https://tpl.ca/about-the-library/business-with-the-library/
+      quote: "For current requests, please visit the Toronto Public Library's Purchasing Portal"
+    notes: TPL's purchasing page; the open bids it points to are the tender source.
+  - institution: toronto-public-library
+    source_type: tender
+    url: https://torontopubliclibrary.bonfirehub.ca/portal/?tab=openOpportunities
+    platform: bonfirehub.ca
+    evidence:
+      url: https://tpl.ca/about-the-library/business-with-the-library/
+      quote: "For current requests, please visit the Toronto Public Library's Purchasing Portal"
+      kind: links_to
+      link_target: https://torontopubliclibrary.bonfirehub.ca/portal/?tab=openOpportunities
+    notes: >-
+      TPL's open bids are on a Bonfire portal (torontopubliclibrary.bonfirehub.ca), a JS app: a
+      HEAD request returns 404, a GET serves the portal. Linked as "Purchasing Portal" from the
+      trusted tpl.ca page.
+  - institution: toronto-public-library
+    source_type: budget
+    url: https://tpl.ca/about-the-library/library-finance/
+    evidence:
+      url: https://tpl.ca/about-the-library/library-finance/
+      quote: "2026 Operating Budget Reports"
+  - institution: toronto-public-library
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Public Library Budget Note"
+  - institution: toronto-public-library
+    source_type: board_meeting
+    url: https://tpl.ca/about-the-library/board/meetings/
+    alternates:
+      - https://tpl.ca/about-the-library/board/
+    evidence:
+      url: https://tpl.ca/about-the-library/board/meetings/
+      quote: "All meetings on Mondays unless otherwise indicated."
+  - institution: toronto-public-library
+    source_type: strategic_plan
+    url: https://tpl.ca/about-the-library/strat-annual/
+    alternates:
+      - https://www.torontopubliclibrary.ca/about-the-library/strat-annual.jsp
+    evidence:
+      url: https://tpl.ca/about-the-library/strat-annual/
+      quote: "Our Strategic Plan (2025-2029) is the result of incredible collaboration."
+    notes: >-
+      Not in library's source list; recorded under the floor rule. The toronto.ca TPL agency page links
+      it as "Annual Report and Strategic Plan" (the old torontopubliclibrary.ca URL, which redirects here).
+  - institution: toronto-public-library
+    source_type: annual_report
+    url: https://tpl.ca/about-the-library/strat-annual/
+    alternates:
+      - https://www.torontopubliclibrary.ca/about-the-library/strat-annual.jsp
+    evidence:
+      url: https://tpl.ca/about-the-library/strat-annual/
+      quote: "Annual Report 2023"
+    notes: Floor rule. Same page as the strategic plan; the latest annual report listed on 2026-10-01 is 2023.
+  - institution: toronto-public-library
+    source_type: capital_plan
+    url: https://tpl.ca/about-the-library/library-finance/
+    evidence:
+      url: https://tpl.ca/about-the-library/library-finance/
+      quote: "2026-2035 Capital Budget and Plan - Adoption (PDF)"
+    notes: Floor rule. The Library Finance page carries the 10-year capital budget and plan beside the operating budget.
+  - institution: toronto-public-library
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Public Library 10-year Capital Budget & Plan"
+    notes: Floor rule; the City budget notes page has a section of its own for TPL.
+  - institution: toronto-public-library
+    source_type: leadership
+    url: https://tpl.ca/about-the-library/board/
+    evidence:
+      url: https://tpl.ca/about-the-library/board/
+      quote: "City Council makes citizen appointments to agencies, boards and commissions, including Toronto Public Library Board."
+    notes: Floor rule. Lists the Board members with biographies (also a board_meeting alternate).
+
+  # --- Toronto Hydro --------------------------------------------------------------------
+  - institution: toronto-hydro
+    source_type: capital_plan
+    url: https://www.torontohydro.com/regulatory-information/our-2025-29-investment-plan
+    alternates:
+      - https://www.torontohydro.com/regulatory-information
+    evidence:
+      url: https://www.torontohydro.com/regulatory-information/our-2025-29-investment-plan
+      quote: "Learn more about our five-year investment plan and rate application."
+  - institution: toronto-hydro
+    source_type: annual_report
+    url: https://www.torontohydro.com/corporate-reports
+    evidence:
+      url: https://www.torontohydro.com/corporate-reports
+      quote: "Learn how we deliver value to our city and ratepayers."
+    notes: >-
+      Not in public_utility's source list; recorded under the floor rule. Corporate Reports: the yearly
+      "Year in Review", quarterly financial reports and the forced labour supply-chain report. Behind an
+      Incapsula wall that blocks curl after a few requests; Python httpx gets through.
+  - institution: toronto-hydro
+    source_type: leadership
+    url: https://www.torontohydro.com/about-us/leadership
+    evidence:
+      url: https://www.torontohydro.com/about-us/leadership
+      quote: "Our Executive Team leads and manages the business affairs of Toronto Hydro"
+    notes: Floor rule. Executive Team and Board of Directors.
+
+  # --- Toronto Fire Services ------------------------------------------------------------
+  - institution: toronto-fire-services
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Fire Services Budget Note"
+  - institution: toronto-fire-services
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Fire Services 10-year Capital Budget & Plan"
+    notes: Not in fire_service's source list; recorded under the floor rule, since the page has a section of its own for TFS.
+
+  # --- Toronto Water --------------------------------------------------------------------
+  - institution: toronto-water
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Water 10-year Capital Budget & Plan"
+  - institution: toronto-water
+    source_type: capital_plan
+    url: https://www.toronto.ca/business-economy/doing-business-with-the-city/upcoming-capital-projects/
+    evidence:
+      url: https://www.toronto.ca/business-economy/doing-business-with-the-city/upcoming-capital-projects/
+      quote: "its three primary asset owner clients: Toronto Water (TW), Transportation Services (TS), and Solid Waste Management Services (SWMS)."
+  - institution: toronto-water
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Water Budget Note"
+    notes: Not in public_utility's source list; recorded under the floor rule, since the page has a budget note of its own for Toronto Water.
+
+  # --- Toronto Public Health ------------------------------------------------------------
+  - institution: toronto-public-health
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Public Health Budget Note"
+    notes: The Board of Health recommends TPH's budget to Council; it is published as a City budget note.
+  - institution: toronto-public-health
+    source_type: board_meeting
+    url: https://secure.toronto.ca/council/#/committees/2564
+    alternates:
+      - https://secure.toronto.ca/council/#/committees/2564/27187
+      - https://www.toronto.ca/city-government/council/council-committee-meetings/
+    evidence:
+      url: https://secure.toronto.ca/council/#/committees/2564
+      quote: "the Board of Health determines and sets public health policy and advises City Council on a broad range of health issues"
+      manual_check: "browser 2026-10-01 (TMMIS is a JavaScript app behind an Akamai bot block)"
+    notes: Board of Health agendas and minutes are on TMMIS (committee 2564), reached from the City's Council & Committee Meetings page.
+  - institution: toronto-public-health
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Public Health 10-year Capital Budget & Plan"
+    notes: Not in public_health_unit's source list; recorded under the floor rule.
+
+  # --- Toronto and Region Conservation Authority -----------------------------------------
+  - institution: toronto-and-region-conservation-authority
+    source_type: procurement
+    url: https://trca.ca/about/procurement/
+    evidence:
+      url: https://trca.ca/about/procurement/
+      quote: "TRCA may participate in one or more procurements conducted by Collaborative Purchasing Organizations"
+  - institution: toronto-and-region-conservation-authority
+    source_type: tender
+    url: https://trca.bidsandtenders.ca/Module/Tenders/en/Home/BidsHomepage
+    alternates:
+      - https://trca.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://trca.ca/about/procurement/
+      quote: "VIEW CURRENT BIDS OPPORTUNITIES"
+      kind: links_to
+      link_target: https://trca.bidsandtenders.ca/Module/Tenders/en/Home/BidsHomepage
+  - institution: toronto-and-region-conservation-authority
+    source_type: budget
+    url: https://trca.ca/about/governance-reports/financial-planning/
+    evidence:
+      url: https://trca.ca/about/governance-reports/financial-planning/
+      quote: "Click below to view Toronto and Region Conservation Authority (TRCA) budget documents."
+  - institution: toronto-and-region-conservation-authority
+    source_type: budget
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto & Region Conservation Authority Budget Note"
+    notes: The City's share of TRCA's budget, with a budget note of its own on the City page.
+  - institution: toronto-and-region-conservation-authority
+    source_type: board_meeting
+    url: https://trca.ca/about/governance/minutes-and-agendas/
+    alternates:
+      - https://trca.ca/about/governance/
+    evidence:
+      url: https://trca.ca/about/governance/minutes-and-agendas/
+      quote: "Meetings will be open to public via a livestream available on this page."
+
+  # --- Toronto Community Housing Corporation ----------------------------------------------
+  - institution: toronto-community-housing-corporation
+    source_type: procurement
+    url: https://torontohousing.ca/partner-tchc/procurement-opportunities
+    evidence:
+      url: https://torontohousing.ca/partner-tchc/procurement-opportunities
+      quote: "Toronto Community Housing enters into agreements with many businesses to provide a range of goods and services for our communities."
+  - institution: toronto-community-housing-corporation
+    source_type: tender
+    url: https://torontohousing.bonfirehub.ca/portal/?tab=openOpportunities
+    alternates:
+      - https://torontohousing.ca/partner-tchc/procurement-opportunities
+    platform: bonfirehub.ca
+    evidence:
+      url: https://torontohousing.ca/partner-tchc/procurement-opportunities
+      quote: "Only documents found on"
+      kind: links_to
+      link_target: https://torontohousing.bonfirehub.ca/portal/?tab=openOpportunities
+    notes: >-
+      TCHC posts its bids on Bonfire (and names Biddingo too, linking only www.biddingo.com). Its
+      procurement page also lists the current opportunities with links to each Bonfire posting, so it
+      is an alternate.
+  - institution: toronto-community-housing-corporation
+    source_type: capital_plan
+    url: https://torontohousing.ca/building-construction-and-revitalization/capital-repairs/10-year-capital-plan
+    evidence:
+      url: https://torontohousing.ca/building-construction-and-revitalization/capital-repairs/10-year-capital-plan
+      quote: "TCHC’s rolling 10-year Capital Plan takes a portfolio-wide approach to repair, renew and modernize buildings"
+    notes: Not in municipal_corporation's source list (housing_corporation, which listed it, was folded in on 2026-10-01); kept under the floor rule.
+  - institution: toronto-community-housing-corporation
+    source_type: capital_plan
+    url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+    evidence:
+      url: https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/
+      quote: "Toronto Community Housing Corporation 10-year Capital Budget & Plan"
+    notes: Floor rule, as above.
+  - institution: toronto-community-housing-corporation
+    source_type: board_meeting
+    url: https://torontohousing.ca/board-and-governance
+    alternates:
+      - https://torontohousing.ca/board-and-governance/past-board-and-committee-meetings
+    evidence:
+      url: https://torontohousing.ca/board-and-governance
+      quote: "Access past meeting minutes, agendas and documentation."
+  - institution: toronto-community-housing-corporation
+    source_type: annual_report
+    url: https://torontohousing.ca/transparency/reporting/annual-reports
+    evidence:
+      url: https://torontohousing.ca/transparency/reporting/annual-reports
+      quote: "Explore our Annual Reports to find out how we worked throughout the years"
+    notes: Annual reports 2025 back to 2003, linked as "Annual reports" under Transparency, Reporting in the site navigation.
+
+  # --- Toronto Seniors Housing Corporation -------------------------------------------------
+  - institution: toronto-seniors-housing-corporation
+    source_type: board_meeting
+    url: https://www.torontoseniorshousing.ca/about/board-of-directors/board-meetings/
+    evidence:
+      url: https://www.torontoseniorshousing.ca/about/board-of-directors/board-meetings/
+      quote: "On this page, you will find minutes and supporting documents for our Board of Directors meetings."
+  - institution: toronto-seniors-housing-corporation
+    source_type: annual_report
+    url: https://www.torontoseniorshousing.ca/about/annual-reports/
+    evidence:
+      url: https://www.torontoseniorshousing.ca/about/annual-reports/
+      quote: "Our Annual Reports provide information about Toronto Seniors Housing"
+    notes: Annual reports 2021 to 2025 (with the 2025 financial statement), linked from the home page and the About Us pages.
+
+  # --- CreateTO ----------------------------------------------------------------------------
+  - institution: createto
+    source_type: procurement
+    url: https://createto.ca/our-work/procurement
+    evidence:
+      url: https://createto.ca/our-work/procurement
+      quote: "CreateTO strives to retain high quality service providers through the application of an open, fair, competitive and transparent procurement process."
+  - institution: createto
+    source_type: tender
+    url: https://www.merx.com/public/solicitations/open?keywords=createto
+    alternates:
+      - https://createto.ca/our-work/procurement
+    platform: merx.com
+    evidence:
+      url: https://createto.ca/our-work/procurement
+      quote: "All current, open procurements can be viewed and responded to via MERX, the electronic tendering service used by CreateTO."
+      kind: links_to
+      link_target: https://www.merx.com/public/solicitations/open?keywords=createto
+    notes: >-
+      The link is a MERX keyword search, not a buyer page (www.merx.com/createto is a 404); the
+      results name the buyer "CreateTO (Build Toronto, TPLC)".
+  - institution: createto
+    source_type: annual_report
+    url: https://createto.ca/news/createto-s-2025-annual-report
+    evidence:
+      url: https://createto.ca/news/createto-s-2025-annual-report
+      quote: "Our 2025 Annual Report reflects steady progress in using public real estate to meet Toronto’s evolving needs."
+    notes: The 2025 report's landing page, linked as "2025 Annual Report" from every createto.ca page footer; it links the PDF.
+  - institution: createto
+    source_type: board_meeting
+    url: https://createto.ca/news/topics/createto-board-meetings
+    alternates:
+      - https://createto.ca/news?topic=createto-board-meetings
+      - https://secure.toronto.ca/council/#/committees/2483
+    evidence:
+      url: https://createto.ca/news/topics/createto-board-meetings
+      quote: "Coporate Board/Committee Meetings"
+    notes: >-
+      Linked as "Governance News and Board Meeting Materials" from the createto.ca footer; it redirects
+      to the news page filtered to that topic (the quote keeps the site's own typo). The agendas and
+      minutes themselves are on TMMIS (committee 2483, "CreateTO"), an alternate.
+
+  # --- Exhibition Place --------------------------------------------------------------------
+  - institution: exhibition-place
+    source_type: procurement
+    url: https://www.explace.on.ca/about/procurement-opportunities/
+    evidence:
+      url: https://www.explace.on.ca/about/procurement-opportunities/
+      quote: "The Purchasing Division adheres to Board and City of Toronto policies, procedures and guidelines"
+  - institution: exhibition-place
+    source_type: tender
+    url: https://explace.bonfirehub.ca/portal/?tab=openOpportunities
+    alternates:
+      - https://explace.bonfirehub.ca/portal/
+    platform: bonfirehub.ca
+    evidence:
+      url: https://www.explace.on.ca/about/procurement-opportunities/
+      quote: "and has created a new procurement portal that will allow interested firms/vendors to access procurement opportunities"
+      kind: links_to
+      link_target: https://explace.bonfirehub.ca/portal/?tab=openOpportunities
+  - institution: exhibition-place
+    source_type: board_meeting
+    url: https://www.explace.on.ca/about/board-of-governors/schedule-reports/
+    alternates:
+      - https://www.explace.on.ca/about/board-of-governors/
+      - https://secure.toronto.ca/council/#/committees/2510
+    evidence:
+      url: https://www.explace.on.ca/about/board-of-governors/schedule-reports/
+      quote: "The Board of Governors of Exhibition Place regularly meet to review the operation and management of Exhibition Place"
+    notes: The Board's meetings are also on TMMIS (committee 2510, "Exhibition Place").
+
+  # --- TO Live -----------------------------------------------------------------------------
+  - institution: to-live
+    source_type: procurement
+    url: https://www.tolive.com/Doing-Business
+    evidence:
+      url: https://www.tolive.com/Doing-Business
+      quote: "Find information about TO Live’s current public procurements on biddingo.com."
+      manual_check: "browser 2026-10-01 (tolive.com renders by JavaScript)"
+  - institution: to-live
+    source_type: tender
+    url: https://www.biddingo.com/tolive
+    platform: biddingo.com
+    evidence:
+      url: https://www.tolive.com/Doing-Business
+      quote: "Visit Biddingo"
+      kind: links_to
+      link_target: https://www.biddingo.com/tolive
+      manual_check: "browser 2026-10-01 (tolive.com renders by JavaScript)"
+    notes: TO Live's Biddingo buyer page, a JavaScript app; linked from Doing Business and from About Us.
+  - institution: to-live
+    source_type: annual_report
+    url: https://www.tolive.com/How-We%E2%80%99re-Making-an-Impact
+    evidence:
+      url: https://www.tolive.com/How-We%E2%80%99re-Making-an-Impact
+      quote: "In 2025, TO Live delivered a year of milestone moments, artistic excellence, and meaningful community impact across our three venues."
+      manual_check: "browser 2026-10-01 (tolive.com renders by JavaScript)"
+    notes: >-
+      JUDGEMENT CALL: TO Live publishes a yearly Impact Report (2025 PDF linked as "Download Report")
+      rather than a report titled annual; it is the yearly report on activities, so it counts.
+  - institution: to-live
+    source_type: board_meeting
+    url: https://secure.toronto.ca/council/#/committees/2482
+    alternates:
+      - https://secure.toronto.ca/council/#/committees/2482/27386
+    evidence:
+      url: https://secure.toronto.ca/council/#/committees/2482
+      quote: "Board of Directors of TO Live By-law 2-2021 governs the proceedings of the Board of Directors of TO Live."
+      manual_check: "browser 2026-10-01 (TMMIS is a JavaScript app behind an Akamai bot block)"
+    notes: tolive.com publishes no board meetings (About Us, Board and Staff checked); the TO Live Board's meetings are on TMMIS (committee 2482).
+
+  # --- Toronto Parking Authority ------------------------------------------------------------
+  - institution: toronto-parking-authority
+    source_type: procurement
+    url: https://parking.greenp.com/about/green-p-business/
+    evidence:
+      url: https://parking.greenp.com/about/green-p-business/
+      quote: "We regularly post public tenders for business opportunities and contracts."
+      manual_check: "curl 2026-10-01 (parking.greenp.com sits behind an Incapsula wall that answers some scripts with an empty page)"
+    notes: '"Do Business With Us": bids, partnerships, events and advertising.'
+  - institution: toronto-parking-authority
+    source_type: tender
+    url: https://www.merx.com/public/solicitations/open?keywords=Toronto+Parking+Authority
+    alternates:
+      - https://parking.greenp.com/about/green-p-business/
+    platform: merx.com
+    evidence:
+      url: https://parking.greenp.com/about/green-p-business/
+      quote: "View our open projects and submit your proposal by visiting our MERX page."
+      kind: links_to
+      link_target: https://www.merx.com/public/solicitations/open?keywords=Toronto+Parking+Authority
+      manual_check: "curl 2026-10-01 (parking.greenp.com sits behind an Incapsula wall that answers some scripts with an empty page)"
+    notes: Linked as "Browse Open Bids & RFPs"; a MERX keyword search rather than a buyer page.
+  - institution: toronto-parking-authority
+    source_type: annual_report
+    url: https://parking.greenp.com/about/documents-and-reports/
+    evidence:
+      url: https://parking.greenp.com/about/documents-and-reports/
+      quote: "Download reports and documents related to the Toronto Parking Authority here."
+      manual_check: "curl 2026-10-01 (parking.greenp.com sits behind an Incapsula wall that answers some scripts with an empty page)"
+    notes: Lists the 2025 Annual Report and past ones; the toronto.ca TPA page links it as "Annual Report".
+  - institution: toronto-parking-authority
+    source_type: board_meeting
+    url: https://parking.greenp.com/about/tpa-board-meetings/
+    alternates:
+      - https://secure.toronto.ca/council/#/committees/2490
+      - https://secure.toronto.ca/council/#/committees/2490/23077
+    evidence:
+      url: https://parking.greenp.com/about/tpa-board-meetings/
+      quote: "The TPA Board meets several times a year."
+      manual_check: "curl 2026-10-01 (parking.greenp.com sits behind an Incapsula wall that answers some scripts with an empty page)"
+    notes: The page keeps agendas up to 2018 and links TMMIS (committee 2490) for the current ones.
+
+  # --- Toronto Zoo -------------------------------------------------------------------------
+  - institution: toronto-zoo
+    source_type: procurement
+    url: https://www.torontozoo.com/business
+    evidence:
+      url: https://www.torontozoo.com/business
+      quote: "The online Bid Opportunities System allows bidders to create an account, register for bid opportunities, and submit bids entirely on-line."
+    notes: The Zoo's "Bids and Tenders" page, the only purchasing page on torontozoo.com.
+  - institution: toronto-zoo
+    source_type: tender
+    url: https://torontozoo.bidsandtenders.ca/Module/Tenders/en
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://www.torontozoo.com/business
+      quote: "Current Bid Opportunities"
+      kind: links_to
+      link_target: https://torontozoo.bidsandtenders.ca/Module/Tenders/en
+  - institution: toronto-zoo
+    source_type: annual_report
+    url: https://www.torontozoo.com/tz/about
+    evidence:
+      url: https://www.torontozoo.com/tz/about
+      quote: "Annual Report 2024"
+    notes: The About page lists the annual reports (2019 to 2024) and impact reports as PDFs.
+  - institution: toronto-zoo
+    source_type: board_meeting
+    url: https://www.torontozoo.com/tz/board
+    alternates:
+      - https://secure.toronto.ca/council/#/committees/2489
+      - https://secure.toronto.ca/council/#/committees/2489/27572
+    evidence:
+      url: https://www.torontozoo.com/tz/board
+      quote: "The Board of Management meeting agendas and reports are posted on the City of Toronto website."
+    notes: The Board & Committees page gives the meeting dates and links the TMMIS page (committee 2489).
+
+  # --- Sankofa Square ----------------------------------------------------------------------
+  - institution: sankofa-square
+    source_type: board_meeting
+    url: https://www.sankofasquare.ca/board-of-management
+    evidence:
+      url: https://www.sankofasquare.ca/board-of-management
+      quote: "2026 BOARD MEETINGS"
+    notes: Lists each meeting with its agenda PDF and YouTube recording.
+
+absent_sources:
+  - institution: toronto-hydro
+    source_type: procurement
+    note: >-
+      No purchasing or supplier page on torontohydro.com: checked the sitemap, About Us, Governance,
+      Contractors & Developers and Corporate Reports pages, and web searches for procurement, bid
+      opportunities and supplier registration. The only nearby pages are the Contractor Pre-Qualification
+      Application (qualified contractor status for third-party work on the grid) and the Local Demand
+      Response Program (a capacity programme), and neither is a purchasing page.
+  - institution: toronto-hydro
+    source_type: tender
+    note: No public bid listing on torontohydro.com, and no Toronto Hydro buyer page found on MERX, Bonfire, Biddingo or Ariba by web search.
+  - institution: toronto-hydro
+    source_type: board_meeting
+    note: >-
+      The Board of Directors is described on /about-us/governance and /about-us/leadership, but no agendas
+      or minutes are published (a Business Corporations Act company whose board meets in private).
+  - institution: toronto-fire-services
+    source_type: procurement
+    covered_by: city-of-toronto
+    note: >-
+      TFS is a City division and buys through the City's Purchasing & Materials Management Division
+      ("procures most of its goods and services on behalf of the 44 divisions" on the City procurement
+      page). No TFS-specific purchasing page was found in the TFS division page or toronto.ca search.
+  - institution: toronto-water
+    source_type: procurement
+    covered_by: city-of-toronto
+    note: A City division that buys through the City's Purchasing & Materials Management Division; no Toronto Water purchasing page (division page, Doing Business with the City pages checked).
+  - institution: toronto-water
+    source_type: tender
+    covered_by: city-of-toronto
+    note: Toronto Water solicitations are issued by the City through the Toronto Bids Portal / SAP Ariba (recorded under city-of-toronto); there is no Toronto Water tender page of its own.
+  - institution: toronto-water
+    source_type: board_meeting
+    note: A City division with no board; its reports go to City Council's Infrastructure and Environment Committee (under city-of-toronto council_meeting).
+  - institution: toronto-public-health
+    source_type: procurement
+    covered_by: city-of-toronto
+    note: >-
+      TPH is a City division and buys through the City's Purchasing & Materials Management Division; no
+      TPH purchasing page on the division or agency pages, the health pages or by toronto.ca search.
+  - institution: toronto-seniors-housing-corporation
+    source_type: procurement
+    covered_by: toronto-community-housing-corporation
+    note: >-
+      TSHC's Procurement Policy (https://www.torontoseniorshousing.ca/policies/procurement-policy/) says
+      its procurement "is a shared service that Toronto Community Housing Corporation (TCHC) performs on
+      the behalf of TSHC"; no purchasing page on torontoseniorshousing.ca (sitemap checked).
+  - institution: toronto-seniors-housing-corporation
+    source_type: tender
+    covered_by: toronto-community-housing-corporation
+    note: >-
+      The same policy says public procurement opportunities "shall be listed by Toronto Community Housing
+      on their website and appropriate tendering websites" on TSHC's behalf.
+  - institution: toronto-seniors-housing-corporation
+    source_type: capital_plan
+    covered_by: toronto-community-housing-corporation
+    note: >-
+      TSHC's About Us page: "We partner closely with Toronto Community Housing, which owns the buildings
+      that we operate." Capital repairs to those buildings sit in TCHC's 10-year capital plan. No capital
+      plan page on torontoseniorshousing.ca (sitemap and Reports pages checked) and no TSHC capital
+      section on the City budget notes page.
+  - institution: exhibition-place
+    source_type: annual_report
+    note: >-
+      No annual report on explace.on.ca: site search for "annual report", the About and Board of
+      Governors pages (schedule and reports, plans) checked.
+  - institution: sankofa-square
+    source_type: procurement
+    note: >-
+      No purchasing page on sankofasquare.ca (navigation, About Us, Opportunities, which lists jobs only)
+      and none found by web search.
+  - institution: sankofa-square
+    source_type: tender
+    note: No bid listing on sankofasquare.ca and no Sankofa Square buyer found on MERX, Bonfire or Biddingo by web search.
+  - institution: sankofa-square
+    source_type: annual_report
+    note: No annual report on sankofasquare.ca (navigation, About Us, Board of Management) or on its toronto.ca agency page.
+
+candidate_domains:
+  - {
+      domain: ttc.ca,
+      institution: toronto-transit-commission,
+      expected: confirm,
+      reason: "TTC's own site, linked from the toronto.ca agency page",
+    }
+  - {
+      domain: tps.ca,
+      institution: toronto-police-service,
+      expected: confirm,
+      reason: "Current TPS site, linked from toronto.ca Public & Community Safety page",
+    }
+  - {
+      domain: torontopolice.on.ca,
+      institution: toronto-police-service,
+      expected: reject,
+      reason: "Legacy TPS domain still linked from the toronto.ca agency page; it only redirects (https://www.torontopolice.on.ca/ to https://www.tps.ca; the bare http host answers with a Cloudflare challenge), so domain_moved closes it as rejected and tps.ca is confirmed (2026-10-01)",
+    }
+  - {
+      domain: tpsb.ca,
+      institution: toronto-police-service,
+      expected: confirm,
+      reason: "Toronto Police Service Board, the service's governing board (folded into the TPS row); linked from the toronto.ca agency page",
+    }
+  - {
+      domain: tpl.ca,
+      institution: toronto-public-library,
+      expected: confirm,
+      reason: "TPL's current site; torontopubliclibrary.ca redirects here",
+    }
+  - {
+      domain: torontopubliclibrary.ca,
+      institution: toronto-public-library,
+      expected: reject,
+      reason: "Domain linked from toronto.ca; it only 301s to tpl.ca, so domain_moved closes it as rejected and tpl.ca is confirmed (2026-10-01)",
+    }
+  - {
+      domain: torontohydro.com,
+      institution: toronto-hydro,
+      expected: confirm,
+      reason: "Toronto Hydro's site, linked from the toronto.ca corporation page",
+    }
+  - {
+      domain: cityoftoronto.ca,
+      institution: city-of-toronto,
+      expected: reject,
+      reason: "Parked lookalike domain (redirects to /lander)",
+    }
+  - {
+      domain: toronto.com,
+      institution: city-of-toronto,
+      expected: reject,
+      reason: "Commercial lifestyle/news site, not the City",
+    }
+  - {
+      domain: greenp.com,
+      institution: toronto-parking-authority,
+      expected: confirm,
+      reason: "Toronto Parking Authority's Green P site (parking.greenp.com), linked from the toronto.ca agency page; the TPA is now a municipal_corporation",
+    }
+  - {
+      domain: createto.ca,
+      institution: createto,
+      expected: confirm,
+      reason: "CreateTO's own site, linked from the toronto.ca agency page; CreateTO is now a municipal_corporation (real estate)",
+    }
+  - {
+      domain: trca.ca,
+      institution: toronto-and-region-conservation-authority,
+      expected: confirm,
+      reason: "TRCA's own site, linked from the toronto.ca partnered agency page",
+    }
+  - {
+      domain: torontohousing.ca,
+      institution: toronto-community-housing-corporation,
+      expected: confirm,
+      reason: "TCHC's own site, linked from the toronto.ca corporation page",
+    }
+  - {
+      domain: torontoseniorshousing.ca,
+      institution: toronto-seniors-housing-corporation,
+      expected: confirm,
+      reason: "TSHC's own site, linked from the toronto.ca corporation page",
+    }
+  - {
+      domain: explace.on.ca,
+      institution: exhibition-place,
+      expected: confirm,
+      reason: "Exhibition Place's own site, linked from the toronto.ca agency page",
+    }
+  - {
+      domain: tolive.com,
+      institution: to-live,
+      expected: confirm,
+      reason: "TO Live's own site, linked (theatre pages) from the toronto.ca agency page",
+    }
+  - {
+      domain: torontozoo.com,
+      institution: toronto-zoo,
+      expected: confirm,
+      reason: "Toronto Zoo's own site, linked from the toronto.ca agency page",
+    }
+  - {
+      domain: sankofasquare.ca,
+      institution: sankofa-square,
+      expected: confirm,
+      reason: "Sankofa Square's own site (board, meetings, bookings); not linked from toronto.ca, found by name",
+    }
+  - {
+      domain: casaloma.ca,
+      institution: city-of-toronto,
+      expected: reject,
+      reason: "Casa Loma attraction site run by the private operator (Liberty Entertainment Group), linked from the toronto.ca Casa Loma Corporation page; not a City body's site",
+    }
+  - {
+      domain: lakeshorearena.ca,
+      institution: city-of-toronto,
+      expected: reject,
+      reason: "Ford Performance Centre (Lakeshore Arena) booking site, linked from the toronto.ca Lakeshore Arena Corporation page; an out-of-scope single-facility arena",
+    }
+  - {
+      domain: tpasc.ca,
+      institution: city-of-toronto,
+      expected: reject,
+      reason: "Toronto Pan Am Sports Centre, linked from the toronto.ca partnered corporation page; an out-of-scope facility jointly owned with the University of Toronto",
+    }
+  - {
+      domain: downtownyonge.com,
+      institution: city-of-toronto,
+      expected: reject,
+      reason: "Downtown Yonge BIA, a Business Improvement Area (out of scope)",
+    }
+  - {
+      domain: ttcriders.ca,
+      institution: toronto-transit-commission,
+      expected: reject,
+      reason: "TTCriders, a transit advocacy group, not the TTC",
+    }
+  - {
+      domain: metrolinx.com,
+      institution: toronto-transit-commission,
+      expected: reject,
+      reason: "Metrolinx, a provincial agency, linked from the TTC agency page",
+    }
+  - {
+      domain: tpa.ca,
+      institution: toronto-police-service,
+      expected: reject,
+      reason: "Toronto Police Association, the members' union, not the service",
+    }
+  - {
+      domain: tplfoundation.ca,
+      institution: toronto-public-library,
+      expected: reject,
+      reason: "Toronto Public Library Foundation, a separate charity",
+    }
+
+out_of_scope:
+  # City agencies and corporations that match none of the types
+  - {
+      name: Heritage Toronto,
+      url: "https://www.heritagetoronto.org/",
+      reason: "City service agency for heritage promotion and education (plaques, tours, awards); it runs no business of the municipal_corporation kinds (real estate, parking, venue, zoo, airport, economic development)",
+    }
+  - {
+      name: Toronto Atmospheric Fund,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-atmospheric-fund/",
+      reason: "City agency that funds climate initiatives from an endowment (grants and investments); a granting fund, not an operating business, so not a municipal_corporation",
+    }
+  - {
+      name: Toronto Investment Board,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/toronto-investment-board/",
+      reason: "City agency that manages the investment of City funds; a treasury function for the City, not a business of its own, so not a municipal_corporation",
+    }
+  - {
+      name: Build Toronto,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/build-toronto/",
+      reason: 'CreateTO subsidiary: a City real estate corporation run through a service agreement with CreateTO (MERX buyer "CreateTO (Build Toronto, TPLC)"); no procurement of its own, covered by createto (rule 3, subsidiaries)',
+    }
+  - {
+      name: Toronto Port Lands Company,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/toronto-port-lands-company/",
+      reason: 'Legally City of Toronto Economic Development Corporation; run through a service agreement with CreateTO (MERX buyer "CreateTO (Build Toronto, TPLC)"); no procurement of its own, covered by createto (rule 3, subsidiaries)',
+    }
+  - {
+      name: Bike Share Toronto,
+      url: "https://www.bikesharetoronto.com/",
+      reason: "Programme of the Toronto Parking Authority, not a separate body; covered by toronto-parking-authority",
+    }
+  - {
+      name: Casa Loma Corporation,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/casa-loma/",
+      reason: "City corporation whose board of City staff only oversees the lease to the private operator (Liberty Entertainment Group runs Casa Loma and casaloma.ca); no business, site or procurement of its own, and a dissolution report went to its board in 2025",
+    }
+  - {
+      name: Lakeshore Arena Corporation,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/corporations/lakeshore-arena-corporation/",
+      reason: "Single-facility arena corporation (the Ford Performance Centre); README keeps single-facility arena boards out, and it publishes no procurement, board meetings or reports of its own (lakeshorearena.ca is a rink booking site)",
+    }
+  - {
+      name: Toronto Pan Am Sports Centre Inc.,
+      url: "https://www.tpasc.ca/",
+      reason: "Single-facility sports centre corporation with the City and the University of Toronto as equal shareholders, so not controlled by the City; no procurement, board meetings or reports of its own on tpasc.ca",
+    }
+  - {
+      name: Waterfront Toronto,
+      url: "https://www.waterfrontoronto.ca/",
+      reason: "Tri-government corporation established by the Governments of Canada, Ontario and the City; the City is one of three partners and does not own or control it, so it is not a municipal_corporation of the City",
+    }
+  # Community-based agencies: single-facility boards of management (README: out of scope)
+  - {
+      name: Arena Boards of Management,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/arena-boards/",
+      reason: "Community-based boards that each run one City arena; small single-facility boards of management (README: out of scope)",
+    }
+  - {
+      name: McCormick Playground Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Leaside Memorial Community Gardens,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Ted Reeve Community Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Ted Reeve Board,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Moss Park Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Moss Park Arena Board of Management,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: William H. Bolton Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: George Bell Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Larry Grossman Forest Hill Memorial Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: North Toronto Memorial Arena,
+      reason: "Arena board of management (single facility; README: out of scope)",
+    }
+  - {
+      name: Association of Community Centres (AOCCs),
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/association-of-community-centres/",
+      reason: "Community-based boards that each run one community centre; small single-facility boards of management (README: out of scope)",
+    }
+  - {
+      name: Community Centre 55,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Eastview Neighbourhood Community Centre,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Ralph Thornton Community Centre,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Scadding Court Community Centre,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: 519 Church Street,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Waterfront Neighbourhood Centre,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Applegrove Community Complex,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Cecil Community Centre,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Swansea Town Hall,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Swansea Town Hall Association,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  - {
+      name: Central (Yonge) Eglinton Community Centre,
+      reason: "Association of Community Centres board (single community centre; README: out of scope)",
+    }
+  # Business improvement areas (README: out of scope); the ones a first crawl saved are listed by name
+  - {
+      name: Business Improvement Areas (BIAs),
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/agencies/business-improvement-areas-bias/",
+      reason: "BIAs (README: out of scope); over 80 in Toronto, e.g. Downtown Yonge BIA",
+    }
+  - {
+      name: Albion Islington Square BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - { name: Baby Point Gates BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bayview Leaside BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bloor Annex BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bloor West Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bloor by the Park BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bloor-Yorkville BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bloorcourt Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Bloordale Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Broadview Danforth BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Cabbagetown BIA, reason: "Business improvement area (README: out of scope)" }
+  - {
+      name: Cedarbrae Markham Lawrence Village BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - { name: Chinatown BIA, reason: "Business improvement area (README: out of scope)" }
+  - {
+      name: Church-Wellesley Village BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - {
+      name: CityPlace and Fort York BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - { name: College Promenade BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: College West BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Corso Italia BIA, reason: "Business improvement area (README: out of scope)" }
+  - {
+      name: Crossroads of the Danforth BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - { name: Danforth Mosaic BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Danforth Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Dovercourt Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Downtown Yonge BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: DuKe Heights BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Dupont by the Castle BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Eglinton Hill BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Emery Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Fairbank Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Financial District BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Forest Hill Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Gerrard India Bazaar BIA, reason: "Business improvement area (README: out of scope)" }
+  - {
+      name: Greektown on the Danforth BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - { name: Harbord Street BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Hillcrest Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Historic Queen East BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Humber Bay Shores BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Kennedy Road BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Kensington Market BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Korea Town BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Lakeshore Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Lawrence Ingram Keele BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Leslieville BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Liberty Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Little Italy BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Little Jamaica BIA, reason: "Business improvement area (README: out of scope)" }
+  - {
+      name: Little Portugal Toronto BIA,
+      reason: "Business improvement area (README: out of scope)",
+    }
+  - { name: Long Branch BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: MarkeTO District BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Midtown Yonge BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Mimico By The Lake BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Mimico Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Mirvish Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Mount Dennis BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Mount Pleasant Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Oakwood Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Old Town Toronto BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Ossington Avenue BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Pape Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Parkdale Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Queen Street West BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Regal Heights Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Riverside District BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Rogers Road BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Roncesvalles Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Rosedale Main Street BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Sheppard East Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Shop The Queensway BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: St. Clair Gardens BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: The Beach BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: The Eglinton Way BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: The Junction BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: The Kingsway BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: The Waterfront BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Toronto Downtown West BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Trinity Bellwoods BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Upper Avenue BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Upper Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Uptown Yonge BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Village of Islington BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: West Queen West BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Weston Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Wexford Heights BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Wilson Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Wychwood Heights BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Yonge & St. Clair BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Yonge Lawrence Village BIA, reason: "Business improvement area (README: out of scope)" }
+  - { name: Yonge North York BIA, reason: "Business improvement area (README: out of scope)" }
+  # Subsidiaries and units of in-scope bodies, and a former City corporation
+  - {
+      name: Toronto Hydro Energy Services Inc.,
+      reason: "Non-regulated Toronto Hydro subsidiary (street and expressway lighting); no procurement of its own, covered by toronto-hydro",
+    }
+  - {
+      name: Toronto Coach Terminal Inc.,
+      reason: "TTC subsidiary company; no procurement of its own, covered by toronto-transit-commission",
+    }
+  - {
+      name: TTC Insurance Company,
+      reason: "TTC subsidiary that insures the TTC; no business or procurement of its own, covered by toronto-transit-commission (rule 3, subsidiaries)",
+    }
+  - {
+      name: Toronto Police Service Parking Enforcement Unit,
+      reason: "Unit of the Toronto Police Service with its own City budget note; part of TPS, not a separate body",
+    }
+  - {
+      name: Wheel-Trans,
+      reason: "TTC's accessible transit service, part of the TTC, not a separate body",
+    }
+  - {
+      name: Enwave Energy Corporation,
+      url: "https://www.enwave.com/",
+      reason: "Former Toronto District Heating Corporation; now privately owned, not a City body",
+    }
+  # City divisions that match no type, or are out of scope by rule
+  - {
+      name: Toronto Paramedic Services,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/toronto-paramedic-services/",
+      reason: "A department of the City of Toronto, which buys and budgets for it; the country file has no paramedic type (dropped 2026-10-01, README rule 2)",
+    }
+  - {
+      name: Toronto Emergency Management,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/toronto-emergency-management/",
+      reason: "City division for emergency planning; its work matches none of the YAML types, so under rule 3b it is not an institution",
+    }
+  - {
+      name: Solid Waste Management Services,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/solid-waste-management-services/",
+      reason: "City division providing waste collection and disposal; judged a municipal service rather than a public_utility (unlike Toronto Water, it does not present itself as a utility), so no row",
+    }
+  - {
+      name: Transit Expansion Division,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/staff-directory-divisions-and-customer-service/transit-expansion-division/",
+      reason: "City division that plans transit expansion but operates no transit; not a transit_agency",
+    }
+  - {
+      name: Long-Term Care Committee of Management,
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/adjudicative-boards/long-term-care-committee-of-management/",
+      reason: "Council committee of management for the City's long-term care homes, which the Seniors Services & Long-Term Care division runs as a department (README: out of scope)",
+    }
+  - {
+      name: "City adjudicative boards (Toronto Local Appeal Body, Committee of Adjustment, Toronto Licensing Tribunal and others)",
+      url: "https://www.toronto.ca/city-government/accountability-operations-customer-service/city-administration/city-managers-office/agencies-corporations/adjudicative-boards/",
+      reason: "Council tribunals and adjudicative committees (README: out of scope); they spend little and buy through the City",
+    }
+  - {
+      name: Toronto Local Appeal Body,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Committee of Adjustment,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Toronto Licensing Tribunal,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Administrative Penalty Tribunal,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Dangerous Dog Review Tribunal,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Multi-Tenant House Licensing Tribunal,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Sign Variance Committee,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Property Standards Committee,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Committee of Revision,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  - {
+      name: Compliance Audit Committee,
+      reason: "City adjudicative board or tribunal (README: out of scope)",
+    }
+  # Other levels of government
+  - {
+      name: Metrolinx,
+      url: "https://www.metrolinx.com/en",
+      reason: "Provincial agency (GO Transit, UP Express, PRESTO, Ontario Line); scored under Ontario, not the City",
+    }
+  - {
+      name: PortsToronto (Toronto Port Authority),
+      url: "https://www.torontoportauthority.com/",
+      reason: "Federal port authority; not a municipal body",
+    }
+  - {
+      name: Toronto District School Board,
+      url: "https://www.tdsb.on.ca/",
+      reason: "School board (province-level type; scored under Ontario)",
+    }
+  - {
+      name: Toronto Catholic District School Board,
+      url: "https://www.tcdsb.org/",
+      reason: "School board (province-level type)",
+    }
+  - {
+      name: Conseil scolaire Viamonde,
+      url: "https://csviamonde.ca/",
+      reason: "French-language school board headquartered in Toronto (province-level type)",
+    }
+  - {
+      name: Conseil scolaire catholique MonAvenir,
+      url: "https://cscmonavenir.ca/",
+      reason: "French-language Catholic school board headquartered in Toronto (province-level type)",
+    }
+  # Non-government lookalikes
+  - {
+      name: Toronto Police Association,
+      url: "https://tpa.ca/",
+      reason: "Police members' union, not a public body",
+    }
+  - {
+      name: Toronto Public Library Foundation,
+      url: "https://tplfoundation.ca/",
+      reason: "Separate registered charity that fundraises for TPL",
+    }
+
+notes: >-
+  Institution list built from the toronto.ca Agencies & Corporations pages (service agencies,
+  corporations, partnered bodies, adjudicative boards) and the Staff Directory, Divisions & Customer
+  Service page. In-scope rows besides the City: TTC, TPS (with its Board folded in), TPL, Toronto
+  Hydro, Toronto Fire Services (division) and Toronto Water (division, a judgement call); and, since the
+  country file gained new types (2026-10-01), Toronto Public Health (with the Board of Health folded
+  in), TRCA (shared conservation authority, its row lives here), and TCHC, Toronto Seniors Housing,
+  CreateTO, Exhibition Place, TO Live, the Toronto Parking Authority, the Toronto Zoo and Sankofa
+  Square (municipal corporations; Sankofa Square a judgement call; the two housing corporations were
+  housing_corporation until that type was folded into municipal_corporation). Toronto Paramedic
+  Services is out_of_scope since paramedic_service was dropped (a City division). Kept out under the new rules: agencies that run no business of the
+  municipal_corporation kinds (Heritage Toronto, the Atmospheric Fund, the Investment Board), CreateTO's
+  subsidiaries, single-facility arena and community centre boards, Casa Loma Corporation (lease
+  oversight only), Lakeshore Arena and the Pan Am Sports Centre (single facilities, the latter jointly
+  owned), and Waterfront Toronto (tri-government). Several agency boards (CreateTO, Exhibition Place,
+  TO Live, TPA, Toronto Zoo, Board of Health) meet on TMMIS, which answers scripts with an Akamai block,
+  so TMMIS committee pages are alternates or carry a browser manual_check. The City's
+  budget notes page
+  (https://www.toronto.ca/city-government/budget-finances/city-budget/notes-reports-and-presentations/)
+  is a budget/capital_plan source for several institutions because it lists each agency's and
+  division's budget note and 10-year capital plan. Precision traps: merx.com/cityoftoronto (0
+  solicitations, not linked from toronto.ca), the parked lookalike cityoftoronto.ca, and the out_of_scope
+  agencies above. Checked against the live web 2026-10-01: sources outside each type's list (annual
+  reports, leadership, the agencies' own capital plans and strategic plans, TTC contract awards, Toronto
+  Water's budget note) were added under the floor rule; the City's contract awards were looked for and
+  not found as a page of their own (the TO Bids portal lists awarded solicitations inside its JavaScript
+  app, and procurement metrics point to Open Data).

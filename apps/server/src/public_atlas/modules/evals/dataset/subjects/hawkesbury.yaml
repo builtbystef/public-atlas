@@ -1,0 +1,558 @@
+subject:
+  kind: place
+  name: Town of Hawkesbury
+  level: municipality
+  place: Town of Hawkesbury
+  parent: United Counties of Prescott and Russell
+  tier: lower
+  official_code: "3502008" # Statistics Canada 2021 CSD "Hawkesbury, Town (T)", DGUID 2021A00053502008
+  institution: town-of-hawkesbury
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, hawkesbury.ca, prescott-russell.on.ca]
+
+institutions:
+  - key: town-of-hawkesbury
+    type: municipal_government
+    names:
+      - { text: Town of Hawkesbury, lang: en }
+      - { text: Ville de Hawkesbury, lang: fr }
+      - { text: Corporation of the Town of Hawkesbury, lang: en }
+      - { text: Corporation de la Ville de Hawkesbury, lang: fr }
+    homepage: https://www.hawkesbury.ca/
+    homepage_alternates:
+      - https://www.hawkesbury.ca/fr
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.hawkesbury.ca/fr/services-aux-citoyens/services-municipaux/finances-et-taxes
+      quote: "Veuillez libeller votre chèque à l’ordre de la Corporation de la ville de Hawkesbury."
+    notes: >-
+      The root https://www.hawkesbury.ca/ serves the English home page whatever the Accept-Language
+      (html lang en-CA, hreflang x-default = /en); the French site is https://www.hawkesbury.ca/fr.
+      Every town page has an /en/... and a /fr/... twin with different slugs.
+
+  - key: hawkesbury-fire-department
+    type: fire_service
+    names:
+      - { text: Hawkesbury Fire Department, lang: en }
+      - { text: Service des incendies de Hawkesbury, lang: fr }
+    homepage: https://www.hawkesbury.ca/en/residents-services/public-safety/fire-department
+    homepage_alternates:
+      - https://www.hawkesbury.ca/fr/services-aux-citoyens/sécurité-publique/service-des-incendies
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.hawkesbury.ca/fr/services-aux-citoyens/sécurité-publique/service-des-incendies
+      quote: "La mission du service des incendies de Hawkesbury est de protéger les vies, les biens et l'environnement"
+    notes: >-
+      Internal department of the Town that presents itself under its own name (rule 3b). The French
+      twin (hreflang fr-ca) is in homepage_alternates. The department also runs "Prescott-Russell Fire and Emergency Dispatch Services" for
+      7 municipalities; that is a division of this department, not its own row (see out_of_scope).
+    parent:
+      institution: town-of-hawkesbury
+      label: The Town of Hawkesbury's Fire Department
+      evidence:
+        url: https://www.hawkesbury.ca/en/residents-services/public-safety/fire-department
+        quote: The Town of Hawkesbury's Fire Department
+
+  - key: hawkesbury-public-library
+    type: library
+    names:
+      - { text: Bibliothèque publique de Hawkesbury, lang: fr }
+      - { text: Hawkesbury Public Library, lang: en }
+      - { text: Hawkesbury Public Library Board, lang: en }
+      - { text: Conseil de la Bibliothèque publique de Hawkesbury, lang: fr }
+    homepage: https://www.bibliotheque.hawkesbury.on.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.hawkesbury.ca/fr
+      quote: Bibliothèque publique de Hawkesbury
+      kind: links_to
+      link_target: https://www.bibliotheque.hawkesbury.on.ca/
+    notes: >-
+      Library board under the Public Libraries Act, consolidated in the Town's financial statements.
+      Root is French (html lang fr-FR); English at /en/. The English town home page links to it as
+      "Hawkesbury Public Library" -> https://www.bibliotheque.hawkesbury.on.ca/en/.
+    parent:
+      institution: town-of-hawkesbury
+      label: board and commissions which are under the control of council
+      evidence:
+        url: https://www.hawkesbury.ca/uploads/documents/Finances/ACCESSIBILITY-Corporation-de-la-Ville-de-Hawkesbury-12312025-Financial-statements.pdf
+        quote: the following board and commissions which are under the control of council
+        locator: 'PDF page 10 (printed page 8, note 1 Reporting entity): "Hawkesbury Public Library Board;" is the second bullet of the list that follows'
+        manual_check: pdftotext 2026-09-29
+
+  - key: hydro-hawkesbury-inc
+    type: public_utility
+    names:
+      - { text: Hydro Hawkesbury Inc., lang: en }
+      - { text: Hydro Hawkesbury Inc., lang: fr }
+      - { text: Hydro Hawkesbury, lang: fr }
+      - { text: Hydro Hawkesbury, lang: en }
+      - { text: Hawkesbury Hydro Inc., lang: en }
+    homepage: https://hydrohawkesbury.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.hawkesbury.ca/fr/foire-aux-questions
+      quote: Hydro Hawkesbury
+      kind: links_to
+      link_target: https://hydrohawkesbury.ca/
+    notes: >-
+      Local electricity distribution company, 100% owned by the Town (its own About page: "sole
+      shareholder is the Town of Hawkesbury"; the Town's statements call it "Hawkesbury Hydro Inc.").
+      Root is French; English at /en/. The English FAQ links to https://hydrohawkesbury.ca/en/.
+    parent:
+      institution: town-of-hawkesbury
+      label: 1,000 common shares representing 100.00% of the voting shares
+      evidence:
+        url: https://www.hawkesbury.ca/uploads/documents/Finances/ACCESSIBILITY-Corporation-de-la-Ville-de-Hawkesbury-12312025-Financial-statements.pdf
+        quote: Hawkesbury Hydro Inc. 1,000 common shares representing 100.00% of the voting shares
+        locator: PDF page 14 (printed page 12, note 4 Investments)
+        manual_check: pdftotext 2026-09-29
+
+sources:
+  # --- Town of Hawkesbury ---
+  - institution: town-of-hawkesbury
+    source_type: procurement
+    url: https://www.hawkesbury.ca/en/discover-hawkesbury/partnership-with-the-town/call-for-tenders
+    alternates:
+      - https://www.hawkesbury.ca/fr/decouvrir-hawkesbury/partenariat-avec-la-ville/appels-doffre
+      - https://www.hawkesbury.ca/hotel-de-ville/appels-d-offres
+    evidence:
+      url: https://www.hawkesbury.ca/en/discover-hawkesbury/partnership-with-the-town/call-for-tenders
+      quote: "The Town respects its Procurement Policy for the purchase of goods and services."
+    notes: >-
+      One page carries both the procurement rules ("Procurement Policy and Details", LAS and MERX
+      pointers) and the open calls. The Procurement Policy PDF (SF-P-2026-01) sits on the policies
+      page; the legacy URL /hotel-de-ville/appels-d-offres redirects to the French twin.
+
+  - institution: town-of-hawkesbury
+    source_type: tender
+    url: https://www.hawkesbury.ca/en/discover-hawkesbury/partnership-with-the-town/call-for-tenders
+    alternates:
+      - https://www.hawkesbury.ca/fr/decouvrir-hawkesbury/partenariat-avec-la-ville/appels-doffre
+      - https://www.hawkesbury.ca/hotel-de-ville/appels-d-offres
+    evidence:
+      url: https://www.hawkesbury.ca/en/discover-hawkesbury/partnership-with-the-town/call-for-tenders
+      quote: "If a request for tenders has to be open to the public, the notice will be posted here or on"
+    notes: >-
+      The page says many tenders are also on MERX and some on LAS (las.on.ca), but links only to
+      the MERX and LAS home pages, not to a Hawkesbury listing, so neither is a separate source.
+
+  - institution: town-of-hawkesbury
+    source_type: budget
+    url: https://www.hawkesbury.ca/en/residents-services/municipal-services/finance-and-tax
+    alternates:
+      - https://www.hawkesbury.ca/fr/services-aux-citoyens/services-municipaux/finances-et-taxes
+    evidence:
+      url: https://www.hawkesbury.ca/en/residents-services/municipal-services/finance-and-tax
+      quote: "Each year, the Town of Hawkesbury conducts an exhaustive review of its needs in order to determine an operating budget"
+    notes: Lists Budget 2022-2026 PDFs (bilingual schedules to the budget by-law) and the audited statements.
+
+  - institution: town-of-hawkesbury
+    source_type: capital_plan
+    url: https://www.hawkesbury.ca/en/my-town/administration/plans-and-guides
+    alternates:
+      - https://www.hawkesbury.ca/fr/ma-ville/administration/plans-et-guides
+    evidence:
+      url: https://www.hawkesbury.ca/en/my-town/administration/plans-and-guides
+      quote: Asset Management Plan 2025
+    notes: >-
+      Judgement call. The multi-year capital documents (Asset Management Plan 2025 with 10-year
+      lifecycle needs, 2020-2025 Financial Plan, Water System Financial Plan, Development Charges
+      study) are listed here. The one-year capital budget is Schedule "B" (Dépenses en immobilisation
+      - Capital expenditures) inside Budget 2026, on the finance-and-tax page, which is the budget
+      source. A reviewer may prefer to accept that page too.
+
+  - institution: town-of-hawkesbury
+    source_type: council_meeting
+    url: https://www.hawkesbury.ca/en/my-town/democratic-life/council-meetings
+    alternates:
+      - https://www.hawkesbury.ca/fr/ma-ville/vivre-ici/reunions-du-conseil
+    evidence:
+      url: https://www.hawkesbury.ca/en/my-town/democratic-life/council-meetings
+      quote: Minutes and Agendas of Council Meetings
+    notes: >-
+      The page embeds the eSCRIBE portal in an iframe (src, not an href), which is the separate
+      entry below. Not included: /en/my-town/democratic-life/council-meeting-summaries, plain-language
+      summaries of decisions rather than agendas and minutes.
+
+  - institution: town-of-hawkesbury
+    source_type: council_meeting
+    url: https://pub-hawkesbury.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-hawkesbury.escribemeetings.com/
+      quote: Regular Meeting of Council
+    notes: >-
+      Bilingual portal (Agenda / Ordre du jour, Minutes / Procès-verbal; French view with
+      ?Lang=French). Reached from the trusted council-meetings page through an iframe, not an <a> link.
+
+  - institution: town-of-hawkesbury
+    source_type: strategic_plan
+    url: https://www.hawkesbury.ca/en/my-town/administration/plans-and-guides
+    alternates:
+      - https://www.hawkesbury.ca/fr/ma-ville/administration/plans-et-guides
+    evidence:
+      url: https://www.hawkesbury.ca/fr/ma-ville/administration/plans-et-guides
+      quote: "Plan stratégique de la ville de Hawkesbury 2025-2030"
+    notes: >-
+      Lists the 2025-2030 Strategic Plan (full report, accessible version, one-pager PDFs). No
+      dedicated strategic-plan page exists. The Economic Development Action Plan 2027-2031 is still
+      being drafted (consultation page), so it is not counted. The Parks and Recreation Master Plan
+      (adopted 2026-06-22) has its own project page,
+      /en/recreation-and-community/in-my-community/plan-directeur-des-parcs-et-loisirs, but it is a
+      departmental plan also listed on this page, so it is not a separate strategic_plan entry.
+
+  - institution: town-of-hawkesbury
+    source_type: leadership
+    url: https://www.hawkesbury.ca/en/my-town/democratic-life/municipal-council
+    alternates:
+      - https://www.hawkesbury.ca/fr/ma-ville/vivre-ici/conseil-municipal
+    evidence:
+      url: https://www.hawkesbury.ca/en/my-town/democratic-life/municipal-council
+      quote: "The Council of the Town of Hawkesbury is composed of a mayor and six councillors"
+    notes: >-
+      Not a municipal_government source type; recorded under the floor rule (README, "The type's
+      list is a floor"). "Meet your Town Council" lists the mayor and six councillors by name and
+      role. No page lists the administration's directors.
+
+  - institution: town-of-hawkesbury
+    source_type: meeting_video
+    url: https://www.youtube.com/c/hawkesburyon
+    alternates:
+      - https://www.hawkesbury.ca/en/my-town/democratic-life/council-meetings
+      - https://www.hawkesbury.ca/fr/ma-ville/vivre-ici/reunions-du-conseil
+      - https://www.youtube.com/@HawkesburyON
+      - https://www.youtube.com/@HawkesburyOn
+      - https://www.youtube.com/@HawkesburyON/playlists
+      - https://www.youtube.com/@HawkesburyON/streams
+      - https://www.youtube.com/channel/UCIMNdW0wMNjL9Y--Opo-MLA
+    platform: youtube.com
+    evidence:
+      url: https://www.hawkesbury.ca/en/my-town/democratic-life/council-meetings
+      quote: "available to watch in real time on our Youtube page."
+      kind: links_to
+      link_target: https://www.youtube.com/c/hawkesburyon
+    notes: >-
+      The Town's YouTube channel ("Bienvenue sur la chaîne officielle de la Ville de Hawkesbury"):
+      live streams and recordings of every council meeting, with yearly playlists (2020-2022
+      archive, 2023, 2024, 2025). The English page links /c/hawkesburyon, the French page
+      /@HawkesburyON, and the page's image caption names /@HawkesburyON/playlists; the channel's
+      canonical handle is /@HawkesburyOn. youtube.com is a listed platform.
+      The government's page that links here only points to it, so it is an alternate.
+
+  - institution: town-of-hawkesbury
+    source_type: news
+    url: https://www.hawkesbury.ca/en/news
+    alternates:
+      - https://www.hawkesbury.ca/fr/actualités
+    evidence:
+      url: https://www.hawkesbury.ca/en/news
+      quote: Public notice
+    notes: >-
+      "News" in the header of every page: news releases and public notices (zoning public
+      meetings, emergency infrastructure work), filterable by category (Public notice, Town Hall,
+      Construction and infrastructure and others, ?category=...). French twin from hreflang fr-ca.
+
+  # --- Hawkesbury Fire Department ---
+  - institution: hawkesbury-fire-department
+    source_type: strategic_plan
+    url: https://www.hawkesbury.ca/en/residents-services/public-safety/fire-department
+    alternates:
+      - https://www.hawkesbury.ca/fr/services-aux-citoyens/sécurité-publique/service-des-incendies
+    evidence:
+      url: https://www.hawkesbury.ca/en/residents-services/public-safety/fire-department
+      quote: "View the Town of Hawkesbury's 2021-2030 Fire Master Plan"
+    notes: >-
+      Not a fire_service source type; recorded under the floor rule. The current 2021-2030 Fire
+      Master Plan (PDF, English only) is linked from the "Fire Master Plan" section of the fire
+      page; there is no dedicated page, so the section counts (README, "A section of a general
+      page counts"). A reviewer may prefer no entry.
+
+  # --- Hawkesbury Public Library ---
+  - institution: hawkesbury-public-library
+    source_type: leadership
+    url: https://www.bibliotheque.hawkesbury.on.ca/en/about-us/
+    alternates:
+      - https://www.bibliotheque.hawkesbury.on.ca/a-propos/
+    evidence:
+      url: https://www.bibliotheque.hawkesbury.on.ca/en/about-us/
+      quote: "Members of Hawkesbury Public Library’s Board of Directors:"
+    notes: >-
+      Not a library source type; recorded under the floor rule. The About page lists the five board
+      members with their roles (chair, vice-chair, administrators, council representative).
+
+  # --- Hydro Hawkesbury Inc. ---
+  - institution: hydro-hawkesbury-inc
+    source_type: leadership
+    url: https://hydrohawkesbury.ca/en/informations/about-hydro-hawkesbury/
+    alternates:
+      - https://hydrohawkesbury.ca/information/a-propos-dhydro-hawkesbury/
+      - https://hydrohawkesbury.ca/wp-content/uploads/2026/02/Organizational-Chart-Hydro-Hawkesbury-Inc.pdf
+    evidence:
+      url: https://hydrohawkesbury.ca/en/informations/about-hydro-hawkesbury/
+      quote: Organizational Chart – Hydro Hawkesbury Inc.
+    notes: >-
+      Not a public_utility source type; recorded under the floor rule. The About page (EN and FR)
+      links the organizational chart PDF, which names the chairman, four board members, the manager
+      and staff. The PDF is an alternate because it is the only place the names appear. The
+      Scorecard page (/en/informations/score-card/) is the one-page OEB performance scorecard, not
+      an annual report.
+
+absent_sources:
+  - institution: hawkesbury-fire-department
+    source_type: procurement
+    covered_by: town-of-hawkesbury
+    note: >-
+      No fire-specific purchasing page. The fire page (EN and FR) and the site map have none; the
+      department buys through the Town's Procurement Policy and Call for Tenders page (a town source).
+  - institution: hawkesbury-fire-department
+    source_type: budget
+    covered_by: town-of-hawkesbury
+    note: >-
+      No separate fire budget page. Fire is a line of the Town's Budget 2026 schedules ("INCENDIES /
+      FIRE" in the capital summary) on the finance-and-tax page. The fire page links only the
+      2021-2030 Fire Master Plan and the emergency plan.
+
+  - institution: hawkesbury-public-library
+    source_type: procurement
+    note: >-
+      None. Checked the library's page-sitemap (about 45 pages, FR and EN): only policies on privacy,
+      gifts, community information and room use; nothing on purchasing or bids.
+  - institution: hawkesbury-public-library
+    source_type: budget
+    covered_by: town-of-hawkesbury
+    note: >-
+      No library budget on the library site (sitemap, About us) or as its own item on hawkesbury.ca;
+      the library appears only as a department line in the Town's budget schedules.
+  - institution: hawkesbury-public-library
+    source_type: board_meeting
+    note: >-
+      No agendas or minutes published. The About us page (/en/about-us/, FR /a-propos/) lists the
+      board members and the 2026 meeting dates only; a site search for "procès-verbal" returns
+      nothing; the Town's eSCRIBE meeting types do not include the library board.
+
+  - institution: hydro-hawkesbury-inc
+    source_type: procurement
+    note: >-
+      None. Read the Yoast page-sitemap of hydrohawkesbury.ca (114 pages, FR and EN) and the site map
+      page: billing, rates, safety, conservation, outages, about/contact only; nothing on purchasing
+      or suppliers. Five employees.
+  - institution: hydro-hawkesbury-inc
+    source_type: tender
+    note: >-
+      None on hydrohawkesbury.ca (same sitemap check, no "appel d'offres" or tender page) and none on
+      the Town's Call for Tenders page.
+  - institution: hydro-hawkesbury-inc
+    source_type: capital_plan
+    note: >-
+      Not published on its own site. The rates page ("APPLICATION AND EVIDENCE DOCUMENTS") links to
+      the OEB records page for EB-2026-0048, which is a 2027 IRM (price-cap) application with no
+      Distribution System Plan; a DSP only comes with a cost-of-service filing on oeb.ca, not a
+      landing page of the utility.
+  - institution: hydro-hawkesbury-inc
+    source_type: board_meeting
+    note: >-
+      No board of directors page, agendas or minutes on hydrohawkesbury.ca (sitemap, About page with
+      organizational chart only) or on hawkesbury.ca.
+
+  - institution: hawkesbury-public-library
+    source_type: tender
+    note: >-
+      None. The page-sitemap check under procurement found no call-for-tenders page either, in
+      French or English.
+
+candidate_domains:
+  - domain: bibliotheque.hawkesbury.on.ca
+    institution: hawkesbury-public-library
+    expected: confirm
+    reason: The library's own site, linked from the Town's navigation and footer (FR and EN).
+  - domain: hydrohawkesbury.ca
+    institution: hydro-hawkesbury-inc
+    expected: confirm
+    reason: The utility's own site, linked from the Town's FAQ (FR and EN) and power-outage notices.
+  - domain: vivreahawkesbury.ca
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: >-
+      "Vivre à Hawkesbury", linked from the Town home page, belongs to the Communauté francophone
+      accueillante de Hawkesbury (footer: "Tous droits réservés © 2021. Communauté francophone
+      accueillante de Hawkesbury", privacy policy of CÉSOC), an IRCC-funded newcomer project, not the
+      Town. The English path the Town links (/en/home/) returns 404.
+  - domain: slwofc.ca
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: >-
+      Service Line Warranties of Canada, a private company whose letters carry the Town's logo; the
+      Town's FAQ links it but says "it is not a Town program".
+  - domain: comzacbia.ca
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: Hawkesbury BIA (Commission de la Zone d'amélioration commerciale), out of scope.
+  - domain: las.on.ca
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: >-
+      Local Authority Services (AMO's group-buying arm), linked from the Town's tender page ("here or
+      on www.las.on.ca"). Its Bid Opportunities page lists LAS's own cooperative RFPs, not the Town's
+      tenders, so it is another body's site, not a hosting platform for Town pages (checked
+      2026-10-01). Was review in the draft.
+  - domain: ipn.paymentus.com
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: >-
+      Paymentus bill-payment portal ("Pay my bills"), linked from the header of every Town page; a
+      vendor payment app with no source types, not the Town's domain.
+  - domain: hawkesbury.bciti.com
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: Bciti+, a third-party citizen app the Town uses for notices and requests; hosts no source types.
+  - domain: app.amilia.com
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: Amilia, third-party recreation registration store for the Robert Hartley Sports Complex.
+  - domain: cdnsm5-hosted.civiclive.com
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: >-
+      File CDN of the Town's former CivicLive website, still linked for a few PDFs (tax rebate
+      by-law, community safety plan); a vendor host, not an institution domain.
+  - domain: hawkesbury.insigniails.com
+    institution: hawkesbury-public-library
+    expected: reject
+    reason: The library's Insignia catalogue (vendor-hosted ILS), not its website.
+  - domain: rds.oeb.ca
+    institution: hydro-hawkesbury-inc
+    expected: reject
+    reason: >-
+      Ontario Energy Board document search, linked from Hydro Hawkesbury's rates page ("APPLICATION
+      AND EVIDENCE DOCUMENTS", case EB-2026-0048); the regulator's domain, not the utility's.
+  - domain: chabo.ca
+    institution: hydro-hawkesbury-inc
+    expected: reject
+    reason: >-
+      The web designer's site, linked from the footer of every Hydro Hawkesbury page ("Web creation:
+      Chabo.ca"); a vendor, not an institution.
+  - domain: hiia.ca
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: >-
+      Hawkesbury Industrial Investment Association, linked from the Town's Entrepreneurship page
+      ("Visit their website"); an independent non-profit the Town does not control (out_of_scope),
+      not the Town's domain.
+  - domain: hawkesbury.nsw.gov.au
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: Lookalike, Hawkesbury City Council in New South Wales, Australia (shows up in tender and annual-report searches).
+  - domain: townofporthawkesbury.ca
+    institution: town-of-hawkesbury
+    expected: reject
+    reason: Lookalike, Town of Port Hawkesbury, Nova Scotia.
+
+out_of_scope:
+  - name: Ontario Provincial Police, Hawkesbury Detachment (Police provinciale de l'Ontario)
+    url: https://www.opp.ca/
+    reason: Hawkesbury has no municipal police; it is policed by the OPP, a provincial service.
+  - name: Hawkesbury OPP Detachment Board (Conseil du détachement de la P.P.O. de Hawkesbury)
+    url: https://www.hawkesbury.ca/en/residents-services/public-safety/opp-detachment-board
+    reason: >-
+      README scope rule 5: an OPP detachment board is out_of_scope (it governs the OPP, which is
+      provincial). Board under the Community Safety and Policing Act, shared by Alfred and
+      Plantagenet, Champlain, East Hawkesbury, Hawkesbury and The Nation, with provincial appointees;
+      it runs no police service or procurement. Its page on hawkesbury.ca has agendas, minutes and a
+      budget, so an agent may well save it: count that as a false positive.
+  - name: Prescott-Russell Fire and Emergency Dispatch Services
+    reason: >-
+      A division of the Hawkesbury Fire Department (its "Emergency Communications" service area,
+      dispatching for 7 municipalities); covered by the fire_service row, not its own institution.
+  - name: Hawkesbury Environment Department (drinking water and wastewater)
+    url: https://www.hawkesbury.ca/en/residents-services/environment-and-waste/drinking-water-and-wastewater-management
+    reason: Town department that runs the water and wastewater plants under the Town's name; no separate utility body or brand (rule 3b).
+  - name: United Counties of Prescott and Russell (Comtés unis de Prescott et Russell)
+    url: https://www.prescott-russell.on.ca/
+    reason: Upper-tier government (level region), scored under its own place, not this lower-tier subject.
+  - name: PR Transpo
+    url: https://en.prescott-russell.on.ca/stay/pr_transpo
+    reason: County (UCPR) service, not the Town's; the intermunicipal transit was permanently suspended in 2023. Hawkesbury has no municipal transit.
+  - name: Prescott-Russell Paramedic Services and UCPR social housing
+    url: https://www.prescott-russell.on.ca/
+    reason: >-
+      Upper-tier (UCPR) services: the paramedic service and the housing department are run by the
+      United Counties, not the Town (rule 2, a body of the upper tier met on a lower tier's site). They
+      belong to the UCPR's file, which is not a subject.
+  - name: Eastern Ontario Health Unit (Bureau de santé de l'est de l'Ontario)
+    url: https://eohu.ca/
+    reason: >-
+      Public health unit of the upper tiers, not the Town: its board seats are "appointed for the
+      counties of Prescott-Russell", SDG and Cornwall, and it is cost-shared by the Province, the two
+      United Counties and Cornwall (eohu.ca/en/about-us, checked 2026-10-01). Hawkesbury neither
+      appoints to nor funds it, so it belongs to the UCPR's file (not a subject), not this one (rule 2).
+  - name: Hôpital général de Hawkesbury et district (Hawkesbury and District General Hospital)
+    url: https://hgh.ca/
+    reason: Hospital, a province-level type scored under Ontario.
+  - name: Conseil scolaire de district catholique de l'Est ontarien (CSDCEO)
+    url: https://csdceo.ca/
+    reason: School board (French Catholic), a province-level type.
+  - name: Conseil des écoles publiques de l'Est de l'Ontario (CEPEO)
+    url: https://cepeo.on.ca/
+    reason: School board (French public), a province-level type.
+  - name: Upper Canada District School Board
+    url: https://www.ucdsb.on.ca/
+    reason: School board (English public), a province-level type.
+  - name: Catholic District School Board of Eastern Ontario
+    url: https://www.cdsbeo.on.ca/
+    reason: School board (English Catholic), a province-level type.
+  - name: Collège Boréal (Hawkesbury campus)
+    url: https://collegeboreal.ca/
+    reason: College, a province-level type.
+  - name: Hawkesbury Business Improvement Area (Commission de la Zone d'amélioration commerciale de Hawkesbury, COMZAC-BIA)
+    url: https://comzacbia.ca/index.php/english
+    reason: >-
+      Business improvement area (rule 2 keeps BIAs out), even though the Town consolidates it as
+      "Corporation of the Town of Hawkesbury Business Improvement Area Commission".
+  - name: Hawkesbury Community Industrial Strategic Planning Association
+    reason: >-
+      Controlled by council and consolidated in the Town's 2025 statements, but it appears there only
+      as a reserve and a reserve-fund line; no page on hawkesbury.ca, eSCRIBE or the web says what it
+      does, so it cannot be confirmed as a municipal_corporation running a business of its own (and
+      has no page to label). Not the same body as the Hawkesbury Industrial Investment Association.
+  - name: Hawkesbury Regional Committee for Waste Management
+    reason: >-
+      Joint waste committee of several municipalities, not controlled by the Town (not consolidated,
+      per the 2025 statements), with no page or name of its own; a committee, not a body the Town owns
+      or controls (rules 2 and 3).
+  - name: Communauté francophone accueillante de Hawkesbury (Vivre à Hawkesbury)
+    url: https://vivreahawkesbury.ca/
+    reason: Federally funded newcomer-attraction project run by a community organization, not a Town body.
+  - name: Hawkesbury Industrial Investment Association (HIIA)
+    url: https://hiia.ca/en/
+    reason: >-
+      Economic-development body linked from the Town's Entrepreneurship page, but its own site calls
+      it "an independent, non-profit corporation" serving four municipalities, and the Town's 2025
+      statements do not consolidate it: a not-for-profit the Town does not control (rule 2), not a
+      municipal_corporation.
+  - name: Town of Hawkesbury Non-Profit Housing Corporation
+    url: https://cdnsm5-hosted.civiclive.com/UserFiles/Servers/Server_2375121/File/Stay/social_services/housing_services/housing_brochure_accessible_document.pdf
+    reason: >-
+      Despite the name, not a Town body: one of the 12 non-profit housing corporations the UCPR's
+      Housing Services administers (UCPR housing brochure), and absent from the board and commissions
+      "under the control of council" in the Town's 2025 statements. No website (a bellnet.ca e-mail).
+      Housing is the upper tier's service; not a housing_corporation of this file.
+
+notes: >-
+  French-majority town (86% French speakers). Every hawkesbury.ca page exists in /en/ and /fr/ with
+  translated slugs; the root serves English. The library and Hydro Hawkesbury sites are French-first
+  at the root with English under /en/. Sources use the English URL with the French twin as an
+  alternate; the town's and the fire service's French home pages are in homepage_alternates (the
+  library and Hydro Hawkesbury roots are the French pages, so their /en/ twins are already under the
+  root path). Evidence quotes are in the language of the page quoted. No body of the five types
+  added with the 2026-10 country file (housing, conservation, paramedic, public health, municipal
+  corporation) is the Town's own: paramedics, social housing and the health unit are the UCPR's, and
+  South Nation Conservation is labelled once, in the ottawa file (rule 4), so it has no row here
+  (Hawkesbury appears to be outside its membership anyway, only in the South Nation source-protection
+  area). A Town-owned housing corporation, paramedic service or municipal corporation was searched
+  for on the site map, the 2025 statements' reporting entity and the web; none was found (see
+  out_of_scope for the near misses).

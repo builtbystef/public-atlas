@@ -1,0 +1,1263 @@
+# City of Ottawa: officially bilingual single-tier city. Tests English/French names and French twins of source pages.
+# ottawa.ca sits behind Imperva/Incapsula bot protection: plain curl/httpx gets a JS challenge page, so every
+# ottawa.ca evidence quote below would show as `missing` in `dataset.py evidence`. Each one was checked on the live page in
+# a real browser on 2026-09-29 (same text-node joining as dataset.py), is copied verbatim and carries manual_check.
+subject:
+  kind: place
+  name: City of Ottawa
+  level: municipality
+  place: City of Ottawa
+  parent: Ontario
+  tier: single
+  official_code: "3506008" # verified: StatCan 2021 Census Profile DGUID 2021A00053506008 = "Ottawa, City (CV)"
+  institution: city-of-ottawa
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+trusted_at_start: [ontario.ca, ottawa.ca]
+
+institutions:
+  - key: city-of-ottawa
+    type: municipal_government
+    names:
+      - { text: City of Ottawa, lang: en }
+      - { text: Ville d'Ottawa, lang: fr }
+    homepage: https://ottawa.ca/en
+    homepage_alternates: [https://ottawa.ca/fr]
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.ontario.ca/page/terms-ontario-ottawa-agreement
+      quote: "Please find enclosed the proposed terms for an agreement between the Province of Ontario and the City of Ottawa."
+    notes: >-
+      https://ottawa.ca/ redirects to https://ottawa.ca/en (French home https://ottawa.ca/fr). The same ontario.ca page also
+      carries the French name ("Ville d'Ottawa Bureau de la directrice municipale").
+
+  - key: oc-transpo
+    type: transit_agency
+    names:
+      - { text: OC Transpo, lang: en }
+      - { text: OC Transpo, lang: fr }
+      - { text: Transit Services Department, lang: en }
+      - { text: Direction générale des services de transport en commun, lang: fr }
+    homepage: https://www.octranspo.com/en/
+    homepage_alternates: [https://www.octranspo.com/fr/]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/parking-roads-and-travel/public-transit
+      quote: "OC Transpo schedules, routes, fares, travel planner, service updates"
+      manual_check: "browser 2026-09-29"
+      kind: links_to
+      link_target: https://ottawa.ca/en/parking-roads-and-travel/public-transit/oc-transpo
+    notes: >-
+      Internal City department (Transit Services Department) branded as OC Transpo: rule 3(b). The ottawa.ca link target
+      redirects to https://www.octranspo.com/en/. Governed by Council's Transit Committee (called Transit Commission until
+      recently; the 2026 budget table still says "Transit Commission"). ottawa.ca is bot-protected: quote checked in a browser.
+    parent:
+      institution: city-of-ottawa
+      label: Transit Services Department
+      evidence:
+        url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/table-city-services-and-standing-committee-reporting-structure
+        quote: Transit Services (OC Transpo – bus, Para Transpo and light rail) Transit Services Department
+        manual_check: browser 2026-09-29
+
+  - key: ottawa-police-service
+    type: police_service
+    names:
+      - { text: Ottawa Police Service, lang: en }
+      - { text: OPS, lang: en, is_acronym: true }
+      - { text: Service de police d'Ottawa, lang: fr }
+      - { text: SPO, lang: fr, is_acronym: true }
+      - { text: Ottawa Police Service Board, lang: en }
+      - { text: Ottawa Police Services Board, lang: en }
+      - { text: OPSB, lang: en, is_acronym: true }
+      - { text: Commission de service de police d'Ottawa, lang: fr }
+    homepage: https://www.ottawapolice.ca/en/
+    homepage_alternates: [https://www.ottawapolice.ca/fr/]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/health-and-public-safety
+      quote: "Ottawa Police Service police record checks, file a police report, find a police station"
+      manual_check: "browser 2026-09-29"
+      kind: links_to
+      link_target: https://ottawa.ca/en/health-and-public-safety/ottawa-police-service
+    notes: >-
+      The ottawa.ca link target redirects to https://www.ottawapolice.ca/en. Governed by the Ottawa Police Service Board,
+      folded into this row (Scope rule 5): its names are in `names` (board site: "Ottawa Police Service Board" in the
+      body, "Ottawa Police Services Board" in the header, French "Commission de service de police d'Ottawa"; "OPSB" on
+      the ottawapolice.ca budget page), its meetings are this institution's board_meeting source and ottawapoliceboard.ca
+      is a confirm candidate. ottawa.ca is bot-protected: quote checked in a browser.
+    parent:
+      institution: city-of-ottawa
+      label: Local Boards/Other Governing Bodies
+      evidence:
+        url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/table-city-services-and-standing-committee-reporting-structure
+        quote: Ottawa Police Service Ottawa Police Services Board
+        manual_check: browser 2026-09-29
+
+  - key: ottawa-fire-services
+    type: fire_service
+    names:
+      - { text: Ottawa Fire Services, lang: en }
+      - { text: OFS, lang: en, is_acronym: true }
+      - { text: Service des incendies d'Ottawa, lang: fr }
+      - { text: SIO, lang: fr, is_acronym: true }
+    homepage: https://ottawa.ca/en/health-and-public-safety/ottawa-fire-services
+    homepage_alternates:
+      [https://ottawa.ca/fr/sante-et-securite-publique/service-des-incendies-dottawa]
+    homepage_host: trusted_domain
+    evidence:
+      url: https://ottawa.ca/en/health-and-public-safety
+      quote: "Ottawa Fire Services firefighter recruitment, fire safety, fire station locations"
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      Division of the Emergency and Protective Services Department presenting itself under its own name: rule 3(b).
+      French section: https://ottawa.ca/fr/sante-et-securite-publique/service-des-incendies-dottawa. ottawa.ca is
+      bot-protected: quote checked in a browser.
+    parent:
+      institution: city-of-ottawa
+      label: Emergency and Protective Services Department
+      evidence:
+        url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/table-city-services-and-standing-committee-reporting-structure
+        quote: Ottawa Fire Services Emergency and Protective Services Department
+        manual_check: browser 2026-09-29
+
+  - key: ottawa-public-library
+    type: library
+    names:
+      - { text: Ottawa Public Library, lang: en }
+      - { text: OPL, lang: en, is_acronym: true }
+      - { text: Bibliothèque publique d'Ottawa, lang: fr }
+      - { text: BPO, lang: fr, is_acronym: true }
+      - { text: Ottawa Public Library Board, lang: en }
+    homepage: https://about.biblioottawalibrary.ca/en
+    homepage_alternates: [https://about.biblioottawalibrary.ca/fr]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/city-hall/creating-equal-inclusive-and-diverse-city/accessibility-city/community-supports-healthcare-recreation/ottawa-public-librarys-homebound-services
+      quote: "To learn more about the Ottawa Public Library’s Homebound services program, please visit the Ottawa Public Library website"
+      manual_check: "browser 2026-09-29"
+      kind: links_to
+      link_target: https://about.biblioottawalibrary.ca/en/homebound-services
+    notes: >-
+      https://biblioottawalibrary.ca/ and /en 301 to https://about.biblioottawalibrary.ca/en (French:
+      https://about.biblioottawalibrary.ca/fr). Governed by the Ottawa Public Library Board (local board under the Public
+      Libraries Act), folded into this row (Scope rule 5); the French board pages only say "C.A de la BPO", so no French
+      board name is listed. ottawa.ca is bot-protected: quote checked in a browser.
+    parent:
+      institution: city-of-ottawa
+      label: Local Boards/Other Governing Bodies
+      evidence:
+        url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/table-city-services-and-standing-committee-reporting-structure
+        quote: Ottawa Public Library Ottawa Public Library Board
+        manual_check: browser 2026-09-29
+
+  - key: hydro-ottawa-limited
+    type: public_utility
+    names:
+      - { text: Hydro Ottawa Limited, lang: en }
+      - { text: Hydro Ottawa, lang: en }
+      - { text: Hydro Ottawa Limitée, lang: fr }
+      - { text: Hydro Ottawa, lang: fr }
+    homepage: https://hydroottawa.com/en
+    homepage_alternates: [https://hydroottawa.com/fr]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/extreme-weather-events/who-call
+      quote: "Hydro Ottawa: 613-738-6400"
+      manual_check: "browser 2026-09-29"
+      kind: links_to
+      link_target: https://hydroottawa.com/
+    notes: >-
+      Local electricity distribution company (also serves Casselman). https://ottawa.ca/en/who-call redirects to the
+      evidence URL. https://hydroottawa.com/ serves the English home at /en (French: https://hydroottawa.com/fr).
+      Operating utility, so it has the row (Scope rule 6) and runs its own procurement. Its parent Hydro Ottawa Holding
+      Inc. ("Hydro Ottawa Group") is out_of_scope rather than in `names`: hydroottawa.com uses the Group name only for
+      the parent ("Hydro Ottawa Limited is a wholly-owned subsidiary of Hydro Ottawa Group", site footer) and for Group
+      reports, never as the utility's own name. ottawa.ca is bot-protected: quote checked in a browser.
+    # Adopted Budget 2026 book (documents.ottawa.ca, an ottawa.ca host, so trusted). It says "Hydro Ottawa", the
+    # utility's brand; the legal chain is City -> Hydro Ottawa Holding Inc. (the same page's table has "Hydro Ottawa
+    # Holding Inc. equity pickup") -> Hydro Ottawa Limited, which hydroottawa.com states but ottawa.ca does not. The
+    # holding company is out_of_scope (Scope rule 6), so the relationship goes straight to the operating utility. The
+    # earlier Procedure By-law quote named only the holding company and was dropped.
+    parent:
+      institution: city-of-ottawa
+      label: 100% owned by
+      evidence:
+        url: https://documents.ottawa.ca/sites/default/files/2026%20Adopted%20Budget%20Book%20English%20Condensed.pdf
+        quote: Hydro Ottawa is 100% owned by the City of Ottawa.
+        manual_check: pdftotext 2026-09-29
+        locator: pdf page 16 (printed i-3)
+
+  - key: ottawa-public-health
+    type: public_health_unit
+    names:
+      - { text: Ottawa Public Health, lang: en }
+      - { text: OPH, lang: en, is_acronym: true }
+      - { text: Santé publique Ottawa, lang: fr }
+      - { text: Ottawa Board of Health, lang: en }
+      - { text: Conseil de santé d'Ottawa, lang: fr }
+    homepage: https://www.ottawapublichealth.ca/
+    homepage_alternates: [https://www.santepubliqueottawa.ca/]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/health-and-public-safety
+      quote: "Public health flu clinics, immunization records, food handler course"
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: https://ottawa.ca/en/health-and-public-safety/public-health
+    notes: >-
+      The ottawa.ca link target redirects to https://www.ottawapublichealth.ca/ (checked in a browser 2026-10-01). The
+      Ottawa Board of Health ("an autonomous corporation (under the Health Protection and Promotion Act) that governs
+      Ottawa Public Health", ottawapublichealth.ca Board of Health page) is folded into this row, as police and library
+      boards are (Scope rule 5). The French site is a separate domain, santepubliqueottawa.ca (a confirm candidate).
+      The ottawa.ca Boards page also lists the Ottawa Board of Health, but its link
+      (/boards/ottawa-board-health) lands on a 404 of the new OPH site, so the health-and-public-safety link is the
+      evidence. ottawa.ca is bot-protected: quote checked in a browser.
+    parent:
+      institution: city-of-ottawa
+      label: Local Boards/Other Governing Bodies
+      evidence:
+        url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/table-city-services-and-standing-committee-reporting-structure
+        quote: Ottawa Public Health Ottawa Board of Health
+        manual_check: browser 2026-10-01
+
+  - key: ottawa-community-housing-corporation
+    type: municipal_corporation
+    names:
+      - { text: Ottawa Community Housing Corporation, lang: en }
+      - { text: Ottawa Community Housing, lang: en }
+      - { text: OCH, lang: en, is_acronym: true }
+      - { text: OCHC, lang: en, is_acronym: true }
+      - { text: Société de logement communautaire d'Ottawa, lang: fr }
+      - { text: LCO, lang: fr, is_acronym: true }
+    homepage: https://www.och-lco.ca/
+    homepage_alternates: [https://www.och-lco.ca/fr/]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/city-hall/council-committees-and-boards/boards
+      quote: "Ottawa Community Housing Corporation Provides quality, affordable, accessible, secure and appropriate housing for households of low and modest income."
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: https://ottawa.ca/en/city-hall/council-committees-and-boards/boards/ottawa-community-housing-corporation
+    notes: >-
+      Ottawa's local housing corporation, listed on the ottawa.ca Boards page: a City-owned corporation that owns and
+      runs community housing, so municipal_corporation (rule 3(a); the country file folded housing_corporation into it
+      on 2026-10-01). The link target redirects to
+      https://www.och-lco.ca/corporate-information/public-meetings/ (checked in a browser 2026-10-01). "OCHC" is the
+      City's acronym (Budget 2026 book); OCH's own pages say "OCH" and, in French, "Société de logement communautaire
+      d'Ottawa (LCO)". och.ca (staff e-mail domain) only redirects to och-lco.ca.
+    # The budget book's reconciliation note: "related entities, such as corporations owned by the City", the first of
+    # which it names is OCHC (consolidated in the City's statements, budgeted outside the City budget).
+    parent:
+      institution: city-of-ottawa
+      label: related entities
+      evidence:
+        url: https://documents.ottawa.ca/sites/default/files/2026%20Adopted%20Budget%20Book%20English%20Condensed.pdf
+        quote: Ottawa Community Housing Corporation (OCHC) and other related entities are not included in the City’s
+        manual_check: pdftotext 2026-10-01
+        locator: pdf page 16 (printed i-3)
+
+  - key: build-ottawa
+    type: municipal_corporation
+    names:
+      - { text: Build Ottawa, lang: en }
+      - { text: Bâtir Ottawa, lang: fr }
+      - { text: Ottawa Community Lands Development Corporation, lang: en }
+      - { text: OCLDC, lang: en, is_acronym: true }
+    homepage: null
+    homepage_host: none
+    evidence:
+      url: https://documents.ottawa.ca/sites/default/files/2026%20Adopted%20Budget%20Book%20English%20Condensed.pdf
+      quote: "Oversee Build Ottawa to develop City-owned lands for public priorities"
+      manual_check: "pdftotext 2026-10-01"
+      locator: "pdf page 244 (printed 225)"
+    notes: >-
+      City-controlled real estate development corporation (rule 3(a); municipal_corporation: real estate). Incorporated
+      in 2009 as the Ottawa Community Lands Development Corporation and renamed Build Ottawa in December 2023 (Build
+      Ottawa 2023 Annual Report to Council, ACS2024-SI-HSI-0019, on the City's eSCRIBE portal), with a mandate now
+      focused on putting surplus City land to affordable housing. Judgement call: it develops and sells land rather than
+      owning or running housing (municipal_corporation either way since housing_corporation was folded into it on
+      2026-10-01). It has no website: buildottawa.ca
+      and ocldc.ca do not resolve and ottawa.ca has no page of its own for it, so find_homepage should record no
+      webpage. The same budget page lists "Build Ottawa (OCLDC)" as a revenue line.
+    parent:
+      institution: city-of-ottawa
+      label: sole voting member
+      evidence:
+        url: https://pub-ottawa.escribemeetings.com/filestream.ashx?DocumentId=237101
+        quote: The City of Ottawa is the sole voting member.
+        manual_check: browser (pdf.js) 2026-10-01; eSCRIBE is behind a Cloudflare check
+        locator: pdf page 2
+
+  - key: byward-market-district-authority
+    type: municipal_corporation
+    names:
+      - { text: ByWard Market District Authority, lang: en }
+      - { text: BMDA, lang: en, is_acronym: true }
+      - { text: Autorité du district du marché By, lang: fr }
+      - { text: ADMB, lang: fr, is_acronym: true }
+    homepage: https://www.byward-market.com/
+    homepage_alternates: [https://fr.byward-market.com/]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/city-hall/council-committees-and-boards/boards
+      quote: "ByWard Market District Authority Oversees the ByWard Market District to enhance its economic, cultural, and social vibrancy"
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: https://ottawa.ca/en/city-hall/council-committees-and-boards/boards/byward-market-district-authority
+    notes: >-
+      "The BMDA is a Municipal Services Corporation, established by the City of Ottawa" (byward-market.com FAQ), City
+      Council being its Member. It runs the ByWard and Parkdale public markets (vendor stalls, events, patio permits,
+      public-realm upkeep): a business of its own, so municipal_corporation (rule 3(a)). The ottawa.ca link target
+      redirects to https://www.byward-market.com/ (checked in a browser 2026-10-01). Judgement call: it also represents
+      the district's businesses, as a BIA would, but unlike a BIA it is a City corporation that runs the markets.
+    parent:
+      institution: city-of-ottawa
+      label: established by the City of Ottawa
+      evidence:
+        url: https://www.byward-market.com/faq
+        quote: The BMDA is a Municipal Services Corporation, established by the City of Ottawa
+
+  - key: rideau-valley-conservation-authority
+    type: conservation_authority
+    names:
+      - { text: Rideau Valley Conservation Authority, lang: en }
+      - { text: RVCA, lang: en, is_acronym: true }
+    homepage: https://www.rvca.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/living-ottawa/environment-conservation-and-climate/protecting-ottawas-waterways/water-environment-protection
+      quote: "Conservation Rideau Valley Conservation Authority"
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: http://www.rvca.ca/
+    notes: >-
+      Shared body (rule 4): 18 watershed municipalities appoint its board; headquartered in Manotick, which is in
+      Ottawa, so its row is here. rvca.ca is English only, so no French name is listed. ottawa.ca is bot-protected:
+      quote checked in a browser.
+
+  - key: mississippi-valley-conservation-authority
+    type: conservation_authority
+    names:
+      - { text: Mississippi Valley Conservation Authority, lang: en }
+      - { text: MVCA, lang: en, is_acronym: true }
+      - { text: Mississippi Valley Conservation, lang: en }
+    homepage: https://mvc.on.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/living-ottawa/environment-conservation-and-climate/protecting-ottawas-waterways/water-environment-protection
+      quote: "Mississippi Valley Conservation"
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: http://www.mvc.on.ca/
+    notes: >-
+      Shared body (rule 4), headquartered in Carleton Place (not a subject); Ottawa is the first subject that meets it,
+      so its row is here. http://www.mvc.on.ca/ redirects to https://mvc.on.ca/. ottawa.ca is bot-protected: quote
+      checked in a browser.
+
+  - key: south-nation-conservation
+    type: conservation_authority
+    names:
+      - { text: South Nation Conservation, lang: en }
+      - { text: SNC, lang: en, is_acronym: true }
+      - { text: Conservation de la Nation Sud, lang: fr }
+      - { text: CNS, lang: fr, is_acronym: true }
+    homepage: https://www.nation.on.ca/en/
+    homepage_alternates: [https://www.nation.on.ca/fr/]
+    homepage_host: own_domain
+    evidence:
+      url: https://ottawa.ca/en/living-ottawa/environment-conservation-and-climate/protecting-ottawas-waterways/water-environment-protection
+      quote: "South Nation Conservation"
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: https://www.nation.on.ca/
+    notes: >-
+      Shared body (rule 4), headquartered in Finch (not a subject); Ottawa is the first subject that meets it, so its
+      row is here (Hawkesbury is outside its membership). https://www.nation.on.ca/ redirects to /en/. ottawa.ca is
+      bot-protected: quote checked in a browser.
+
+sources:
+  # --- City of Ottawa ---
+  - institution: city-of-ottawa
+    source_type: procurement
+    url: https://ottawa.ca/en/business/procurement/procurement
+    alternates:
+      - https://ottawa.ca/en/business/procurement
+      - https://ottawa.ca/fr/entreprises/approvisionnement/approvisionnement
+      - https://ottawa.ca/fr/entreprises/approvisionnement
+    evidence:
+      url: https://ottawa.ca/en/business/procurement/procurement
+      quote: "The City's Supply Services administers purchasing activities averaging more than $1 billion annually, in accordance with the City of Ottawa Purchasing By-law and established policies and procedures."
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      /en/business/procurement redirects here. The section's sub-pages (Bidding opportunities, Contracts awarded, Unofficial
+      Bidding Results, SAP Ariba, Contact Supply Services) hang off this page. ottawa.ca is bot-protected: quote checked in a browser.
+  - institution: city-of-ottawa
+    source_type: tender
+    url: https://www.merx.com/cityofottawa
+    platform: merx.com
+    alternates:
+      - https://www.merx.com/cityofottawa/solicitations/open-bids
+      - https://ottawa.ca/en/business/procurement/bidding-opportunities
+      - https://ottawa.ca/fr/entreprises/approvisionnement/possibilites-de-soumission
+    evidence:
+      url: https://www.merx.com/cityofottawa
+      quote: "The City of Ottawa Quotations Portal is the online bidding portal for procurement opportunities under $100,000."
+    notes: >-
+      The City posts bids on MERX, not bidsandtenders (ottawa.bidsandtenders.ca and cityofottawa.bidsandtenders.ca 404).
+      Trusted link: https://ottawa.ca/en/business/procurement/bidding-opportunities links "MERX e-Procurement System" to this
+      URL and says "All requirements for Goods and Services valued at $125,000 and over are advertised on MERX". French
+      view is the same URL with ?language=FR. Construction tenders are also announced via the Ottawa Construction
+      Association bulletin board, whose City page itself points back to this MERX URL (see candidate_domains oca.ca).
+  - institution: city-of-ottawa
+    source_type: budget
+    url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/adopted-budget-2026-book
+    alternates:
+      - https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026
+      - https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/table-city-services-and-standing-committee-reporting-structure
+      - https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/draft-budget-2026-magazine-and-explorer
+      - https://ottawa.ca/fr/hotel-de-ville/budget-finances-et-planification-municipale/budget-2026/livres-budgetaires-2026
+    evidence:
+      url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/budget-2026/adopted-budget-2026-book
+      quote: "Adopted Budget Book 2026"
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      Budget 2026 (adopted December 2025) is current; no 2027 draft yet (election year). /budget-2026 redirects to its
+      first child page (the services/committee table). The book itself is a PDF on ottawa.ca/sites/default/files. ottawa.ca
+      is bot-protected: quote checked in a browser.
+  - institution: city-of-ottawa
+    source_type: capital_plan
+    url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/financial-reports-and-statements/long-range-financial-plans/long-range-financial-plan-vi
+    alternates:
+      - https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/financial-reports-and-statements/long-range-financial-plans
+      - https://ottawa.ca/fr/hotel-de-ville/budget-finances-et-planification-municipale/documents-financiers/plan-financier-long-terme/plan-financier-long-terme-vi
+    evidence:
+      url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/financial-reports-and-statements/long-range-financial-plans/long-range-financial-plan-vi
+      quote: "Long Range Financial Plan - Tax Supported Capital"
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      Ten-year tax-supported capital plan and rate-supported (water, wastewater, stormwater) plan; links go to eSCRIBE
+      reports. /long-range-financial-plans redirects to this page. ottawa.ca is bot-protected: quote checked in a browser.
+  - institution: city-of-ottawa
+    source_type: capital_plan
+    url: https://ottawa.ca/en/planning-development-and-construction/official-plan-and-master-plans/transportation-master-plan
+    alternates:
+      - https://ottawa.ca/fr/urbanisme-amenagement-et-construction/plans-officiel-et-directeurs/plan-directeur-des-transports
+    evidence:
+      url: https://ottawa.ca/en/planning-development-and-construction/official-plan-and-master-plans/transportation-master-plan
+      quote: "This plan identifies the transit, road, and active transportation projects and investments required to support Ottawa’s growth"
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      TMP Capital Infrastructure Plan (approved July 2025): multi-year transit and road capital projects. A second,
+      genuinely different capital_plan page. ottawa.ca is bot-protected: quote checked in a browser.
+  - institution: city-of-ottawa
+    source_type: council_meeting
+    url: https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/meetings-agendas-and-minutes
+    alternates:
+      - https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos
+      - https://ottawa.ca/fr/hotel-de-ville/conseil-municipal-comites-et-conseils/ordres-du-jour-proces-verbaux-et-videos/ordres-du-jour-et-proces-verbaux-des-reunions
+    evidence:
+      url: https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/meetings-agendas-and-minutes
+      quote: "Meeting agendas, minutes and videos for City Council, its committees and select local boards can be accessed through the City’s agendas and minutes web portal"
+      manual_check: "browser 2026-09-29"
+    notes: >-
+      /agendas-minutes-and-videos redirects here; the page links to the eSCRIBE portal. ottawa.ca is bot-protected: quote
+      checked in a browser.
+  - institution: city-of-ottawa
+    source_type: council_meeting
+    url: https://pub-ottawa.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-ottawa.escribemeetings.com/
+      quote: "eSCRIBE Published Meetings"
+    notes: >-
+      Shared eSCRIBE portal for City Council, standing committees (incl. Transit Committee), the Police Service Board, the
+      OPL Board and the Board of Health. French view: ?lang=French (same URL after query normalization). Meeting lists are
+      loaded by JavaScript; the static page carries the meeting-type filter.
+  - institution: city-of-ottawa
+    source_type: strategic_plan
+    url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/understanding-your-city-budget/corporate-planning/2023-2026-city-strategic-plan
+    alternates:
+      - https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/understanding-your-city-budget/corporate-planning
+      - https://ottawa.ca/fr/hotel-de-ville/budget-finances-et-planification-municipale/comprendre-le-budget-municipal/planification-municipales/plan-strategique-de-la-ville-2023-2026
+    evidence:
+      url: https://ottawa.ca/en/city-hall/budget-finance-and-corporate-planning/understanding-your-city-budget/corporate-planning/2023-2026-city-strategic-plan
+      quote: "The 2023-2026 City Strategic Plan is the key corporate planning document defining what Council plans to accomplish over its four-year term."
+      manual_check: "browser 2026-09-29"
+    notes: "/corporate-planning redirects here. ottawa.ca is bot-protected: quote checked in a browser."
+  - institution: city-of-ottawa
+    source_type: contract_award
+    url: https://ottawa.ca/en/business/procurement/contracts-awarded
+    alternates:
+      - https://www.merx.com/cityofottawa/solicitations/awarded-bids
+      - https://ottawa.ca/en/city-hall/open-transparent-and-accountable-government/public-disclosure/disclosure-executed-contracts-and-reports
+    evidence:
+      url: https://ottawa.ca/en/business/procurement/procurement
+      quote: "Contracts awarded"
+      manual_check: "Wayback raw snapshot 2026-08-24 (live page bot-walled 2026-10-01)"
+      kind: links_to
+      link_target: https://ottawa.ca/en/business/procurement/contracts-awarded
+    notes: >-
+      Not a municipal_government source type in canada.yaml; recorded under the floor rule (README, "The type's list is
+      a floor") because the agent meets it one click from the procurement page. Contracts awarded lists the
+      Delegation of Authority reports (all City procurements over $25,000, half-yearly PDFs on documents.ottawa.ca).
+      Alternates: the "Awarded Solicitations" tab of the City's MERX portal and the Disclosure of executed contracts
+      page (contracts of significant public interest). Judgement call: those two are arguably separate pages of the
+      same type. ottawa.ca is bot-protected: the link was checked in the Wayback Machine's raw copy, and the page
+      itself in a browser on 2026-10-01 (it lists the half-yearly reports to Council, to Transit Commission and, in
+      2016, to the Board of Health).
+  - institution: city-of-ottawa
+    source_type: meeting_video
+    url: https://pub-ottawa.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-ottawa.escribemeetings.com/
+      quote: "eSCRIBE Published Meetings"
+    notes: >-
+      Same portal as the council_meeting entry. The meetings page lists "Meeting recordings for meetings held on or after
+      June 27, 2022" among what the portal holds; City Council meetings carry HasVideo in the portal's calendar data
+      (checked 2026-10-01). The video list is loaded by JavaScript, so the quote is the portal's static title.
+  - institution: city-of-ottawa
+    source_type: meeting_video
+    url: https://www.youtube.com/channel/UCUR3i_hvk3-3i8vtrPg6v1Q
+    alternates:
+      - https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/watch-or-listen-council-and-committee-meetings
+      - https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/archived-council-and-committee-audio-and-webcasts
+      - https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos
+      - https://ottawa.ca/fr/hotel-de-ville/conseil-municipal-comites-et-conseils/ordres-du-jour-proces-verbaux-et-videos/regarder-ou-ecouter-les-reunions-du-conseil-municipal-et-des-comites
+      - https://www.youtube.com/@ottcitycouncil
+    platform: youtube.com
+    evidence:
+      url: https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/meetings-agendas-and-minutes
+      quote: "Live meeting streams and archived meeting videos continue to be available on the Ottawa City Council YouTube Channel."
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: https://www.youtube.com/channel/UCUR3i_hvk3-3i8vtrPg6v1Q
+    notes: >-
+      The "Ottawa City Council" channel of the Office of the City Clerk: live and archived Council and committee meetings.
+      The watch page links it too. youtube.com is a listed platform.
+      ottawa.ca is bot-protected: link checked in a browser.
+      The government's page that links here only points to it, so it is an alternate.
+  - institution: city-of-ottawa
+    source_type: meeting_video
+    url: https://www.rogerstv.com/ottawa/show/ottawa-city-council
+    platform: rogerstv.com
+    evidence:
+      url: https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/watch-or-listen-council-and-committee-meetings
+      quote: "Regular City Council meetings are also broadcast live on RogersTV Cable 22 and live streamed on the RogersTV website."
+      manual_check: "browser 2026-10-01"
+      kind: links_to
+      link_target: https://www.rogerstv.com/ottawa/show/ottawa-city-council
+    notes: >-
+      Rogers tv Ottawa's "Ottawa City Council" show page lists each regular Council meeting broadcast. rogerstv.com (the
+      community cable channel, used by many Ontario municipalities) is a listed platform. ottawa.ca is bot-protected: link checked in a browser.
+  - institution: city-of-ottawa
+    source_type: news
+    url: https://ottawa.ca/en/city-hall/city-news/newsroom
+    alternates:
+      - https://ottawa.ca/en/news
+      - https://ottawa.ca/en/newsroom
+      - https://ottawa.ca/en/city-hall/city-news
+      - https://ottawa.ca/fr/hotel-de-ville/sujets-de-lheure/salle-de-presse
+    evidence:
+      url: https://ottawa.ca/en/city-hall/city-news/newsroom
+      quote: "Search all city news"
+      manual_check: "browser 2026-10-01"
+    notes: >-
+      Newsroom: searchable list of news releases, notices and statements by topic and date. /en/news and /en/newsroom
+      redirect here; /city-news is the page one click up. ottawa.ca is bot-protected: quote checked in a browser.
+
+  # --- OC Transpo ---
+  - institution: oc-transpo
+    source_type: contract_award
+    url: https://ottawa.ca/en/business/procurement/contracts-awarded
+    evidence:
+      url: https://ottawa.ca/en/business/procurement/procurement
+      quote: "Contracts awarded"
+      manual_check: "Wayback raw snapshot 2026-08-24 (live page bot-walled 2026-10-01)"
+      kind: links_to
+      link_target: https://ottawa.ca/en/business/procurement/contracts-awarded
+    notes: >-
+      The City's Contracts awarded page has a "Reports to Transit Commission" section of its own, with the half-yearly
+      transit contract reports (checked in a browser 2026-10-01), so it is a real source for OC Transpo as well as the
+      City (README: a page with a section of its own per body is a source for each body). Floor rule, as for the City.
+  - institution: oc-transpo
+    source_type: procurement
+    url: https://www.octranspo.com/en/about-us/how-we-work/
+    alternates:
+      - https://www.octranspo.com/fr/a-propos/fonctionnement/
+    evidence:
+      url: https://www.octranspo.com/en/about-us/how-we-work/
+      quote: "All purchasing at OC Transpo is administered by the City of Ottawa’s Supply Services Department."
+    notes: >-
+      "Selling services or products" section of the How we work page: how OC Transpo buys and who to call; links to
+      ottawa.ca/en/business. Judgement call: a section on a general page, not a dedicated purchasing page.
+  - institution: oc-transpo
+    source_type: board_meeting
+    url: https://pub-ottawa.escribemeetings.com/
+    platform: escribemeetings.com
+    alternates:
+      - https://ottawa.ca/en/city-hall/council-committees-and-boards/agendas-minutes-and-videos/meetings-agendas-and-minutes
+    evidence:
+      url: https://pub-ottawa.escribemeetings.com/
+      quote: "Transit Committee"
+    notes: >-
+      OC Transpo has no board of directors; Council's Transit Committee (terms of reference: "providing overall guidance and
+      direction to the Transit Services Department") is its governing body and its agendas/minutes are on the City's eSCRIBE
+      portal. Judgement call: a council standing committee used as the transit agency's board_meeting source.
+
+  # --- Ottawa Police Service ---
+  - institution: ottawa-police-service
+    source_type: budget
+    url: https://www.ottawapolice.ca/en/who-we-are/budget/
+    alternates:
+      - https://www.ottawapolice.ca/fr/qui-nous-sommes/budget/
+    evidence:
+      url: https://www.ottawapolice.ca/en/who-we-are/budget/
+      quote: "The Ottawa Police Service (OPS) tabled its 2026 Draft Operating and Capital Budget to the Ottawa Police Service Board (OPSB) in November 2025"
+  - institution: ottawa-police-service
+    source_type: board_meeting
+    url: https://ottawapoliceboard.ca/opsb-cspo/meetings.html
+    alternates:
+      - https://ottawapoliceboard.ca/opsb-cspo/fr/calendrier-des-reunions.html
+      - https://ottawapoliceboard.ca/opsb-cspo/
+      - https://ottawapoliceboard.ca/
+    evidence:
+      url: https://ottawapoliceboard.ca/opsb-cspo/meetings.html
+      quote: "Agendas for Regular Meetings will be made available on the Monday before the meeting date."
+    notes: >-
+      Ottawa Police Service Board site (linked as "Ottawa Police Service Board" from ottawapolice.ca navigation; the ottawa.ca
+      Boards page link redirects to https://ottawapoliceboard.ca/opsb-cspo/). Agenda documents themselves are on the City's
+      eSCRIBE portal.
+  - institution: ottawa-police-service
+    source_type: strategic_plan
+    url: https://www.ottawapolice.ca/en/who-we-are/strategies-and-projects/strategic-direction/
+    alternates:
+      - https://www.ottawapolice.ca/fr/qui-nous-sommes/strategies-et-projets/orientation-strategique/
+      - https://www.ottawapolice.ca/en/who-we-are/strategies-and-projects/
+      - https://ottawapoliceboard.ca/opsb-cspo/policies-publications.html
+    evidence:
+      url: https://www.ottawapolice.ca/en/who-we-are/strategies-and-projects/strategic-direction/
+      quote: "The Ottawa Police Service Board (OPSB) developed a strategic plan in consultation with the Ottawa Police Service (OPS)."
+    notes: >-
+      Not a police_service source type in canada.yaml; recorded under the floor rule (README, "The type's list is a
+      floor"). Strategic Direction 2027 (the Board's 2024-2027 plan), linked under Who We Are > Strategies and
+      Projects; the Board's Policies & Publications page lists it as "Strategic Direction - 2024/2027".
+
+  # --- Ottawa Public Library ---
+  - institution: ottawa-public-library
+    source_type: budget
+    url: https://about.biblioottawalibrary.ca/en/2026-opl-budget-approved-expanding-services-access
+    alternates:
+      - https://about.biblioottawalibrary.ca/en/2026-draft-opl-budget
+      - https://about.biblioottawalibrary.ca/fr/budget-2026-de-la-bpo-approuve-expansion-des-services-et-de-lacces
+    evidence:
+      url: https://about.biblioottawalibrary.ca/en/2026-opl-budget-approved-expanding-services-access
+      quote: "The 2026 Operating and Capital Budget was approved by the Ottawa Public Library Board on December 2 and by City Council on December 10."
+    notes: >-
+      /en/2026-draft-opl-budget 301s here. OPL keeps one page per budget year (budget-2021 ... 2025-opl-budget) and no
+      stable budget landing page; the budget books are PDFs under /sites/default/files.
+  - institution: ottawa-public-library
+    source_type: board_meeting
+    url: https://about.biblioottawalibrary.ca/en/opl-board-agenda-and-minutes
+    alternates:
+      - https://about.biblioottawalibrary.ca/fr/ca-de-la-bpo-ordres-du-jour-et-proces-verbaux
+      - https://about.biblioottawalibrary.ca/en/opl-board-overview
+    evidence:
+      url: https://about.biblioottawalibrary.ca/en/opl-board-agenda-and-minutes
+      quote: "Board agendas are released five calendar days prior to the meeting date."
+    notes: >-
+      English and French agendas and minutes per meeting. The ottawa.ca Boards page link
+      (/en/city-hall/council-committees-and-boards/boards/ottawa-public-library-board) redirects to the overview page.
+  - institution: ottawa-public-library
+    source_type: strategic_plan
+    url: https://about.biblioottawalibrary.ca/en/strategic-plan
+    alternates:
+      - https://about.biblioottawalibrary.ca/fr/plan-strategique
+    evidence:
+      url: https://about.biblioottawalibrary.ca/en/strategic-plan
+      quote: "Strategic Directions and Priorities 2023-2028"
+    notes: >-
+      Not a library source type in canada.yaml; recorded under the floor rule (README, "The type's list is a floor"),
+      as for the Waterloo library. Linked as "Strategic Plan" from the About navigation. The older
+      /en/strategic-direction-and-priorities page (earlier directions, still in the sitemap) is not the current plan.
+
+  # --- Hydro Ottawa Limited ---
+  - institution: hydro-ottawa-limited
+    source_type: procurement
+    url: https://hydroottawa.com/en/about-us/policies-and-terms/supply-chain
+    alternates:
+      - https://hydroottawa.com/fr/propos/politiques-et-conditions/chaine-dapprovisionnement
+      - https://hydroottawa.com/en/about-us/our-company/supply-chain
+    evidence:
+      url: https://hydroottawa.com/en/about-us/policies-and-terms/supply-chain
+      quote: "Hydro Ottawa regularly seeks out suppliers and contractors of products and/or services."
+    notes: "The older URL /en/about-us/our-company/supply-chain (still in search results) redirects here."
+  - institution: hydro-ottawa-limited
+    source_type: capital_plan
+    url: https://hydroottawa.com/en/community/investment-plan
+    alternates:
+      - https://hydroottawa.com/fr/communaute/plan-dinvestissement
+    evidence:
+      url: https://hydroottawa.com/en/community/investment-plan
+      quote: "Powering a sustainable tomorrow: 2026–2030 investment plan"
+    notes: "Linked from the Regulatory affairs page as the 2026–2030 investment plan (OEB distribution system plan)."
+
+  - institution: oc-transpo
+    source_type: strategic_plan
+    url: https://www.octranspo.com/en/about-us/
+    alternates:
+      - https://www.octranspo.com/fr/a-propos/
+      - https://www.octranspo.com/images/files/reports/Report-English-5-Year-Roadmap.pdf
+      - https://pub-ottawa.escribemeetings.com/filestream.ashx?DocumentId=134256
+    evidence:
+      url: https://www.octranspo.com/en/about-us/
+      quote: "The roadmap guides how OC Transpo is modernizing and growing, while focusing on service reliability and customer satisfaction."
+    notes: >-
+      The Transit Services Five-Year Roadmap (28 strategic initiatives with measurable indicators)
+      is a section of the About us page, which links the roadmap PDF and its 2025 update.
+      Judgement call, as for procurement: a section on a general page, not a dedicated page.
+
+  # --- Ottawa Public Health ---
+  - institution: ottawa-public-health
+    source_type: board_meeting
+    url: https://www.ottawapublichealth.ca/about-us/board-of-health/agendas-and-minutes/
+    alternates:
+      - https://www.santepubliqueottawa.ca/a-notre-sujet/conseil-de-sante/ordres-du-jour-et-comptes-rendus/
+      - https://www.ottawapublichealth.ca/about-us/board-of-health/
+      - https://pub-ottawa.escribemeetings.com/
+    evidence:
+      url: https://www.ottawapublichealth.ca/about-us/board-of-health/agendas-and-minutes/
+      quote: "December 1, 2025 - Agenda, Minutes"
+    notes: >-
+      Board of Health agendas and minutes by term; each links to the meeting on the City's eSCRIBE portal (the bare
+      portal is an alternate, as for the other local boards).
+
+  # --- Ottawa Community Housing Corporation ---
+  - institution: ottawa-community-housing-corporation
+    source_type: procurement
+    url: https://www.och-lco.ca/join-our-team/contractors-suppliers/
+    alternates:
+      - https://www.och-lco.ca/fr/joignez-vous-equipe/entrepreneurs-fournisseurs/
+    evidence:
+      url: https://www.och-lco.ca/join-our-team/contractors-suppliers/
+      quote: "In accordance with the OCH Procurement Policy and Procedure, solicitations for proposals:"
+  - institution: ottawa-community-housing-corporation
+    source_type: tender
+    url: https://www.merx.com/English/SUPPLIER_Menu.asp?WCE=GOTO&GID=REMOTESEARCH&TAB=3&PORTAL=MERX&hcode=U7OgSambacV%2f5BbBuwab1Q%3d%3d
+    platform: merx.com
+    alternates:
+      - https://www.och-lco.ca/join-our-team/contractors-suppliers/
+    evidence:
+      url: https://www.och-lco.ca/join-our-team/contractors-suppliers/
+      quote: "Ottawa Community Housing uses MERX to notify companies about public tender opportunities."
+      kind: links_to
+      link_target: https://www.merx.com/English/SUPPLIER_Menu.asp?WCE=GOTO&GID=REMOTESEARCH&TAB=3&PORTAL=MERX&hcode=U7OgSambacV%2f5BbBuwab1Q%3d%3d
+    notes: >-
+      The "TAKE ME TO MERX" button links a MERX saved search for OCH's solicitations (over $125,000). Scoring drops the
+      query string, so any MERX supplier-menu URL matches; the contractors page that links it is an alternate.
+  - institution: ottawa-community-housing-corporation
+    source_type: capital_plan
+    url: https://www.och-lco.ca/corporate-information/development-strategy/
+    alternates:
+      - https://www.och-lco.ca/fr/renseignements-administratifs/strategie-de-developpement/
+      - https://www.och-lco.ca/corporate-information/corporate-reporting/
+    evidence:
+      url: https://www.och-lco.ca/corporate-information/development-strategy/
+      quote: "OCH’s Development Strategy outlines plans for building more affordable housing"
+    notes: >-
+      Judgement call: OCH publishes no capital budget page. The Development Strategy (new construction, community
+      renewals, projects in planning) is its multi-year building plan; the Corporate Reporting page links the Long
+      Range Financial Plan (an Adobe InDesign viewer link), kept as an alternate. A reviewer may prefer the absence.
+      Not a municipal_corporation source type since housing_corporation was folded into it (2026-10-01); kept under
+      the floor rule (README, "The type's list is a floor").
+  - institution: ottawa-community-housing-corporation
+    source_type: annual_report
+    url: https://www.och-lco.ca/corporate-information/corporate-reporting/
+    alternates:
+      - https://www.och-lco.ca/fr/renseignements-administratifs/renseignements-administratifs/
+    evidence:
+      url: https://www.och-lco.ca/corporate-information/corporate-reporting/
+      quote: "ANNUAL REPORTS 2025 Annual Report 2024 Annual Report"
+    notes: >-
+      Annual Reports section of the Corporate Reporting page, linking the 2020 to 2025 reports (Canva and Adobe
+      InDesign viewer links, no PDFs on och-lco.ca). French twin "Rapport annuel 2025" and earlier.
+  - institution: ottawa-community-housing-corporation
+    source_type: board_meeting
+    url: https://www.och-lco.ca/corporate-information/public-meetings/
+    alternates:
+      - https://www.och-lco.ca/fr/renseignements-administratifs/reunions-publiques/
+    evidence:
+      url: https://www.och-lco.ca/corporate-information/public-meetings/
+      quote: "Ottawa Community Housing Board of Directors hosts regular meeting sessions open to the public."
+    notes: >-
+      2026 meeting dates; the "Agenda, Minutes and Reports" link opens a public SharePoint folder
+      (ottawacommunityhousing.sharepoint.com) with each board package.
+
+  # --- ByWard Market District Authority ---
+  - institution: byward-market-district-authority
+    source_type: annual_report
+    url: https://www.byward-market.com/2025-annual-report
+    evidence:
+      url: https://www.byward-market.com/2025-annual-report
+      quote: "2025 Annual Report"
+      kind: links_to
+      link_target: https://www.byward-market.com/s/BMDA-AnnualReport-2025-EN.pdf
+    notes: >-
+      Page for the 2025 annual report, linking the English and French PDFs; there is no older-years archive page.
+
+  # --- Rideau Valley Conservation Authority ---
+  - institution: rideau-valley-conservation-authority
+    source_type: procurement
+    url: https://www.rvca.ca/tenders-rfp
+    evidence:
+      url: https://www.rvca.ca/tenders-rfp
+      quote: "The RVCA encourages competition among suppliers to maximize savings for taxpayers."
+    notes: "One page for both: how RVCA buys, and where its calls for bids are posted (none open on 2026-10-01)."
+  - institution: rideau-valley-conservation-authority
+    source_type: tender
+    url: https://www.rvca.ca/tenders-rfp
+    evidence:
+      url: https://www.rvca.ca/tenders-rfp
+      quote: "The purchasing process is transparent and equitable ensuring fairness among bidders."
+  - institution: rideau-valley-conservation-authority
+    source_type: budget
+    url: https://www.rvca.ca/annual-budgets
+    alternates:
+      - https://www.rvca.ca/governance
+    evidence:
+      url: https://www.rvca.ca/annual-budgets
+      quote: "Annual Budgets 2026 Budget"
+  - institution: rideau-valley-conservation-authority
+    source_type: board_meeting
+    url: https://www.rvca.ca/governance/board-of-directors/bod-meeting-schedule
+    alternates:
+      - https://www.rvca.ca/governance
+    evidence:
+      url: https://www.rvca.ca/governance/board-of-directors/bod-meeting-schedule
+      quote: "RVCA’s Board of Directors usually meets the fourth Thursday of the month"
+
+  # --- Mississippi Valley Conservation Authority ---
+  - institution: mississippi-valley-conservation-authority
+    source_type: procurement
+    url: https://mvc.on.ca/finances/
+    evidence:
+      url: https://mvc.on.ca/finances/
+      quote: "MVCA carries out purchases in accordance with a Board-approved Purchasing Policy"
+    notes: "Judgement call: the Procurement section of the Finances page (links the Purchasing Policy), not a dedicated page."
+  - institution: mississippi-valley-conservation-authority
+    source_type: budget
+    url: https://mvc.on.ca/finances/
+    evidence:
+      url: https://mvc.on.ca/finances/
+      quote: "The annual budget is developed and approved over a period of months as shown below."
+    notes: "The Budget section links the draft 2027 and final 2026 budgets and the 10-year capital plan."
+  - institution: mississippi-valley-conservation-authority
+    source_type: board_meeting
+    url: https://mvc.on.ca/meetings/
+    alternates:
+      - https://mvc.on.ca/board-of-directors/
+    evidence:
+      url: https://mvc.on.ca/meetings/
+      quote: "Agenda & Report packages are posted as soon as they are available."
+
+  # --- South Nation Conservation ---
+  - institution: south-nation-conservation
+    source_type: budget
+    url: https://www.nation.on.ca/en/governance/governance-overview
+    alternates:
+      - https://www.nation.on.ca/uploads/governance/2026-snc-budget.pdf
+    evidence:
+      url: https://www.nation.on.ca/en/governance/governance-overview
+      quote: "The SNC 2026 Budget can be accessed here"
+    notes: "Financial Reporting section of the Governance overview, linking the 2026 budget PDF."
+  - institution: south-nation-conservation
+    source_type: board_meeting
+    url: https://www.nation.on.ca/en/governance/board-of-directors/board-of-directors-meetings
+    evidence:
+      url: https://www.nation.on.ca/en/governance/board-of-directors/board-of-directors-meetings
+      quote: "Board agenda packages are posted online one week prior to the Board meeting date."
+
+absent_sources:
+  - institution: oc-transpo
+    source_type: tender
+    note: >-
+      No bid listing of its own: octranspo.com sitemap (en/fr) has no procurement/tender pages, merx.com/octranspo and
+      octranspo.bidsandtenders.ca 404. Transit solicitations (prefixed TS/) are posted on the City's MERX portal
+      (city-of-ottawa tender source), as the How we work page says purchasing is done by the City's Supply Services.
+    covered_by: city-of-ottawa
+  - institution: oc-transpo
+    source_type: budget
+    note: >-
+      No budget page on octranspo.com (sitemap and About us/Transparency pages searched; only Council memos about the
+      budget). The transit budget is part of the City budget (city-of-ottawa budget source; Budget 2026 table lists
+      "Transit Services (OC Transpo ...)").
+    covered_by: city-of-ottawa
+  - institution: oc-transpo
+    source_type: capital_plan
+    note: >-
+      No capital plan on octranspo.com (sitemap, About us, Transparency searched; the "Capital Railway Three-Year Plan" is a
+      rail-safety plan of the Capital Railway operator, and the Five-Year Roadmap is a strategic plan). Transit capital
+      projects are in the City's TMP Capital Infrastructure Plan and Long Range Financial Plan (city-of-ottawa capital_plan).
+    covered_by: city-of-ottawa
+  - institution: ottawa-police-service
+    source_type: procurement
+    note: >-
+      No purchasing page on ottawapolice.ca (full sitemap.xml, Who We Are and Transparency pages searched). OPS buys through
+      the City's Supply Services (ottawa.ca "Standing Offers by Client Unit" lists Ottawa Police Service).
+    covered_by: city-of-ottawa
+  - institution: ottawa-police-service
+    source_type: tender
+    note: >-
+      No bid listing of its own: none in the ottawapolice.ca sitemap, merx.com/ottawapolice and
+      ottawapolice.bidsandtenders.ca 404; OPS solicitations appear on the City's MERX portal.
+    covered_by: city-of-ottawa
+  - institution: ottawa-fire-services
+    source_type: procurement
+    note: >-
+      No purchasing page in the Ottawa Fire Services section of ottawa.ca (section index, About OFS, Performance and Key
+      Reports searched). Fire buys through the City's Supply Services (city-of-ottawa procurement source).
+    covered_by: city-of-ottawa
+  - institution: ottawa-fire-services
+    source_type: budget
+    note: >-
+      No fire budget page: OFS section has annual reports and the CRA/SOC but no budget. Ottawa Fire Services is a line in the
+      City budget (Budget 2026 table, Emergency and Protective Services Department; city-of-ottawa budget source).
+    covered_by: city-of-ottawa
+  - institution: ottawa-public-library
+    source_type: procurement
+    note: >-
+      No purchasing page on about.biblioottawalibrary.ca (sitemap.xml with 415 URLs searched for procure/purchas/vendor/
+      tender/bid/supplier; only "Suggest to Purchase" for patrons). OPL buys through the City's Supply Services (ottawa.ca
+      standing offers list "Public Works and Ottawa Public Library").
+    covered_by: city-of-ottawa
+  - institution: hydro-ottawa-limited
+    source_type: tender
+    note: >-
+      The supply chain page no longer points to a bid listing (older copies said bids are on MERX); merx.com/hydroottawa
+      and hydroottawa.bidsandtenders.ca 404, and no MERX organization page for Hydro Ottawa was found. Individual
+      solicitations surface only via MERX keyword search, which is not a landing page. The parent's hydroottawagroup.com
+      has no bid listing either.
+  - institution: hydro-ottawa-limited
+    source_type: board_meeting
+    note: >-
+      Hydro Ottawa Limited Board of Directors page (hydroottawa.com/en/about-us/governance/hydro-ottawa-limited-board-directors)
+      lists directors only; no public agendas or minutes (OBCA corporation). The parent's hydroottawagroup.com Board of
+      directors and Committees of the Board pages likewise list members and mandates only. Council receives the Group's
+      annual report at a shareholder meeting (City eSCRIBE), which is not a board meeting of the utility.
+
+  - institution: ottawa-public-library
+    source_type: tender
+    covered_by: city-of-ottawa
+    note: >-
+      No bid page on about.biblioottawalibrary.ca (the sitemap search above covered tender and
+      bid). Recorded under the city, as for procurement.
+
+  - institution: ottawa-public-health
+    source_type: procurement
+    covered_by: city-of-ottawa
+    note: >-
+      No purchasing page on ottawapublichealth.ca (sitemap.xml, 525 URLs, searched for procure/purchas/tender/bid/
+      supplier; About us and Board of Health pages read). The City provides the Board its public health staff (OPH
+      governance page), and OPH purchases go through the City's Supply Services: the City's Contracts awarded page
+      lists a delegated-authority procurement report to the Board of Health (2016).
+  - institution: ottawa-public-health
+    source_type: budget
+    covered_by: city-of-ottawa
+    note: >-
+      No budget page on ottawapublichealth.ca (sitemap searched for budget; the Board of Health and governance pages
+      speak only of "fiscal and administrative oversight"). The Board's budget is tabled at Board meetings and carried
+      in the City budget: the Adopted Budget 2026 book has an "Ottawa Public Health Board" section.
+  - institution: build-ottawa
+    source_type: procurement
+    covered_by: city-of-ottawa
+    note: >-
+      No website. Build Ottawa has no staff of its own: "The objectives and mandate of Build Ottawa are achieved through
+      the primary support of the Corporate Real Estate Office" (2023 Annual Report to Council, eSCRIBE), so its buying
+      runs through the City.
+  - institution: build-ottawa
+    source_type: tender
+    covered_by: city-of-ottawa
+    note: "No website and no bid listing of its own; as for procurement, the City's Corporate Real Estate Office runs its work."
+  - institution: build-ottawa
+    source_type: annual_report
+    note: >-
+      No landing page: Build Ottawa's annual reports reach the public only as attachments to a yearly report to
+      Planning and Housing Committee and Council on the City's eSCRIBE portal (2023 report: ACS2024-SI-HSI-0019).
+  - institution: build-ottawa
+    source_type: board_meeting
+    note: >-
+      No public board meetings, agendas or minutes found (no website, no ottawa.ca page). Its board holds an annual
+      meeting and reports to Council as the member (2023 Annual Report to Council).
+  - institution: byward-market-district-authority
+    source_type: procurement
+    note: >-
+      No purchasing page on byward-market.com (sitemap.xml, 279 URLs, searched for rfp/tender/procure/bid/supplier;
+      About, FAQ and Team pages read). "Become a Vendor" is for market stall vendors, not suppliers.
+  - institution: byward-market-district-authority
+    source_type: tender
+    note: >-
+      No bid listing on byward-market.com (sitemap searched as above).
+  - institution: byward-market-district-authority
+    source_type: board_meeting
+    note: >-
+      The Team > Board page lists directors only; no agendas or minutes on byward-market.com (sitemap searched for
+      meeting/minutes/governance).
+  - institution: mississippi-valley-conservation-authority
+    source_type: tender
+    note: >-
+      No bid listing on mvc.on.ca (every link of the home page navigation and the Finances page read; tender appears
+      only on project pages such as the Kashwakamak Lake Dam replacement). mvca.bidsandtenders.ca belongs to Maitland
+      Valley Conservation Authority, not MVCA.
+  - institution: south-nation-conservation
+    source_type: procurement
+    note: >-
+      No purchasing page on nation.on.ca (sitemap.xml, 240 URLs, searched for procure/purchas/tender/rfp/bid/supplier;
+      Governance overview read).
+  - institution: south-nation-conservation
+    source_type: tender
+    note: >-
+      No bid listing on nation.on.ca (sitemap searched as above). The only "Tender Sales" page
+      (/en/land-forestry/land-management/tender-sales) is for timber SNC sells, not for buying.
+
+candidate_domains:
+  - {
+      domain: octranspo.com,
+      institution: oc-transpo,
+      expected: confirm,
+      reason: "OC Transpo's own site; ottawa.ca public transit page links to it via /public-transit/oc-transpo redirect",
+    }
+  - {
+      domain: ottawapolice.ca,
+      institution: ottawa-police-service,
+      expected: confirm,
+      reason: "Ottawa Police Service's own site",
+    }
+  - {
+      domain: ottawapoliceboard.ca,
+      institution: ottawa-police-service,
+      expected: confirm,
+      reason: "Ottawa Police Service Board site (governing board of the service; hosts its board_meeting source); ottawa.ca Boards page redirects to it",
+    }
+  - {
+      domain: biblioottawalibrary.ca,
+      institution: ottawa-public-library,
+      expected: confirm,
+      reason: "OPL's own site (served from about.biblioottawalibrary.ca)",
+    }
+  - {
+      domain: hydroottawa.com,
+      institution: hydro-ottawa-limited,
+      expected: confirm,
+      reason: "Hydro Ottawa Limited's own site; linked from ottawa.ca Who to call page",
+    }
+  - {
+      domain: hydroottawagroup.com,
+      institution: hydro-ottawa-limited,
+      expected: reject,
+      reason: "Trap. Corporate site of the parent Hydro Ottawa Group (Hydro Ottawa Holding Inc., out of scope), not the utility's own site, although hydroottawa.com links to it for Group reports",
+    }
+  - {
+      domain: adisoke.ca,
+      institution: ottawa-public-library,
+      expected: reject,
+      reason: "Facility microsite for Ādisōke, the joint OPL - Library and Archives Canada central library; not OPL's official domain",
+    }
+  - {
+      domain: oca.ca,
+      institution: city-of-ottawa,
+      expected: reject,
+      reason: "Ottawa Construction Association (industry body); its City of Ottawa resources page and bid bulletin are not the City's",
+    }
+  - {
+      domain: ottawacommunityhousing.ca,
+      institution: ottawa-community-housing-corporation,
+      expected: reject,
+      reason: "Lookalike: redirects to EmergencyHousing.ca, an unrelated group (checked 2026-10-01); Ottawa Community Housing is och-lco.ca",
+    }
+  - {
+      domain: ottawapublichealth.ca,
+      institution: ottawa-public-health,
+      expected: confirm,
+      reason: "Ottawa Public Health's own site (public_health_unit, now a YAML type); ottawa.ca Health and public safety page links to it via /public-health redirect",
+    }
+  - {
+      domain: santepubliqueottawa.ca,
+      institution: ottawa-public-health,
+      expected: confirm,
+      reason: "French twin of ottawapublichealth.ca (Santé publique Ottawa), linked from every OPH page's Français switch",
+    }
+  - {
+      domain: och-lco.ca,
+      institution: ottawa-community-housing-corporation,
+      expected: confirm,
+      reason: "Ottawa Community Housing's own site; the ottawa.ca Boards page link redirects to it",
+    }
+  - {
+      domain: byward-market.com,
+      institution: byward-market-district-authority,
+      expected: confirm,
+      reason: "ByWard Market District Authority's own site (French at fr.byward-market.com); the ottawa.ca Boards page link redirects to it",
+    }
+  - {
+      domain: rvca.ca,
+      institution: rideau-valley-conservation-authority,
+      expected: confirm,
+      reason: "Rideau Valley Conservation Authority's own site, linked from ottawa.ca Water Environment Protection",
+    }
+  - {
+      domain: mvc.on.ca,
+      institution: mississippi-valley-conservation-authority,
+      expected: confirm,
+      reason: "Mississippi Valley Conservation Authority's own site, linked from ottawa.ca Water Environment Protection",
+    }
+  - {
+      domain: nation.on.ca,
+      institution: south-nation-conservation,
+      expected: confirm,
+      reason: "South Nation Conservation's own site, linked from ottawa.ca Water Environment Protection",
+    }
+  - {
+      domain: sparkslive.com,
+      institution: city-of-ottawa,
+      expected: reject,
+      reason: "Trap. Sparks Street site (Sparks Street Mall Authority and BIA, both out of scope); the ottawa.ca Boards page link for the Mall Authority redirects to sparkslive.com/mall-authority",
+    }
+  - {
+      domain: downtownrideau.com,
+      institution: city-of-ottawa,
+      expected: reject,
+      reason: "Downtown Rideau BIA site; BIAs are out of scope",
+    }
+  - {
+      domain: ottawatourism.ca,
+      institution: city-of-ottawa,
+      expected: reject,
+      reason: "Ottawa Tourism, an independent destination-marketing non-profit",
+    }
+
+out_of_scope:
+  - {
+      name: Transit Committee (formerly Transit Commission),
+      url: "https://ottawa.ca/en/city-hall/council-committees-and-boards/standing-committees/transit-committee/terms-reference",
+      reason: "Council standing committee governing OC Transpo, not a separate body",
+    }
+  - {
+      name: Sparks Street Mall Authority,
+      url: "https://www.sparkslive.com/mall-authority",
+      reason: "Small single-facility board of management: it maintains and programs one pedestrian street (ottawa.ca Boards page: 'Controls, operates and manages the Sparks Street Mall'), sharing its site with the Sparks Street BIA; no business of its own beyond that",
+    }
+  - {
+      name: Ottawa Investment Board,
+      url: "https://ottawa.ca/en/investor-relations/ottawa-investment-board",
+      reason: "Board that invests the City's own funds (ottawa.ca Boards page: 'Oversees the investment of certain City of Ottawa assets'): part of the City's treasury function, not a corporation running a business of its own",
+    }
+  - {
+      name: Business Improvement Areas (e.g. Downtown Rideau BIA),
+      url: "https://ottawa.ca/en/business/economic-development-services/business-improvement-areas",
+      reason: "BIAs are out of scope (README rule 2)",
+    }
+  - {
+      name: Committee of Adjustment,
+      reason: "Tribunal of Council (README rule 2: council committees and tribunals are out of scope)",
+    }
+  - {
+      name: City of Ottawa Long-Term Care,
+      reason: "Long-term care homes run as a department (Budget 2026 table: Long-Term Care, Community and Social Services Department); README rule 2",
+    }
+  - {
+      name: "City water and wastewater services (Infrastructure and Water Services Department)",
+      reason: "Runs a public utility but is an internal department with no separate brand, so no row under rule 3(b)",
+    }
+  - {
+      name: "Hydro Ottawa Holding Inc. / Hydro Ottawa Group (Groupe Hydro Ottawa)",
+      url: "https://hydroottawagroup.com/",
+      reason: "Holding company wholly owned by the City and parent of hydro-ottawa-limited (Scope rule 6); it runs no procurement of its own and hydroottawa.com does not use its name for the utility",
+    }
+  - {
+      name: Envari Energy Solutions,
+      url: "https://envari.com/",
+      reason: "Hydro Ottawa Group energy-services subsidiary; not a utility and no published procurement of its own",
+    }
+  - {
+      name: Portage Power,
+      url: "https://portagepower.com/",
+      reason: "Hydro Ottawa Group generation subsidiary; no published procurement of its own",
+    }
+  - { name: hiboo networks, reason: "Hydro Ottawa Group fibre subsidiary; not a utility type" }
+  - {
+      name: Invest Ottawa,
+      url: "https://www.investottawa.ca/",
+      reason: "Economic development not-for-profit the City funds but does not own or control (not on the City's Boards page); README rule 2",
+    }
+  - {
+      name: Ottawa Tourism,
+      url: "https://ottawatourism.ca/en",
+      reason: "Independent destination-marketing non-profit",
+    }
+  - {
+      name: Office of the Auditor General,
+      url: "https://www.oagottawa.ca/",
+      reason: "Statutory officer of Council that audits the City; neither a separate corporation nor a division running a YAML type's service (rule 3)",
+    }
+  - {
+      name: Ottawa-Carleton District School Board,
+      reason: "School board (province-level type, scored under Ontario)",
+    }
+  - { name: Ottawa Catholic School Board, reason: "School board (province-level type)" }
+  - {
+      name: Conseil des écoles publiques de l'Est de l'Ontario (CEPEO),
+      reason: "French public school board (province-level type)",
+    }
+  - {
+      name: Conseil des écoles catholiques du Centre-Est (CECCE),
+      reason: "French Catholic school board (province-level type)",
+    }
+  - { name: National Capital Commission, reason: "Federal Crown corporation" }
+  - {
+      name: Ottawa Macdonald-Cartier International Airport Authority,
+      reason: "Federal airport authority, not municipal",
+    }
+  - {
+      name: Rogers Centre Ottawa (formerly Shaw Centre; Ottawa Convention and Event Centre),
+      reason: "Provincial agency (Ottawa Convention Centre Corporation), not the City's; Council only appoints a public member to its board",
+    }
+  - {
+      name: Société de transport de l'Outaouais (STO),
+      reason: "Gatineau (Quebec) transit agency that shares fares with OC Transpo",
+    }
+  - {
+      name: Para Transpo,
+      url: "https://www.octranspo.com/en/para-transpo/",
+      reason: "OC Transpo's paratransit service, part of the oc-transpo row (Budget 2026 table: 'Transit Services (OC Transpo – bus, Para Transpo and light rail)'), not a separate transit agency",
+    }
+  - {
+      name: Rideau Transit Group / Rideau Transit Maintenance,
+      reason: "Private P3 contractor for O-Train Line 1, not a public body",
+    }
+  - {
+      name: Ottawa Paramedic Service,
+      url: "https://ottawa.ca/en/health-and-public-safety/ottawa-paramedic-service",
+      reason: "A department of the City of Ottawa (Emergency and Protective Services Department), which buys and budgets for it; the country file has no paramedic type (dropped 2026-10-01, README rule 2)",
+    }
+  - {
+      name: Ādisōke (Ottawa Central Library),
+      url: "https://adisoke.ca/",
+      reason: "A facility of OPL shared with Library and Archives Canada, not a separate institution",
+    }
+
+notes: >-
+  Bilingual subject: every in-scope institution carries English and French names; French twins of source pages are in
+  alternates. ottawa.ca returns an Imperva/Incapsula challenge to non-browser clients (HTTP 200 with a JS stub, or 403
+  after repeated requests), so ottawa.ca pages cannot be checked by dataset.py; they were read and quotes verified in Chrome
+  on 2026-09-29. Scope decisions: OC Transpo and Ottawa Fire Services are internal divisions with their own names (rule
+  3b); the Police Service Board and OPL Board are folded into the bodies they govern (Scope rule 5, board names in
+  `names`); Hydro Ottawa is one row for the operating utility Hydro Ottawa Limited, with the holding company Hydro
+  Ottawa Holding Inc. out_of_scope (Scope rule 6). Divisions (OC Transpo, fire) and local boards that buy or budget
+  through the City have those source types in absent_sources with covered_by: city-of-ottawa. With the five types added
+  on 2026-10-01: Ottawa Public Health (Board of Health folded in), Ottawa Community Housing Corporation, Build Ottawa
+  (formerly OCLDC; no website) and the ByWard Market District Authority (municipal services corporation) moved from
+  out_of_scope to institutions; the three corporations are municipal_corporation since housing_corporation was folded
+  into it, and Ottawa Paramedic Service went back to out_of_scope when paramedic_service was dropped. Rideau Valley, Mississippi Valley and South
+  Nation conservation authorities are shared bodies (rule 4) whose rows live here, each with a member_of from the City.
+  The Sparks Street Mall Authority and the Ottawa Investment Board stay out of scope (see their reasons).

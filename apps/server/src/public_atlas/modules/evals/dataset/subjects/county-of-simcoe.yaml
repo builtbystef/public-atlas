@@ -1,0 +1,611 @@
+subject:
+  kind: place
+  name: County of Simcoe
+  level: region
+  place: County of Simcoe
+  parent: Ontario
+  tier: upper
+  official_code: "3543" # Statistics Canada census division "Simcoe, County (CTY)", SGC 2021 3543 (verified). The CD geography includes Barrie and Orillia; the county government does not.
+  institution: county-of-simcoe
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, simcoe.ca]
+
+institutions:
+  - key: county-of-simcoe
+    type: regional_government
+    names:
+      - { text: County of Simcoe, lang: en }
+      - { text: Corporation of the County of Simcoe, lang: en }
+      - { text: Simcoe County, lang: en }
+    homepage: https://simcoe.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://simcoe.ca/government/clk/municipal-partners/
+      quote: "The County of Simcoe is composed of 16 member municipalities and, as an upper tier municipality, provides a wide-range of crucial public services to County residents"
+    notes: >-
+      www.simcoe.ca and http://simcoe.ca redirect to https://simcoe.ca/. The ontario.ca list of
+      municipalities (https://www.ontario.ca/page/list-ontario-municipalities) is rendered from
+      api.ontario.ca by JavaScript, so it cannot give a curl-checkable quote; evidence is from simcoe.ca.
+
+  - key: linx-transit
+    type: transit_agency
+    names:
+      - { text: LINX Transit, lang: en }
+      - { text: Simcoe County LINX, lang: en }
+      - { text: LINX, lang: en }
+    homepage: https://simcoe.ca/residents/linx-transit/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://simcoe.ca/residents/linx-transit/about-linx-transit/
+      quote: "Simcoe County LINX is a conventional public transit system that begun it’s operations in 2018."
+    notes: >-
+      A county division (Transit, in Transportation and Engineering), not a separate board or
+      commission; it gets a row under rule 3(b) because it matches transit_agency and presents
+      itself under its own name. LINX Plus (LINX+) is its specialized service, not a separate body.
+      http://linx.simcoe.ca redirects to the homepage (https://linx.simcoe.ca timed out);
+      the legacy https://www.simcoe.ca/dpt/linx/about redirects to the About LINX page. The county's
+      Transit Service Delivery Review planned "Transit Governance Recommendations" for Council in
+      April 2026; no new transit body was found on simcoe.ca, in the 2026 Council Highlights or in the
+      2026 Budget (page 258: Phase 2 of the review continues "advancing the growth of LINX") as of
+      2026-10-01.
+    parent:
+      institution: county-of-simcoe
+      label: operates
+      evidence:
+        url: https://simcoe.ca/transitreview/
+        quote: The County also operates a separate inter-community service known as LINX Transit
+
+  - key: simcoe-county-housing-corporation
+    type: municipal_corporation
+    names:
+      - { text: Simcoe County Housing Corporation, lang: en }
+      - { text: SCHC, lang: en, is_acronym: true }
+      - { text: Simcoe County Housing Corporation Board, lang: en }
+      - { text: County of Simcoe Housing Corporation, lang: en }
+    homepage: https://simcoe.ca/residents/housing/about/
+    homepage_alternates:
+      - https://simcoe.ca/residents/housing/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://simcoe.ca/residents/housing/about/
+      quote: "The County of Simcoe is the direct owner and manager of the Simcoe County Housing Corporation (SCHC)"
+    notes: >-
+      Local housing corporation under the Housing Services Act, 2011, wholly owned by the county
+      (sole shareholder; its board is county, Barrie and Orillia councillors and meets at Committee
+      of the Whole). A separately constituted corporation running community housing, so
+      municipal_corporation (housing_corporation folded into it 2026-10-01). No site of its own: its
+      home is the "Housing Corporation" section of the county's Social and Affordable Housing page;
+      the Housing hub one click up is an alternate.
+      Its financial statements are on the county's Financial Information page
+      (https://simcoe.ca/simcoe-business/finance/financial-information/), and its operations are the
+      Community Housing section of the county budget (2026 Budget PDF, page 79).
+    parent:
+      institution: county-of-simcoe
+      label: sole shareholder
+      evidence:
+        url: https://simcoe.civicweb.net/Portal/MeetingTypeList.aspx
+        quote: The Corporation of the County of Simcoe is the sole shareholder of the Simcoe County Housing Corporation.
+
+  - key: lake-simcoe-regional-airport
+    type: municipal_corporation
+    names:
+      - { text: Lake Simcoe Regional Airport, lang: en }
+      - { text: Lake Simcoe Regional Airport Inc., lang: en }
+      - { text: LSRA, lang: en, is_acronym: true }
+      - { text: Lake Simcoe Regional Airport Board, lang: en }
+    homepage: https://lakesimcoeairport.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://simcoe.ca/simcoe-business/doing-business/about-procurement-fleet-and-property/
+      quote: "Ontario Works, Lake Simcoe Regional Airport, Children’s Services"
+      kind: links_to
+      link_target: https://lakesimcoeairport.com/
+    notes: >-
+      Airport wholly owned by the county since 2020, run by a municipal service corporation (Lake
+      Simcoe Regional Airport Inc.) with its own board; the county is its sole shareholder
+      (simcoe.civicweb.net meeting types). An airport is named in municipal_corporation's
+      definition. The simcoe.ca menu ("Lake Simcoe Regional Airport", Business and Explore) links to
+      lakesimcoeairport.com on every page. It buys through County Procurement (the Vendor Information
+      page lists "Airport maintenance equipment"), so its procurement and tender are covered_by.
+    parent:
+      institution: county-of-simcoe
+      label: wholly owned by
+      evidence:
+        url: https://lakesimcoeairport.com/about/
+        quote: The Lake Simcoe Regional Airport is wholly owned by the County of Simcoe
+
+  - key: simcoe-muskoka-district-health-unit
+    type: public_health_unit
+    names:
+      - { text: Simcoe Muskoka District Health Unit, lang: en }
+      - { text: SMDHU, lang: en, is_acronym: true }
+      - { text: Simcoe Muskoka District Health Unit Board of Health, lang: en }
+    homepage: https://www.simcoemuskokahealth.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://simcoe.ca/government/clk/aboutcc/
+      quote: "Economic Development Sub-Committee, Simcoe Muskoka District Health Unit, and Hospital Board"
+    notes: >-
+      Shared body (rule 4): its Board of Health has members from the County of Simcoe, the District
+      of Muskoka, Barrie and Orillia, plus provincial appointees. Headquartered in Barrie, which is
+      not a subject, so its one row is here, the first subject that meets it, with a member_of from
+      the county. The county pays it a levy (2026 Budget PDF, page 335: "The Simcoe Muskoka District
+      Health Unit (SMDHU) annualized levy is set at $6.4M"). No simcoe.ca page links to its home page
+      (only to topic pages), so the evidence is appears_on.
+
+sources:
+  # --- County of Simcoe ---------------------------------------------------------------
+  - institution: county-of-simcoe
+    source_type: procurement
+    url: https://simcoe.ca/simcoe-business/doing-business/doing-business-with-the-county-of-simcoe/
+    alternates:
+      - https://simcoe.ca/simcoe-business/doing-business/
+      - https://simcoe.ca/simcoe-business/doing-business/about-procurement-fleet-and-property/
+    evidence:
+      url: https://simcoe.ca/simcoe-business/doing-business/doing-business-with-the-county-of-simcoe/
+      quote: "County of Simcoe frequently purchases goods and services from vendors through the bids&tenders™ system."
+    notes: >-
+      "Vendor Information" page: how the county buys (bids&tenders over $100,000, supplier database
+      below), commodities purchased, and contact. The Doing Business hub (one click up) and the
+      About Procurement, Fleet and Property page are alternates. Procurement policy PDF:
+      https://simcoe.ca/wp-content/uploads/2025/11/POL-PFP-2025-01-Procurement-Policy.pdf.
+      Supplier registration on bids&tenders is not recorded (vendor_portal dropped 2026-10-01).
+
+  - institution: county-of-simcoe
+    source_type: tender
+    url: https://simcoecounty.bidsandtenders.ca/Module/Tenders/en
+    alternates:
+      - https://simcoecounty.bidsandtenders.ca/
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://simcoecounty.bidsandtenders.ca/Module/Tenders/en
+      quote: "This site allows potential bidders to easily view bid opportunities posted by the County of Simcoe."
+    notes: Linked from simcoe.ca main navigation ("Bids & Tenders") and the Vendor Information page. The bid list itself loads by JavaScript.
+
+  - institution: county-of-simcoe
+    source_type: budget
+    url: https://simcoe.ca/simcoe-business/finance/budgets/
+    alternates:
+      - https://simcoe.ca/simcoe-business/finance/
+    evidence:
+      url: https://simcoe.ca/simcoe-business/finance/budgets/
+      quote: "This challenge is addressed annually through budget deliberations as Council decides on the overall level of services"
+    notes: Lists 2021 to 2026 budget books and overviews; current is the 2026 Budget (https://simcoe.ca/wp-content/uploads/2026/02/2026-COS-Budget-Final.pdf).
+
+  - institution: county-of-simcoe
+    source_type: capital_plan
+    url: https://simcoe.ca/simcoe-business/finance/budgets/
+    alternates:
+      - https://simcoe.ca/simcoe-business/finance/corporate-strategies/
+    evidence:
+      url: https://simcoe.ca/simcoe-business/finance/budgets/
+      quote: "the types of programs, infrastructure and long-term investments necessary to support a growing community"
+    notes: >-
+      No stand-alone capital plan page. The 10-year capital budget is inside each budget book
+      (2026 Budget PDF, page 343: "The County maintains a 10-year capital budget and plans each year
+      to ensure there are enough funds to maintain aging infrastructure"). The 2025 Asset Management
+      Plan (https://simcoe.ca/wp-content/uploads/2025/06/2025-Asset-Management-Plan.pdf) is on the
+      Corporate Strategies page, accepted as an alternate. Judgement call: same URL as the budget source.
+
+  - institution: county-of-simcoe
+    source_type: council_meeting
+    url: https://simcoe.civicweb.net/Portal/
+    alternates:
+      - https://simcoe.civicweb.net/Portal/MeetingSchedule.aspx
+      - https://simcoe.ca/government/clk/aboutcc/
+    platform: civicweb.net
+    evidence:
+      url: https://simcoe.civicweb.net/Portal/
+      quote: "County Council and Committee of the Whole meetings are normally livestreamed on the County of Simcoe YouTube channel"
+    notes: >-
+      CivicWeb (iCompass, a Diligent brand) is on platforms. Linked from simcoe.ca ("Calendar, Agendas, &
+      Meetings", "View all Agenda, Minutes and Reports."). The simcoe.ca Council & Committees page only
+      links to the portal, so it is an alternate. The Simcoe County Housing Corporation board also
+      meets inside Committee of the Whole on this portal.
+
+  - institution: county-of-simcoe
+    source_type: strategic_plan
+    url: https://simcoe.ca/simcoe-business/finance/corporate-strategies/
+    evidence:
+      url: https://simcoe.ca/simcoe-business/finance/corporate-strategies/
+      quote: "The Strategic Plan serves as a roadmap that will take us from where we are today to where we want to be in the coming years."
+    notes: Current plan is the 2023 Strategic Plan (https://simcoe.ca/wp-content/uploads/2024/04/Corporate-Strategy-Plan-2023.pdf), which says it guides "the next 10 years".
+
+  - institution: county-of-simcoe
+    source_type: meeting_video
+    url: https://www.youtube.com/@CountyofSimcoe/streams
+    alternates:
+      - https://simcoe.ca/government/clk/aboutcc/
+      - https://www.youtube.com/user/CountyofSimcoe/live
+      - https://www.youtube.com/user/CountyofSimcoe
+      - https://www.youtube.com/@CountyofSimcoe
+      - https://www.youtube.com/channel/UCttQnNK9H8pW71JGdimfIzA
+    platform: youtube.com
+    evidence:
+      url: https://simcoe.ca/government/clk/aboutcc/
+      quote: "Council and Committee meetings will be live streamed to the County of Simcoe’s YouTube channel"
+      kind: links_to
+      link_target: https://www.youtube.com/user/CountyofSimcoe/live
+    notes: >-
+      The County's general channel; its Live tab (/streams, linked from the CivicWeb portal) lists past Council and
+      Committee of the Whole streams. simcoe.ca links /user/CountyofSimcoe/live. youtube.com is a listed platform.
+      The government's page that links here only points to it, so it is an alternate.
+
+  - institution: county-of-simcoe
+    source_type: news
+    url: https://simcoe.ca/news-notices/newsroom/
+    alternates:
+      - https://simcoe.ca/news-notices/
+      - https://simcoe.ca/news-notices/newsroom/public-notices/
+    evidence:
+      url: https://simcoe.ca/news-notices/newsroom/
+      quote: "Communications and Events branch works with the media to ensure information presented to the public is reliable and precise"
+    notes: >-
+      Newsroom: "Latest News and Notices", paginated (media releases, statements, advisories, notices). News and
+      Notices one click up and the Public Notices category page are alternates.
+
+  # --- Simcoe County Housing Corporation ------------------------------------------------
+  - institution: simcoe-county-housing-corporation
+    source_type: capital_plan
+    url: https://simcoe.ca/residents/housing/simcoe-county-housing-corporation-master-plan/
+    evidence:
+      url: https://simcoe.ca/residents/housing/simcoe-county-housing-corporation-master-plan/
+      quote: "The Master Plan is a long-term capital infrastructure plan to guide, sustain, and expand the County’s affordable housing system"
+    notes: SCHC Affordable Housing Master Plan 2024-2034 (PDF https://simcoe.ca/wp-content/uploads/2026/03/SCHC-master-plan-2024-V5.pdf), linked from the Housing hub.
+
+  - institution: simcoe-county-housing-corporation
+    source_type: board_meeting
+    url: https://simcoe.civicweb.net/Portal/MeetingInformation.aspx?type=19
+    alternates:
+      - https://simcoe.civicweb.net/Portal/MeetingTypeList.aspx
+      - https://simcoe.civicweb.net/Portal/
+    platform: civicweb.net
+    evidence:
+      url: https://simcoe.civicweb.net/Portal/MeetingTypeList.aspx
+      quote: "The business of the Simcoe County Housing Corporation is directed through a Board of Directors"
+    notes: >-
+      "Simcoe County Housing Corporation Board" meeting type (id 19) on the county's CivicWeb portal;
+      the type link redirects to the latest meeting (MeetingInformation.aspx?Id=...). The Meeting
+      Types page, which lists the board with its description and recent meetings, and the portal
+      home are alternates. Board meetings are held at Committee of the Whole. The "Shareholder of the
+      Simcoe County Housing Corporation" type (id 32) is the county's annual shareholder meeting.
+
+  - institution: simcoe-county-housing-corporation
+    source_type: annual_report
+    url: https://simcoe.ca/simcoe-business/finance/financial-information/
+    evidence:
+      url: https://simcoe.ca/simcoe-business/finance/financial-information/
+      quote: "2024 Simcoe County Housing Corporation – Financial Statements"
+    notes: >-
+      Judgement call: SCHC publishes no narrative annual report (checked the Housing hub, the
+      Housing Corporation section and the Financial Information page); its audited financial
+      statements by year (2020 to 2024) are on the county's Financial Information page, accepted as
+      the annual_report. A reviewer may prefer the absence.
+
+  # --- Lake Simcoe Regional Airport ----------------------------------------------------
+  - institution: lake-simcoe-regional-airport
+    source_type: board_meeting
+    url: https://simcoe.civicweb.net/Portal/MeetingInformation.aspx?type=56
+    alternates:
+      - https://simcoe.civicweb.net/Portal/MeetingTypeList.aspx
+      - https://simcoe.civicweb.net/Portal/
+    platform: civicweb.net
+    evidence:
+      url: https://simcoe.civicweb.net/Portal/MeetingTypeList.aspx
+      quote: "Lake Simcoe Regional Airport (LSRA) Board is a Municipal Service Corporation that manages the strategic and day-to-day requirements of the LSRA."
+    notes: >-
+      "Lake Simcoe Regional Airport Board" meeting type (id 56) on the county's CivicWeb portal; the
+      type link redirects to the latest meeting. lakesimcoeairport.com has no meetings page. The
+      "Shareholder of the Lake Simcoe Regional Airport Inc." type (id 61) is the county's annual
+      shareholder meeting.
+
+  - institution: lake-simcoe-regional-airport
+    source_type: annual_report
+    url: https://simcoe.ca/simcoe-business/finance/financial-information/
+    evidence:
+      url: https://simcoe.ca/simcoe-business/finance/financial-information/
+      quote: "Lake Simcoe Regional Airport – 2024 Financial Statements"
+    notes: >-
+      Judgement call: the airport publishes no narrative annual report; its audited financial
+      statements by year (2022 to 2024) are on the county's Financial Information page, accepted as
+      the annual_report. A reviewer may prefer the absence.
+
+  - institution: lake-simcoe-regional-airport
+    source_type: strategic_plan
+    url: https://lakesimcoeairport.com/about/
+    evidence:
+      url: https://lakesimcoeairport.com/about/
+      quote: "The Strategic Plan proposes a vision for the development of LSRA and a path into the future"
+    notes: Off-list for municipal_corporation. Strategic Plan section of the About page, linking the plan PDF (https://lakesimcoeairport.com/wp-content/uploads/2024/04/Lake-Simcoe-Regional-Airport-Strategic-Plan_April-2018-2.pdf).
+
+  # --- Simcoe Muskoka District Health Unit ---------------------------------------------
+  - institution: simcoe-muskoka-district-health-unit
+    source_type: procurement
+    url: https://www.simcoemuskokahealth.org/HealthUnit/About/Tenders
+    alternates:
+      - https://www.simcoemuskokahealth.org/HealthUnit/Tenders.aspx
+    evidence:
+      url: https://www.simcoemuskokahealth.org/HealthUnit/About/Tenders
+      quote: "We appreciate your interest in working with the Simcoe Muskoka District Health Unit."
+    notes: >-
+      "Tenders, Proposals and Quotes", the only purchasing page (linked as "Tenders" in the header);
+      the old Tenders.aspx link redirects here. It is also the tender source. No separate
+      procurement policy or vendor page was found under About Us.
+
+  - institution: simcoe-muskoka-district-health-unit
+    source_type: tender
+    url: https://www.simcoemuskokahealth.org/HealthUnit/About/Tenders
+    alternates:
+      - https://www.simcoemuskokahealth.org/HealthUnit/Tenders.aspx
+    evidence:
+      url: https://www.simcoemuskokahealth.org/HealthUnit/About/Tenders
+      quote: "Requests for Tenders, Proposals and Quotes"
+    notes: Off-list for public_health_unit. Same page as the procurement source.
+
+  - institution: simcoe-muskoka-district-health-unit
+    source_type: board_meeting
+    url: https://www.simcoemuskokahealth.org/HealthUnit/About/BoardOfHealth/BoardMeetings/Minutes.aspx
+    alternates:
+      - https://www.simcoemuskokahealth.org/HealthUnit/About/BoardOfHealth/BoardMeetings.aspx
+      - https://www.simcoemuskokahealth.org/HealthUnit/About/BoardOfHealth/BoardMeetings/Agendas.aspx
+    evidence:
+      url: https://www.simcoemuskokahealth.org/HealthUnit/About/BoardOfHealth/BoardMeetings/Minutes.aspx
+      quote: "Minutes are made public once accepted by the Board of Health."
+    notes: Board of Health minutes by year. The Board Meetings page one click up and the Agendas page (the current agenda only) are alternates.
+
+  - institution: simcoe-muskoka-district-health-unit
+    source_type: annual_report
+    url: https://www.simcoemuskokahealth.org/HealthUnit/About/Reports.aspx
+    evidence:
+      url: https://www.simcoemuskokahealth.org/HealthUnit/About/Reports.aspx
+      quote: "The Annual Reports reflect upon on-going public health issues and the activities the health unit engages in"
+    notes: Off-list for public_health_unit. SMDHU Annual Reports 2020-2021 to 2025.
+
+absent_sources:
+  - institution: linx-transit
+    source_type: procurement
+    covered_by: county-of-simcoe
+    note: >-
+      LINX has no procurement page of its own. As a county division it buys through County
+      Procurement, Fleet and Property, whose Vendor Information page lists "Heavy, light duty, public
+      transit and off-the-road (OTR) vehicles, repair, maintenance, and fuel" among the commodities
+      it buys. Checked the LINX pages (landing, About, Accessible Transit, Fares) and simcoe.ca search.
+
+  - institution: linx-transit
+    source_type: tender
+    covered_by: county-of-simcoe
+    note: >-
+      LINX bids (buses, operations contracts) are posted as County of Simcoe bids on the county's
+      bids&tenders portal (simcoecounty.bidsandtenders.ca); there is no LINX bid page.
+
+  - institution: linx-transit
+    source_type: budget
+    covered_by: county-of-simcoe
+    note: >-
+      No LINX budget page. The Transit budget is a section of the county budget book (2026 Budget
+      PDF, page 258, "Transit ... The LINX transit system provides citizens and visitors a reliable
+      and courteous transit system"), published on the county's Budgets page.
+
+  - institution: linx-transit
+    source_type: capital_plan
+    covered_by: county-of-simcoe
+    note: >-
+      No LINX capital plan page. Transit capital (bus purchases, the bus order cancelled after the
+      maker's insolvency) is in the county budget book, 2026 Budget PDF page 263, on the county's
+      Budgets page. The Transportation Master Plan page (https://simcoe.ca/services/planning/tmp/,
+      transit, road and active transportation network to 2051) is the county's, not a LINX plan.
+
+  - institution: linx-transit
+    source_type: board_meeting
+    note: >-
+      LINX has no board of directors. It is a county division, and transit matters go to County
+      Council / Committee of the Whole (see the county's council_meeting source on
+      simcoe.civicweb.net). Checked the LINX pages (landing, About, Accessible Transit, Fares),
+      the Transit Service Delivery Review page, the Council & Committees list of committees (no
+      transit committee), and a web search for a LINX board.
+
+  - institution: linx-transit
+    source_type: strategic_plan
+    covered_by: county-of-simcoe
+    note: >-
+      No LINX plan page: the LINX landing page on simcoe.ca and its navigation (checked
+      2026-09-29) link to no transit plan. Transit is a division, so its direction sits in the
+      County's strategic plan, recorded under the county. Judgement call: the county's
+      Transportation Master Plan (https://simcoe.ca/services/planning/tmp/) sets the transit network
+      to 2051 and names LINX, but it is a county-wide multimodal plan, not a LINX plan; a reviewer
+      may prefer it as a LINX strategic_plan source.
+
+  - institution: simcoe-county-housing-corporation
+    source_type: procurement
+    covered_by: county-of-simcoe
+    note: >-
+      No procurement page of its own. SCHC buys through County Procurement, Fleet and Property: its
+      bids are posted as County of Simcoe bids on simcoecounty.bidsandtenders.ca (e.g. RFP 2018-021,
+      "The Simcoe County Housing Corporation (SCHC) is planning the redevelopment of a 4 acre site
+      located in the Town of Wasaga Beach"). Checked the Housing pages and the Vendor Information page.
+
+  - institution: simcoe-county-housing-corporation
+    source_type: tender
+    covered_by: county-of-simcoe
+    note: >-
+      SCHC bids are posted on the county's bids&tenders portal under the County of Simcoe (RFP
+      2018-021); there is no SCHC bid page.
+
+  - institution: lake-simcoe-regional-airport
+    source_type: procurement
+    covered_by: county-of-simcoe
+    note: >-
+      No procurement page on lakesimcoeairport.com (checked the menu, About, Contact and Business at
+      the Airport pages). The county's Vendor Information page lists "Airport maintenance equipment"
+      among the commodities County Procurement buys.
+
+  - institution: lake-simcoe-regional-airport
+    source_type: tender
+    covered_by: county-of-simcoe
+    note: >-
+      No bid page on lakesimcoeairport.com; airport bids go through the county's bids&tenders portal
+      (simcoecounty.bidsandtenders.ca), whose About Procurement page names the airport among the
+      county's services.
+
+  - institution: simcoe-muskoka-district-health-unit
+    source_type: budget
+    note: >-
+      No budget page found. Checked the About Us menu (Health Unit Profile, Board of Health, Board
+      Meetings, Agendas, Minutes, Reports, Strategic Plan) and a web search for an SMDHU budget page;
+      the budget is approved by the Board of Health in its meeting materials. The county's budget
+      book shows only the county's levy to it (2026 Budget PDF, page 335), not the health unit's
+      budget, so it is not covered_by the county.
+
+candidate_domains:
+  - domain: lakesimcoeairport.com
+    institution: lake-simcoe-regional-airport
+    expected: confirm
+    reason: Lake Simcoe Regional Airport's own site, linked from the simcoe.ca menu; the county-owned airport corporation is a municipal_corporation row.
+  - domain: simcoemuskokahealth.org
+    institution: simcoe-muskoka-district-health-unit
+    expected: confirm
+    reason: Simcoe Muskoka District Health Unit's own site (www.simcoemuskokahealth.org), linked from simcoe.ca pages (Planning FAQ, Immigration Simcoe health pages).
+  - domain: cyclesimcoe.ca
+    institution: county-of-simcoe
+    expected: reject
+    reason: County cycling-tourism campaign microsite linked as "Cycle Simcoe" from the simcoe.ca Explore menu; not an institution's homepage.
+  - domain: workinsimcoecounty.ca
+    institution: county-of-simcoe
+    expected: reject
+    reason: Workforce-attraction campaign microsite linked from simcoe.ca; not an institution's homepage.
+  - domain: barrie.ca
+    institution: county-of-simcoe
+    expected: reject
+    reason: City of Barrie, a separated single-tier city linked from the county's council page; not part of the county government.
+  - domain: orillia.ca
+    institution: county-of-simcoe
+    expected: reject
+    reason: City of Orillia, a separated single-tier city linked from the county's council page; not part of the county government.
+  - domain: simcoe.usetransit.com
+    institution: linx-transit
+    expected: reject
+    reason: Third-party LINX fare-card account portal (sign-in), linked as "LINX CARD portal" from the LINX page; a vendor-hosted login app, not LINX's homepage.
+
+out_of_scope:
+  # Separated cities
+  - name: City of Barrie
+    url: https://www.barrie.ca/
+    reason: >-
+      Separated single-tier city, not part of the county government ("The cities of Barrie and
+      Orillia, although separate politically and administratively from the County, are
+      geographically and economically part of the County", simcoe.ca Council & Committees). It is in
+      census division 3543 but is its own municipality-level subject. The county provides paramedic,
+      social and housing services to it under agreement.
+  - name: City of Orillia
+    url: https://www.orillia.ca/
+    reason: Separated single-tier city, not part of the county government (same source as Barrie). It is in census division 3543 but is its own municipality-level place.
+
+  # Policing: not a county function
+  - name: Ontario Provincial Police
+    url: https://www.opp.ca/
+    reason: >-
+      Polices most Simcoe County municipalities (and Orillia) under contract with the lower tiers.
+      The county has no police service or board: simcoe.ca says the lower-tier municipalities are
+      responsible for "fire and police services". A provincial body, scored under Ontario.
+  - name: Huronia West OPP Detachment Board
+    url: https://www.wasagabeach.com/our-organization/boards-committees/huronia-west-opp-detachment-board/
+    reason: OPP detachment board (Community Safety and Policing Act) for Clearview, Springwater and Wasaga Beach; governed by lower-tier members, not the county.
+  - name: Southern Georgian Bay OPP Detachment Board
+    url: https://sgb.detachmentboard.com/
+    reason: OPP detachment board for Midland, Penetanguishene, Tay, Tiny and Georgian Bay; lower-tier body, not the county. Other Simcoe detachment boards (Nottawasaga, Collingwood and Blue Mountains, Orillia) are in the same position.
+  - name: South Simcoe Police Service
+    url: https://southsimcoepolice.on.ca/
+    reason: Municipal police of the Town of Innisfil and the Town of Bradford West Gwillimbury (lower tiers), not the county.
+  - name: Barrie Police Service
+    url: https://www.barriepolice.ca/
+    reason: Police service of the separated City of Barrie; not the county.
+  - name: Bradford West Gwillimbury/Innisfil Police Service Board
+    reason: Board of the South Simcoe Police Service (rule 5 folds it into the service), which belongs to the Towns of Innisfil and Bradford West Gwillimbury (lower tiers), not the county.
+
+  # County departments and dissolved bodies that are not institutions
+  - name: County of Simcoe long-term care homes (Georgian Manor, Simcoe Manor, Sunset Manor, Trillium Manor)
+    url: https://simcoe.ca/ltc
+    reason: '"The County owns and operates 4 long-term care homes." Long-term care homes run as a county department (Long-Term Care and Seniors Services), not separately constituted; README rule 2 keeps them out.'
+  - name: Simcoe County Library Co-operative
+    reason: >-
+      County-managed library co-operative, dissolved by County Council in 2022 and replaced by a
+      county Information Library Service (ILS) that gives IT and licensing support to the local
+      libraries (simcoe.ca statement of April 26, 2022); the ILS is not a library. A dissolved body gets no row. Had it still operated it would
+      be a library row with expected: review (README rule 1: a YAML type at a level the YAML does
+      not list it under). Public libraries in Simcoe are lower-tier boards.
+  - name: Simcoe County Museum
+    url: https://museum.simcoe.ca/
+    reason: >-
+      County department on its own subdomain, not a separately constituted board or corporation.
+      Rule 3(b) gives a division a row only when its work matches a type; a museum run as a
+      department does not (municipal_corporation covers a venue only when a corporation, authority
+      or board the county owns runs it).
+  - name: County of Simcoe Paramedic Services
+    url: https://simcoe.ca/residents/paramedic-services/
+    reason: A department of the County of Simcoe, which buys and budgets for it; the country file has no paramedic type (dropped 2026-10-01, README rule 2)
+  - name: Simcoe County Archives
+    url: https://simcoe.ca/explore/simcoe-county-archives/
+    reason: County department, not separately constituted; its work matches no institution type (rule 3(b)).
+  - name: Simcoe County Forests
+    url: https://simcoe.ca/explore/forests/
+    reason: County forest management department, not separately constituted; its work matches no institution type (rule 3(b)).
+  - name: County of Simcoe Solid Waste Management
+    url: https://simcoe.ca/residents/organics-recycling-and-garbage/
+    reason: >-
+      County waste collection and landfill department. Rule 8: a waste department gets a
+      public_utility row only when it presents under its own name, like Toronto Water. Simcoe's
+      does not: its pages are the "Organics, Recycling, & Garbage" section of simcoe.ca with no
+      name, brand or site of its own, and "Solid Waste Management" appears only as a department
+      label (CAO page, Council Highlights). It is not separately constituted. The old URL
+      /residents/organics-and-garbage/ still serves the same page. Open question in
+      docs/todo.md (open decisions); judgement call for review.
+  - name: Economic Development Office / Tourism Simcoe County / Immigration Simcoe
+    url: https://edo.simcoe.ca/
+    reason: >-
+      County departments on simcoe.ca subdomains (edo., experience., immigration.), not separately
+      constituted. municipal_corporation covers economic development only when a corporation,
+      authority or board the county owns runs it (rule 3); a department doing it gets no row.
+
+  # Lower-tier bodies (not the county's)
+  - name: Barrie Transit
+    url: https://www.barrie.ca/services-payments/transportation-parking/barrie-transit
+    reason: City of Barrie transit (separated city). LINX connects to it but it is not a county body.
+  - name: Local transit of member municipalities (Colltrans, BWG Transit, Midland Transit, Wasaga Beach Transit, Innisfil Transit) and Orillia Transit
+    reason: '"six of the County’s 16 member municipalities, as well as Barrie and Orillia, operate their own transit service" (simcoe.ca/transitreview). Lower-tier or city bodies, not the county.'
+  - name: InnPower Corporation
+    url: https://innpower.ca/
+    reason: Electricity distributor owned by the Town of Innisfil (lower tier). The county owns no utility; water, sewer and hydro are lower-tier.
+
+  # Other levels / types
+  - name: Simcoe County District School Board
+    url: https://www.scdsb.on.ca/
+    reason: school_board is a province-level type, scored under Ontario, not the county.
+  - name: Simcoe Muskoka Catholic District School Board
+    url: https://www.smcdsb.on.ca/
+    reason: school_board is a province-level type, scored under Ontario.
+  - name: Royal Victoria Regional Health Centre
+    url: https://www.rvh.on.ca/
+    reason: hospital is a province-level type, scored under Ontario.
+  - name: Georgian Bay Area Public Purchasing Co-operative
+    reason: Voluntary buying group of public bodies that the county belongs to (named on its bids&tenders page and About Procurement page); not owned or controlled by the county (rule 3) and runs no business of its own.
+
+notes: >-
+  Upper-tier county with 16 lower-tier members. Barrie and Orillia are separated cities. The county
+  runs paramedics, social services, housing, long-term care, roads, waste, LINX transit, museum,
+  archives, forests and an airport. Besides regional_government and transit_agency (LINX) it has
+  two municipal_corporation rows (Simcoe County Housing Corporation and Lake Simcoe Regional
+  Airport Inc.) and, as a shared body labelled here, public_health_unit (Simcoe Muskoka District
+  Health Unit). County of Simcoe Paramedic Services is a department with no type of its own
+  (out_of_scope). The county runs no police service and no utility (waste is a department
+  without a name of its own, rule 8). Its CivicWeb meeting types list only two boards of its own
+  (SCHC and LSRA); long-term care, museum, archives, forests and economic development are
+  departments. The county library co-operative, which would be a library row with expected: review,
+  is dissolved. Nottawasaga Valley and Lake Simcoe Region Conservation Authorities are left out with
+  no row: their members are the lower-tier municipalities (NVCA's About page lists 18, none of them
+  the county), simcoe.ca only links to them, and the 2026 county budget has no levy to either. LINX,
+  SCHC and the airport buy (and LINX budgets) through the county, so those absent_sources carry
+  covered_by: county-of-simcoe (README, "Bought or budgeted through someone else").

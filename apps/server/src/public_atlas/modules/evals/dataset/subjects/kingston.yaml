@@ -1,0 +1,989 @@
+subject:
+  kind: place
+  name: City of Kingston
+  level: municipality
+  place: City of Kingston
+  parent: Ontario
+  tier: single
+  official_code: "3510010" # verified: StatCan 2021 Census Profile DGUID 2021A00053510010 = "Kingston, City (CY) [Census subdivision], Ontario"
+  institution: city-of-kingston
+
+status: reviewed
+reviewed_at: 2026-10-01
+labelled_at: 2026-09-29
+
+trusted_at_start: [ontario.ca, cityofkingston.ca]
+
+institutions:
+  - key: city-of-kingston
+    type: municipal_government
+    names:
+      - { text: City of Kingston, lang: en }
+      - { text: The Corporation of the City of Kingston, lang: en }
+    homepage: https://www.cityofkingston.ca/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.cityofkingston.ca/
+      quote: "© 2026 The Corporation of the City of Kingston"
+    notes: >-
+      Separated city: single-tier, independent of the County of Frontenac although it sits inside
+      the Frontenac census division. Site runs on Govstack; many subpages under /business-in-kingston/
+      are JS stubs (window.location.replace) pointing at the canonical page or at outside bodies.
+
+  - key: kingston-transit
+    type: transit_agency
+    names:
+      - { text: Kingston Transit, lang: en }
+    homepage: https://www.kingstontransit.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/careers-and-volunteering/career-opportunities/bus-operator-recruitment/
+      quote: "Come work with us at Kingston Transit and keep Kingston moving!"
+    notes: >-
+      City division (the "Transportation & Transit" department under Transportation & Infrastructure
+      Services) presenting itself under its own name and domain; row under README scope rule 3(b).
+      The link to kingstontransit.ca from a trusted page is the city home page's "Transit" navigation
+      link (link text does not name the body, so the naming quote comes from the recruitment page).
+      kingstontransit.ca is built on the same Govstack instance, footer "© 2026 Kingston Transit".
+    parent:
+      institution: city-of-kingston
+      label: department reporting to the Commissioner of Transportation & Infrastructure Services
+      evidence:
+        url: https://www.cityofkingston.ca/council-and-city-administration/organizational-structure/
+        quote: "The following departments report to the Commissioner of Transportation & Infrastructure Services: Engineering Services Major Projects Public Works & Solid Waste Services Transportation & Transit"
+
+  - key: kingston-police
+    type: police_service
+    names:
+      - { text: Kingston Police, lang: en }
+      - { text: KP, lang: en, is_acronym: true }
+      - { text: Kingston Police Service Board, lang: en }
+      - { text: KPSB, lang: en, is_acronym: true }
+      - { text: Kingston Police Services Board, lang: en }
+    homepage: https://www.kingstonpolice.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/committees-and-boards/other-committees-and-boards/
+      quote: "The Kingston Police Service Board provides civilian oversight of the Kingston Police."
+      kind: links_to
+      link_target: https://www.kingstonpolice.ca/about-kp/police-service-board/
+    notes: >-
+      One row for the service and its board: the Kingston Police Service Board is a separately
+      constituted local board, but the police_service type already carries board_meeting, so the
+      board's pages are recorded as this institution's sources rather than as a second institution.
+      An agent that saves "Kingston Police Service Board" as its own institution should be reviewed
+      (see report). kingstonpolice.ca uses "KP" in its navigation ("About KP", "Join KP"). Board names
+      added per README scope rule 5 (checked 2026-10-01): "Kingston Police Service Board" and "KPSB"
+      on the board and meetings pages; "Kingston Police Services Board", the pre-CSPA name, on the
+      Our History page.
+    parent:
+      institution: city-of-kingston
+      label: police service board is a local board under the Municipal Act
+      evidence:
+        url: https://www.cityofkingston.ca/council-and-city-administration/committees-and-boards/other-committees-and-boards/
+        quote: In Ontario, a police service board is a local board under the Municipal Act, but it derives its authority from the Community Safety and Policing Act (CSPA).
+
+  - key: kingston-fire-rescue
+    type: fire_service
+    names:
+      - { text: Kingston Fire & Rescue, lang: en }
+      - { text: Kingston Fire and Rescue, lang: en }
+      - { text: KFR, lang: en, is_acronym: true }
+    homepage: https://www.cityofkingston.ca/emergency-services-and-public-health/fire-and-rescue/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.cityofkingston.ca/emergency-services-and-public-health/fire-and-rescue/
+      quote: "The Communications Division of Kingston Fire & Rescue (KFR) provides emergency fire response services for nine departments"
+    notes: City department ("Fire & Emergency Services" in the org chart) presenting itself under its own name; README scope rule 3(b).
+    parent:
+      institution: city-of-kingston
+      label: department reporting to the Commissioner of Corporate & Emergency Services
+      evidence:
+        url: https://www.cityofkingston.ca/council-and-city-administration/organizational-structure/
+        quote: "The following departments report to the Commissioner of Corporate & Emergency Services: Communications & Customer Experience Corporate Asset Management & Fleet Facilities Management & Construction Services Fire & Emergency Services"
+
+  - key: utilities-kingston
+    type: public_utility
+    names:
+      - { text: Utilities Kingston, lang: en }
+      - { text: 1425445 Ontario Limited, lang: en }
+    homepage: https://utilitieskingston.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/
+      quote: Utilities Kingston
+      kind: links_to
+      link_target: https://utilitieskingston.com/
+    notes: >-
+      City-owned multi-utility corporation (water, wastewater, natural gas, fibre, street lights) that
+      also operates Kingston Hydro's electricity system. Legal name 1425445 Ontario Limited, owned by
+      holding company 1425447 Ontario Limited, which is owned by the City. Runs its own procurement on
+      bids&tenders. utilitieskingston.com answers plain curl with HTTP 403 (bot protection) but 200 to
+      httpx with a Chrome UA, so the evidence checker can fetch it.
+    parent:
+      institution: city-of-kingston
+      label: a separate corporation that is owned by the city
+      evidence:
+        url: https://www.cityofkingston.ca/council-and-city-administration/budgets-and-finances/
+        quote: Utilities Kingston, a separate corporation that is owned by the city, prepares budgets for municipal utilities
+
+  - key: kingston-hydro
+    type: public_utility
+    names:
+      - { text: Kingston Hydro, lang: en }
+      - { text: Kingston Hydro Corporation, lang: en }
+    homepage: https://www.kingstonhydro.com/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/news/posts/city-explores-establishment-of-municipal-service-corporation-for-water-and-wastewater-services/
+      quote: "Kingston Hydro, owned 100 per cent by the City of Kingston, is an Ontario Business Corporation"
+    notes: >-
+      OEB-licensed electricity distributor, separately constituted and owned directly by the City,
+      with its own board (chaired by the Mayor); row under README scope rule 3(a). It owns the assets
+      but its system is operated by Utilities Kingston staff and it has no procurement of its own
+      (see absent_sources). No trusted page links to kingstonhydro.com; utilitieskingston.com links to
+      it ("Electricity Rates"). Same 403-to-curl behaviour as utilitieskingston.com.
+    parent:
+      institution: city-of-kingston
+      label: owned 100 per cent by the City of Kingston
+      evidence:
+        url: https://www.cityofkingston.ca/news/posts/city-explores-establishment-of-municipal-service-corporation-for-water-and-wastewater-services/
+        quote: Kingston Hydro, owned 100 per cent by the City of Kingston, is an Ontario Business Corporation
+
+  - key: kingston-frontenac-public-library
+    type: library
+    names:
+      - { text: Kingston Frontenac Public Library, lang: en }
+      - { text: KFPL, lang: en, is_acronym: true }
+      - { text: Kingston Frontenac Public Library Board, lang: en }
+      - { text: Kingston-Frontenac Public Library Board, lang: en }
+      - { text: Kingston & Frontenac Public Library, lang: en }
+    homepage: https://www.kfpl.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/committees-and-boards/other-committees-and-boards/
+      quote: "The Kingston Frontenac Public Library Board is the legal authority of the Library"
+      kind: links_to
+      link_target: https://www.kfpl.ca/about-the-library/library-board-and-management
+    notes: >-
+      Shared body (README scope rule 4): governed jointly with the County of Frontenac (board seats
+      appointed by "Kingston City Council" and "Frontenac County Council" per kfpl.ca), headquartered
+      at the Central Branch in Kingston, so the row lives here with member_of from the city. The
+      County of Frontenac is not a dataset subject, so no member_of from it is recorded. The city's own
+      /arts-culture-and-events/kingston-frontenac-public-library/ page is a JS redirect to kfpl.ca.
+      "Kingston-Frontenac Public Library Board" is the name on the audited financial statements;
+      "Kingston & Frontenac Public Library" is the city budget page's wording.
+
+  - key: kingston-frontenac-housing-corporation
+    type: municipal_corporation
+    names:
+      - { text: Kingston & Frontenac Housing Corporation, lang: en }
+      - { text: KFHC, lang: en, is_acronym: true }
+    homepage: https://kfhc.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/committees-and-boards/other-committees-and-boards/
+      quote: "The Kingston & Frontenac Housing Corporation (KFHC) Board oversees the governance of Kingston & Frontenac Housing Corporation"
+      kind: links_to
+      link_target: http://www.kfhc.ca
+    notes: >-
+      Added 2026-10-01 (was out_of_scope); housing_corporation folded into municipal_corporation
+      the same day, so it is a municipal_corporation (community housing). Local housing
+      corporation under the Social Housing Reform Act, 2000; "The City of Kingston is the sole
+      shareholder of KFHC" (kfhc.ca/about-kfhc), so README scope rule 3(a), and it is in the City's
+      consolidated reporting entity (2025 audited financial statements, note 1(a)). Serves Kingston
+      and the County of Frontenac, but owned by the City alone, so parent_of rather than member_of.
+      The city links http://www.kfhc.ca, which redirects to https://kfhc.ca/ (GoDaddy site builder).
+    parent:
+      institution: city-of-kingston
+      label: sole shareholder
+      evidence:
+        url: https://kfhc.ca/about-kfhc
+        quote: The City of Kingston is the sole shareholder of KFHC.
+
+  - key: southeast-public-health
+    type: public_health_unit
+    names:
+      - { text: Southeast Public Health, lang: en }
+      - { text: SEPH, lang: en, is_acronym: true }
+      - { text: Southeast Board of Health, lang: en }
+      - { text: South East Health Unit, lang: en }
+    homepage: https://southeastph.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/committees-and-boards/other-committees-and-boards/
+      quote: "is responsible for ensuring Southeast Public Health meets the mandatory Health Programs and Services Guidelines"
+      kind: links_to
+      link_target: https://southeastph.ca/about-us/board-of-health/
+    notes: >-
+      Added 2026-10-01 with the public_health_unit type (was out_of_scope). Board of health formed
+      on 2025-01-01 by merging KFL&A Public Health, Hastings Prince Edward Public Health and Leeds,
+      Grenville and Lanark District Health Unit. Shared body (README scope rule 4): governed by the
+      City "together with twelve other participating municipalities"; its "Kingston Main office" is
+      at 221 Portsmouth Avenue and the board meets in Kingston, so the row lives here with member_of
+      from the city. None of the other member municipalities is a dataset subject. "South East Health
+      Unit" is its legal name (Our story page); "Southeast Board of Health" is the city's wording
+      for its board. The former KFL&A Public Health is a predecessor, not a name of this body.
+
+  - key: cataraqui-region-conservation-authority
+    type: conservation_authority
+    names:
+      - { text: Cataraqui Region Conservation Authority, lang: en }
+      - { text: Cataraqui Conservation, lang: en }
+      - { text: CRCA, lang: en, is_acronym: true }
+    homepage: https://cataraquiconservation.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/committees-and-boards/other-committees-and-boards/
+      quote: Cataraqui Region Conservation Authority (CRCA)
+    notes: >-
+      Added 2026-10-01 with the conservation_authority type (was out_of_scope). Shared body (README
+      scope rule 4): 17 board members appointed by the 11 watershed municipalities, four of them
+      Kingston councillors; headquartered in Kingston (Administration Building, 2069 Battersea
+      Road, Glenburnie, a community within the city), so its one row
+      in the eval dataset is here, with member_of from the city. No trusted page links to its site (the
+      city's committees page and budget page name it without a link). Brands itself "Cataraqui
+      Conservation" on a Shopify site; crca.ca, its email domain and PDF host, redirects there.
+      cataraquiconservation.ca rate-limits repeated fetches (HTTP 429 on /blogs/ pages).
+
+  - key: kingston-airport
+    type: municipal_corporation
+    names:
+      - { text: Kingston Airport, lang: en }
+      - { text: YGK Airport, lang: en }
+      - { text: Norman Rogers Airport, lang: en }
+    homepage: https://www.ygkairport.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/
+      quote: "Learn more about Kingston Airport services."
+      kind: links_to
+      link_target: https://www.ygkairport.ca/
+    notes: >-
+      Added 2026-10-01 with the municipal_corporation type (was out_of_scope, "an airport matches no
+      institution type"). The City's Airport Division (reports to the CAO), presenting itself under
+      its own name and domain, so README scope rule 3(b): "The YGK Airport is owned and operated by
+      the City of Kingston" (ygkairport.ca). ygkairport.ca runs on the city's Govstack instance,
+      footer "© 2026 The Corporation of the City of Kingston". The home page card reads "Kingston
+      Airport - YGK".
+    parent:
+      institution: city-of-kingston
+      label: department reporting to the CAO
+      evidence:
+        url: https://www.cityofkingston.ca/council-and-city-administration/organizational-structure/
+        quote: "The following departments report to the CAO: Strategy, Innovation & Partnerships Airport Division"
+
+  - key: kingston-grand-theatre
+    type: municipal_corporation
+    names:
+      - { text: Kingston Grand Theatre, lang: en }
+      - { text: Grand Theatre Kingston, lang: en }
+    homepage: https://www.kingstongrand.ca/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.cityofkingston.ca/news/posts/local-arts-residency-returns-for-a-fourth-year-to-kingston-grand-theatre/
+      quote: "We are thrilled to welcome the 2024 artists-in-residence to Kingston Grand Theatre"
+    notes: >-
+      Added 2026-10-01 with the municipal_corporation type. Judgment call: a City-run performing
+      arts venue (box office, rentals, resident companies) under Arts & Culture Services, presenting
+      under its own name and domain (footer "© 2026 The Corporation of the City of Kingston"), so
+      README scope rule 3(b) with "a venue" from the type's description. It is not a board or
+      corporation, and not in the org chart by name; a reviewer may prefer out_of_scope. The city's
+      /arts-culture-and-events/kingston-grand-theatre/ page is a JS redirect to kingstongrand.ca, so
+      no trusted page links to it by href. No parent_of: no page found that states the
+      relationship in words.
+
+sources:
+  # --- City of Kingston ------------------------------------------------------------
+  - institution: city-of-kingston
+    source_type: procurement
+    url: https://www.cityofkingston.ca/council-and-city-administration/procurement/
+    alternates:
+      - https://www.cityofkingston.ca/business-in-kingston/procurement/
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/procurement/
+      quote: "If you are interested in doing business with the City of Kingston, visit the Biddingo website"
+    notes: The /business-in-kingston/procurement/ copy is a JS redirect (window.location.replace) to this page.
+
+  - institution: city-of-kingston
+    source_type: tender
+    url: https://biddingo.com/kingston
+    alternates:
+      - https://www.biddingo.com/kingston
+    platform: biddingo.com
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/procurement/
+      quote: "Find the results of all bid opportunities Go to Biddingo"
+      kind: links_to
+      link_target: https://biddingo.com/kingston
+    notes: >-
+      Biddingo (biddingo.com) is a listed third-party platform. The page is an Angular app whose HTML is an empty shell, so the evidence is the
+      city procurement page linking to it rather than the portal's own text.
+
+  - institution: city-of-kingston
+    source_type: budget
+    url: https://www.cityofkingston.ca/council-and-city-administration/budgets-and-finances/
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/budgets-and-finances/
+      quote: "A municipal operating budget of $530.4 million"
+
+  - institution: city-of-kingston
+    source_type: capital_plan
+    url: https://www.cityofkingston.ca/council-and-city-administration/budgets-and-finances/
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/budgets-and-finances/
+      quote: "A municipal capital budget of $135.8 million"
+    notes: Same page as the budget; links the 2026 Proposed Operating and Capital Budgets PDF.
+
+  - institution: city-of-kingston
+    source_type: capital_plan
+    url: https://www.cityofkingston.ca/council-and-city-administration/plans-reports-and-studies/asset-management/
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/plans-reports-and-studies/asset-management/
+      quote: "Our AMPs provide a roadmap for future infrastructure spending within the City of Kingston."
+    notes: Multi-year Asset Management Plans (core, volumes 1-6, facilities, financial strategy); a genuinely different page from the annual capital budget.
+
+  - institution: city-of-kingston
+    source_type: council_meeting
+    url: https://www.cityofkingston.ca/council-and-city-administration/council/council-meetings/
+    alternates:
+      - "https://events.cityofkingston.ca/default/Month?Council%20and%20Committee%20Calendar=on&Council%20and%20Committee%20Calendar=Council"
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/council/council-meetings/
+      quote: "Council agendas are posted by 11 a.m. on the Thursday before a meeting."
+    notes: The calendar alternate is the "View All" link from this page (events.cityofkingston.ca meeting calendar).
+
+  - institution: city-of-kingston
+    source_type: council_meeting
+    url: https://pub-cityofkingston.escribemeetings.com/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-cityofkingston.escribemeetings.com/
+      quote: "eSCRIBE Published Meetings"
+    notes: >-
+      The eSCRIBE portal holding agendas, reports and minutes (meeting types include "City Council
+      Meeting"). Trusted pages link into it only by filestream document links (e.g. the Strategic
+      Priorities and Asset Management pages), not to the landing page.
+
+  - institution: city-of-kingston
+    source_type: strategic_plan
+    url: https://www.cityofkingston.ca/council-and-city-administration/strategic-priorities/
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/strategic-priorities/
+      quote: "In June 2023, the Mayor and Council approved the City of Kingston 2023-2026 Strategic Plan"
+    notes: The budgets page says the update of the Council Strategic Plan is expected to begin in early 2027.
+
+  - institution: city-of-kingston
+    source_type: meeting_video
+    url: https://pub-cityofkingston.escribemeetings.com/
+    alternates:
+      - https://www.cityofkingston.ca/council-and-city-administration/council/council-meetings/
+    platform: escribemeetings.com
+    evidence:
+      url: https://pub-cityofkingston.escribemeetings.com/
+      quote: "eSCRIBE Published Meetings"
+    notes: >-
+      Same portal as the council_meeting entry. Recordings since Nov. 5, 2024 are on each meeting's agenda page here;
+      City Council meetings carry HasVideo in the portal's calendar data (checked 2026-10-01). The meeting list is loaded
+      by JavaScript, so the quote is the portal's static title.
+      The government's page that links here only points to it, so it is an alternate.
+      Each recording plays in the portal's own player, e.g.
+      /Players/ISIStandAlonePlayer.aspx?ClientId=kingston&FileName=Compact%20Encoder_City%20Council%20Meeting_2026-09-01-07-00.mp4;
+      the City's "Watch a live meeting" ISI webcast is live only and not a source.
+
+  - institution: city-of-kingston
+    source_type: meeting_video
+    url: https://www.youtube.com/@KingstonCityCouncil
+    alternates:
+      - https://www.youtube.com/channel/UCglKQ0t6jFdKyBUTEVf-yXQ
+    platform: youtube.com
+    evidence:
+      url: https://www.cityofkingston.ca/council-and-city-administration/council/council-meetings/
+      quote: "Archived recordings of meetings"
+      kind: links_to
+      link_target: https://www.youtube.com/@KingstonCityCouncil
+    notes: >-
+      "Kingston City Council" channel: archived Council and committee meetings from October 2014 to December 2024 (per
+      its description); not the City's general channel (youtube.com/TheCityofKingston). youtube.com is a listed platform.
+
+  - institution: city-of-kingston
+    source_type: news
+    url: https://www.cityofkingston.ca/news/
+    alternates:
+      - https://www.cityofkingston.ca/news-and-notices/
+    evidence:
+      url: https://www.cityofkingston.ca/news/
+      quote: "Search the news feed"
+    notes: >-
+      News feed with categories (Community News, Planning Notices, Parking Notices, Transit News and Service Alerts,
+      Utilities Kingston Notices). News and Notices is the page one click up.
+
+  # --- Kingston Police -------------------------------------------------------------
+  - institution: kingston-police
+    source_type: board_meeting
+    url: https://www.kingstonpolice.ca/about-kp/police-service-board/meetings/
+    alternates:
+      - https://www.kingstonpolice.ca/about-kp/police-service-board/
+    evidence:
+      url: https://www.kingstonpolice.ca/about-kp/police-service-board/meetings/
+      quote: "The Board holds a regular meeting on the fourth Thursday of each month"
+
+  - institution: kingston-police
+    source_type: board_meeting
+    url: https://www.kingstonpolice.ca/about-kp/police-service-board/committee-meetings/
+    evidence:
+      url: https://www.kingstonpolice.ca/about-kp/police-service-board/committee-meetings/
+      quote: "Committees of the Kingston Police Service Board meet as required, with notice of meetings published in advance."
+    notes: >-
+      Added 2026-10-01. A separate page from the regular meetings page, with agendas, minutes and
+      reports of the board's committees (2026 Budget Committee, Strategic Planning Committee, Diversity
+      Plan Working Group). Listed in kingstonpolice.ca/sitemap.xml and the board's section menu.
+
+  - institution: kingston-police
+    source_type: strategic_plan
+    url: https://www.kingstonpolice.ca/about-kp/police-service-board/strategic-plan/
+    evidence:
+      url: https://www.kingstonpolice.ca/about-kp/police-service-board/strategic-plan/
+      quote: "The Kingston Police 2023-2026 Strategic Plan"
+    notes: >-
+      Added 2026-10-01 under the README floor rule (strategic_plan is not in police_service's list).
+      The board's dedicated page for the current 2023-2026 plan; a successor is being prepared by the
+      board's 2026 Strategic Planning Committee.
+
+  - institution: kingston-police
+    source_type: annual_report
+    url: https://www.kingstonpolice.ca/about-kp/annual-reports/
+    alternates:
+      - https://www.kingstonpolice.ca/about-kp/police-service-board/annual-report/
+    evidence:
+      url: https://www.kingstonpolice.ca/about-kp/annual-reports/
+      quote: "This Annual Report highlights a year defined by professionalism, adaptability, and a strong commitment to community safety and engagement."
+    notes: >-
+      Added 2026-10-01 under the README floor rule. Annual reports 2021-2025. The board section's
+      Annual Report page links the same 2024 and 2025 reports, so it is an alternate.
+
+  # --- Utilities Kingston -----------------------------------------------------------
+  - institution: utilities-kingston
+    source_type: procurement
+    url: https://utilitieskingston.com/Projects/Tenders-RFPs
+    evidence:
+      url: https://utilitieskingston.com/Projects/Tenders-RFPs
+      quote: "Utilities Kingston has partnered with Bids and Tenders to advertise procurement opportunities."
+
+  - institution: utilities-kingston
+    source_type: tender
+    url: https://utilitieskingston.bidsandtenders.ca/Module/Tenders/en
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://utilitieskingston.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Utilities Kingston Bid Opportunities Website"
+
+  - institution: utilities-kingston
+    source_type: capital_plan
+    url: https://utilitieskingston.com/multiutility/assetmanagement
+    alternates:
+      - https://utilitieskingston.com/Projects
+    evidence:
+      url: https://utilitieskingston.com/multiutility/assetmanagement
+      quote: "Our asset management plan addresses infrastructure needs to effectively collect, convey and treat sewage and to treat and distribute safe, quality drinking water over the next ten years"
+    notes: >-
+      Ten-year water/wastewater asset management plan page. The "Planned capital projects" page
+      (/Projects) lists the current capital program and is accepted as an alternate. The utilities'
+      two-year operating and capital budgets are a PDF linked from the city's Budgets and Finances page.
+
+  # --- Kingston Frontenac Public Library --------------------------------------------
+  - institution: kingston-frontenac-public-library
+    source_type: board_meeting
+    url: https://www.kfpl.ca/library-board-and-management/library-board
+    alternates:
+      - https://www.kfpl.ca/library-board-and-management
+    evidence:
+      url: https://www.kfpl.ca/library-board-and-management/library-board
+      quote: "Library Board Minutes and Agendas"
+
+  - institution: kingston-frontenac-public-library
+    source_type: strategic_plan
+    url: https://www.kfpl.ca/strategic-plans-and-reports
+    evidence:
+      url: https://www.kfpl.ca/strategic-plans-and-reports
+      quote: "Library Strategic Plan 2023"
+    notes: >-
+      Added 2026-10-01 under the README floor rule (the README's own example, a library's strategic
+      plan). The 2023 plan covers a "three- to five-year strategic planning cycle", so it is current.
+
+  - institution: kingston-frontenac-public-library
+    source_type: annual_report
+    url: https://www.kfpl.ca/strategic-plans-and-reports
+    evidence:
+      url: https://www.kfpl.ca/strategic-plans-and-reports
+      quote: "Read the 2025 Annual Report (PDF)"
+    notes: Added 2026-10-01 under the README floor rule; same page as the strategic plan.
+
+  - institution: kingston-frontenac-public-library
+    source_type: capital_plan
+    url: https://www.kfpl.ca/strategic-plans-and-reports
+    evidence:
+      url: https://www.kfpl.ca/strategic-plans-and-reports
+      quote: "Download the Library Facilities Plan Addendum (2026)"
+    notes: >-
+      Added 2026-10-01 under the README floor rule. Same page: the 20-year Library Facilities Plan
+      (2022) and its June 2026 addendum set branch expansions and space targets to 2041, a multi-year
+      plan for buildings. Judgment call: a reviewer may prefer to drop this as a space-needs study
+      rather than a capital plan.
+
+  # --- Kingston & Frontenac Housing Corporation -------------------------------------
+  - institution: kingston-frontenac-housing-corporation
+    source_type: procurement
+    url: https://kfhc.ca/tenders
+    evidence:
+      url: https://kfhc.ca/tenders
+      quote: "KFHC advertises all Public Tenders in the Kingston-Whig Standard newspaper as well as on Biddingo"
+    notes: >-
+      Added 2026-10-01. The only purchasing page: how KFHC advertises tenders, with a tender email
+      list sign-up. The Biddingo link is to the bare biddingo.com home page, not a KFHC listing.
+
+  - institution: kingston-frontenac-housing-corporation
+    source_type: tender
+    url: https://kfhc.ca/tenders
+    evidence:
+      url: https://kfhc.ca/tenders
+      quote: KFHC Current Tenders
+    notes: >-
+      Added 2026-10-01. Same page as procurement, headed "KFHC Current Tenders" (empty, "Files
+      coming soon", on 2026-10-01). Its tender packages (e.g. PT 26-05) are also posted on Biddingo,
+      but no KFHC landing page on biddingo.com was found.
+
+  - institution: kingston-frontenac-housing-corporation
+    source_type: board_meeting
+    url: https://kfhc.ca/board-minutes
+    evidence:
+      url: https://kfhc.ca/board-minutes
+      quote: KFHC Board of Directors Monthly Minutes
+    notes: Added 2026-10-01. Minutes only (September 2024 to February 2026); no agendas published.
+
+  - institution: kingston-frontenac-housing-corporation
+    source_type: strategic_plan
+    url: https://kfhc.ca/kfhc-reports
+    evidence:
+      url: https://kfhc.ca/kfhc-reports
+      quote: KFHC Strategic Plan 2024-2028
+    notes: >-
+      Added 2026-10-01 under the README floor rule. The same page holds audited financial statements
+      (2022-2024) and the 2021 and 2022 annual reports (recorded as annual_report).
+
+  - institution: kingston-frontenac-housing-corporation
+    source_type: annual_report
+    url: https://kfhc.ca/kfhc-reports
+    evidence:
+      url: https://kfhc.ca/kfhc-reports
+      quote: KFHC Annual Reports
+    notes: >-
+      Added 2026-10-01 when municipal_corporation (which lists annual_report) took in the housing
+      corporations. Same page as the strategic plan, under "Financial Statements/Annual Reports/
+      Strategic Plan": annual reports 2021 and 2022 only, beside audited financial statements to 2024.
+      The newest report is old; a reviewer may prefer the absence, but the landing page is the one an
+      agent should save.
+
+  # --- Southeast Public Health ------------------------------------------------------
+  - institution: southeast-public-health
+    source_type: board_meeting
+    url: https://southeastph.ca/about-us/board-of-health/
+    evidence:
+      url: https://southeastph.ca/about-us/board-of-health/
+      quote: "The regular meeting schedule for the Board of Health is the fourth Wednesday of each month"
+    notes: Added 2026-10-01. Agenda packages and meeting recordings, 2025 to date.
+
+  # --- Cataraqui Region Conservation Authority --------------------------------------
+  - institution: cataraqui-region-conservation-authority
+    source_type: tender
+    url: https://cataraquiconservation.bidsandtenders.ca/Module/Tenders/en
+    platform: bidsandtenders.ca
+    evidence:
+      url: https://cataraquiconservation.bidsandtenders.ca/Module/Tenders/en
+      quote: "Welcome to the Cataraqui Conservation Bid Opportunities Website"
+    notes: >-
+      Added 2026-10-01. Found by web search; cataraquiconservation.ca does not link the portal from
+      its navigation. RFPs and RFQs are also announced as individual news posts on
+      cataraquiconservation.ca/blogs/news (e.g. "RFQ - Boat Package Purchase"), which are single
+      tenders, not a landing page.
+
+  - institution: cataraqui-region-conservation-authority
+    source_type: budget
+    url: https://cataraquiconservation.ca/pages/budget
+    evidence:
+      url: https://cataraquiconservation.ca/pages/budget
+      quote: "Current and past operating budgets, summary for all business units."
+    notes: Added 2026-10-01. Budget & Financials page (2024 to draft 2027 operating budgets, fee schedules, levies, audited statements).
+
+  - institution: cataraqui-region-conservation-authority
+    source_type: capital_plan
+    url: https://cataraquiconservation.ca/pages/budget
+    evidence:
+      url: https://cataraquiconservation.ca/pages/budget
+      quote: "Capital project budget with a 10-year forecast and project details sheets"
+    notes: Added 2026-10-01 under the README floor rule; same page as the budget (Capital Forecast section).
+
+  - institution: cataraqui-region-conservation-authority
+    source_type: board_meeting
+    url: https://cataraquiconservation.ca/pages/board-meetings
+    alternates:
+      - https://cataraquiconservation.ca/pages/board
+    evidence:
+      url: https://cataraquiconservation.ca/pages/board-meetings
+      quote: "For older meeting agendas or minutes please contact dcampbell@crca.ca"
+    notes: >-
+      Added 2026-10-01. "Full Authority Board Meetings" page; the current year's meetings are not in
+      the served HTML (archives 2021-2023 are). The Full Authority Board page one level up links it
+      ("Visit our Board Meetings page"), so it is an alternate.
+
+absent_sources:
+  - institution: kingston-transit
+    source_type: procurement
+    covered_by: city-of-kingston
+    note: >-
+      No transit purchasing page on kingstontransit.ca (navigation, city sitemap, which also lists
+      the transit pages) or cityofkingston.ca; transit buys through the City's central procurement
+      (city procurement page and Biddingo), recorded under city-of-kingston.
+  - institution: kingston-transit
+    source_type: tender
+    covered_by: city-of-kingston
+    note: No transit-specific bid listing; transit tenders are posted on the City's Biddingo page (recorded under city-of-kingston).
+  - institution: kingston-transit
+    source_type: budget
+    covered_by: city-of-kingston
+    note: >-
+      No separate transit budget page; transit is a line in the City's operating budget (Budgets and
+      Finances page, "Transit ... Maintains 82 transit buses"). Searched kingstontransit.ca navigation
+      and web search.
+  - institution: kingston-transit
+    source_type: capital_plan
+    covered_by: city-of-kingston
+    note: >-
+      No current transit capital or business plan page. The 2017-2021 Transit Business Plan is
+      archived ("File not available" on cityofkingston.ca); transit fleet and facilities appear in
+      the City's Asset Management Plan Volume 1 and capital budget, recorded under city-of-kingston.
+  - institution: kingston-transit
+    source_type: board_meeting
+    note: No transit board or commission; Kingston Transit is a City department overseen by Council and its Environment, Infrastructure and Transportation Policies Committee.
+
+  - institution: kingston-police
+    source_type: procurement
+    note: >-
+      No purchasing page on kingstonpolice.ca (sitemap checked: only Finance unit page, which says
+      the unit provides "purchasing services", Property and Stores, and Online Auctions); web search
+      found no Kingston Police bid portal.
+  - institution: kingston-police
+    source_type: tender
+    note: No bid listing found on kingstonpolice.ca or by web search.
+  - institution: kingston-police
+    source_type: budget
+    covered_by: city-of-kingston
+    note: >-
+      No budget landing page. The proposed operating and capital budget is a board report PDF
+      (e.g. Report 25-82 Proposed 2026 Budget) inside the board meetings page, which is recorded as
+      board_meeting; the board's 2026 Budget Committee papers are on the committee meetings page.
+      Checked sitemap and web search. covered_by added 2026-10-01: the police levy is part of the
+      City budget, and the City's Budgets and Finances page has a "Kingston Police" section under
+      External Agencies (a description, no figures, so it is not treated as a per-body budget source).
+
+  - institution: kingston-fire-rescue
+    source_type: procurement
+    covered_by: city-of-kingston
+    note: KFR has no purchasing page; it buys through the City's central procurement (recorded under city-of-kingston). Checked the Fire and Rescue section and city sitemap.
+  - institution: kingston-fire-rescue
+    source_type: budget
+    covered_by: city-of-kingston
+    note: >-
+      No separate fire budget page; Fire & Rescue Services is a section of the City's Budgets and
+      Finances page and of the city budget PDF. The fire page links only an old annual report,
+      the 2021 strategic plan and the community risk assessment.
+
+  - institution: utilities-kingston
+    source_type: board_meeting
+    note: >-
+      Board structure page lists directors only; no board agendas or minutes published on
+      utilitieskingston.com (Company section, site search, web search).
+
+  - institution: kingston-hydro
+    source_type: procurement
+    covered_by: utilities-kingston
+    note: Kingston Hydro has no purchasing page on kingstonhydro.com; its system is operated by Utilities Kingston, whose procurement page and bids&tenders portal are recorded under utilities-kingston.
+  - institution: kingston-hydro
+    source_type: tender
+    covered_by: utilities-kingston
+    note: No Kingston Hydro bid portal; see procurement note.
+  - institution: kingston-hydro
+    source_type: capital_plan
+    note: >-
+      No capital plan page on kingstonhydro.com. Its Distribution System Plan is filed inside OEB rate
+      applications linked from the Rates & Regulatory Affairs page (off-site on the OEB RDS; the
+      current one is the 2027 rates application EB-2026-0053, checked 2026-10-01). The
+      Kingston Hydro Strategic Plan 2026-2030 is a PDF on utilitieskingston.com, not a capital plan.
+  - institution: kingston-hydro
+    source_type: board_meeting
+    note: Board of Directors page lists directors only; no agendas or minutes published.
+
+  - institution: kingston-frontenac-public-library
+    source_type: procurement
+    note: >-
+      No purchasing or tenders page on kfpl.ca (sitemap.xml, 237 URLs on 2026-10-01, checked for
+      tender, rfp, procure, bid, purchas; only "Suggest a Purchase" for books) and none by web search.
+      The library does run its own RFPs (board minutes cite "KFPL-RFP-2025-02" for shelving), but
+      the only purchasing item online is the "Procurement of Goods and Services Policy" PDF on the
+      governance policies page, a policy rather than a purchasing page.
+  - institution: kingston-frontenac-public-library
+    source_type: budget
+    covered_by: city-of-kingston
+    note: >-
+      No operating budget page. "Library Finance" (/about-the-library/library-finance) holds only
+      audited financial statements and salary grids, which are not a budget; the budget appears in
+      board agenda packages and as a line in the City and County budgets. covered_by added
+      2026-10-01: the City's Budgets and Finances page has a "Kingston & Frontenac Public Library"
+      section under External Agencies (a description, no figures).
+
+  - institution: kingston-frontenac-public-library
+    source_type: tender
+    note: >-
+      None. The sitemap.xml check under procurement already covered tender, rfp and bid; nothing
+      but "Suggest a Purchase".
+
+  - institution: kingston-transit
+    source_type: strategic_plan
+    covered_by: city-of-kingston
+    note: >-
+      No current transit plan page: the 2017-2021 Transit Business Plan is archived ("File not
+      available", see capital_plan). Transit direction sits in the City's strategic plan, recorded
+      under the city.
+
+  - institution: kingston-frontenac-housing-corporation
+    source_type: capital_plan
+    note: >-
+      No capital plan page on kfhc.ca (all navigation pages checked 2026-10-01: About, Tenders,
+      Properties, Board of Directors, Board Minutes, KFHC Reports). The reports page holds audited
+      financial statements, annual reports and the 2024-2028 strategic plan, none a capital plan;
+      building upgrades appear only in board minutes.
+
+  - institution: southeast-public-health
+    source_type: procurement
+    note: >-
+      No purchasing or tenders page on southeastph.ca: page sitemap (19 pages) and the site's
+      WordPress search for tender, procurement and "request for proposal" return only board agenda
+      packages and health pages (checked 2026-10-01).
+  - institution: southeast-public-health
+    source_type: budget
+    note: >-
+      No budget page. The annual budget is a report inside the board agenda packages on the Board
+      of Health page (recorded as board_meeting); the Annual reports and Strategic plan pages are
+      placeholders after the 2025 merger. The City's Budgets and Finances page names Southeast
+      Public Health under External Agencies (a description, no figures), but the body is funded by
+      thirteen municipalities and the Province, so it is not treated as covered by the City.
+
+  - institution: cataraqui-region-conservation-authority
+    source_type: procurement
+    note: >-
+      No purchasing page on cataraquiconservation.ca (page sitemap, 155 pages, checked 2026-10-01
+      for tender, rfp, procur, bid, purchas, supplier; /pages/tenders and /pages/procurement are
+      404). It buys through its bids&tenders portal (recorded as tender) and announces RFPs as
+      news posts.
+
+  - institution: kingston-airport
+    source_type: procurement
+    covered_by: city-of-kingston
+    note: >-
+      No purchasing page on ygkairport.ca (sitemap and navigation: Airport Services, Business and
+      Aviation, About); the Airport Division buys through the City's central procurement and
+      Biddingo, recorded under city-of-kingston. The site's "Want to do business with us?" invites
+      hangar lease inquiries through MyKingston, not bids.
+  - institution: kingston-airport
+    source_type: tender
+    covered_by: city-of-kingston
+    note: No airport bid listing; airport tenders are posted on the City's Biddingo page (recorded under city-of-kingston).
+  - institution: kingston-airport
+    source_type: annual_report
+    note: No annual report on ygkairport.ca or cityofkingston.ca (city sitemap searched for airport pages, 2026-10-01).
+  - institution: kingston-airport
+    source_type: board_meeting
+    note: No airport board or commission; a City division reporting to the CAO and overseen by Council.
+
+  - institution: kingston-grand-theatre
+    source_type: procurement
+    covered_by: city-of-kingston
+    note: >-
+      No purchasing page on kingstongrand.ca (sitemap checked 2026-10-01: tickets, visit, donate,
+      education, about, rentals); the theatre is part of the City's Arts & Culture Services and buys
+      through the City's central procurement, recorded under city-of-kingston.
+  - institution: kingston-grand-theatre
+    source_type: tender
+    covered_by: city-of-kingston
+    note: No theatre bid listing; City tenders are on Biddingo (recorded under city-of-kingston).
+  - institution: kingston-grand-theatre
+    source_type: annual_report
+    note: No annual report on kingstongrand.ca (sitemap) or on cityofkingston.ca.
+  - institution: kingston-grand-theatre
+    source_type: board_meeting
+    note: No board of its own; a City-run venue within Arts & Culture Services, overseen by Council.
+
+candidate_domains:
+  - domain: kingstontransit.ca
+    institution: kingston-transit
+    expected: confirm
+    reason: Kingston Transit's own site, linked from the city home page navigation and built on the city's Govstack instance.
+  - domain: kingstonpolice.ca
+    institution: kingston-police
+    expected: confirm
+    reason: Kingston Police's site, linked from the city's Other Committees and Boards page.
+  - domain: utilitieskingston.com
+    institution: utilities-kingston
+    expected: confirm
+    reason: Utilities Kingston's site, linked from the city home page.
+  - domain: kingstonhydro.com
+    institution: kingston-hydro
+    expected: confirm
+    reason: Kingston Hydro Corporation's site (board, rates, OEB filings); linked from utilitieskingston.com, not from a trusted page.
+  - domain: kfpl.ca
+    institution: kingston-frontenac-public-library
+    expected: confirm
+    reason: Kingston Frontenac Public Library's site, linked from the city's Other Committees and Boards page.
+  - domain: kfhc.ca
+    institution: kingston-frontenac-housing-corporation
+    expected: confirm
+    reason: Kingston & Frontenac Housing Corporation's site, linked (as www.kfhc.ca) from the city's Other Committees and Boards page.
+  - domain: southeastph.ca
+    institution: southeast-public-health
+    expected: confirm
+    reason: Southeast Public Health's site, linked from the city's Other Committees and Boards page ("Southeast Board of Health").
+  - domain: cataraquiconservation.ca
+    institution: cataraqui-region-conservation-authority
+    expected: confirm
+    reason: Cataraqui Conservation's site; named but not linked on the city's pages, so discovery reaches it by search or from crca.ca.
+  - domain: kingstongrand.ca
+    institution: kingston-grand-theatre
+    expected: confirm
+    reason: Kingston Grand Theatre's site; the city's /arts-culture-and-events/kingston-grand-theatre/ page redirects there by script.
+  - domain: ygkairport.ca
+    institution: kingston-airport
+    expected: confirm
+    reason: >-
+      Kingston Airport's own site (YGK Airport), linked from the city home page ("Kingston Airport -
+      YGK"). Was a reject trap under the city while an airport had no type; confirm since the
+      municipal_corporation type (2026-10-01).
+  - domain: visitkingston.ca
+    institution: city-of-kingston
+    expected: reject
+    reason: Trap. Tourism Kingston, a separate not-for-profit the city funds; the city's Tourism Kingston page redirects there.
+  - domain: investkingston.ca
+    institution: city-of-kingston
+    expected: reject
+    reason: >-
+      Trap. Kingston Economic Development Corporation, a separately incorporated not-for-profit the
+      city funds but does not own or control (not in the City's consolidated reporting entity);
+      out of scope, not the city's domain.
+  - domain: downtownkingston.ca
+    institution: city-of-kingston
+    expected: reject
+    reason: Trap. Downtown Kingston! Business Improvement Area.
+  - domain: kingstonaccessbus.net
+    institution: kingston-transit
+    expected: reject
+    reason: Trap. Kingston Access Services, an independent charity running specialized transit under contract; not Kingston Transit's domain.
+  - domain: mykingston.ca
+    institution: city-of-kingston
+    expected: reject
+    reason: Trap. The city's MyKingston resident login and document-request portal, not an institution home page; cityofkingston.ca is the official domain.
+  - domain: kpsb.ca
+    institution: kingston-police
+    expected: reject
+    reason: >-
+      Trap. The police board's email domain (admin_board@kpsb.ca on kingstonpolice.ca's board
+      pages), but the site is a GoDaddy Website Builder "Launching Soon" placeholder with no content
+      (checked 2026-10-01), so there is nothing on it to quote. Unlike tpsb.ca under README scope
+      rule 5, it serves no board page; the board's pages are on kingstonpolice.ca. Revisit if it launches.
+
+out_of_scope:
+  - name: Kingston Access Services (Kingston Access Bus)
+    url: https://www.kingstonaccessbus.net/
+    reason: >-
+      Specialized (paratransit) transit, but an "incorporated non-profit, registered charitable
+      organization operated as an external agency to the City" with one councillor on its board; not
+      owned or controlled by the city (README scope rule 3), so not a transit_agency row.
+  - name: Kingston and Area Taxi Commission
+    url: https://katc.ca/
+    reason: >-
+      Taxi licensing and regulatory commission under its own statute, a regulator rather than a body
+      running a business of its own (a tribunal-like body, README scope rule 2); its licensing moved
+      to the City on 2026-10-01 (katc.ca), so it is not a municipal_corporation.
+  - name: Kingston Economic Development Corporation (Invest Kingston)
+    url: https://www.investkingston.ca/
+    reason: >-
+      Separately incorporated not-for-profit (four of twelve directors are council members) that the
+      city funds but does not own or control: it is not in the City's consolidated reporting entity
+      (2025 audited financial statements, note 1(a)), and the city lists it among External Agencies it
+      supports "primarily through direct financial funding". A not-for-profit the municipality only
+      funds (README scope rule 2), so not a municipal_corporation despite economic development.
+  - name: Tourism Kingston
+    url: https://www.visitkingston.ca/
+    reason: >-
+      Tourism not-for-profit the city funds (two councillors on its board) but does not own or
+      control; not in the City's consolidated reporting entity. A not-for-profit the municipality
+      only funds (README scope rule 2).
+  - name: Downtown Kingston! Business Improvement Area
+    url: https://downtownkingston.ca/
+    reason: BIA; README scope rule 2.
+  - name: Sustainable Kingston
+    url: https://www.sustainablekingston.com/
+    reason: Community not-for-profit with a council seat (vacant) on its board; not owned or controlled by the city, a not-for-profit the municipality at most funds (README scope rule 2).
+  - name: Rideaucrest Home (Rideaucrest Long-Term Care)
+    reason: City-run long-term care home (department under Community Services); a long-term care home run as a department (README scope rule 2).
+  - name: Frontenac Paramedics
+    reason: >-
+      Land ambulance (paramedic service) run by the County of Frontenac, which serves Kingston; a
+      service of another municipality (Kingston is separated from the county), not the city's. A
+      department of the County of Frontenac, which buys and budgets for it; the country file has no
+      paramedic type (dropped 2026-10-01, README rule 2).
+  - name: County of Frontenac
+    url: https://www.frontenaccounty.ca/
+    reason: Neighbouring upper-tier municipality (co-governs KFPL and KFHC); Kingston is separated from it, so it is not part of this subject.
+  - name: Water and Wastewater Municipal Services Corporation (proposed)
+    reason: Endorsed in principle by Council in June 2026 but not yet established; revisit when it exists (it would be a public_utility row).
+  - name: 1425447 Ontario Limited
+    reason: Holding company that owns Utilities Kingston; no operations or procurement of its own (spec §4 subsidiary rule).
+  - name: Limestone District School Board
+    url: https://www.limestone.on.ca/
+    reason: School board; province-level type.
+  - name: Algonquin and Lakeshore Catholic District School Board
+    url: https://www.alcdsb.on.ca/
+    reason: School board; province-level type.
+  - name: Conseil des écoles catholiques du Centre-Est / Conseil des écoles publiques de l'Est de l'Ontario
+    reason: French-language school boards serving Kingston; province-level type.
+  - name: Queen's University
+    url: https://www.queensu.ca/
+    reason: University; province-level type.
+  - name: St. Lawrence College
+    url: https://www.stlawrencecollege.ca/
+    reason: College; province-level type.
+  - name: Royal Military College of Canada
+    reason: Federal (Department of National Defence) institution.
+  - name: Kingston Health Sciences Centre
+    url: https://kingstonhsc.ca/
+    reason: Hospital; province-level type.
+  - name: Providence Care
+    url: https://providencecare.ca/
+    reason: Hospital (mental health and rehabilitation); province-level type.
+  - name: Hydro One
+    reason: Provincial utility serving the parts of Kingston outside Kingston Hydro's territory; province-level.
+
+notes: >-
+  Researched 2026-09-29 from cityofkingston.ca (sitemap, Council and City Administration section,
+  Committees and Boards, Budgets and Finances, Organizational Structure) and each body's own site.
+  City procurement is centralised: the city page points to Biddingo for all bids and supplier
+  registration, and transit and fire buy through it (recorded as absent for those divisions rather
+  than duplicating the city's pages, with covered_by: city-of-kingston). Utilities Kingston runs its own procurement on
+  bids&tenders. Council agendas and minutes live on eSCRIBE (pub-cityofkingston.escribemeetings.com)
+  and in the events.cityofkingston.ca meeting calendar.
+  Updated 2026-10-01 for the five new institution types: KFHC (housing_corporation, folded into
+  municipal_corporation later that day), Southeast
+  Public Health (public_health_unit, shared, headquartered here) and Cataraqui Conservation
+  (conservation_authority, shared, headquartered here) moved from out_of_scope; the Airport Division
+  (YGK) and the Kingston Grand Theatre added as municipal_corporation divisions under rule 3(b),
+  and ygkairport.ca flipped from reject to confirm. Paramedics are the County of Frontenac's, and
+  the economic development and tourism corporations are funded, not controlled, so they stay out.
