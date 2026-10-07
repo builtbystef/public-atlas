@@ -22,7 +22,7 @@ dependencies = [
   "playwright>=1.61,<2",
   # The job queue, on PostgreSQL. Its tables are created by our Alembic migrations, so a bump may
   # need a new migration.
-  "procrastinate[psycopg]>=3.9,<4",
+  "procrastinate[psycopg]>=3.10.0,<4",
   "psycopg[binary]>=3.3.5,<4",
   "pydantic-ai-slim[openai]>=2.40,<3",
   "pydantic-settings>=2.13.1,<3",
