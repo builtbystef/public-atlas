@@ -121,6 +121,7 @@ async def score_database(
             cards=scorer.score_files(graph, rules, subjects, lists),
         )
     settings = harness.eval_settings(resources.settings)
+    await harness.require_main_migrated(resources)
     async with _eval_resources(resources, settings) as eval_res:
         async with eval_res.session() as session:
             graph, rules = await _graph_and_rules(session)
@@ -237,6 +238,9 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
     queues = tuple(queues) if queues is not None else harness.default_queues()
     settings = harness.eval_settings(resources.settings)
     harness.refuse_shared_database(resources.settings, settings.eval_database_name)
+    # The run and its scores are rows in the main database; a column it lacks would fail the
+    # insert at the end of the run, hours in.
+    await harness.require_main_migrated(resources)
     if serve and resources.models is None:
         raise ValueError("no model is configured (PUBLIC_ATLAS_OPENAI_API_KEY); nothing can run")
     report(f"preparing the eval database {settings.eval_database_name}")

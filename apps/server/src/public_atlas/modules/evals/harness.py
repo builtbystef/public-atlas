@@ -15,12 +15,10 @@ from collections.abc import Callable, Iterable, Sequence
 from contextlib import suppress
 from dataclasses import dataclass, field
 from decimal import Decimal
-from pathlib import Path
 from types import ModuleType
 from typing import Any
 
 from alembic import command
-from alembic.config import Config
 from pydantic import PostgresDsn
 from sqlalchemy import create_engine, func, select, text
 from sqlalchemy.engine import Connection, make_url
@@ -28,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.pool import NullPool
 
 from public_atlas.config import Settings
+from public_atlas.db import migrations
 from public_atlas.integrations.parse import Parser
 from public_atlas.integrations.storage import ObjectStore
 from public_atlas.jobs import QUEUES, Queue
@@ -62,7 +61,6 @@ from public_atlas.resources import Resources, worker_context
 logger = logging.getLogger(__name__)
 
 # apps/server, where pyproject.toml holds Alembic's settings.
-SERVER_ROOT = Path(__file__).resolve().parents[4]
 # Everything the harness seeds was verified by hand: the dataset is the labeller's word.
 BY = EnteredBy.MANUAL
 
@@ -128,12 +126,19 @@ async def ensure_database(settings: Settings) -> bool:
 
 
 def _upgrade(connection: Connection) -> None:
-    # The settings are in pyproject.toml; alembic.ini holds only a logging configuration, which
-    # would replace this process's loggers, so it is left out.
-    config = Config(toml_file=SERVER_ROOT / "pyproject.toml")
+    config = migrations.alembic_config()
     # Alembic's env.py migrates on a connection passed this way instead of opening its own.
     config.attributes["connection"] = connection
     command.upgrade(config, "head")
+
+
+async def require_main_migrated(resources: Resources) -> None:
+    """The main database is at the latest migration. An eval run and its scores are rows there;
+    checked before a run starts, not at the insert hours later. On the resources' own session,
+    so a test's transaction counts."""
+    async with resources.session() as session:
+        connection = await session.connection()
+        await connection.run_sync(migrations.check_head)
 
 
 async def migrate(engine: AsyncEngine) -> None:

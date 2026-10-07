@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, AsyncSession, c
 from sqlalchemy.pool import NullPool
 
 from public_atlas.config import Settings
+from public_atlas.db import migrations
 from public_atlas.db.models import Base
 from public_atlas.dependencies import get_session
 from public_atlas.integrations.parse import MemoryParser
@@ -165,6 +166,8 @@ async def _begin(engine: AsyncEngine) -> AsyncConnection:
         pytest.fail(f"PostgreSQL is not reachable at {engine.url}. Run `vp run infra:up`. ({exc})")
     await connection.begin()
     await connection.run_sync(Base.metadata.create_all)
+    # Stamped at head, as a migrated database is: the eval service checks before it starts.
+    await connection.run_sync(migrations.stamp_head)
     return connection
 
 

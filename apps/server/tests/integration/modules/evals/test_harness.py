@@ -12,10 +12,11 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 import yaml
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 
+from public_atlas.db import migrations
 from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.assignments.models import (
     Assignment,
@@ -590,3 +591,23 @@ def test_the_eval_database_is_never_the_main_one(settings: Settings):
         harness.refuse_shared_database(shared, shared.eval_database_name)
     pointed = make_url(str(harness.eval_settings(settings).database_url))
     assert pointed.database == settings.eval_database_name
+
+
+def test_an_eval_needs_the_main_database_at_the_latest_migration(
+    db: Database, finishing: Resources
+):
+    """The run and its scores are rows in the main database. A database behind the migrations
+    is refused before the eval database is touched, not at the insert hours later."""
+
+    async def behind(connection: AsyncConnection) -> None:
+        await connection.run_sync(migrations.check_head)
+        await connection.execute(text("UPDATE alembic_version SET version_num = 'b3e8d1f4a627'"))
+        with pytest.raises(migrations.NotMigratedError, match="alembic upgrade head"):
+            await connection.run_sync(migrations.check_head)
+
+    db.run(behind, db.connection)
+    files = dataset.files_named(["mcgarry"], lists_by_default=False)
+    with pytest.raises(migrations.NotMigratedError):
+        db.run(lambda: evals.run_eval(finishing, files, serve=False))
+    with pytest.raises(migrations.NotMigratedError):
+        db.run(lambda: evals.score_database(finishing, files, eval_database=True))
