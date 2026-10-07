@@ -293,17 +293,17 @@ def test_a_ministry_is_seeded_in_the_province(
         homepage = await session.get_one(Homepage, ministry.homepage_id)
         webpage = await session.get_one(Webpage, homepage.webpage_id)
         assert webpage.url == "https://www.ontario.ca/page/ministry-fixtures"
-        # The province's government got the homepage the file names, so the province's own
-        # discovery has a page to start from.
+        # The province's government got the homepage the file names, so the ministry's page
+        # sits under a verified government.
         ontario = await session.get_one(Place, world.ontario.id)
         head = await session.get_one(Institution, ontario.government_institution_id)
         head_page = await session.get_one(Homepage, head.homepage_id)
         assert (
             await session.get_one(Webpage, head_page.webpage_id)
         ).url == "https://www.ontario.ca/"
-        by_type = {a.type: a for a in seeded.queued}
-        assert by_type[FIND_INSTITUTIONS].subject_id == world.ontario.id
-        assert by_type[FIND_SOURCES].subject_id == ministry.id
+        # Only the ministry's sources are the agent's to find: its agencies come from an
+        # official list, so no province-wide discovery is queued for it.
+        assert [(a.type, a.subject_id) for a in seeded.queued] == [(FIND_SOURCES, ministry.id)]
         for assignment in seeded.queued:
             row = await session.get_one(Assignment, assignment.id)
             assert row.status is AssignmentStatus.FINISHED

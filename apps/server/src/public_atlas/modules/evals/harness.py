@@ -221,9 +221,11 @@ async def seed_subject(  # noqa: PLR0913
     slug: str,
 ) -> Seeded:
     """Seed one subject file into `run`'s database and queue its discovery: `find_sources` for
-    the government or ministry and `find_institutions` for its place, as a verified homepage
-    would have spawned them (spec section 7.3), within the run's filter. Flushed, not
-    committed. Seeding again changes nothing."""
+    the government or ministry and, for a place subject, `find_institutions` for the place, as
+    a verified homepage would have spawned them (spec section 7.3), within the run's filter.
+    A ministry's bodies are an official list's to load, not the agent's to find (spec section
+    5.2), so an institution subject queues no discovery. Flushed, not committed. Seeding again
+    changes nothing."""
     subject = expected.subject
     government = expected.institution(subject.institution)
     if government is None:
@@ -257,15 +259,10 @@ async def seed_subject(  # noqa: PLR0913
     if government.homepage:
         await _verified_homepage(session, institution, government.homepage)
     await _cancel_stale_searches(session, institution)
-    queued = await assignments.queue_spawns(
-        session,
-        resources.jobs,
-        run,
-        [
-            Spawn(AssignmentType.FIND_SOURCES, institution.id),
-            Spawn(AssignmentType.FIND_INSTITUTIONS, place.id),
-        ],
-    )
+    spawns = [Spawn(AssignmentType.FIND_SOURCES, institution.id)]
+    if subject.kind == "place":
+        spawns.append(Spawn(AssignmentType.FIND_INSTITUTIONS, place.id))
+    queued = await assignments.queue_spawns(session, resources.jobs, run, spawns)
     await session.flush()
     return Seeded(slug=slug, place_id=place.id, institution_id=institution.id, queued=queued)
 

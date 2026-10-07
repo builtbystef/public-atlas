@@ -244,8 +244,11 @@ an institution does:
 - A place subject names itself in `place`; its `institution` is its government.
 - An institution subject (a ministry) names its place (`Ontario`) and its
   `government_homepage`, the homepage of the place's government: the harness
-  seeds it verified so the province's `find_institutions`, which finds the
-  ministry's agencies, has a page to start from.
+  seeds it verified so the ministry's page sits under a verified government.
+  Only the ministry's `find_sources` is queued. Its agencies are an official
+  list's to load (the provincial agency directory, `ontario_agencies` in the
+  Phase 7 plan), not the agent's to find, so until that list is loaded the
+  file's agencies score as misses with that reason.
 
 ### Evidence quotes
 
@@ -271,9 +274,9 @@ an institution does:
 
 An eval run resets the eval database, seeds the country through the real seed
 and loader with every assignment held, seeds each subject's place, government,
-trusted domains and homepage, queues the subject's `find_sources` and its
-place's `find_institutions`, serves the queues in its own process, then scores
-and prices. For a places file the seed is the loader's alone, so the run is
+trusted domains and homepage, queues the subject's `find_sources` and, for a
+place subject, its `find_institutions`, serves the queues in its own process,
+then scores and prices. For a places file the seed is the loader's alone, so the run is
 scored on each government's `find_homepage`. A homepage matches when it is on
 the same registrable domain and its path starts with the dataset's path. The
 rules below are code in `../scorer/`; `public-atlas eval score` applies them to

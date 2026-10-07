@@ -266,9 +266,17 @@ The first module is `lists/ontario_places.py`: three sources (the census
 population table, the census geography file, the Ontario municipal
 directory), about twenty overrides, and an `entries()` that returns 454
 `PlaceEntry` records. `public-atlas load-list ontario_places` shows the
-diff; `--apply` loads it. A later `lists/ontario_hospitals.py` returns
-`InstitutionEntry` records and is loaded by the same command; nothing in the
-loader changes.
+diff; `--apply` loads it. The second, `lists/ontario_agencies.py`, reads the
+province's directory of its agencies and returns `InstitutionEntry` records,
+each agency under its ministry; the same command loads it and nothing in the
+loader changes. A later `lists/ontario_hospitals.py` is the same again.
+
+This is also where the bodies under a body come from. `find_institutions`
+takes a place and finds the types its level expects; it is never pointed at a
+ministry or a department, because a government that has agencies publishes
+the list of them, and a list beats a discovery that starts from one homepage.
+A hierarchy below a place is loaded from the list its authority publishes, or
+it waits until there is one.
 
 A rule test per list (`tests/unit/imports/test_ontario_places.py`) calls
 `entries()` on the cached files and checks every record: a numeric code, a
@@ -518,7 +526,8 @@ database URL, and it writes its results to `eval_runs` and `eval_scores` in
 the main database so history survives a reset. The runner resets the eval
 database, seeds the country with every assignment held, seeds each subject's
 place, government, trusted domains and homepage, queues the subject's
-discovery, serves the queues in its own process, then scores and prices.
+`find_sources` and, for a place subject, its `find_institutions`, serves the
+queues in its own process, then scores and prices.
 Recall and precision per assignment type, the bucket of every miss, and the
 cost per subject are stored and shown in the console.
 

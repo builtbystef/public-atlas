@@ -574,6 +574,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/eval-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Eval Runs
+         * @description Every eval run, newest first.
+         */
+        get: operations["evals-list_eval_runs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/eval-runs/{eval_run_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Eval Run
+         * @description One eval run with its scores per subject and assignment type.
+         */
+        get: operations["evals-read_eval_run"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -779,6 +819,91 @@ export interface components {
          * @enum {string}
          */
         EntityKind: "place" | "institution" | "source" | "domain" | "homepage";
+        /** EvalRunDetail */
+        EvalRunDetail: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Dataset Version */
+            dataset_version: string;
+            /** Model */
+            model: string;
+            /** Settings */
+            settings: {
+                [key: string]: unknown;
+            };
+            /** Cost */
+            cost: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Finished At */
+            finished_at: string | null;
+            /** Scores */
+            scores: components["schemas"]["EvalScoreOutput"][];
+        };
+        /** EvalRunOutput */
+        EvalRunOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /** Dataset Version */
+            dataset_version: string;
+            /** Model */
+            model: string;
+            /** Settings */
+            settings: {
+                [key: string]: unknown;
+            };
+            /** Cost */
+            cost: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Finished At */
+            finished_at: string | null;
+        };
+        /** EvalScoreOutput */
+        EvalScoreOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Subject */
+            subject: string;
+            assignment_type: components["schemas"]["AssignmentType"];
+            /** Recall */
+            recall: number | null;
+            /** Precision */
+            precision: number | null;
+            /** Misses */
+            misses: {
+                [key: string]: unknown;
+            }[];
+            /** False Positives */
+            false_positives: {
+                [key: string]: unknown;
+            }[];
+        };
         /**
          * EventKind
          * @enum {string}
@@ -1206,6 +1331,9 @@ export type CountrySettingsInput = components['schemas']['CountrySettingsInput']
 export type DecisionInput = components['schemas']['DecisionInput'];
 export type DecisionOutput = components['schemas']['DecisionOutput'];
 export type EntityKind = components['schemas']['EntityKind'];
+export type EvalRunDetail = components['schemas']['EvalRunDetail'];
+export type EvalRunOutput = components['schemas']['EvalRunOutput'];
+export type EvalScoreOutput = components['schemas']['EvalScoreOutput'];
 export type EventKind = components['schemas']['EventKind'];
 export type EventOutput = components['schemas']['EventOutput'];
 export type EvidenceOutput = components['schemas']['EvidenceOutput'];
@@ -2245,6 +2373,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EventOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "evals-list_eval_runs": {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalRunOutput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "evals-read_eval_run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eval_run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvalRunDetail"];
                 };
             };
             /** @description Validation Error */
