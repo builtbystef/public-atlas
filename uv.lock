@@ -2365,7 +2365,7 @@ dev = [
     { name = "types-pyyaml", specifier = ">=6.0.12,<7" },
 ]
 parse-cpu = [
-    { name = "docling", extras = ["rapidocr"], specifier = ">=2.129,<3" },
+    { name = "docling", extras = ["rapidocr"], specifier = ">=2.132.0,<3" },
     { name = "torch", marker = "sys_platform != 'darwin'", specifier = ">=2.14,<3", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "public-atlas-server", group = "parse-cpu" } },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.14,<3" },
     { name = "torchvision", marker = "sys_platform != 'darwin'", specifier = ">=0.29,<1", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "public-atlas-server", group = "parse-cpu" } },
