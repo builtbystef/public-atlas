@@ -9,7 +9,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from public_atlas.modules.graph.models import (
+    DomainKind,
     EnteredBy,
+    EntityKind,
     EntityStatus,
     ProcurementHandledBy,
     SourceAccess,
@@ -150,3 +152,46 @@ class InstitutionDetail(InstitutionOutput):
     homepages: list[HomepageOutput]
     sources: list[SourceOutput]
     evidence: list[EvidenceOutput]
+
+
+# --- The graph as a picture ---
+
+# What an edge stands for: the foreign key it was read from.
+GraphRelation = Literal["parent", "government", "place", "homepage", "source", "domain", "serves"]
+
+
+class GraphNode(BaseModel):
+    """One entity as the graph view draws it: what to call it, its kind and status, and the
+    figure its size follows."""
+
+    id: uuid.UUID
+    kind: EntityKind
+    # A name, or the URL of a homepage or a source.
+    label: str
+    status: EntityStatus
+    # A place's newest population figure.
+    population: int | None = None
+    # An institution's number of sources, rejected ones aside.
+    source_count: int | None = None
+    administrative_level: str | None = None
+    institution_type: str | None = None
+    source_type: str | None = None
+    domain_kind: DomainKind | None = None
+
+
+class GraphEdge(BaseModel):
+    """A link between two nodes, from the row that holds the key to the row it points at."""
+
+    source: uuid.UUID
+    target: uuid.UUID
+    relation: GraphRelation
+
+
+class GraphOutput(BaseModel):
+    root_id: uuid.UUID
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]
+    truncated: bool = Field(
+        description="True when the whole graph was over the cap and only the places and their "
+        "governments came back; the client expands a place or an institution on demand."
+    )

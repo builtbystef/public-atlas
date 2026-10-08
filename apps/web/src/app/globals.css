@@ -32,6 +32,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-graph-place: var(--graph-place);
+  --color-graph-institution: var(--graph-institution);
+  --color-graph-homepage: var(--graph-homepage);
+  --color-graph-source: var(--graph-source);
+  --color-graph-domain: var(--graph-domain);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -108,6 +113,16 @@
   --chart-4: var(--plum);
   --chart-5: var(--destructive);
 
+  /* The graph view's node colours, one per kind, in the same register: the brand blue for
+     places, the plum for institutions, the green for homepages, a teal for sources and the
+     sidebar's bronze for domains. Status is a ring or a fade, so the warning and destructive
+     hues stay out of this set. The canvas reads these by name (features/graph). */
+  --graph-place: var(--primary);
+  --graph-institution: var(--plum);
+  --graph-homepage: var(--success);
+  --graph-source: oklch(0.55 0.09 205);
+  --graph-domain: oklch(0.55 0.07 65);
+
   /* The sidebar: the one dark surface, its navy muted so the bronze sits well on it. */
   --sidebar: oklch(0.24 0.025 248);
   --sidebar-foreground: oklch(0.9 0.012 240);
@@ -159,6 +174,12 @@
   --chart-3: var(--success);
   --chart-4: var(--plum);
   --chart-5: var(--destructive);
+
+  --graph-place: var(--primary);
+  --graph-institution: var(--plum);
+  --graph-homepage: var(--success);
+  --graph-source: oklch(0.76 0.09 205);
+  --graph-domain: oklch(0.76 0.07 65);
 
   --sidebar: oklch(0.12 0.015 250);
   --sidebar-foreground: oklch(0.86 0.012 240);

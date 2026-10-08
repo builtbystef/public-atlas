@@ -25,6 +25,7 @@ import {
   AssignmentsIcon,
   CountriesIcon,
   EvalsIcon,
+  GraphIcon,
   InstitutionsIcon,
   PlacesIcon,
   ReviewIcon,
@@ -59,6 +60,7 @@ const sections: { label?: string; items: NavItem[] }[] = [
       { href: paths.lists, label: "Saved lists", icon: SavedListsIcon },
       { href: paths.institutions, label: "Institutions", icon: InstitutionsIcon },
       { href: paths.places, label: "Places", icon: PlacesIcon },
+      { href: paths.graph, label: "Graph", icon: GraphIcon },
     ],
   },
   {

@@ -1,4 +1,4 @@
-import type { ApiClient, EntityStatus } from "@public-atlas/api-client";
+import type { ApiClient, EntityKind, EntityStatus } from "@public-atlas/api-client";
 import { queryOptions } from "@tanstack/react-query";
 
 import type { EntityOption } from "@/components/shared/entity-combobox";
@@ -6,7 +6,9 @@ import { unwrap } from "@/lib/api/errors";
 import { humanize } from "@/lib/labels";
 import { paged, PICKER_ROWS, queryParams, type ListPage, type SortOrder } from "@/lib/lists";
 
+import { parseKinds } from "./graph-data";
 import type {
+  GraphSearch,
   InstitutionFilterValues,
   InstitutionSearch,
   InstitutionSort,
@@ -39,8 +41,22 @@ export interface PlaceListFilters extends ListPage {
   order?: SortOrder | undefined;
 }
 
+/** What `GET /graph` takes: a root and the filters on what hangs off it. */
+export interface GraphViewFilters {
+  place_id?: string | undefined;
+  institution_id?: string | undefined;
+  country_code?: string | undefined;
+  depth?: number | undefined;
+  kinds?: EntityKind[] | undefined;
+  administrative_level?: string | undefined;
+  institution_type?: string | undefined;
+  status?: EntityStatus | undefined;
+  platforms?: boolean | undefined;
+}
+
 export const graphKeys = {
   all: ["graph"] as const,
+  view: (filters: GraphViewFilters) => [...graphKeys.all, "view", filters] as const,
   institutions: (filters: InstitutionListFilters) =>
     [...graphKeys.all, "institutions", filters] as const,
   institution: (id: string) => [...graphKeys.all, "institution", id] as const,
@@ -97,6 +113,28 @@ export function placeListQuery(api: ApiClient, filters: PlaceListFilters) {
     queryKey: graphKeys.places(filters),
     queryFn: async () =>
       unwrap(await api.GET("/places", { params: { query: queryParams(filters) } })),
+  });
+}
+
+/** The filters the graph view's URL asks the API for. */
+export function graphViewFilters(search: GraphSearch): GraphViewFilters {
+  return {
+    place_id: search.place_id,
+    country_code: search.country_code,
+    kinds: search.kinds === undefined ? undefined : parseKinds(search.kinds),
+    administrative_level: search.administrative_level,
+    institution_type: search.institution_type,
+    status: search.status,
+    platforms: search.platforms === "1" ? true : undefined,
+  };
+}
+
+/** The picture under a root: nodes and edges in one payload, for the graph view. */
+export function graphQuery(api: ApiClient, filters: GraphViewFilters) {
+  return queryOptions({
+    queryKey: graphKeys.view(filters),
+    queryFn: async () =>
+      unwrap(await api.GET("/graph", { params: { query: queryParams(filters) } })),
   });
 }
 

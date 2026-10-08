@@ -2,6 +2,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { GraphLink } from "@/components/shared/graph-link";
 import { DetailSkeleton, TableSkeleton } from "@/components/shared/skeletons";
 import { PlaceDetail } from "@/features/graph/components/place-detail";
 import { PlacesTable } from "@/features/graph/components/places-table";
@@ -49,7 +50,11 @@ async function PlaceContent({
     await api.GET("/places/{place_id}", { params: { path: { place_id: id } } }),
   );
   return (
-    <PlaceDetail place={place} timeZone={timeZone}>
+    <PlaceDetail
+      place={place}
+      timeZone={timeZone}
+      actions={<GraphLink search={{ place_id: place.id }} />}
+    >
       <Suspense fallback={<TableSkeleton rows={3} />}>
         <ChildPlaces id={id} name={place.name} />
       </Suspense>

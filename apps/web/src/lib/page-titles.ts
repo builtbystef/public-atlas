@@ -20,6 +20,7 @@ const sections: Record<string, { label: string; href: ListPath; record: string }
   assignments: { label: "Assignments", href: paths.assignments, record: "Assignment" },
   institutions: { label: "Institutions", href: paths.institutions, record: "Institution" },
   places: { label: "Places", href: paths.places, record: "Place" },
+  graph: { label: "Graph", href: paths.graph, record: "Graph" },
   review: { label: "Review queue", href: paths.review, record: "Review item" },
   countries: { label: "Country config", href: paths.countries, record: "Country" },
   evals: { label: "Evals", href: paths.evals, record: "Eval run" },

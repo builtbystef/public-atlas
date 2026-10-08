@@ -72,6 +72,19 @@ export function PlacesIcon(props: SVGProps<SVGSVGElement>) {
   );
 }
 
+/** Graph: nodes joined by their edges. */
+export function GraphIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M8.6 9.2 14.6 6M8.9 13.4l5.5 3.9" />
+      <Tint d="M20.5 5a2.75 2.75 0 1 1-5.5 0 2.75 2.75 0 0 1 5.5 0zM9.5 11.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM19.5 18.5a2.75 2.75 0 1 1-5.5 0 2.75 2.75 0 0 1 5.5 0z" />
+      <circle cx="17.75" cy="5" r="2.75" />
+      <circle cx="6.5" cy="11.5" r="3" />
+      <circle cx="16.75" cy="18.5" r="2.75" />
+    </Icon>
+  );
+}
+
 /** Country config: a flag on its pole. */
 export function CountriesIcon(props: SVGProps<SVGSVGElement>) {
   const flag = "M5 4.5c2.3-1.4 4.7-1.4 7 0s4.7 1.4 7 0v9c-2.3 1.4-4.7 1.4-7 0s-4.7-1.4-7 0z";

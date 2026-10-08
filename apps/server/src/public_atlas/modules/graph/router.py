@@ -10,11 +10,12 @@ from fastapi import APIRouter, Query
 
 from public_atlas.dependencies import ObjectStoreDep, SessionDep, SettingsDep
 from public_atlas.modules.evidence import service as evidence
-from public_atlas.modules.graph import service
-from public_atlas.modules.graph.models import EntityStatus, Institution, Place
+from public_atlas.modules.graph import service, subgraph
+from public_atlas.modules.graph.models import EntityKind, EntityStatus, Institution, Place
 from public_atlas.modules.graph.schemas import (
     AliasOutput,
     EvidenceOutput,
+    GraphOutput,
     HomepageOutput,
     IdentifierOutput,
     InstitutionDetail,
@@ -261,4 +262,48 @@ async def read_place(place_id: uuid.UUID, session: SessionDep) -> PlaceDetail:
         **_place_output(place, await service.place_population(session, place.id)).model_dump(),
         parents=[_place_ref(row) for row in await service.place_parents(session, place)],
         government=_institution_ref(government) if government is not None else None,
+    )
+
+
+@router.get("/graph")
+async def read_graph(  # noqa: PLR0913, PLR0917 - one argument per filter
+    session: SessionDep,
+    place_id: Annotated[uuid.UUID | None, Query()] = None,
+    institution_id: Annotated[uuid.UUID | None, Query()] = None,
+    country_code: Annotated[str | None, Query(pattern=r"^[A-Z]{2}$")] = None,
+    depth: Annotated[int | None, Query(ge=0)] = None,
+    kinds: Annotated[list[EntityKind] | None, Query()] = None,
+    administrative_level: Annotated[str | None, Query(max_length=64)] = None,
+    institution_type: Annotated[str | None, Query(max_length=64)] = None,
+    status: Annotated[EntityStatus | None, Query()] = None,
+    q: Annotated[str | None, Query(max_length=200)] = None,
+    platforms: Annotated[bool, Query()] = False,  # noqa: FBT002 - a query flag
+) -> GraphOutput:
+    """The graph under a root as nodes and edges, for the graph view. The root is `place_id`
+    with every place under it (`depth` levels down; all of them by default), or the country's
+    top place; or `institution_id` with its homepages, sources and domains alone. `kinds` says
+    which kinds come back, every kind by default; the other filters keep the matching places
+    and institutions, and the root is always kept. Rejected entities come back only when asked
+    for by `status`, and platform domains only with `platforms`. Over a few thousand nodes the
+    payload is cut down to the places and their governments, and says so."""
+    picture = await subgraph.subgraph(
+        session,
+        subgraph.GraphFilters(
+            place_id=place_id,
+            institution_id=institution_id,
+            country_code=country_code,
+            depth=depth,
+            kinds=frozenset(kinds) if kinds else frozenset(EntityKind),
+            administrative_level=administrative_level,
+            institution_type=institution_type,
+            status=status,
+            q=q,
+            platforms=platforms,
+        ),
+    )
+    return GraphOutput(
+        root_id=picture.root_id,
+        nodes=picture.nodes,
+        edges=picture.edges,
+        truncated=picture.truncated,
     )

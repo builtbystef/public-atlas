@@ -11,4 +11,5 @@ test("record pages are built from their id", () => {
   expect(paths.reviewItem("v1")).toBe("/review/v1");
   expect(paths.country("CA")).toBe("/countries/CA");
   expect(paths.evalRun("e1")).toBe("/evals/e1");
+  expect(paths.graphWhere("place_id=p1")).toBe("/graph?place_id=p1");
 });

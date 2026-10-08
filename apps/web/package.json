@@ -25,6 +25,7 @@
     "next-themes": "catalog:",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
+    "react-force-graph-2d": "catalog:",
     "server-only": "catalog:",
     "sonner": "catalog:",
     "zod": "catalog:"

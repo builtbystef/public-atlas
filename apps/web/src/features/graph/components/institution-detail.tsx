@@ -31,10 +31,13 @@ import { EvidenceList } from "./evidence-list";
 export function InstitutionDetail({
   institution,
   timeZone,
+  actions,
   children,
 }: {
   institution: InstitutionDetailOutput;
   timeZone: string;
+  /** Buttons beside the name: the page's link into the graph view. */
+  actions?: ReactNode;
   /** The assignments section, which the page streams separately. */
   children?: ReactNode;
 }) {
@@ -73,7 +76,9 @@ export function InstitutionDetail({
             ))}
           </span>
         }
-      />
+      >
+        {actions}
+      </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Card>

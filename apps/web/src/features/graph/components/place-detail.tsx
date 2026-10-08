@@ -19,10 +19,13 @@ import { Population } from "./population";
 export function PlaceDetail({
   place,
   timeZone,
+  actions,
   children,
 }: {
   place: PlaceDetailOutput;
   timeZone: string;
+  /** Buttons beside the name: the page's link into the graph view. */
+  actions?: ReactNode;
   children?: ReactNode;
 }) {
   return (
@@ -48,7 +51,9 @@ export function PlaceDetail({
             ))}
           </span>
         }
-      />
+      >
+        {actions}
+      </PageHeader>
       <Card className="mb-8">
         <CardContent>
           <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">

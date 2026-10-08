@@ -1699,6 +1699,222 @@
         }
       }
     },
+    "/graph": {
+      "get": {
+        "tags": [
+          "graph"
+        ],
+        "summary": "Read Graph",
+        "description": "The graph under a root as nodes and edges, for the graph view. The root is `place_id`\nwith every place under it (`depth` levels down; all of them by default), or the country's\ntop place; or `institution_id` with its homepages, sources and domains alone. `kinds` says\nwhich kinds come back, every kind by default; the other filters keep the matching places\nand institutions, and the root is always kept. Rejected entities come back only when asked\nfor by `status`, and platform domains only with `platforms`. Over a few thousand nodes the\npayload is cut down to the places and their governments, and says so.",
+        "operationId": "graph-read_graph",
+        "parameters": [
+          {
+            "name": "place_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Place Id"
+            }
+          },
+          {
+            "name": "institution_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Institution Id"
+            }
+          },
+          {
+            "name": "country_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country Code"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Depth"
+            }
+          },
+          {
+            "name": "kinds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EntityKind"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kinds"
+            }
+          },
+          {
+            "name": "administrative_level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Administrative Level"
+            }
+          },
+          {
+            "name": "institution_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Institution Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EntityStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "platforms",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Platforms"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/evidence/{evidence_id}/context": {
       "get": {
         "tags": [
@@ -4379,6 +4595,14 @@
         "title": "DecisionPreviewOutput",
         "description": "What a decision would do, from the decision run and rolled back."
       },
+      "DomainKind": {
+        "type": "string",
+        "enum": [
+          "official",
+          "platform"
+        ],
+        "title": "DomainKind"
+      },
       "EnteredBy": {
         "type": "string",
         "enum": [
@@ -5220,6 +5444,170 @@
         ],
         "title": "GateOutput",
         "description": "A pilot target the run is judged on: a recall floor on one assignment type. Hits and\nmisses are null when the run was not judged on it: still running, or recorded before\ngates were kept, in which case the floor is today's. The verdict is null when there was\nnothing to judge."
+      },
+      "GraphEdge": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Target"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "parent",
+              "government",
+              "place",
+              "homepage",
+              "source",
+              "domain",
+              "serves"
+            ],
+            "title": "Relation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "relation"
+        ],
+        "title": "GraphEdge",
+        "description": "A link between two nodes, from the row that holds the key to the row it points at."
+      },
+      "GraphNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population"
+          },
+          "source_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Count"
+          },
+          "administrative_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Administrative Level"
+          },
+          "institution_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Type"
+          },
+          "source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Type"
+          },
+          "domain_kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DomainKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "status"
+        ],
+        "title": "GraphNode",
+        "description": "One entity as the graph view draws it: what to call it, its kind and status, and the\nfigure its size follows."
+      },
+      "GraphOutput": {
+        "properties": {
+          "root_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Root Id"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNode"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdge"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "description": "True when the whole graph was over the cap and only the places and their governments came back; the client expands a place or an institution on demand."
+          }
+        },
+        "type": "object",
+        "required": [
+          "root_id",
+          "nodes",
+          "edges",
+          "truncated"
+        ],
+        "title": "GraphOutput"
       },
       "HTTPValidationError": {
         "properties": {

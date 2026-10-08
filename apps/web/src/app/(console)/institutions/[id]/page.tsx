@@ -2,6 +2,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
+import { GraphLink } from "@/components/shared/graph-link";
 import { DetailSkeleton, TableSkeleton } from "@/components/shared/skeletons";
 import { AssignmentsTable } from "@/features/assignments/components/assignments-table";
 import { assignmentListQuery } from "@/features/assignments/queries";
@@ -42,7 +43,11 @@ async function InstitutionContent({
     await api.GET("/institutions/{institution_id}", { params: { path: { institution_id: id } } }),
   );
   return (
-    <InstitutionDetail institution={institution} timeZone={timeZone}>
+    <InstitutionDetail
+      institution={institution}
+      timeZone={timeZone}
+      actions={<GraphLink search={{ place_id: institution.place.id, node: institution.id }} />}
+    >
       <section className="mt-8 flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Assignments</h3>
         <Suspense fallback={<TableSkeleton rows={3} />}>

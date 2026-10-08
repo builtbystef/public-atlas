@@ -18,6 +18,9 @@ export const paths = {
   institutionsWhere: (search: string) => `/institutions?${search}` as const,
   places: "/places",
   place: (id: string) => `/places/${id}` as const,
+  graph: "/graph",
+  /** The graph view with a query string of its root and filters, as `toSearchString` builds one. */
+  graphWhere: (search: string) => `/graph?${search}` as const,
   review: "/review",
   /** The queue with a query string of filters, as `toSearchString` builds one. */
   reviewWhere: (search: string) => `/review?${search}` as const,

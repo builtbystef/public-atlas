@@ -383,6 +383,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Graph
+         * @description The graph under a root as nodes and edges, for the graph view. The root is `place_id`
+         *     with every place under it (`depth` levels down; all of them by default), or the country's
+         *     top place; or `institution_id` with its homepages, sources and domains alone. `kinds` says
+         *     which kinds come back, every kind by default; the other filters keep the matching places
+         *     and institutions, and the root is always kept. Rejected entities come back only when asked
+         *     for by `status`, and platform domains only with `platforms`. Over a few thousand nodes the
+         *     payload is cut down to the places and their governments, and says so.
+         */
+        get: operations["graph-read_graph"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/evidence/{evidence_id}/context": {
         parameters: {
             query?: never;
@@ -1140,6 +1166,11 @@ export interface components {
             run: components["schemas"]["RunRefOutput"] | null;
         };
         /**
+         * DomainKind
+         * @enum {string}
+         */
+        DomainKind: "official" | "platform";
+        /**
          * EnteredBy
          * @description How a row got here. On every entity and every evidence row.
          * @enum {string}
@@ -1464,6 +1495,71 @@ export interface components {
             recall: number | null;
             /** Verdict */
             verdict: ("pass" | "fail") | null;
+        };
+        /**
+         * GraphEdge
+         * @description A link between two nodes, from the row that holds the key to the row it points at.
+         */
+        GraphEdge: {
+            /**
+             * Source
+             * Format: uuid
+             */
+            source: string;
+            /**
+             * Target
+             * Format: uuid
+             */
+            target: string;
+            /**
+             * Relation
+             * @enum {string}
+             */
+            relation: "parent" | "government" | "place" | "homepage" | "source" | "domain" | "serves";
+        };
+        /**
+         * GraphNode
+         * @description One entity as the graph view draws it: what to call it, its kind and status, and the
+         *     figure its size follows.
+         */
+        GraphNode: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            kind: components["schemas"]["EntityKind"];
+            /** Label */
+            label: string;
+            status: components["schemas"]["EntityStatus"];
+            /** Population */
+            population?: number | null;
+            /** Source Count */
+            source_count?: number | null;
+            /** Administrative Level */
+            administrative_level?: string | null;
+            /** Institution Type */
+            institution_type?: string | null;
+            /** Source Type */
+            source_type?: string | null;
+            domain_kind?: components["schemas"]["DomainKind"] | null;
+        };
+        /** GraphOutput */
+        GraphOutput: {
+            /**
+             * Root Id
+             * Format: uuid
+             */
+            root_id: string;
+            /** Nodes */
+            nodes: components["schemas"]["GraphNode"][];
+            /** Edges */
+            edges: components["schemas"]["GraphEdge"][];
+            /**
+             * Truncated
+             * @description True when the whole graph was over the cap and only the places and their governments came back; the client expands a place or an institution on demand.
+             */
+            truncated: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -2365,6 +2461,7 @@ export type CountrySettingsInput = components['schemas']['CountrySettingsInput']
 export type DecisionInput = components['schemas']['DecisionInput'];
 export type DecisionOutput = components['schemas']['DecisionOutput'];
 export type DecisionPreviewOutput = components['schemas']['DecisionPreviewOutput'];
+export type DomainKind = components['schemas']['DomainKind'];
 export type EnteredBy = components['schemas']['EnteredBy'];
 export type EntityKind = components['schemas']['EntityKind'];
 export type EntityRefOutput = components['schemas']['EntityRefOutput'];
@@ -2379,6 +2476,9 @@ export type EventOutput = components['schemas']['EventOutput'];
 export type EvidenceOutput = components['schemas']['EvidenceOutput'];
 export type FindingOutput = components['schemas']['FindingOutput'];
 export type GateOutput = components['schemas']['GateOutput'];
+export type GraphEdge = components['schemas']['GraphEdge'];
+export type GraphNode = components['schemas']['GraphNode'];
+export type GraphOutput = components['schemas']['GraphOutput'];
 export type HttpValidationError = components['schemas']['HTTPValidationError'];
 export type Health = components['schemas']['Health'];
 export type HomepageOutput = components['schemas']['HomepageOutput'];
@@ -3208,6 +3308,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlaceDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "graph-read_graph": {
+        parameters: {
+            query?: {
+                place_id?: string | null;
+                institution_id?: string | null;
+                country_code?: string | null;
+                depth?: number | null;
+                kinds?: components["schemas"]["EntityKind"][] | null;
+                administrative_level?: string | null;
+                institution_type?: string | null;
+                status?: components["schemas"]["EntityStatus"] | null;
+                q?: string | null;
+                platforms?: boolean;
+            };
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphOutput"];
                 };
             };
             /** @description Validation Error */
