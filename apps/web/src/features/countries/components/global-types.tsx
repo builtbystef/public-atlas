@@ -20,11 +20,7 @@ export function GlobalTypes() {
   const { data: sourceTypes } = useSuspenseQuery(sourceTypesQuery(browserApi));
   return (
     <SettingsSections>
-      <SettingsSection
-        wide
-        title="Institution types"
-        description="The kinds of public body. A country says which it uses and what each is called there."
-      >
+      <SettingsSection wide title="Institution types">
         <TypeTable
           noun="institution type"
           rows={institutionTypes}
@@ -32,11 +28,7 @@ export function GlobalTypes() {
           remove={deleteInstitutionType}
         />
       </SettingsSection>
-      <SettingsSection
-        wide
-        title="Source types"
-        description="The kinds of signal page find_sources looks for: tenders, budgets, minutes, and so on."
-      >
+      <SettingsSection wide title="Source types">
         <TypeTable
           noun="source type"
           rows={sourceTypes}

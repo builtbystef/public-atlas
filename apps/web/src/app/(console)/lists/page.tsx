@@ -35,7 +35,9 @@ async function SavedListsContent() {
 function ListsSkeleton() {
   return (
     <>
-      <PageHeader title="Saved lists" description="Reading…" />
+      <PageHeader>
+        <Skeleton className="h-8 w-64" />
+      </PageHeader>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }, (_, i) => (
           <Skeleton key={i} className="h-36" />

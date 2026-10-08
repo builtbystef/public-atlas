@@ -183,13 +183,7 @@ function TypeDialog({
         )}
       </form.AppField>
       <form.AppField name="description">
-        {(field) => (
-          <field.TextareaField
-            label="Description"
-            rows={3}
-            description="What the agent is told the type means."
-          />
-        )}
+        {(field) => <field.TextareaField label="Description" rows={3} />}
       </form.AppField>
     </FormDialog>
   );

@@ -236,9 +236,7 @@ function CountryTypeDialog({
         <> · {typeNamed(row.institution_type)?.description}</>
       )}
     </>
-  ) : (
-    "Choose a type for the country to use. It starts with the type's default sources."
-  );
+  ) : undefined;
 
   return (
     <FormDialog
@@ -297,7 +295,6 @@ function CountryTypeDialog({
                 <CheckboxGroup
                   name={field.name}
                   label="Expected source types"
-                  description="What find_sources looks for on a body of this type."
                   clampDescriptions
                   options={sourceTypes.map((t) => ({
                     value: t.name,

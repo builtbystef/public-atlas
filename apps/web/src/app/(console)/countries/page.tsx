@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CountryFlag } from "@/features/countries/components/country-flag";
@@ -20,48 +19,25 @@ export const metadata: Metadata = { title: "Country config" };
 
 export default function CountryConfigPage() {
   return (
-    <>
-      <PageHeader
-        title="Country config"
-        description="The tables the agent's rules are built from. Product data lives here, not in settings."
-      />
-      <div className="flex flex-col gap-12">
-        <Group
-          title="Countries"
-          description="Each country's naming rules, administrative levels and the institution types it uses."
-        >
-          <Suspense fallback={<Skeleton className="h-20" />}>
-            <CountryList />
-          </Suspense>
-        </Group>
-        <Group
-          title="Shared across countries"
-          description="The types every country draws from. An edit here changes them for all of them."
-        >
-          <Suspense fallback={<TableSkeleton />}>
-            <GlobalTypesContent />
-          </Suspense>
-        </Group>
-      </div>
-    </>
+    <div className="flex flex-col gap-12">
+      <Group title="Countries">
+        <Suspense fallback={<Skeleton className="h-20" />}>
+          <CountryList />
+        </Suspense>
+      </Group>
+      <Group title="Shared across countries">
+        <Suspense fallback={<TableSkeleton />}>
+          <GlobalTypesContent />
+        </Suspense>
+      </Group>
+    </div>
   );
 }
 
-function Group({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1 border-b pb-3">
-        <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
+      <h2 className="border-b pb-3 text-lg font-semibold tracking-tight">{title}</h2>
       {children}
     </section>
   );

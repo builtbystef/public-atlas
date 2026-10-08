@@ -2,7 +2,6 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { institutionListQuery, institutionTableFilters } from "@/features/graph/queries";
 import { parseInstitutionSearch } from "@/features/graph/schemas";
@@ -21,15 +20,9 @@ export default function InstitutionsPage({
   searchParams: Promise<SearchParams>;
 }) {
   return (
-    <>
-      <PageHeader
-        title="Institutions"
-        description="Every public body in the graph, with its place, type, status and homepage."
-      />
-      <Suspense fallback={<TableSkeleton />}>
-        <InstitutionsContent searchParams={searchParams} />
-      </Suspense>
-    </>
+    <Suspense fallback={<TableSkeleton />}>
+      <InstitutionsContent searchParams={searchParams} />
+    </Suspense>
   );
 }
 

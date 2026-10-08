@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { institutionCountQuery } from "@/features/graph/queries";
 import { browserApi } from "@/lib/api/client";
-import { databaseLabels, type Database } from "@/lib/api/database";
+import type { Database } from "@/lib/api/database";
 import { formatDate } from "@/lib/formatting/dates";
 import { formatCount } from "@/lib/formatting/money";
 import { paths } from "@/lib/routes";
@@ -69,10 +69,7 @@ export function SavedListsOverview({
 
   return (
     <>
-      <PageHeader
-        title="Saved lists"
-        description={`Institution queries kept in this browser, for the ${databaseLabels[database].toLowerCase()}.`}
-      >
+      <PageHeader>
         <input
           ref={fileInput}
           type="file"

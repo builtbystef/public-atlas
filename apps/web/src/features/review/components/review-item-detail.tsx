@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/shared/layout/page-header";
 import { EntityStatusBadge, ReviewStatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EvidenceList } from "@/features/graph/components/evidence-list";
 import { browserApi } from "@/lib/api/client";
 import { formatDateTime } from "@/lib/formatting/dates";
@@ -79,9 +79,6 @@ export function ReviewItemDetail({ id, timeZone }: { id: string; timeZone: strin
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>The question</CardTitle>
-            <CardDescription>
-              Why the entity was sent to review, once per time it was.
-            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <ul className="flex list-disc flex-col gap-1 pl-5 text-sm">

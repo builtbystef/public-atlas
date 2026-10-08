@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * One block of a settings page: heading and description in the left column,
+ * One block of a settings page: heading in the left column,
  * the form or control in the right, with a rule between blocks. `wide`
  * stacks the heading above the content for things that need the full width,
  * such as tables.
@@ -15,7 +15,6 @@ export function SettingsSections({ children }: { children: ReactNode }) {
 export function SettingsSection({
   id,
   title,
-  description,
   actions,
   wide = false,
   children,
@@ -23,7 +22,6 @@ export function SettingsSection({
   /** For a link to the section; it scrolls in below the sticky headers. */
   id?: string;
   title: ReactNode;
-  description?: ReactNode;
   actions?: ReactNode;
   wide?: boolean;
   children: ReactNode;
@@ -37,10 +35,7 @@ export function SettingsSection({
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <h2 className="text-base font-medium">{title}</h2>
-          {description && <p className="text-sm text-muted-foreground">{description}</p>}
-        </div>
+        <h2 className="text-base font-medium">{title}</h2>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
       <div className={cn("flex min-w-0 flex-col gap-6", !wide && "md:max-w-xl")}>{children}</div>

@@ -2,7 +2,6 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { AssignmentsTable } from "@/features/assignments/components/assignments-table";
 import { assignmentListQuery } from "@/features/assignments/queries";
@@ -16,15 +15,9 @@ export const metadata: Metadata = { title: "Assignments" };
 
 export default function AssignmentsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
-    <>
-      <PageHeader
-        title="Assignments"
-        description="One piece of agent work each: a type, a subject, a budget, and how it ended."
-      />
-      <Suspense fallback={<TableSkeleton />}>
-        <AssignmentsContent searchParams={searchParams} />
-      </Suspense>
-    </>
+    <Suspense fallback={<TableSkeleton />}>
+      <AssignmentsContent searchParams={searchParams} />
+    </Suspense>
   );
 }
 

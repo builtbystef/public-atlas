@@ -174,13 +174,7 @@ export function EvalRunDetail({
       </div>
 
       <section className="mt-8 flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-lg font-semibold">Scores by subject</h3>
-          <p className="text-sm text-muted-foreground">
-            Open a score to see what was found, missed and saved wrongly.
-            {baseline && " Arrows show the change in recall since the run compared with."}
-          </p>
-        </div>
+        <h3 className="text-lg font-semibold">Scores by subject</h3>
         <EvalScoresTable
           rows={rows}
           total={all.length}

@@ -80,7 +80,6 @@ export function SavedListDialog({
         if (!open) onClose();
       }}
       title={list ? "Edit list" : "Save a list"}
-      description="A saved list is a query, kept in this browser: it shows whatever institutions match these filters now."
       form={form}
       serverError={error}
       submit={
@@ -110,13 +109,7 @@ export function SavedListDialog({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <form.AppField name="q">
-          {(field) => (
-            <field.TextField
-              label="Institution name contains"
-              description="Matches a name or an alias."
-              autoComplete="off"
-            />
-          )}
+          {(field) => <field.TextField label="Institution name contains" autoComplete="off" />}
         </form.AppField>
         {countries.length > 1 && (
           <form.AppField name="country_code">

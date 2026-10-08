@@ -2,7 +2,6 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { ReviewQueue } from "@/features/review/components/review-queue";
 import { reviewKindsQuery, reviewListQuery } from "@/features/review/queries";
@@ -16,15 +15,9 @@ export const metadata: Metadata = { title: "Review queue" };
 
 export default function ReviewPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
-    <>
-      <PageHeader
-        title="Review queue"
-        description="Questions the rules could not settle. A decision verifies or rejects the entity and spawns what follows."
-      />
-      <Suspense fallback={<TableSkeleton />}>
-        <ReviewContent searchParams={searchParams} />
-      </Suspense>
-    </>
+    <Suspense fallback={<TableSkeleton />}>
+      <ReviewContent searchParams={searchParams} />
+    </Suspense>
   );
 }
 

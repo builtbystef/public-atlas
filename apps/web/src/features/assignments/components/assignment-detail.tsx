@@ -104,7 +104,6 @@ export function AssignmentDetail({ id, timeZone }: { id: string; timeZone: strin
         <Card>
           <CardHeader>
             <CardTitle>Outcome</CardTitle>
-            <CardDescription>What the agent reported when it stopped.</CardDescription>
           </CardHeader>
           <CardContent>
             <Outcome assignment={assignment} />
@@ -140,19 +139,13 @@ export function AssignmentDetail({ id, timeZone }: { id: string; timeZone: strin
         </Card>
       </div>
 
-      <Section
-        title="Findings"
-        description="What the assignment saved, with the quote behind each save and the page it was read on."
-      >
+      <Section title="Findings">
         <Suspense fallback={<TableSkeleton rows={3} />}>
           <FindingsList assignmentId={assignment.id} live={live} />
         </Suspense>
       </Section>
 
-      <Section
-        title="Events"
-        description="Everything the agent saw, said and did, session by session."
-      >
+      <Section title="Events">
         <Suspense fallback={<Skeleton className="h-48" />}>
           <EventTimeline assignmentId={assignment.id} live={live} timeZone={timeZone} />
         </Suspense>
@@ -161,21 +154,10 @@ export function AssignmentDetail({ id, timeZone }: { id: string; timeZone: strin
   );
 }
 
-function Section({
-  title,
-  description,
-  children,
-}: {
-  title: string;
-  description: string;
-  children: ReactNode;
-}) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="mt-10 flex flex-col gap-4">
-      <div className="flex flex-col gap-0.5">
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
+      <h3 className="text-lg font-semibold">{title}</h3>
       {children}
     </section>
   );

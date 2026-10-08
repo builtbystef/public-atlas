@@ -208,13 +208,11 @@ function LevelDialog({
       }}
       title={level ? `Edit the ${humanize(level.name).toLowerCase()} level` : "Add a level"}
       description={
-        level ? (
+        level && (
           <>
             <span className="font-mono text-xs">{level.name}</span> · rank {level.rank} in{" "}
             {countryName}&apos;s hierarchy of places
           </>
-        ) : (
-          `A step in ${countryName}'s hierarchy of places, with the bodies to look for at each place on it.`
         )
       }
       className="sm:max-w-xl"
@@ -268,8 +266,7 @@ function LevelDialog({
             description={
               governmentOptions.length === 0
                 ? `${countryName} uses no government type yet. Add one under Institution types first.`
-                : (describe(field.state.value) ??
-                  "The type of a place's own government at this level.")
+                : describe(field.state.value)
             }
           />
         )}
@@ -280,7 +277,6 @@ function LevelDialog({
             label="Expected institution types"
             options={expectedOptions}
             placeholder="Search the country's types…"
-            description="The checklist find_institutions works through under each place at this level. The government is found on its own."
           />
         )}
       </form.AppField>

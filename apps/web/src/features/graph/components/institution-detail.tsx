@@ -8,7 +8,7 @@ import { ExternalLink } from "@/components/shared/external-link";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { EntityStatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -176,7 +176,6 @@ export function InstitutionDetail({
         <Card>
           <CardHeader>
             <CardTitle>Bodies under it</CardTitle>
-            <CardDescription>Institutions whose parent this is.</CardDescription>
           </CardHeader>
           <CardContent>
             {institution.children.length === 0 ? (

@@ -59,8 +59,7 @@ export function ReleaseDialog({
         <DialogHeader>
           <DialogTitle>Release held assignments</DialogTitle>
           <DialogDescription>
-            {held === 1 ? "One assignment is held." : `${held} assignments are held.`} The next ones
-            in order are queued; the worker starts them as it can.
+            {held === 1 ? "One assignment is held." : `${held} assignments are held.`}
           </DialogDescription>
         </DialogHeader>
         <Form form={form} className="gap-4">

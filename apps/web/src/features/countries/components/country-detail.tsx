@@ -54,7 +54,6 @@ export function CountryShell({
             flag={flag}
           />
         }
-        description="Edits apply from the next assignment; running ones keep the rules they started with."
       />
       <SectionSidebar pages={pages}>{children}</SectionSidebar>
     </>
@@ -71,11 +70,7 @@ function useCountry() {
 export function CountryNamingRulesPage() {
   const { country } = useCountry();
   return (
-    <SettingsSection
-      wide
-      title="Naming rules"
-      description="How the country writes its public bodies' names, in each of its languages. The duplicate search and the name checks read them to tell one place from another."
-    >
+    <SettingsSection wide title="Naming rules">
       <div className="max-w-2xl">
         <NamingRulesForm key={country.settings.country_code} settings={country.settings} />
       </div>
@@ -87,11 +82,7 @@ export function CountryLevelsPage() {
   const { code, country } = useCountry();
   const { data: institutionTypes } = useSuspenseQuery(institutionTypesQuery(browserApi));
   return (
-    <SettingsSection
-      wide
-      title="Administrative levels"
-      description="The hierarchy of places, with the government's type and the bodies expected at each level."
-    >
+    <SettingsSection wide title="Administrative levels">
       <LevelsTable
         countryCode={code}
         countryName={country.settings.name}
@@ -109,11 +100,7 @@ export function CountryInstitutionTypesPage() {
   const { data: sourceTypes } = useSuspenseQuery(sourceTypesQuery(browserApi));
   const { data: defaultSources } = useSuspenseQuery(defaultSourcesQuery(browserApi));
   return (
-    <SettingsSection
-      wide
-      title="Institution types in this country"
-      description="Which types the country uses, the sources expected on each, and the name pattern a body should match."
-    >
+    <SettingsSection wide title="Institution types in this country">
       <CountryTypesTable
         countryCode={code}
         countryName={country.settings.name}

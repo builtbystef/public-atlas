@@ -21,10 +21,7 @@ export const metadata: Metadata = { title: "Runs" };
 export default function RunsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
     <>
-      <PageHeader
-        title="Runs"
-        description="A run is a controlled batch of assignments: a filter, a mode, and a budget it spends."
-      >
+      <PageHeader>
         <Button nativeButton={false} render={<Link href={paths.runNew} />}>
           <PlusIcon /> New run
         </Button>

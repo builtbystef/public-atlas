@@ -139,19 +139,16 @@ function ScoreBody({
 
       <EntrySection
         title="Missed"
-        description="In the dataset, not saved."
         entries={kinds.missed}
         fresh={newLines(kinds.missed, before?.missed)}
       />
       <EntrySection
         title="Saved wrong"
-        description="Saved, but not as the dataset has it: a miss and a false positive at once."
         entries={kinds.wrong}
         fresh={newLines(kinds.wrong, before?.wrong)}
       />
       <EntrySection
         title="False positives"
-        description="Saved, though the dataset says it should not be."
         entries={kinds.falsePositives}
         fresh={newLines(kinds.falsePositives, before?.falsePositives)}
       />
@@ -197,24 +194,19 @@ function Figure({
 
 function EntrySection({
   title,
-  description,
   entries,
   fresh,
 }: {
   title: string;
-  description: string;
   entries: EvalEntry[];
   fresh: Set<string> | null;
 }) {
   return (
     <section className="flex flex-col gap-2">
-      <div className="flex flex-col gap-0.5">
-        <h4 className="flex items-center gap-2 font-medium">
-          {title} <span className="font-normal text-muted-foreground">({entries.length})</span>
-          {fresh !== null && fresh.size > 0 && <Badge variant="warning">{fresh.size} new</Badge>}
-        </h4>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
+      <h4 className="flex items-center gap-2 font-medium">
+        {title} <span className="font-normal text-muted-foreground">({entries.length})</span>
+        {fresh !== null && fresh.size > 0 && <Badge variant="warning">{fresh.size} new</Badge>}
+      </h4>
       {entries.length === 0 ? (
         <EmptyState>None.</EmptyState>
       ) : (

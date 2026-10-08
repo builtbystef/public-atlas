@@ -2,7 +2,6 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
-import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { EvalRunsTable } from "@/features/evals/components/eval-runs-table";
 import { evalRunListQuery } from "@/features/evals/queries";
@@ -16,15 +15,9 @@ export const metadata: Metadata = { title: "Evals" };
 
 export default function EvalsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   return (
-    <>
-      <PageHeader
-        title="Evals"
-        description="Each run of the harness over the labelled subjects: recall and precision per assignment type, and what it cost."
-      />
-      <Suspense fallback={<TableSkeleton />}>
-        <EvalsContent searchParams={searchParams} />
-      </Suspense>
-    </>
+    <Suspense fallback={<TableSkeleton />}>
+      <EvalsContent searchParams={searchParams} />
+    </Suspense>
   );
 }
 

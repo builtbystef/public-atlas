@@ -103,10 +103,7 @@ export function RunForm({ countries }: { countries: CountrySettingsInput[] }) {
     <Form form={form} warnOnLeave>
       <FormError message={serverError} />
       <FormSections>
-        <FormSection
-          title="Run"
-          description="What to call it, where it works, and how it is driven."
-        >
+        <FormSection title="Run">
           <form.AppField name="name">
             {(field) => (
               <field.TextField
@@ -153,10 +150,7 @@ export function RunForm({ countries }: { countries: CountrySettingsInput[] }) {
             )}
           </form.Field>
         </FormSection>
-        <FormSection
-          title="Filter"
-          description="Which assignments the run spawns. An empty list means no limit on that axis."
-        >
+        <FormSection title="Filter">
           <form.Field name="assignment_types">
             {(field) => (
               <CheckboxGroup
@@ -192,7 +186,6 @@ export function RunForm({ countries }: { countries: CountrySettingsInput[] }) {
               <CheckboxGroup
                 name={field.name}
                 label="Institution types"
-                description="Only institutions of these types."
                 options={typeOptions}
                 value={field.state.value}
                 onChange={field.handleChange}

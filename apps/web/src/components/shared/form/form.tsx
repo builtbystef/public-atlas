@@ -98,24 +98,13 @@ export function FormSections({ className, ...props }: React.ComponentProps<"div"
 }
 
 /** A titled group of fields inside <FormSections>. */
-export function FormSection({
-  title,
-  description,
-  children,
-}: {
-  title: ReactNode;
-  description?: ReactNode;
-  children: ReactNode;
-}) {
+export function FormSection({ title, children }: { title: ReactNode; children: ReactNode }) {
   const id = useId();
   return (
     <section aria-labelledby={id} className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1">
-        <h3 id={id} className="text-base leading-none font-medium">
-          {title}
-        </h3>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      </div>
+      <h3 id={id} className="text-base leading-none font-medium">
+        {title}
+      </h3>
       <FieldGroup>{children}</FieldGroup>
     </section>
   );
