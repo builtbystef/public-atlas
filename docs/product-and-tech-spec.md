@@ -454,7 +454,7 @@ note. Never the old transcript.
 | `confirm_domain`, `reject_domain`, `domain_moved` | `find_homepage` only. End the domain decision; the checks run before any status changes |
 | `status` | What this assignment has saved, the checklist, the files parsing |
 | `request_review` | Raise a review item |
-| `finish(summary, types_not_found)` | End a discovery assignment. Refused once if the checklist is short; a second short close ends `complete_with_gaps` |
+| `finish(summary, types_not_found)` | End a discovery assignment. Refused once if the checklist is short (a body saved under a place above the subject counts for its type); a second short close ends `complete_with_gaps` |
 
 Tools are the findings functions registered directly with Pydantic AI through
 one adapter. There is no wrapper layer. Each tool returns a typed result that

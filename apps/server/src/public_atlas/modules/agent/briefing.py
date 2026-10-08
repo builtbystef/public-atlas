@@ -40,8 +40,9 @@ async def briefing(ctx: SessionContext, session: AsyncSession) -> str:
     remaining = await findings.remaining_checklist(ctx, session)
     if remaining:
         parts.append(
-            "Types still to account for: " + ", ".join(remaining) + ". Each is saved under the "
-            "subject or named in types_not_found when you finish."
+            "Types still to account for: " + ", ".join(remaining) + ". Each is saved (under "
+            "the subject, or under the place above it that the body serves) or named in "
+            "types_not_found when you finish."
         )
     parts.extend(await where_to_look(ctx, session))
     visited = list(

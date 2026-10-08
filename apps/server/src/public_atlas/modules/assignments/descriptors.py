@@ -22,7 +22,8 @@ __all__ = [
 
 class Checklist(StrEnum):
     """What a discovery assignment must account for before it finishes: every type listed is
-    saved under the subject or named in `types_not_found`."""
+    saved under the subject (for institution types, under it or a place above it) or named in
+    `types_not_found`."""
 
     # The institution types the country expects at the place's level.
     INSTITUTION_TYPES = "institution_types"

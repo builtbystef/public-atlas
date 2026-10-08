@@ -198,12 +198,16 @@ async def expected_types(ctx: SessionContext, session: AsyncSession) -> list[str
 
 async def saved_types(ctx: SessionContext, session: AsyncSession) -> set[str]:
     """The types with something saved under the subject, rejected rows aside, by any
-    assignment."""
+    assignment. For institution types, a body under a place above the subject counts too: a
+    body serving a whole region is saved under the region, as the goal text asks, and it
+    serves the town as much as one of the town's own would."""
     match ctx.descriptor.checklist:
         case Checklist.INSTITUTION_TYPES:
+            place = await session.get_one(Place, ctx.place.id)
+            chain = await graph.place_chain(session, place)
             rows = await session.scalars(
                 select(Institution.institution_type).where(
-                    Institution.place_id == ctx.place.id,
+                    Institution.place_id.in_([found.id for found in chain]),
                     Institution.status != EntityStatus.REJECTED,
                 )
             )
@@ -221,7 +225,7 @@ async def saved_types(ctx: SessionContext, session: AsyncSession) -> set[str]:
 
 async def remaining_checklist(ctx: SessionContext, session: AsyncSession) -> list[str]:
     """The types the assignment still has to account for: the ones expected for the subject
-    with nothing saved under it yet."""
+    with nothing saved under it, or under a place above it, yet."""
     saved = await saved_types(ctx, session)
     return [name for name in await expected_types(ctx, session) if name not in saved]
 
@@ -271,8 +275,9 @@ async def finish(
         summary: What was found, and for each type you did not find, where you looked.
         types_not_found: find_institutions and find_sources only: each institution type (or
             source type) you looked for and did not find, as the goal names them. Every type
-            expected for the subject must be saved under it or named here; a finish that
-            leaves one out is refused once.
+            expected for the subject must be saved under it (or, for a body serving a whole
+            place above, under that place) or named here; a finish that leaves one out is
+            refused once.
     """
     return await in_session(
         ctx, lambda session: finish_assignment(ctx.deps, session, summary, types_not_found)
@@ -283,11 +288,11 @@ async def finish_assignment(
     ctx: SessionContext, session: AsyncSession, summary: str, types_not_found: list[str] | None
 ) -> Finished:
     """Record the summary and end the session. A discovery finish is checked against the
-    checklist: one that leaves an expected type neither saved under the subject nor named in
-    `types_not_found` is refused once with the gap; finished short again, the assignment ends
-    `complete_with_gaps` with a review item. A `find_homepage` finish ends `complete` when the
-    homepage is verified or with a reviewer, and `no_homepage` with a review item when the
-    searches found nothing."""
+    checklist: one that leaves an expected type neither saved under the subject (or a place
+    above it) nor named in `types_not_found` is refused once with the gap; finished short
+    again, the assignment ends `complete_with_gaps` with a review item. A `find_homepage`
+    finish ends `complete` when the homepage is verified or with a reviewer, and
+    `no_homepage` with a review item when the searches found nothing."""
     if "finish" not in ctx.descriptor.finishing_tools:
         raise FindingError(
             f"a {ctx.descriptor.type.value} assignment ends with "
@@ -355,10 +360,10 @@ async def _discovery_result(
     ctx.short_closes += 1
     if ctx.short_closes == 1:
         raise FindingError(
-            f"Not finished: these {kind}s are neither saved under the subject nor named in "
-            f"types_not_found: {', '.join(missing)}. Look for each (status() shows what is "
-            "saved), save what you find, then finish again with types_not_found naming the ones "
-            "you looked for and did not find."
+            f"Not finished: these {kind}s are neither saved under the subject (or a place "
+            f"above it) nor named in types_not_found: {', '.join(missing)}. Look for each "
+            "(status() shows what is saved), save what you find, then finish again with "
+            "types_not_found naming the ones you looked for and did not find."
         )
     summary = f"Not accounted for: {', '.join(missing)}. {summary}"
     subject = await graph.entity_by_id(session, ctx.subject.id)

@@ -122,7 +122,3 @@ is `product-and-tech-spec.md`. Code to port lives in
 - [ ] Submit at the posting and note the date here.
 
 **Done when** the application is submitted.
-
-## Open decisions
-
-- [ ] **The false gap in `find_institutions`.** A body that serves a whole region is saved under the region, as the goal text asks, but the checklist only counts bodies saved under the subject place. In the Oakville pilot the police service, the conservation authority and the public health unit were all found and verified under Halton, yet the assignment ended `complete_with_gaps` with a `gaps` review item naming those three types, because the agent would not list types it had found in `types_not_found`. Decide between: (a) the checklist counts a verified body of the type under any place above the subject, one query change in `saved_types`, with the risk of a wrong "covered" where a town has its own body beside the region's; (b) the goal text and the refusal message tell the agent to name such types in `types_not_found` with that reason, no rule change, no review item. Nothing done yet.

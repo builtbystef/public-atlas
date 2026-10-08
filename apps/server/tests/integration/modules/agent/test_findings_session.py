@@ -19,7 +19,15 @@ from public_atlas.modules.assignments.models import (
     Usage,
     UsageKind,
 )
-from public_atlas.modules.graph.models import EntityStatus, Homepage, Institution, Place
+from public_atlas.modules.graph import service as graph
+from public_atlas.modules.graph import status_changes
+from public_atlas.modules.graph.models import (
+    EnteredBy,
+    EntityStatus,
+    Homepage,
+    Institution,
+    Place,
+)
 from public_atlas.modules.review.models import ReviewItem
 
 if TYPE_CHECKING:
@@ -101,8 +109,9 @@ def test_a_discovery_finish_accounts_for_every_expected_type(
     # A finish that accounts for nothing is refused once, naming what is left.
     with pytest.raises(findings.FindingError) as refused:
         call(discover, findings.finish_assignment, summary="Done.", types_not_found=None)
-    assert "neither saved under the subject nor named in types_not_found: " + ", ".join(
-        REGIONAL_TYPES
+    assert (
+        "neither saved under the subject (or a place above it) nor named in types_not_found: "
+        + ", ".join(REGIONAL_TYPES)
     ) in str(refused.value)
     assert discover.ended is None
     # A name the country does not list is refused on its own, and does not count as a second
@@ -132,6 +141,59 @@ def test_a_discovery_finish_accounts_for_every_expected_type(
         "police_service",
         *[t for t in REGIONAL_TYPES if t != "police_service"],
     ]
+
+
+def test_a_body_under_a_place_above_the_subject_counts_for_its_type(
+    db: Database,
+    world: World,
+    make_assignment: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+    capture: Capture,
+    call: Callable[..., Any],
+):
+    """A regional conservation authority is saved under the region, as the goal text asks, so
+    a town under that region must not end `complete_with_gaps` for want of one of its own. A
+    rejected body above counts no more than one under the subject would."""
+    assignment = make_assignment(FIND_INSTITUTIONS, world.oakville.id)
+    capture.towns(assignment.id)
+    ctx = context(assignment)
+    assert "conservation_authority" in call(ctx, findings.remaining_checklist)
+    # Saved under Elm from a page found while working on Oakville.
+    call(
+        ctx,
+        findings.record_institution,
+        name="Elm Conservation Authority",
+        language="en",
+        institution_type="conservation_authority",
+        quote="Elm Conservation Authority, ECA, protects the watershed.",
+        page_url=TOWNS_URL,
+        place_id=str(world.elm.id),
+    )
+
+    async def rejected_above() -> None:
+        async with db.session() as session:
+            elm = await session.get_one(Place, world.elm.id)
+            utility = await graph.create_institution(
+                session,
+                name="Elm Hydro",
+                institution_type="public_utility",
+                place=elm,
+                entered_by=EnteredBy.SCRIPT,
+            )
+            await status_changes.reject_institution(session, utility, entered_by=EnteredBy.SCRIPT)
+            await session.commit()
+
+    db.run(rejected_above)
+    remaining = call(ctx, findings.remaining_checklist)
+    assert "conservation_authority" not in remaining
+    assert "public_utility" in remaining
+    finished = call(
+        ctx,
+        findings.finish_assignment,
+        summary="The region's conservation authority covers the town.",
+        types_not_found=remaining,
+    )
+    assert finished.result is AssignmentResult.COMPLETE
 
 
 def test_a_second_short_finish_ends_complete_with_gaps_and_raises_a_review_item(
