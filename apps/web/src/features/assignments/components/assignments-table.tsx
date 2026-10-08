@@ -10,6 +10,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { DataTable } from "@/components/shared/data-table";
+import { TableToolbar } from "@/components/shared/table-toolbar";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlFilters } from "@/hooks/use-url-filters";
@@ -70,47 +71,58 @@ export function AssignmentsTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <NativeSelect
-          value={type}
-          onChange={(event) => setType(event.target.value as AssignmentType | "")}
-          aria-label="Filter by type"
-        >
-          <NativeSelectOption value="">Any type</NativeSelectOption>
-          {assignmentTypes.map((value) => (
-            <NativeSelectOption key={value} value={value}>
-              {assignmentTypeLabels[value]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          value={status}
-          onChange={(event) => setStatus(event.target.value as AssignmentStatus | "")}
-          aria-label="Filter by status"
-        >
-          <NativeSelectOption value="">Any status</NativeSelectOption>
-          {assignmentStatuses.map((value) => (
-            <NativeSelectOption key={value} value={value}>
-              {assignmentStatusLabels[value]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <NativeSelect
-          value={result}
-          onChange={(event) => setResult(event.target.value as AssignmentResult | "")}
-          aria-label="Filter by result"
-        >
-          <NativeSelectOption value="">Any result</NativeSelectOption>
-          {assignmentResults.map((value) => (
-            <NativeSelectOption key={value} value={value}>
-              {assignmentResultLabels[value]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <span className="ml-auto text-sm text-muted-foreground">
-          {assignments.total} {assignments.total === 1 ? "assignment" : "assignments"}
-        </span>
-      </div>
+      <TableToolbar
+        filters={
+          <>
+            <NativeSelect
+              value={type}
+              onChange={(event) => setType(event.target.value as AssignmentType | "")}
+              aria-label="Filter by type"
+            >
+              <NativeSelectOption value="">Any type</NativeSelectOption>
+              {assignmentTypes.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {assignmentTypeLabels[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              value={status}
+              onChange={(event) => setStatus(event.target.value as AssignmentStatus | "")}
+              aria-label="Filter by status"
+            >
+              <NativeSelectOption value="">Any status</NativeSelectOption>
+              {assignmentStatuses.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {assignmentStatusLabels[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              value={result}
+              onChange={(event) => setResult(event.target.value as AssignmentResult | "")}
+              aria-label="Filter by result"
+            >
+              <NativeSelectOption value="">Any result</NativeSelectOption>
+              {assignmentResults.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {assignmentResultLabels[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </>
+        }
+        count={`${assignments.total} ${assignments.total === 1 ? "assignment" : "assignments"}`}
+        onClear={
+          status || result || type
+            ? () => {
+                setStatus("");
+                setResult("");
+                setType("");
+              }
+            : undefined
+        }
+      />
       <DataTable<AssignmentOutput>
         columns={assignmentColumns({ timeZone, showRun: fixed.run_id === undefined })}
         data={assignments.items}

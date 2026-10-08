@@ -5,6 +5,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
 import { DataTable } from "@/components/shared/data-table";
+import { TableToolbar } from "@/components/shared/table-toolbar";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlFilters } from "@/hooks/use-url-filters";
@@ -56,35 +57,45 @@ export function ReviewTable({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <NativeSelect
-          value={status}
-          onChange={(event) => setStatus(event.target.value as ReviewSearch["status"])}
-          aria-label="Filter by status"
-        >
-          {reviewStatuses.map((value) => (
-            <NativeSelectOption key={value} value={value}>
-              {reviewStatusLabels[value]}
-            </NativeSelectOption>
-          ))}
-          <NativeSelectOption value="all">Any status</NativeSelectOption>
-        </NativeSelect>
-        <NativeSelect
-          value={rule}
-          onChange={(event) => setRule(event.target.value as ReviewRule | "")}
-          aria-label="Filter by rule"
-        >
-          <NativeSelectOption value="">Any rule</NativeSelectOption>
-          {reviewRules.map((value) => (
-            <NativeSelectOption key={value} value={value}>
-              {reviewRuleLabels[value]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <span className="ml-auto text-sm text-muted-foreground">
-          {items.total} {items.total === 1 ? "item" : "items"}
-        </span>
-      </div>
+      <TableToolbar
+        filters={
+          <>
+            <NativeSelect
+              value={status}
+              onChange={(event) => setStatus(event.target.value as ReviewSearch["status"])}
+              aria-label="Filter by status"
+            >
+              {reviewStatuses.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {reviewStatusLabels[value]}
+                </NativeSelectOption>
+              ))}
+              <NativeSelectOption value="all">Any status</NativeSelectOption>
+            </NativeSelect>
+            <NativeSelect
+              value={rule}
+              onChange={(event) => setRule(event.target.value as ReviewRule | "")}
+              aria-label="Filter by rule"
+            >
+              <NativeSelectOption value="">Any rule</NativeSelectOption>
+              {reviewRules.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {reviewRuleLabels[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+          </>
+        }
+        count={`${items.total} ${items.total === 1 ? "item" : "items"}`}
+        onClear={
+          status !== "open" || rule
+            ? () => {
+                setStatus("open");
+                setRule("");
+              }
+            : undefined
+        }
+      />
       <DataTable<ReviewItemRow>
         columns={reviewColumns({ timeZone, actions })}
         data={items.items}

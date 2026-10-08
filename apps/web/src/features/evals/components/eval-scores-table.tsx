@@ -3,6 +3,7 @@
 import type { AssignmentType } from "@public-atlas/api-client";
 
 import { EmptyState } from "@/components/shared/empty-state";
+import { TableToolbar } from "@/components/shared/table-toolbar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -77,31 +78,32 @@ export function EvalScoresTable({
   }
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <NativeSelect
-          value={sort}
-          onChange={(event) => onSortChange(event.target.value as SubjectSort)}
-          aria-label="Sort subjects"
-        >
-          {(Object.keys(sortLabels) as SubjectSort[]).map((value) => (
-            <NativeSelectOption
-              key={value}
-              value={value}
-              disabled={value === "change" && !comparing}
+      <TableToolbar
+        filters={
+          <>
+            <NativeSelect
+              value={sort}
+              onChange={(event) => onSortChange(event.target.value as SubjectSort)}
+              aria-label="Sort subjects"
             >
-              {sortLabels[value]}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <Label className="flex items-center gap-2 font-normal">
-          <Checkbox checked={belowOnly} onCheckedChange={onBelowOnlyChange} />
-          Only subjects below target
-        </Label>
-        <span className="ml-auto text-sm text-muted-foreground">
-          {rows.length === total ? total : `${rows.length} of ${total}`}{" "}
-          {total === 1 ? "subject" : "subjects"}
-        </span>
-      </div>
+              {(Object.keys(sortLabels) as SubjectSort[]).map((value) => (
+                <NativeSelectOption
+                  key={value}
+                  value={value}
+                  disabled={value === "change" && !comparing}
+                >
+                  {sortLabels[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <Label className="ml-2 flex items-center gap-2 font-normal">
+              <Checkbox checked={belowOnly} onCheckedChange={onBelowOnlyChange} />
+              Only subjects below target
+            </Label>
+          </>
+        }
+        count={`${rows.length === total ? total : `${rows.length} of ${total}`} ${total === 1 ? "subject" : "subjects"}`}
+      />
       {rows.length === 0 ? (
         <EmptyState boxed>Every subject meets its targets.</EmptyState>
       ) : (

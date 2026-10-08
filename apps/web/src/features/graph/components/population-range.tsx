@@ -3,9 +3,14 @@
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { cn } from "@/lib/utils";
 
+// Number inputs without the browser's spinners, which crowd a narrow box.
+const boundClassName =
+  "w-0 min-w-0 px-1.5 text-center tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none";
+
 /**
- * A population range as two inputs, each a whole number or empty for no
- * bound. The values are the inputs' text; parsing is the list schema's job.
+ * A population range as one control with two bounds, each a whole number or
+ * empty for no bound. The values are the inputs' text; parsing is the list
+ * schema's job.
  */
 export function PopulationRange({
   min,
@@ -23,36 +28,36 @@ export function PopulationRange({
   className?: string;
 }) {
   return (
-    <div className={cn("flex items-center gap-1.5", className)}>
-      <InputGroup className="w-36">
-        <InputGroupAddon className="text-xs">Pop. ≥</InputGroupAddon>
-        <InputGroupInput
-          id={`${idPrefix}-min`}
-          type="number"
-          inputMode="numeric"
-          min={0}
-          step={1}
-          value={min}
-          onChange={(event) => onMinChange(event.target.value)}
-          placeholder="Any"
-          aria-label="Smallest population"
-        />
-      </InputGroup>
-      <InputGroup className="w-36">
-        <InputGroupAddon className="text-xs">Pop. ≤</InputGroupAddon>
-        <InputGroupInput
-          id={`${idPrefix}-max`}
-          type="number"
-          inputMode="numeric"
-          min={0}
-          step={1}
-          value={max}
-          onChange={(event) => onMaxChange(event.target.value)}
-          placeholder="Any"
-          aria-label="Largest population"
-        />
-      </InputGroup>
-    </div>
+    <InputGroup className={cn("w-60", className)}>
+      <InputGroupAddon>Population</InputGroupAddon>
+      <InputGroupInput
+        id={`${idPrefix}-min`}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        step={1}
+        value={min}
+        onChange={(event) => onMinChange(event.target.value)}
+        placeholder="Min"
+        aria-label="Smallest population"
+        className={boundClassName}
+      />
+      <span aria-hidden="true" className="text-sm text-muted-foreground">
+        –
+      </span>
+      <InputGroupInput
+        id={`${idPrefix}-max`}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        step={1}
+        value={max}
+        onChange={(event) => onMaxChange(event.target.value)}
+        placeholder="Max"
+        aria-label="Largest population"
+        className={boundClassName}
+      />
+    </InputGroup>
   );
 }
 

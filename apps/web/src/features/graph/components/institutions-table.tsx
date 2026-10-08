@@ -12,6 +12,7 @@ import { useState, type ReactNode } from "react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { EntityCombobox } from "@/components/shared/entity-combobox";
+import { TableToolbar } from "@/components/shared/table-toolbar";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -104,108 +105,121 @@ export function InstitutionsTable({
     .flatMap((c) => c.administrative_levels.map((l) => l.name));
   const levelOptions = [...new Set(levels)];
   const filtered = Object.values({ ...chosen, ...fixed }).some((value) => value !== undefined);
+  const clear = () => {
+    setInput("");
+    setCountryCode("");
+    setPlaceId("");
+    setLevel("");
+    setType("");
+    setStatus("");
+    setMinInput("");
+    setMaxInput("");
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {shows("q") && (
-          <InputGroup className="w-64">
-            <InputGroupAddon>
-              <SearchIcon />
-            </InputGroupAddon>
-            <InputGroupInput
-              type="search"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Name or alias"
-              aria-label="Search institutions"
-            />
-          </InputGroup>
-        )}
-        {shows("place_id") && (
-          <div className="w-56">
-            <EntityCombobox
-              id="place-filter"
-              name="place_id"
-              value={placeId}
-              onValueChange={setPlaceId}
-              placeholder="Any place"
-              search={(text) => placePickerQuery(browserApi, text, country || undefined)}
-              resolve={(id) => placeOptionQuery(browserApi, id)}
-            />
-          </div>
-        )}
-        {shows("country_code") && countries.length > 1 && (
-          <NativeSelect
-            value={countryCode}
-            onChange={(event) => setCountryCode(event.target.value)}
-            aria-label="Filter by country"
-          >
-            <NativeSelectOption value="">Any country</NativeSelectOption>
-            {countries.map((c) => (
-              <NativeSelectOption key={c.settings.country_code} value={c.settings.country_code}>
-                {c.settings.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        )}
-        {shows("administrative_level") && (
-          <NativeSelect
-            value={level}
-            onChange={(event) => setLevel(event.target.value)}
-            aria-label="Filter by administrative level"
-          >
-            <NativeSelectOption value="">Any level</NativeSelectOption>
-            {levelOptions.map((name) => (
-              <NativeSelectOption key={name} value={name}>
-                {humanize(name)}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        )}
-        {shows("institution_type") && (
-          <NativeSelect
-            value={type}
-            onChange={(event) => setType(event.target.value)}
-            aria-label="Filter by institution type"
-          >
-            <NativeSelectOption value="">Any type</NativeSelectOption>
-            {institutionTypes.map((t) => (
-              <NativeSelectOption key={t.name} value={t.name}>
-                {humanize(t.name)}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        )}
-        {shows("status") && (
-          <NativeSelect
-            value={status}
-            onChange={(event) => setStatus(event.target.value as EntityStatus | "")}
-            aria-label="Filter by status"
-          >
-            <NativeSelectOption value="">Any status</NativeSelectOption>
-            {entityStatuses.map((value) => (
-              <NativeSelectOption key={value} value={value}>
-                {entityStatusLabels[value]}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        )}
-        {shows("min_population") && shows("max_population") && (
-          <PopulationRange
-            min={minInput}
-            max={maxInput}
-            onMinChange={setMinInput}
-            onMaxChange={setMaxInput}
-          />
-        )}
-        <span className="ml-auto flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">
-            {institutions.total} {institutions.total === 1 ? "institution" : "institutions"}
-          </span>
-          {actions?.({ ...chosen, ...fixed })}
-        </span>
-      </div>
+      <TableToolbar
+        search={
+          shows("q") && (
+            <InputGroup>
+              <InputGroupAddon>
+                <SearchIcon />
+              </InputGroupAddon>
+              <InputGroupInput
+                type="search"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Name or alias"
+                aria-label="Search institutions"
+              />
+            </InputGroup>
+          )
+        }
+        filters={
+          <>
+            {shows("place_id") && (
+              <div className="w-56">
+                <EntityCombobox
+                  id="place-filter"
+                  name="place_id"
+                  value={placeId}
+                  onValueChange={setPlaceId}
+                  placeholder="Any place"
+                  search={(text) => placePickerQuery(browserApi, text, country || undefined)}
+                  resolve={(id) => placeOptionQuery(browserApi, id)}
+                />
+              </div>
+            )}
+            {shows("country_code") && countries.length > 1 && (
+              <NativeSelect
+                value={countryCode}
+                onChange={(event) => setCountryCode(event.target.value)}
+                aria-label="Filter by country"
+              >
+                <NativeSelectOption value="">Any country</NativeSelectOption>
+                {countries.map((c) => (
+                  <NativeSelectOption key={c.settings.country_code} value={c.settings.country_code}>
+                    {c.settings.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            {shows("administrative_level") && (
+              <NativeSelect
+                value={level}
+                onChange={(event) => setLevel(event.target.value)}
+                aria-label="Filter by administrative level"
+              >
+                <NativeSelectOption value="">Any level</NativeSelectOption>
+                {levelOptions.map((name) => (
+                  <NativeSelectOption key={name} value={name}>
+                    {humanize(name)}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            {shows("institution_type") && (
+              <NativeSelect
+                value={type}
+                onChange={(event) => setType(event.target.value)}
+                aria-label="Filter by institution type"
+              >
+                <NativeSelectOption value="">Any type</NativeSelectOption>
+                {institutionTypes.map((t) => (
+                  <NativeSelectOption key={t.name} value={t.name}>
+                    {humanize(t.name)}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            {shows("status") && (
+              <NativeSelect
+                value={status}
+                onChange={(event) => setStatus(event.target.value as EntityStatus | "")}
+                aria-label="Filter by status"
+              >
+                <NativeSelectOption value="">Any status</NativeSelectOption>
+                {entityStatuses.map((value) => (
+                  <NativeSelectOption key={value} value={value}>
+                    {entityStatusLabels[value]}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            {shows("min_population") && shows("max_population") && (
+              <PopulationRange
+                min={minInput}
+                max={maxInput}
+                onMinChange={setMinInput}
+                onMaxChange={setMaxInput}
+              />
+            )}
+          </>
+        }
+        count={`${institutions.total} ${institutions.total === 1 ? "institution" : "institutions"}`}
+        actions={actions?.({ ...chosen, ...fixed })}
+        onClear={Object.values(chosen).some((value) => value !== undefined) ? clear : undefined}
+      />
       <DataTable<InstitutionOutput>
         columns={institutionColumns({ timeZone })}
         data={institutions.items}

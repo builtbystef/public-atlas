@@ -7,6 +7,7 @@ import { useState } from "react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { EntityCombobox } from "@/components/shared/entity-combobox";
+import { TableToolbar } from "@/components/shared/table-toolbar";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
@@ -79,72 +80,85 @@ export function PlacesTable({
     .map((l) => l.name);
   const levelOptions = [...new Set(levels)];
   const filtered = Object.values(chosen).some((value) => value !== undefined);
+  const clear = () => {
+    setInput("");
+    setCountryCode("");
+    setParentId("");
+    setLevel("");
+    setMinInput("");
+    setMaxInput("");
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <InputGroup className="w-64">
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
-            type="search"
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            placeholder="Name or alias"
-            aria-label="Search places"
-          />
-        </InputGroup>
-        {!nested && (
-          <div className="w-56">
-            <EntityCombobox
-              id="parent-filter"
-              name="parent_place_id"
-              value={parentId}
-              onValueChange={setParentId}
-              placeholder="Directly under any place"
-              search={(text) => placePickerQuery(browserApi, text, countryCode || undefined)}
-              resolve={(id) => placeOptionQuery(browserApi, id)}
+      <TableToolbar
+        search={
+          <InputGroup>
+            <InputGroupAddon>
+              <SearchIcon />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="search"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="Name or alias"
+              aria-label="Search places"
             />
-          </div>
-        )}
-        {!nested && countries.length > 1 && (
-          <NativeSelect
-            value={countryCode}
-            onChange={(event) => setCountryCode(event.target.value)}
-            aria-label="Filter by country"
-          >
-            <NativeSelectOption value="">Any country</NativeSelectOption>
-            {countries.map((c) => (
-              <NativeSelectOption key={c.settings.country_code} value={c.settings.country_code}>
-                {c.settings.name}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
-        )}
-        <NativeSelect
-          value={level}
-          onChange={(event) => setLevel(event.target.value)}
-          aria-label="Filter by administrative level"
-        >
-          <NativeSelectOption value="">Any level</NativeSelectOption>
-          {levelOptions.map((name) => (
-            <NativeSelectOption key={name} value={name}>
-              {humanize(name)}
-            </NativeSelectOption>
-          ))}
-        </NativeSelect>
-        <PopulationRange
-          idPrefix={nested ? "child-population" : "population"}
-          min={minInput}
-          max={maxInput}
-          onMinChange={setMinInput}
-          onMaxChange={setMaxInput}
-        />
-        <span className="ml-auto text-sm text-muted-foreground">
-          {places.total} {places.total === 1 ? "place" : "places"}
-        </span>
-      </div>
+          </InputGroup>
+        }
+        filters={
+          <>
+            {!nested && (
+              <div className="w-56">
+                <EntityCombobox
+                  id="parent-filter"
+                  name="parent_place_id"
+                  value={parentId}
+                  onValueChange={setParentId}
+                  placeholder="Directly under any place"
+                  search={(text) => placePickerQuery(browserApi, text, countryCode || undefined)}
+                  resolve={(id) => placeOptionQuery(browserApi, id)}
+                />
+              </div>
+            )}
+            {!nested && countries.length > 1 && (
+              <NativeSelect
+                value={countryCode}
+                onChange={(event) => setCountryCode(event.target.value)}
+                aria-label="Filter by country"
+              >
+                <NativeSelectOption value="">Any country</NativeSelectOption>
+                {countries.map((c) => (
+                  <NativeSelectOption key={c.settings.country_code} value={c.settings.country_code}>
+                    {c.settings.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            <NativeSelect
+              value={level}
+              onChange={(event) => setLevel(event.target.value)}
+              aria-label="Filter by administrative level"
+            >
+              <NativeSelectOption value="">Any level</NativeSelectOption>
+              {levelOptions.map((name) => (
+                <NativeSelectOption key={name} value={name}>
+                  {humanize(name)}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            <PopulationRange
+              idPrefix={nested ? "child-population" : "population"}
+              min={minInput}
+              max={maxInput}
+              onMinChange={setMinInput}
+              onMaxChange={setMaxInput}
+            />
+          </>
+        }
+        count={`${places.total} ${places.total === 1 ? "place" : "places"}`}
+        onClear={filtered ? clear : undefined}
+      />
       <DataTable<PlaceOutput>
         columns={placeColumns({ showCountry: !nested && countries.length > 1 })}
         data={places.items}
