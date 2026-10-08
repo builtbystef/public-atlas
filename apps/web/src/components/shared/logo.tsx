@@ -3,9 +3,10 @@ import type { SVGProps } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The Public Atlas mark, copied from logo.svg at the repository root. It is inline so it
- * needs no request, and it fills with `currentColor` so it takes the text colour around it;
- * pass `fill` to pin a colour where there is no CSS, as the icons under src/app do.
+ * The Public Atlas mark, and the source of it: src/app/icon.svg draws the same path on its
+ * tile. It is inline so it needs no request, and it fills with `currentColor` so it takes
+ * the text colour around it; pass `fill` to pin a colour where there is no CSS, as the
+ * icons under src/app do.
  */
 export function Logo(props: SVGProps<SVGSVGElement>) {
   return (
