@@ -38,7 +38,7 @@ from public_atlas.modules.assignments.models import (
     UsageKind,
 )
 from public_atlas.modules.assignments.pricing import load_prices
-from public_atlas.modules.assignments.schemas import Progress, RunFilter
+from public_atlas.modules.assignments.schemas import Progress, RunFilter, SkipReason
 from public_atlas.modules.evidence.models import Evidence
 from public_atlas.modules.graph.models import (
     EntityStatus,
@@ -50,6 +50,7 @@ from public_atlas.shared.exceptions import ConflictError, NotFoundError
 
 __all__ = [
     "RUN_ASSIGNMENT_TASK",
+    "SkipReason",
     "Spawn",
     "assignment_cost",
     "cancel",
@@ -79,6 +80,7 @@ __all__ = [
     "spawn_on_finish",
     "stop_run",
     "subjects_of",
+    "would_spawn",
 ]
 
 logger = logging.getLogger(__name__)
@@ -422,6 +424,30 @@ async def spawn(  # noqa: C901, PLR0913 - one rule per line
         created.append(assignment)
     await session.flush()
     return created
+
+
+async def would_spawn(
+    session: AsyncSession, run: Run | None, spawns: Sequence[Spawn]
+) -> list[tuple[Spawn, SkipReason | None]]:
+    """What `spawn` would make of `spawns` in `run`, without making anything: each distinct
+    spawn with why it would be left out, None when it would be created. Without a run the work
+    waits for the next run to seed itself."""
+    planned: list[tuple[Spawn, SkipReason | None]] = []
+    wanted = run_filter(run) if run is not None else None
+    for asked in dict.fromkeys(spawns):
+        reason: SkipReason | None = None
+        if run is None or wanted is None:
+            reason = "no_run"
+        elif run.status is RunStatus.STOPPED:
+            reason = "run_stopped"
+        else:
+            subject = await _subject(session, asked)
+            if subject is None or not await _in_scope(session, wanted, asked.type, subject):
+                reason = "out_of_scope"
+            elif await _open(session, asked) is not None:
+                reason = "already_open"
+        planned.append((asked, reason))
+    return planned
 
 
 async def _subject(session: AsyncSession, asked: Spawn) -> Place | Institution | None:

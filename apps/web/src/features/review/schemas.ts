@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { reviewRules, reviewStatuses } from "@/lib/labels";
+import { entityKinds, reviewRules, reviewStatuses } from "@/lib/labels";
 import { listSearch, optionalParam, paged, parseSearch, type SearchParams } from "@/lib/lists";
 import { emptyToNull, text, TYPE_NAME, typeNameMessage } from "@/lib/validation";
 
@@ -9,10 +9,26 @@ import type { ReviewListFilters } from "./queries";
 /** The list shows open items unless the URL says which status, or `all`. */
 export const reviewStatusFilters = [...reviewStatuses, "all"] as const;
 
+/** How many items a row decides: one, or several that ask the same question. */
+export const reviewAffects = ["several", "one"] as const;
+
+export type ReviewAffects = (typeof reviewAffects)[number];
+
+/** The queue's sorts: the largest rows first by default. */
+export const reviewSorts = ["count", "raised_at"] as const;
+
+export type ReviewSort = (typeof reviewSorts)[number];
+
 const reviewSearchSchema = z.object({
+  q: optionalParam(z.string().trim().min(1).max(200)),
   status: optionalParam(z.enum(reviewStatusFilters)),
   rule: optionalParam(z.enum(reviewRules)),
-  ...listSearch(["created_at"]),
+  /** One shared question: `type_level:library@region`. */
+  kind: optionalParam(z.string().min(1).max(200)),
+  entity_kind: optionalParam(z.enum(entityKinds)),
+  country_code: optionalParam(z.string().regex(/^[A-Z]{2}$/)),
+  affects: optionalParam(z.enum(reviewAffects)),
+  ...listSearch(reviewSorts),
 });
 
 export type ReviewSearch = z.output<typeof reviewSearchSchema>;
@@ -48,6 +64,6 @@ export function kindTypeName(kind: string): string {
 
 /** The API's list parameters for a parsed search: open items unless the URL says otherwise. */
 export function reviewFilters(search: ReviewSearch): ReviewListFilters {
-  const { status = "open", sort: _sort, order: _order, ...rest } = search;
+  const { status = "open", ...rest } = search;
   return { ...paged(rest), status: status === "all" ? undefined : status };
 }

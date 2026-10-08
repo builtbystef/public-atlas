@@ -1767,7 +1767,7 @@
           "review"
         ],
         "summary": "List Review Items",
-        "description": "A page of items, open ones by default, oldest first, each with its entity's name.",
+        "description": "A page of the queue, any status unless one is asked for. The items of one kind and\nstatus are one row, decided together; every other item is a row of its own. `q` matches the\nentity's name or URL, or the question's text; `kind` keeps one shared question. A row counts\nthe items the filters admit.",
         "operationId": "review-list_review_items",
         "parameters": [
           {
@@ -1783,25 +1783,24 @@
                   "type": "null"
                 }
               ],
-              "default": "open",
               "title": "Status"
             }
           },
           {
-            "name": "kind",
+            "name": "q",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
                   "type": "string",
-                  "maxLength": 300
+                  "maxLength": 200
                 },
                 {
                   "type": "null"
                 }
               ],
-              "title": "Kind"
+              "title": "Q"
             }
           },
           {
@@ -1822,6 +1821,104 @@
             }
           },
           {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 200
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "entity_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EntityKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Kind"
+            }
+          },
+          {
+            "name": "country_code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country Code"
+            }
+          },
+          {
+            "name": "affects",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "one",
+                    "several"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Affects"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "count",
+                "raised_at"
+              ],
+              "type": "string",
+              "default": "count",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "desc",
+              "title": "Order"
+            }
+          },
+          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -1829,7 +1926,7 @@
               "type": "integer",
               "maximum": 500,
               "minimum": 1,
-              "default": 100,
+              "default": 50,
               "title": "Limit"
             }
           },
@@ -1869,63 +1966,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Page_ReviewItemRow_"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/review-items/kinds": {
-      "get": {
-        "tags": [
-          "review"
-        ],
-        "summary": "List Review Kinds",
-        "description": "The open items grouped by the question they share; one call on a kind decides them all.",
-        "operationId": "review-list_review_kinds",
-        "parameters": [
-          {
-            "name": "x-database",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "`main` (the default) or `eval`: which database the request reads.",
-              "title": "X-Database"
-            },
-            "description": "`main` (the default) or `eval`: which database the request reads."
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/KindOutput"
-                  },
-                  "title": "Response Review-List Review Kinds"
+                  "$ref": "#/components/schemas/Page_ReviewRow_"
                 }
               }
             }
@@ -1949,7 +1990,7 @@
           "review"
         ],
         "summary": "Approve Review Kind",
-        "description": "Approve every open item of the kind. A `new_type` kind gives its bodies the type named,\nby default the suggested type as a type name; the type must exist.",
+        "description": "Approve every open item of the kind, or the `item_ids` among them. A `new_type` kind\ngives its bodies the type named, by default the suggested type as a type name; the type must\nexist.",
         "operationId": "review-approve_review_kind",
         "parameters": [
           {
@@ -2011,7 +2052,7 @@
           "review"
         ],
         "summary": "Reject Review Kind",
-        "description": "Reject every open item of the kind.",
+        "description": "Reject every open item of the kind, or the `item_ids` among them.",
         "operationId": "review-reject_review_kind",
         "parameters": [
           {
@@ -2067,13 +2108,137 @@
         }
       }
     },
+    "/review-items/kinds/approve/preview": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Preview Review Kind Approval",
+        "description": "What approving the kind would do, without doing it.",
+        "operationId": "review-preview_review_kind_approval",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KindApproveInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionPreviewOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/kinds/reject/preview": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Preview Review Kind Rejection",
+        "description": "What rejecting the kind would do, without doing it.",
+        "operationId": "review-preview_review_kind_rejection",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KindDecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionPreviewOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/review-items/{review_item_id}": {
       "get": {
         "tags": [
           "review"
         ],
         "summary": "Read Review Item",
-        "description": "The item with its entity, the entity's names and status, and every quote for it with a\nlink to the stored copy it was found on.",
+        "description": "The item with a summary of its entity and of each entity its question names, every\nquote for the entity with a link to the stored copy it was found on, the assignment that\nraised it, how many other open items ask the same question, what was started since the\ndecision, and the next open item.",
         "operationId": "review-read_review_item",
         "parameters": [
           {
@@ -2327,6 +2492,222 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DecisionOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}/approve/preview": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Preview Review Item Approval",
+        "description": "What approving the item would do: the statuses it would change and the work it would\nstart, from the approval itself, rolled back. Refused as the approval would be.",
+        "operationId": "review-preview_review_item_approval",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionPreviewOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}/reject/preview": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Preview Review Item Rejection",
+        "description": "What rejecting the item would do, without doing it.",
+        "operationId": "review-preview_review_item_rejection",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecisionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionPreviewOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/review-items/{review_item_id}/merge/preview": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Preview Review Item Merge",
+        "description": "What merging the item's entity into `into_id` would do, without doing it.",
+        "operationId": "review-preview_review_item_merge",
+        "parameters": [
+          {
+            "name": "review_item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Item Id"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DecisionPreviewOutput"
                 }
               }
             }
@@ -3748,6 +4129,38 @@
         ],
         "title": "AssignmentOutput"
       },
+      "AssignmentRefOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "type": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssignmentStatus"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/EntityRefOutput"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "status",
+          "subject",
+          "created_at"
+        ],
+        "title": "AssignmentRefOutput"
+      },
       "AssignmentResult": {
         "type": "string",
         "enum": [
@@ -3928,6 +4341,44 @@
         ],
         "title": "DecisionOutput"
       },
+      "DecisionPreviewOutput": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/StatusChangeOutput"
+            },
+            "type": "array",
+            "title": "Changes",
+            "description": "Each entity whose status would change, in the order the decision changes it."
+          },
+          "spawn": {
+            "items": {
+              "$ref": "#/components/schemas/PlannedOutput"
+            },
+            "type": "array",
+            "title": "Spawn"
+          },
+          "run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RunRefOutput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The run the work would start in; null when no run would take it."
+          }
+        },
+        "type": "object",
+        "required": [
+          "changes",
+          "spawn",
+          "run"
+        ],
+        "title": "DecisionPreviewOutput",
+        "description": "What a decision would do, from the decision run and rolled back."
+      },
       "EnteredBy": {
         "type": "string",
         "enum": [
@@ -3949,6 +4400,29 @@
         ],
         "title": "EntityKind"
       },
+      "EntityRefOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_kind",
+          "label"
+        ],
+        "title": "EntityRefOutput"
+      },
       "EntityStatus": {
         "type": "string",
         "enum": [
@@ -3958,6 +4432,158 @@
           "needs_review"
         ],
         "title": "EntityStatus"
+      },
+      "EntitySummaryOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Names"
+          },
+          "institution_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Type"
+          },
+          "suggested_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Suggested Type",
+            "description": "The type a body saved as `other` would have."
+          },
+          "administrative_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Administrative Level"
+          },
+          "country_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country Code"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityRefOutput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An institution's place, or a place's parent."
+          },
+          "parent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityRefOutput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An institution's parent institution."
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityRefOutput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The institution a homepage or source belongs to, or that a domain's question is about."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url",
+            "description": "A homepage's or a source's page."
+          },
+          "homepage_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Url",
+            "description": "An institution's verified homepage."
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_kind",
+          "status",
+          "label",
+          "names",
+          "institution_type",
+          "suggested_type",
+          "administrative_level",
+          "country_code",
+          "place",
+          "parent",
+          "owner",
+          "url",
+          "homepage_url",
+          "evidence_count"
+        ],
+        "title": "EntitySummaryOutput",
+        "description": "What to compare an entity by; a field that does not apply to its kind is null or empty."
       },
       "EvalEntry": {
         "properties": {
@@ -5102,6 +5728,23 @@
             "maxLength": 300,
             "title": "Kind"
           },
+          "item_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array",
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Ids",
+            "description": "Decide these open items of the kind, the ones the reviewer saw; else all."
+          },
           "institution_type": {
             "anyOf": [
               {
@@ -5141,6 +5784,23 @@
             "type": "string",
             "maxLength": 300,
             "title": "Kind"
+          },
+          "item_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "type": "array",
+                "minItems": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Ids",
+            "description": "Decide these open items of the kind, the ones the reviewer saw; else all."
           }
         },
         "type": "object",
@@ -5186,53 +5846,6 @@
           "spawn"
         ],
         "title": "KindDecisionOutput"
-      },
-      "KindOutput": {
-        "properties": {
-          "kind": {
-            "type": "string",
-            "title": "Kind"
-          },
-          "rule": {
-            "type": "string",
-            "title": "Rule"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          },
-          "question": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Question"
-          },
-          "names": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Names",
-            "description": "The first few entities of the kind, to recognise it by."
-          },
-          "item_ids": {
-            "items": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "type": "array",
-            "title": "Item Ids"
-          }
-        },
-        "type": "object",
-        "required": [
-          "kind",
-          "rule",
-          "count",
-          "question",
-          "names",
-          "item_ids"
-        ],
-        "title": "KindOutput"
       },
       "MergeInput": {
         "properties": {
@@ -5585,11 +6198,11 @@
         ],
         "title": "Page[PlaceOutput]"
       },
-      "Page_ReviewItemRow_": {
+      "Page_ReviewRow_": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ReviewItemRow"
+              "$ref": "#/components/schemas/ReviewRow"
             },
             "type": "array",
             "title": "Items"
@@ -5614,7 +6227,7 @@
           "limit",
           "offset"
         ],
-        "title": "Page[ReviewItemRow]"
+        "title": "Page[ReviewRow]"
       },
       "Page_RunDetail_": {
         "properties": {
@@ -5852,6 +6465,41 @@
         ],
         "title": "PlaceRef"
       },
+      "PlannedOutput": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/EntityRefOutput"
+          },
+          "skipped": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "no_run",
+                  "run_stopped",
+                  "out_of_scope",
+                  "already_open"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "subject",
+          "skipped"
+        ],
+        "title": "PlannedOutput",
+        "description": "Work a decision asks for. `skipped` says why it would not start; null when it would."
+      },
       "ProcurementHandledBy": {
         "type": "string",
         "enum": [
@@ -5943,6 +6591,24 @@
           "page"
         ],
         "title": "QuoteContextOutput"
+      },
+      "RelatedOutput": {
+        "properties": {
+          "fact": {
+            "type": "string",
+            "title": "Fact"
+          },
+          "entity": {
+            "$ref": "#/components/schemas/EntitySummaryOutput"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fact",
+          "entity"
+        ],
+        "title": "RelatedOutput",
+        "description": "An entity the question names, under the fact that names it, such as `duplicate_of`."
       },
       "ReleaseInput": {
         "properties": {
@@ -6050,25 +6716,18 @@
           "entity_kind": {
             "$ref": "#/components/schemas/EntityKind"
           },
-          "entity_status": {
-            "type": "string",
-            "title": "Entity Status"
-          },
           "label": {
             "type": "string",
             "title": "Label"
           },
-          "names": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Names"
+          "subject": {
+            "$ref": "#/components/schemas/EntitySummaryOutput"
           },
           "entity": {
             "additionalProperties": true,
             "type": "object",
-            "title": "Entity"
+            "title": "Entity",
+            "description": "The entity's own columns."
           },
           "evidence": {
             "items": {
@@ -6076,6 +6735,55 @@
             },
             "type": "array",
             "title": "Evidence"
+          },
+          "related": {
+            "items": {
+              "$ref": "#/components/schemas/RelatedOutput"
+            },
+            "type": "array",
+            "title": "Related",
+            "description": "Every entity the question names by id."
+          },
+          "raised_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Raised At"
+          },
+          "raised_by": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentRefOutput"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "same_kind_open": {
+            "type": "integer",
+            "title": "Same Kind Open",
+            "description": "The other open items that ask the same question."
+          },
+          "started_since": {
+            "items": {
+              "$ref": "#/components/schemas/AssignmentRefOutput"
+            },
+            "type": "array",
+            "title": "Started Since",
+            "description": "The assignments on the entity or its institution made since the decision."
+          },
+          "next_open_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Open Id",
+            "description": "The open item to look at next: another of the same question first, else the one raised before this, as the queue lists them."
           }
         },
         "type": "object",
@@ -6090,11 +6798,16 @@
           "decided_at",
           "note",
           "entity_kind",
-          "entity_status",
           "label",
-          "names",
+          "subject",
           "entity",
-          "evidence"
+          "evidence",
+          "related",
+          "raised_at",
+          "raised_by",
+          "same_kind_open",
+          "started_since",
+          "next_open_id"
         ],
         "title": "ReviewItemDetail"
       },
@@ -6183,7 +6896,7 @@
         ],
         "title": "ReviewItemOutput"
       },
-      "ReviewItemRow": {
+      "ReviewMember": {
         "properties": {
           "id": {
             "type": "string",
@@ -6195,16 +6908,14 @@
             "format": "uuid",
             "title": "Entity Id"
           },
-          "rule": {
+          "entity_kind": {
+            "$ref": "#/components/schemas/EntityKind"
+          },
+          "label": {
             "type": "string",
-            "title": "Rule"
+            "title": "Label"
           },
-          "question": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Question"
-          },
-          "kind": {
+          "country_code": {
             "anyOf": [
               {
                 "type": "string"
@@ -6213,10 +6924,19 @@
                 "type": "null"
               }
             ],
-            "title": "Kind"
+            "title": "Country Code"
           },
-          "status": {
-            "$ref": "#/components/schemas/ReviewStatus"
+          "reasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "raised_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Raised At"
           },
           "raised_by_assignment_id": {
             "anyOf": [
@@ -6229,6 +6949,64 @@
               }
             ],
             "title": "Raised By Assignment Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "entity_id",
+          "entity_kind",
+          "label",
+          "country_code",
+          "reasons",
+          "raised_at",
+          "raised_by_assignment_id"
+        ],
+        "title": "ReviewMember",
+        "description": "An item of a queue row, with what to recognise its entity by."
+      },
+      "ReviewRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "description": "The row's first item's id."
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind"
+          },
+          "rule": {
+            "type": "string",
+            "title": "Rule"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReviewStatus"
+          },
+          "question": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Question",
+            "description": "The facts every item has, reasons aside."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "The row's items that match the filters."
+          },
+          "raised_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Raised At",
+            "description": "When the first item was raised."
           },
           "decided_at": {
             "anyOf": [
@@ -6240,43 +7018,42 @@
                 "type": "null"
               }
             ],
-            "title": "Decided At"
+            "title": "Decided At",
+            "description": "When the last item was decided."
           },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewMember"
+            },
+            "type": "array",
+            "title": "Members",
+            "description": "The first items, oldest first."
           },
-          "entity_kind": {
-            "$ref": "#/components/schemas/EntityKind"
-          },
-          "label": {
-            "type": "string",
-            "title": "Label"
+          "item_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Item Ids",
+            "description": "Every item of the row, to decide them by."
           }
         },
         "type": "object",
         "required": [
           "id",
-          "entity_id",
-          "rule",
-          "question",
           "kind",
+          "rule",
           "status",
-          "raised_by_assignment_id",
+          "question",
+          "count",
+          "raised_at",
           "decided_at",
-          "note",
-          "entity_kind",
-          "label"
+          "members",
+          "item_ids"
         ],
-        "title": "ReviewItemRow",
-        "description": "An item as the queue lists it: with what to recognise its entity by."
+        "title": "ReviewRow",
+        "description": "A line of the queue: an item on its own, or every item of one `kind` and status, which\nask the same question and are decided together."
       },
       "ReviewStatus": {
         "type": "string",
@@ -6434,6 +7211,25 @@
         ],
         "title": "RunMode"
       },
+      "RunRefOutput": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "RunRefOutput"
+      },
       "RunStatus": {
         "type": "string",
         "enum": [
@@ -6534,6 +7330,26 @@
         ],
         "title": "SpawnOutput",
         "description": "Work the decision asks for; the assignments module queues it."
+      },
+      "StatusChangeOutput": {
+        "properties": {
+          "entity": {
+            "$ref": "#/components/schemas/EntityRefOutput"
+          },
+          "before": {
+            "$ref": "#/components/schemas/EntityStatus"
+          },
+          "after": {
+            "$ref": "#/components/schemas/EntityStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity",
+          "before",
+          "after"
+        ],
+        "title": "StatusChangeOutput"
       },
       "SubjectOutput": {
         "properties": {

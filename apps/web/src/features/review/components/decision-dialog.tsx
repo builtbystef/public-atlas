@@ -1,22 +1,13 @@
 "use client";
 
-import { revalidateLogic } from "@tanstack/react-form";
+import { revalidateLogic, useStore } from "@tanstack/react-form";
 import { useState, type ReactNode } from "react";
 
-import { Form, FormError, useAppForm } from "@/components/shared/form";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useAppForm } from "@/components/shared/form";
 import { errorMessage } from "@/lib/api/errors";
 
 import { decisionSchema, type DecisionFormInput } from "../schemas";
+import { DecisionFrame } from "./decision-frame";
 
 /**
  * Approve or reject, with a note for the record. An approval of an
@@ -27,20 +18,29 @@ export function DecisionDialog({
   open,
   onOpenChange,
   title,
+  subject,
   description,
   confirmLabel,
+  details,
   destructive = false,
   typeField,
+  preview,
   onConfirm,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /** What is decided on, such as the entity's name. */
+  subject?: ReactNode;
   description: ReactNode;
+  /** Under the description, such as the entities a decision on several items changes. */
+  details?: ReactNode;
   confirmLabel: string;
   destructive?: boolean;
   /** Shows the institution type field, prefilled with this; omit to hide it. */
   typeField?: { initial: string; description: string } | undefined;
+  /** What the decision would do, given the type typed so far ("" when none). */
+  preview?: (values: { institution_type: string }) => ReactNode;
   onConfirm: (values: { note: string | null; institution_type: string | null }) => Promise<unknown>;
 }) {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -61,46 +61,46 @@ export function DecisionDialog({
       }
     },
   });
+  const institutionType = useStore(form.store, (state) => state.values.institution_type);
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-        <Form form={form} className="gap-4">
-          <FormError message={serverError} />
-          {typeField && (
-            <form.AppField name="institution_type">
-              {(field) => (
-                <field.TextField
-                  label="Institution type"
-                  description={typeField.description}
-                  placeholder="school_board"
-                  autoComplete="off"
-                />
-              )}
-            </form.AppField>
+    <DecisionFrame
+      open={open}
+      onOpenChange={onOpenChange}
+      tone={destructive ? "reject" : "approve"}
+      title={title}
+      subject={subject}
+      description={description}
+      form={form}
+      serverError={serverError}
+      submit={(className) => (
+        <form.AppForm>
+          <form.SubmitButton className={className}>{confirmLabel}</form.SubmitButton>
+        </form.AppForm>
+      )}
+    >
+      {details}
+      {typeField && (
+        <form.AppField name="institution_type">
+          {(field) => (
+            <field.TextField
+              label="Institution type"
+              description={typeField.description}
+              placeholder="school_board"
+              autoComplete="off"
+            />
           )}
-          <form.AppField name="note">
-            {(field) => (
-              <field.TextareaField label="Note" rows={3} placeholder="Why, for the next reader." />
-            )}
-          </form.AppField>
-          <DialogFooter>
-            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <form.AppForm>
-              <form.SubmitButton
-                className={
-                  destructive ? "bg-destructive text-white hover:bg-destructive/90" : undefined
-                }
-              >
-                {confirmLabel}
-              </form.SubmitButton>
-            </form.AppForm>
-          </DialogFooter>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </form.AppField>
+      )}
+      {preview?.({ institution_type: institutionType.trim() })}
+      <form.AppField name="note">
+        {(field) => (
+          <field.TextareaField
+            label="Note (optional)"
+            rows={2}
+            placeholder="Why, for the next reader."
+          />
+        )}
+      </form.AppField>
+    </DecisionFrame>
   );
 }

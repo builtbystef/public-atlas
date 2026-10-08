@@ -1,13 +1,47 @@
 import { expect, test } from "vite-plus/test";
 
-import { decisionSchema, kindTypeName, mergeSchema, parseReviewSearch } from "./schemas";
+import {
+  decisionSchema,
+  kindTypeName,
+  mergeSchema,
+  parseReviewSearch,
+  reviewFilters,
+} from "./schemas";
 
 test("the queue reads its filters from the URL", () => {
-  expect(parseReviewSearch({ status: "all", rule: "duplicate" })).toEqual({
+  expect(
+    parseReviewSearch({
+      q: " library ",
+      status: "all",
+      rule: "duplicate",
+      kind: "type_level:library@region",
+      entity_kind: "institution",
+      country_code: "CA",
+      affects: "several",
+      sort: "raised_at",
+    }),
+  ).toEqual({
+    q: "library",
     status: "all",
     rule: "duplicate",
+    kind: "type_level:library@region",
+    entity_kind: "institution",
+    country_code: "CA",
+    affects: "several",
+    sort: "raised_at",
   });
-  expect(parseReviewSearch({ status: "bogus" })).toEqual({});
+  expect(
+    parseReviewSearch({ status: "bogus", country_code: "ca", affects: "many", q: " " }),
+  ).toEqual({});
+});
+
+test("the queue asks for open items unless the URL says otherwise", () => {
+  expect(reviewFilters({})).toEqual({ status: "open", limit: 50, offset: 0 });
+  expect(reviewFilters({ status: "all", page: 2 })).toEqual({
+    status: undefined,
+    limit: 50,
+    offset: 50,
+  });
 });
 
 test("a decision's note and type become the API's body", () => {

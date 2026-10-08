@@ -413,29 +413,12 @@ export interface paths {
         };
         /**
          * List Review Items
-         * @description A page of items, open ones by default, oldest first, each with its entity's name.
+         * @description A page of the queue, any status unless one is asked for. The items of one kind and
+         *     status are one row, decided together; every other item is a row of its own. `q` matches the
+         *     entity's name or URL, or the question's text; `kind` keeps one shared question. A row counts
+         *     the items the filters admit.
          */
         get: operations["review-list_review_items"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/review-items/kinds": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List Review Kinds
-         * @description The open items grouped by the question they share; one call on a kind decides them all.
-         */
-        get: operations["review-list_review_kinds"];
         put?: never;
         post?: never;
         delete?: never;
@@ -455,8 +438,9 @@ export interface paths {
         put?: never;
         /**
          * Approve Review Kind
-         * @description Approve every open item of the kind. A `new_type` kind gives its bodies the type named,
-         *     by default the suggested type as a type name; the type must exist.
+         * @description Approve every open item of the kind, or the `item_ids` among them. A `new_type` kind
+         *     gives its bodies the type named, by default the suggested type as a type name; the type must
+         *     exist.
          */
         post: operations["review-approve_review_kind"];
         delete?: never;
@@ -476,9 +460,49 @@ export interface paths {
         put?: never;
         /**
          * Reject Review Kind
-         * @description Reject every open item of the kind.
+         * @description Reject every open item of the kind, or the `item_ids` among them.
          */
         post: operations["review-reject_review_kind"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/kinds/approve/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Review Kind Approval
+         * @description What approving the kind would do, without doing it.
+         */
+        post: operations["review-preview_review_kind_approval"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/kinds/reject/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Review Kind Rejection
+         * @description What rejecting the kind would do, without doing it.
+         */
+        post: operations["review-preview_review_kind_rejection"];
         delete?: never;
         options?: never;
         head?: never;
@@ -494,8 +518,10 @@ export interface paths {
         };
         /**
          * Read Review Item
-         * @description The item with its entity, the entity's names and status, and every quote for it with a
-         *     link to the stored copy it was found on.
+         * @description The item with a summary of its entity and of each entity its question names, every
+         *     quote for the entity with a link to the stored copy it was found on, the assignment that
+         *     raised it, how many other open items ask the same question, what was started since the
+         *     decision, and the next open item.
          */
         get: operations["review-read_review_item"];
         put?: never;
@@ -558,6 +584,67 @@ export interface paths {
          * @description The entity is a duplicate of `into_id`: what it holds moves over and it is rejected.
          */
         post: operations["review-merge_review_item"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}/approve/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Review Item Approval
+         * @description What approving the item would do: the statuses it would change and the work it would
+         *     start, from the approval itself, rolled back. Refused as the approval would be.
+         */
+        post: operations["review-preview_review_item_approval"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}/reject/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Review Item Rejection
+         * @description What rejecting the item would do, without doing it.
+         */
+        post: operations["review-preview_review_item_rejection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/review-items/{review_item_id}/merge/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Review Item Merge
+         * @description What merging the item's entity into `into_id` would do, without doing it.
+         */
+        post: operations["review-preview_review_item_merge"];
         delete?: never;
         options?: never;
         head?: never;
@@ -948,6 +1035,22 @@ export interface components {
             /** Finished At */
             finished_at: string | null;
         };
+        /** AssignmentRefOutput */
+        AssignmentRefOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            type: components["schemas"]["AssignmentType"];
+            status: components["schemas"]["AssignmentStatus"];
+            subject: components["schemas"]["EntityRefOutput"];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /**
          * AssignmentResult
          * @description How a finished assignment ended.
@@ -1022,6 +1125,21 @@ export interface components {
             assignment_ids: string[];
         };
         /**
+         * DecisionPreviewOutput
+         * @description What a decision would do, from the decision run and rolled back.
+         */
+        DecisionPreviewOutput: {
+            /**
+             * Changes
+             * @description Each entity whose status would change, in the order the decision changes it.
+             */
+            changes: components["schemas"]["StatusChangeOutput"][];
+            /** Spawn */
+            spawn: components["schemas"]["PlannedOutput"][];
+            /** @description The run the work would start in; null when no run would take it. */
+            run: components["schemas"]["RunRefOutput"] | null;
+        };
+        /**
          * EnteredBy
          * @description How a row got here. On every entity and every evidence row.
          * @enum {string}
@@ -1032,11 +1150,68 @@ export interface components {
          * @enum {string}
          */
         EntityKind: "place" | "institution" | "source" | "domain" | "homepage";
+        /** EntityRefOutput */
+        EntityRefOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            entity_kind: components["schemas"]["EntityKind"];
+            /** Label */
+            label: string;
+        };
         /**
          * EntityStatus
          * @enum {string}
          */
         EntityStatus: "candidate" | "verified" | "rejected" | "needs_review";
+        /**
+         * EntitySummaryOutput
+         * @description What to compare an entity by; a field that does not apply to its kind is null or empty.
+         */
+        EntitySummaryOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            entity_kind: components["schemas"]["EntityKind"];
+            status: components["schemas"]["EntityStatus"];
+            /** Label */
+            label: string;
+            /** Names */
+            names: string[];
+            /** Institution Type */
+            institution_type: string | null;
+            /**
+             * Suggested Type
+             * @description The type a body saved as `other` would have.
+             */
+            suggested_type: string | null;
+            /** Administrative Level */
+            administrative_level: string | null;
+            /** Country Code */
+            country_code: string | null;
+            /** @description An institution's place, or a place's parent. */
+            place: components["schemas"]["EntityRefOutput"] | null;
+            /** @description An institution's parent institution. */
+            parent: components["schemas"]["EntityRefOutput"] | null;
+            /** @description The institution a homepage or source belongs to, or that a domain's question is about. */
+            owner: components["schemas"]["EntityRefOutput"] | null;
+            /**
+             * Url
+             * @description A homepage's or a source's page.
+             */
+            url: string | null;
+            /**
+             * Homepage Url
+             * @description An institution's verified homepage.
+             */
+            homepage_url: string | null;
+            /** Evidence Count */
+            evidence_count: number;
+        };
         /**
          * EvalEntry
          * @description One judged thing (`scorer.Entry`): a hit, a miss, a false positive, or `wrong` (saved,
@@ -1446,6 +1621,11 @@ export interface components {
             note?: string | null;
             /** Kind */
             kind: string;
+            /**
+             * Item Ids
+             * @description Decide these open items of the kind, the ones the reviewer saw; else all.
+             */
+            item_ids?: string[] | null;
             /** Institution Type */
             institution_type?: string | null;
         };
@@ -1455,6 +1635,11 @@ export interface components {
             note?: string | null;
             /** Kind */
             kind: string;
+            /**
+             * Item Ids
+             * @description Decide these open items of the kind, the ones the reviewer saw; else all.
+             */
+            item_ids?: string[] | null;
         };
         /** KindDecisionOutput */
         KindDecisionOutput: {
@@ -1469,26 +1654,6 @@ export interface components {
              * @default []
              */
             assignment_ids: string[];
-        };
-        /** KindOutput */
-        KindOutput: {
-            /** Kind */
-            kind: string;
-            /** Rule */
-            rule: string;
-            /** Count */
-            count: number;
-            /** Question */
-            question: {
-                [key: string]: unknown;
-            };
-            /**
-             * Names
-             * @description The first few entities of the kind, to recognise it by.
-             */
-            names: string[];
-            /** Item Ids */
-            item_ids: string[];
         };
         /** MergeInput */
         MergeInput: {
@@ -1635,10 +1800,10 @@ export interface components {
             /** Offset */
             offset: number;
         };
-        /** Page[ReviewItemRow] */
-        Page_ReviewItemRow_: {
+        /** Page[ReviewRow] */
+        Page_ReviewRow_: {
             /** Items */
-            items: components["schemas"]["ReviewItemRow"][];
+            items: components["schemas"]["ReviewRow"][];
             /** Total */
             total: number;
             /** Limit */
@@ -1727,6 +1892,16 @@ export interface components {
             administrative_level: string;
         };
         /**
+         * PlannedOutput
+         * @description Work a decision asks for. `skipped` says why it would not start; null when it would.
+         */
+        PlannedOutput: {
+            type: components["schemas"]["AssignmentType"];
+            subject: components["schemas"]["EntityRefOutput"];
+            /** Skipped */
+            skipped: ("no_run" | "run_stopped" | "out_of_scope" | "already_open") | null;
+        };
+        /**
          * ProcurementHandledBy
          * @description Whether an institution buys on its own account or its parent buys for it.
          * @enum {string}
@@ -1765,6 +1940,15 @@ export interface components {
             after: string;
             /** Page */
             page: number | null;
+        };
+        /**
+         * RelatedOutput
+         * @description An entity the question names, under the fact that names it, such as `duplicate_of`.
+         */
+        RelatedOutput: {
+            /** Fact */
+            fact: string;
+            entity: components["schemas"]["EntitySummaryOutput"];
         };
         /**
          * ReleaseInput
@@ -1811,18 +1995,44 @@ export interface components {
             /** Note */
             note: string | null;
             entity_kind: components["schemas"]["EntityKind"];
-            /** Entity Status */
-            entity_status: string;
             /** Label */
             label: string;
-            /** Names */
-            names: string[];
-            /** Entity */
+            subject: components["schemas"]["EntitySummaryOutput"];
+            /**
+             * Entity
+             * @description The entity's own columns.
+             */
             entity: {
                 [key: string]: unknown;
             };
             /** Evidence */
             evidence: components["schemas"]["EvidenceOutput"][];
+            /**
+             * Related
+             * @description Every entity the question names by id.
+             */
+            related: components["schemas"]["RelatedOutput"][];
+            /**
+             * Raised At
+             * Format: date-time
+             */
+            raised_at: string;
+            raised_by: components["schemas"]["AssignmentRefOutput"] | null;
+            /**
+             * Same Kind Open
+             * @description The other open items that ask the same question.
+             */
+            same_kind_open: number;
+            /**
+             * Started Since
+             * @description The assignments on the entity or its institution made since the decision.
+             */
+            started_since: components["schemas"]["AssignmentRefOutput"][];
+            /**
+             * Next Open Id
+             * @description The open item to look at next: another of the same question first, else the one raised before this, as the queue lists them.
+             */
+            next_open_id: string | null;
         };
         /** ReviewItemOutput */
         ReviewItemOutput: {
@@ -1853,10 +2063,10 @@ export interface components {
             note: string | null;
         };
         /**
-         * ReviewItemRow
-         * @description An item as the queue lists it: with what to recognise its entity by.
+         * ReviewMember
+         * @description An item of a queue row, with what to recognise its entity by.
          */
-        ReviewItemRow: {
+        ReviewMember: {
             /**
              * Id
              * Format: uuid
@@ -1867,24 +2077,71 @@ export interface components {
              * Format: uuid
              */
             entity_id: string;
-            /** Rule */
-            rule: string;
-            /** Question */
-            question: {
-                [key: string]: unknown;
-            };
-            /** Kind */
-            kind: string | null;
-            status: components["schemas"]["ReviewStatus"];
-            /** Raised By Assignment Id */
-            raised_by_assignment_id: string | null;
-            /** Decided At */
-            decided_at: string | null;
-            /** Note */
-            note: string | null;
             entity_kind: components["schemas"]["EntityKind"];
             /** Label */
             label: string;
+            /** Country Code */
+            country_code: string | null;
+            /** Reasons */
+            reasons: string[];
+            /**
+             * Raised At
+             * Format: date-time
+             */
+            raised_at: string;
+            /** Raised By Assignment Id */
+            raised_by_assignment_id: string | null;
+        };
+        /**
+         * ReviewRow
+         * @description A line of the queue: an item on its own, or every item of one `kind` and status, which
+         *     ask the same question and are decided together.
+         */
+        ReviewRow: {
+            /**
+             * Id
+             * Format: uuid
+             * @description The row's first item's id.
+             */
+            id: string;
+            /** Kind */
+            kind: string | null;
+            /** Rule */
+            rule: string;
+            status: components["schemas"]["ReviewStatus"];
+            /**
+             * Question
+             * @description The facts every item has, reasons aside.
+             */
+            question: {
+                [key: string]: unknown;
+            };
+            /**
+             * Count
+             * @description The row's items that match the filters.
+             */
+            count: number;
+            /**
+             * Raised At
+             * Format: date-time
+             * @description When the first item was raised.
+             */
+            raised_at: string;
+            /**
+             * Decided At
+             * @description When the last item was decided.
+             */
+            decided_at: string | null;
+            /**
+             * Members
+             * @description The first items, oldest first.
+             */
+            members: components["schemas"]["ReviewMember"][];
+            /**
+             * Item Ids
+             * @description Every item of the row, to decide them by.
+             */
+            item_ids: string[];
         };
         /**
          * ReviewStatus
@@ -1974,6 +2231,16 @@ export interface components {
          * @enum {string}
          */
         RunMode: "step" | "auto";
+        /** RunRefOutput */
+        RunRefOutput: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
         /**
          * RunStatus
          * @enum {string}
@@ -2022,6 +2289,12 @@ export interface components {
              * Format: uuid
              */
             subject_id: string;
+        };
+        /** StatusChangeOutput */
+        StatusChangeOutput: {
+            entity: components["schemas"]["EntityRefOutput"];
+            before: components["schemas"]["EntityStatus"];
+            after: components["schemas"]["EntityStatus"];
         };
         /**
          * SubjectOutput
@@ -2082,6 +2355,7 @@ export type AliasOutput = components['schemas']['AliasOutput'];
 export type ApproveInput = components['schemas']['ApproveInput'];
 export type AssignmentDetail = components['schemas']['AssignmentDetail'];
 export type AssignmentOutput = components['schemas']['AssignmentOutput'];
+export type AssignmentRefOutput = components['schemas']['AssignmentRefOutput'];
 export type AssignmentResult = components['schemas']['AssignmentResult'];
 export type AssignmentStatus = components['schemas']['AssignmentStatus'];
 export type AssignmentType = components['schemas']['AssignmentType'];
@@ -2090,9 +2364,12 @@ export type CountryOutput = components['schemas']['CountryOutput'];
 export type CountrySettingsInput = components['schemas']['CountrySettingsInput'];
 export type DecisionInput = components['schemas']['DecisionInput'];
 export type DecisionOutput = components['schemas']['DecisionOutput'];
+export type DecisionPreviewOutput = components['schemas']['DecisionPreviewOutput'];
 export type EnteredBy = components['schemas']['EnteredBy'];
 export type EntityKind = components['schemas']['EntityKind'];
+export type EntityRefOutput = components['schemas']['EntityRefOutput'];
 export type EntityStatus = components['schemas']['EntityStatus'];
+export type EntitySummaryOutput = components['schemas']['EntitySummaryOutput'];
 export type EvalEntry = components['schemas']['EvalEntry'];
 export type EvalRunDetail = components['schemas']['EvalRunDetail'];
 export type EvalRunOutput = components['schemas']['EvalRunOutput'];
@@ -2113,7 +2390,6 @@ export type InstitutionTypeInput = components['schemas']['InstitutionTypeInput']
 export type KindApproveInput = components['schemas']['KindApproveInput'];
 export type KindDecisionInput = components['schemas']['KindDecisionInput'];
 export type KindDecisionOutput = components['schemas']['KindDecisionOutput'];
-export type KindOutput = components['schemas']['KindOutput'];
 export type MergeInput = components['schemas']['MergeInput'];
 export type MetricOutput = components['schemas']['MetricOutput'];
 export type NamePatternCheck = components['schemas']['NamePatternCheck'];
@@ -2126,28 +2402,33 @@ export type PageAssignmentOutput = components['schemas']['Page_AssignmentOutput_
 export type PageEvalRunOutput = components['schemas']['Page_EvalRunOutput_'];
 export type PageInstitutionOutput = components['schemas']['Page_InstitutionOutput_'];
 export type PagePlaceOutput = components['schemas']['Page_PlaceOutput_'];
-export type PageReviewItemRow = components['schemas']['Page_ReviewItemRow_'];
+export type PageReviewRow = components['schemas']['Page_ReviewRow_'];
 export type PageRunDetail = components['schemas']['Page_RunDetail_'];
 export type PlaceDetail = components['schemas']['PlaceDetail'];
 export type PlaceOutput = components['schemas']['PlaceOutput'];
 export type PlaceRef = components['schemas']['PlaceRef'];
+export type PlannedOutput = components['schemas']['PlannedOutput'];
 export type ProcurementHandledBy = components['schemas']['ProcurementHandledBy'];
 export type Progress = components['schemas']['Progress'];
 export type QuoteContextOutput = components['schemas']['QuoteContextOutput'];
+export type RelatedOutput = components['schemas']['RelatedOutput'];
 export type ReleaseInput = components['schemas']['ReleaseInput'];
 export type ReviewItemDetail = components['schemas']['ReviewItemDetail'];
 export type ReviewItemOutput = components['schemas']['ReviewItemOutput'];
-export type ReviewItemRow = components['schemas']['ReviewItemRow'];
+export type ReviewMember = components['schemas']['ReviewMember'];
+export type ReviewRow = components['schemas']['ReviewRow'];
 export type ReviewStatus = components['schemas']['ReviewStatus'];
 export type RunDetail = components['schemas']['RunDetail'];
 export type RunFilter = components['schemas']['RunFilter'];
 export type RunInput = components['schemas']['RunInput'];
 export type RunMode = components['schemas']['RunMode'];
+export type RunRefOutput = components['schemas']['RunRefOutput'];
 export type RunStatus = components['schemas']['RunStatus'];
 export type SourceAccess = components['schemas']['SourceAccess'];
 export type SourceOutput = components['schemas']['SourceOutput'];
 export type SourceTypeInput = components['schemas']['SourceTypeInput'];
 export type SpawnOutput = components['schemas']['SpawnOutput'];
+export type StatusChangeOutput = components['schemas']['StatusChangeOutput'];
 export type SubjectOutput = components['schemas']['SubjectOutput'];
 export type TypeSummary = components['schemas']['TypeSummary'];
 export type ValidationError = components['schemas']['ValidationError'];
@@ -2978,8 +3259,14 @@ export interface operations {
         parameters: {
             query?: {
                 status?: components["schemas"]["ReviewStatus"] | null;
-                kind?: string | null;
+                q?: string | null;
                 rule?: string | null;
+                kind?: string | null;
+                entity_kind?: components["schemas"]["EntityKind"] | null;
+                country_code?: string | null;
+                affects?: ("one" | "several") | null;
+                sort?: "count" | "raised_at";
+                order?: "asc" | "desc";
                 limit?: number;
                 offset?: number;
             };
@@ -2998,39 +3285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Page_ReviewItemRow_"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    "review-list_review_kinds": {
-        parameters: {
-            query?: never;
-            header?: {
-                /** @description `main` (the default) or `eval`: which database the request reads. */
-                "x-database"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["KindOutput"][];
+                    "application/json": components["schemas"]["Page_ReviewRow_"];
                 };
             };
             /** @description Validation Error */
@@ -3103,6 +3358,78 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["KindDecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-preview_review_kind_approval": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KindApproveInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionPreviewOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-preview_review_kind_rejection": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KindDecisionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionPreviewOutput"];
                 };
             };
             /** @description Validation Error */
@@ -3251,6 +3578,120 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecisionOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-preview_review_item_approval": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApproveInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionPreviewOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-preview_review_item_rejection": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionPreviewOutput"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "review-preview_review_item_merge": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                review_item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionPreviewOutput"];
                 };
             };
             /** @description Validation Error */

@@ -1,16 +1,23 @@
 "use client";
 
-import type { ReviewItemRow } from "@public-atlas/api-client";
+import type { EntityKind, ReviewRow } from "@public-atlas/api-client";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { SearchIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
 import { DataTable } from "@/components/shared/data-table";
 import { TableToolbar } from "@/components/shared/table-toolbar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { browserApi } from "@/lib/api/client";
 import {
+  entityKindLabels,
+  entityKinds,
   reviewRuleLabels,
   reviewRules,
   reviewStatusLabels,
@@ -20,46 +27,121 @@ import {
 import { cn } from "@/lib/utils";
 
 import type { useReviewActions } from "../hooks/use-review-actions";
+import { isGroup, questionText } from "../question";
 import { reviewListQuery } from "../queries";
-import { parseReviewSearch, reviewFilters, type ReviewSearch } from "../schemas";
+import {
+  parseReviewSearch,
+  reviewFilters,
+  type ReviewAffects,
+  type ReviewSearch,
+} from "../schemas";
 import { reviewColumns } from "./review-columns";
+import { ReviewMembers } from "./review-members";
 
 const REFRESH_MS = 15_000;
+const SEARCH_DEBOUNCE_MS = 250;
 
+/**
+ * The queue as one table. An item is a row of its own, except the items that
+ * ask the same question: they share a row, set apart and counted in
+ * "Affects", which expands to them and approves or rejects them all at once.
+ */
 export function ReviewTable({
   initialFilters,
+  countries,
   timeZone,
   actions,
 }: {
   initialFilters: ReviewSearch;
+  /** The countries to filter by; the filter shows when there is more than one. */
+  countries: { code: string; name: string }[];
   timeZone: string;
   actions: ReturnType<typeof useReviewActions>;
 }) {
+  const [input, setInput] = useState(initialFilters.q ?? "");
+  const q = useDebouncedValue(input.trim(), SEARCH_DEBOUNCE_MS);
   const [status, setStatus] = useState<ReviewSearch["status"]>(initialFilters.status ?? "open");
   const [rule, setRule] = useState<ReviewRule | "">(initialFilters.rule ?? "");
+  // Set by a link from an item's page; cleared, not chosen, here.
+  const [kind, setKind] = useState(initialFilters.kind ?? "");
+  const [entityKind, setEntityKind] = useState<EntityKind | "">(initialFilters.entity_kind ?? "");
+  const [countryCode, setCountryCode] = useState(initialFilters.country_code ?? "");
+  const [affects, setAffects] = useState<ReviewAffects | "">(initialFilters.affects ?? "");
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
+
+  // What the controls choose; open items are the default and stay out of the URL.
+  const chosen = {
+    q: q || undefined,
+    status: status === "open" ? undefined : status,
+    rule: rule || undefined,
+    kind: kind || undefined,
+    entity_kind: entityKind || undefined,
+    country_code: countryCode || undefined,
+    affects: affects || undefined,
+  };
   const list = useListState({
-    filterKey: `${status}\0${rule}`,
+    filterKey: JSON.stringify(chosen),
     initial: initialFilters,
-    defaultSort: { sort: "created_at", order: "desc" },
+    defaultSort: { sort: "count", order: "desc" },
   });
-  const { deferred, isStale } = useUrlFilters(
-    {
-      status: status === "open" ? undefined : status,
-      rule: rule || undefined,
-      page: list.search.page,
-    },
-    parseReviewSearch,
-  );
-  const { data: items } = useSuspenseQuery({
+  const { deferred, isStale } = useUrlFilters({ ...chosen, ...list.search }, parseReviewSearch);
+  const { data: rows } = useSuspenseQuery({
     ...reviewListQuery(browserApi, reviewFilters(deferred)),
     refetchInterval: REFRESH_MS,
   });
 
+  const filtered = Object.values(chosen).some((value) => value !== undefined);
+  const clear = () => {
+    setInput("");
+    setStatus("open");
+    setRule("");
+    setKind("");
+    setEntityKind("");
+    setCountryCode("");
+    setAffects("");
+  };
+  const toggle = (id: string) =>
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+
   return (
     <div className="flex flex-col gap-4">
       <TableToolbar
+        search={
+          <InputGroup>
+            <InputGroupAddon>
+              <SearchIcon />
+            </InputGroupAddon>
+            <InputGroupInput
+              type="search"
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              placeholder="Name, URL or reason"
+              aria-label="Search the queue"
+            />
+          </InputGroup>
+        }
         filters={
           <>
+            {kind && (
+              <Badge variant="info" className="h-8 max-w-full gap-1 pr-1">
+                <span className="truncate">
+                  {(rows.items[0] && questionText(rows.items[0].rule, rows.items[0].question)) ??
+                    "One question"}
+                </span>
+                <Button
+                  size="icon-xs"
+                  variant="ghost"
+                  onClick={() => setKind("")}
+                  aria-label="Show every question"
+                >
+                  <XIcon />
+                </Button>
+              </Badge>
+            )}
             <NativeSelect
               value={status}
               onChange={(event) => setStatus(event.target.value as ReviewSearch["status"])}
@@ -75,36 +157,74 @@ export function ReviewTable({
             <NativeSelect
               value={rule}
               onChange={(event) => setRule(event.target.value as ReviewRule | "")}
-              aria-label="Filter by rule"
+              aria-label="Filter by reason"
             >
-              <NativeSelectOption value="">Any rule</NativeSelectOption>
+              <NativeSelectOption value="">Any reason</NativeSelectOption>
               {reviewRules.map((value) => (
                 <NativeSelectOption key={value} value={value}>
                   {reviewRuleLabels[value]}
                 </NativeSelectOption>
               ))}
             </NativeSelect>
+            <NativeSelect
+              value={entityKind}
+              onChange={(event) => setEntityKind(event.target.value as EntityKind | "")}
+              aria-label="Filter by entity"
+            >
+              <NativeSelectOption value="">Any entity</NativeSelectOption>
+              {entityKinds.map((value) => (
+                <NativeSelectOption key={value} value={value}>
+                  {entityKindLabels[value]}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            {countries.length > 1 && (
+              <NativeSelect
+                value={countryCode}
+                onChange={(event) => setCountryCode(event.target.value)}
+                aria-label="Filter by country"
+              >
+                <NativeSelectOption value="">Any country</NativeSelectOption>
+                {countries.map((country) => (
+                  <NativeSelectOption key={country.code} value={country.code}>
+                    {country.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            )}
+            <NativeSelect
+              value={affects}
+              onChange={(event) => setAffects(event.target.value as ReviewAffects | "")}
+              aria-label="Filter by how many entities a row affects"
+            >
+              <NativeSelectOption value="">Any size</NativeSelectOption>
+              <NativeSelectOption value="several">Affects several</NativeSelectOption>
+              <NativeSelectOption value="one">Affects one</NativeSelectOption>
+            </NativeSelect>
           </>
         }
-        count={`${items.total} ${items.total === 1 ? "item" : "items"}`}
-        onClear={
-          status !== "open" || rule
-            ? () => {
-                setStatus("open");
-                setRule("");
-              }
-            : undefined
-        }
+        count={`${rows.total} ${rows.total === 1 ? "row" : "rows"}`}
+        onClear={filtered ? clear : undefined}
       />
-      <DataTable<ReviewItemRow>
-        columns={reviewColumns({ timeZone, actions })}
-        data={items.items}
-        total={items.total}
+      <DataTable<ReviewRow>
+        columns={reviewColumns({ timeZone, actions, expanded, onToggle: toggle })}
+        data={rows.items}
+        total={rows.total}
         page={list.page}
         onPageChange={list.setPage}
-        emptyMessage={
-          status === "open" && !rule ? "The queue is empty." : "No items match these filters."
+        sorting={list.sorting}
+        onSortingChange={list.setSorting}
+        rowClassName={(row) =>
+          isGroup(row)
+            ? "bg-primary/[0.03] [&>td:first-child]:shadow-[inset_2px_0_0_var(--color-primary)]"
+            : undefined
         }
+        renderSubRow={(row) =>
+          isGroup(row) && expanded.has(row.id) ? (
+            <ReviewMembers row={row} timeZone={timeZone} actions={actions} />
+          ) : null
+        }
+        emptyMessage={filtered ? "Nothing matches these filters." : "The queue is empty."}
         className={cn(isStale && "opacity-60 transition-opacity")}
       />
     </div>

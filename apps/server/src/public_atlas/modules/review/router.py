@@ -10,21 +10,29 @@ from fastapi import APIRouter, Query
 from public_atlas.dependencies import ObjectStoreDep, ResourcesDep, SessionDep, SettingsDep
 from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.assignments.service import Spawn
-from public_atlas.modules.review import service
+from public_atlas.modules.graph.models import EntityKind
+from public_atlas.modules.graph.schemas import SortOrder
+from public_atlas.modules.review import preview, reading, service
 from public_atlas.modules.review.models import ReviewStatus
 from public_atlas.modules.review.schemas import (
+    Affects,
     ApproveInput,
+    AssignmentRefOutput,
     DecisionInput,
     DecisionOutput,
+    DecisionPreviewOutput,
+    EntitySummaryOutput,
     EvidenceOutput,
     KindApproveInput,
     KindDecisionInput,
     KindDecisionOutput,
-    KindOutput,
     MergeInput,
+    RelatedOutput,
     ReviewItemDetail,
     ReviewItemOutput,
-    ReviewItemRow,
+    ReviewMember,
+    ReviewRow,
+    RowSort,
     SpawnOutput,
 )
 from public_atlas.shared.pagination import Page
@@ -84,61 +92,83 @@ async def _kind_decision(
     )
 
 
+def _row(row: service.Row) -> ReviewRow:
+    first = row.members[0].item
+    return ReviewRow(
+        id=first.id,
+        kind=row.kind,
+        rule=row.rule,
+        status=row.status,
+        question=row.question,
+        count=row.count,
+        raised_at=service.raised_at(first.id),
+        decided_at=row.decided_at,
+        members=[
+            ReviewMember(
+                id=member.item.id,
+                entity_id=member.item.entity_id,
+                entity_kind=member.entity_kind,
+                label=member.label,
+                country_code=member.country_code,
+                reasons=[str(reason) for reason in member.item.question.get("reasons", [])],
+                raised_at=service.raised_at(member.item.id),
+                raised_by_assignment_id=member.item.raised_by_assignment_id,
+            )
+            for member in row.members
+        ],
+        item_ids=row.item_ids,
+    )
+
+
 @router.get("")
 async def list_review_items(  # noqa: PLR0913, PLR0917 - one argument per filter
     session: SessionDep,
-    status: Annotated[ReviewStatus | None, Query()] = ReviewStatus.OPEN,
-    kind: Annotated[str | None, Query(max_length=300)] = None,
+    status: Annotated[ReviewStatus | None, Query()] = None,
+    q: Annotated[str | None, Query(max_length=200)] = None,
     rule: Annotated[str | None, Query(max_length=100)] = None,
-    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    kind: Annotated[str | None, Query(max_length=200)] = None,
+    entity_kind: Annotated[EntityKind | None, Query()] = None,
+    country_code: Annotated[str | None, Query(pattern=r"^[A-Z]{2}$")] = None,
+    affects: Annotated[Affects | None, Query()] = None,
+    sort: RowSort = "count",
+    order: SortOrder = "desc",
+    limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> Page[ReviewItemRow]:
-    """A page of items, open ones by default, oldest first, each with its entity's name."""
-    items, total = await service.list_items(
-        session, status=status, kind=kind, rule=rule, limit=limit, offset=offset
+) -> Page[ReviewRow]:
+    """A page of the queue, any status unless one is asked for. The items of one kind and
+    status are one row, decided together; every other item is a row of its own. `q` matches the
+    entity's name or URL, or the question's text; `kind` keeps one shared question. A row counts
+    the items the filters admit."""
+    filters = service.RowFilters(
+        status=status,
+        q=q,
+        rule=rule,
+        kind=kind,
+        entity_kind=entity_kind,
+        country_code=country_code,
+        affects=affects,
     )
-    labels = await service.labels_of(session, items)
-    kinds = {item.id: await service.entity_kind_of(session, item) for item in items}
-    return Page(
-        items=[
-            ReviewItemRow(
-                **ReviewItemOutput.model_validate(item).model_dump(),
-                entity_kind=kinds[item.id],
-                label=labels[item.id],
-            )
-            for item in items
-        ],
-        total=total,
-        limit=limit,
-        offset=offset,
+    rows, total = await service.list_rows(
+        session, filters, sort=sort, order=order, limit=limit, offset=offset
     )
+    return Page(items=[_row(row) for row in rows], total=total, limit=limit, offset=offset)
 
 
 # Declared before `/{review_item_id}`, or "kinds" would be read as an id.
-@router.get("/kinds")
-async def list_review_kinds(session: SessionDep) -> list[KindOutput]:
-    """The open items grouped by the question they share; one call on a kind decides them all."""
-    return [
-        KindOutput(
-            kind=kind.kind,
-            rule=kind.rule,
-            count=kind.count,
-            question=kind.question,
-            names=kind.names,
-            item_ids=kind.item_ids,
-        )
-        for kind in await service.open_kinds(session)
-    ]
-
-
 @router.post("/kinds/approve")
 async def approve_review_kind(
     body: KindApproveInput, session: SessionDep, resources: ResourcesDep
 ) -> KindDecisionOutput:
-    """Approve every open item of the kind. A `new_type` kind gives its bodies the type named,
-    by default the suggested type as a type name; the type must exist."""
+    """Approve every open item of the kind, or the `item_ids` among them. A `new_type` kind
+    gives its bodies the type named, by default the suggested type as a type name; the type must
+    exist."""
     decision = await service.decide_kind(
-        session, body.kind, approved=True, note=body.note, institution_type=body.institution_type
+        session,
+        body.kind,
+        approved=True,
+        note=body.note,
+        institution_type=body.institution_type,
+        item_ids=body.item_ids,
     )
     return await _kind_decision(session, resources, decision)
 
@@ -147,29 +177,83 @@ async def approve_review_kind(
 async def reject_review_kind(
     body: KindDecisionInput, session: SessionDep, resources: ResourcesDep
 ) -> KindDecisionOutput:
-    """Reject every open item of the kind."""
-    decision = await service.decide_kind(session, body.kind, approved=False, note=body.note)
+    """Reject every open item of the kind, or the `item_ids` among them."""
+    decision = await service.decide_kind(
+        session, body.kind, approved=False, note=body.note, item_ids=body.item_ids
+    )
     return await _kind_decision(session, resources, decision)
+
+
+@router.post("/kinds/approve/preview")
+async def preview_review_kind_approval(
+    body: KindApproveInput, session: SessionDep
+) -> DecisionPreviewOutput:
+    """What approving the kind would do, without doing it."""
+    return _preview(
+        await preview.preview(
+            session,
+            lambda: service.decide_kind(
+                session,
+                body.kind,
+                approved=True,
+                note=body.note,
+                institution_type=body.institution_type,
+                item_ids=body.item_ids,
+            ),
+        )
+    )
+
+
+@router.post("/kinds/reject/preview")
+async def preview_review_kind_rejection(
+    body: KindDecisionInput, session: SessionDep
+) -> DecisionPreviewOutput:
+    """What rejecting the kind would do, without doing it."""
+    return _preview(
+        await preview.preview(
+            session,
+            lambda: service.decide_kind(
+                session, body.kind, approved=False, note=body.note, item_ids=body.item_ids
+            ),
+        )
+    )
 
 
 @router.get("/{review_item_id}")
 async def read_review_item(
     review_item_id: uuid.UUID, session: SessionDep, store: ObjectStoreDep, settings: SettingsDep
 ) -> ReviewItemDetail:
-    """The item with its entity, the entity's names and status, and every quote for it with a
-    link to the stored copy it was found on."""
+    """The item with a summary of its entity and of each entity its question names, every
+    quote for the entity with a link to the stored copy it was found on, the assignment that
+    raised it, how many other open items ask the same question, what was started since the
+    decision, and the next open item."""
     item = await service.get_item(session, review_item_id)
-    detail = await service.read_item(session, store, item, url_ttl=settings.storage_url_ttl)
+    detail = await reading.read_item(session, store, item, url_ttl=settings.storage_url_ttl)
     return ReviewItemDetail(
         **ReviewItemOutput.model_validate(item).model_dump(),
-        entity_kind=detail.entity_kind,
-        entity_status=detail.entity_status,
-        label=detail.label,
-        names=detail.names,
+        entity_kind=detail.subject.entity_kind,
+        label=detail.subject.label,
+        subject=EntitySummaryOutput.model_validate(detail.subject, from_attributes=True),
         entity=detail.entity,
         evidence=[
             EvidenceOutput.model_validate(row, from_attributes=True) for row in detail.evidence
         ],
+        related=[
+            RelatedOutput.model_validate(related, from_attributes=True)
+            for related in detail.related
+        ],
+        raised_at=detail.raised_at,
+        raised_by=(
+            AssignmentRefOutput.model_validate(detail.raised_by, from_attributes=True)
+            if detail.raised_by
+            else None
+        ),
+        same_kind_open=detail.same_kind_open,
+        started_since=[
+            AssignmentRefOutput.model_validate(row, from_attributes=True)
+            for row in detail.started_since
+        ],
+        next_open_id=detail.next_open_id,
     )
 
 
@@ -203,3 +287,49 @@ async def merge_review_item(
     item = await service.get_item(session, review_item_id)
     decision = await service.merge(session, item, into_id=body.into_id, note=body.note)
     return await _decision(session, resources, decision)
+
+
+def _preview(found: preview.Preview) -> DecisionPreviewOutput:
+    return DecisionPreviewOutput.model_validate(found, from_attributes=True)
+
+
+@router.post("/{review_item_id}/approve/preview")
+async def preview_review_item_approval(
+    review_item_id: uuid.UUID, body: ApproveInput, session: SessionDep
+) -> DecisionPreviewOutput:
+    """What approving the item would do: the statuses it would change and the work it would
+    start, from the approval itself, rolled back. Refused as the approval would be."""
+    item = await service.get_item(session, review_item_id)
+    return _preview(
+        await preview.preview(
+            session,
+            lambda: service.approve(
+                session, item, note=body.note, institution_type=body.institution_type
+            ),
+        )
+    )
+
+
+@router.post("/{review_item_id}/reject/preview")
+async def preview_review_item_rejection(
+    review_item_id: uuid.UUID, body: DecisionInput, session: SessionDep
+) -> DecisionPreviewOutput:
+    """What rejecting the item would do, without doing it."""
+    item = await service.get_item(session, review_item_id)
+    return _preview(
+        await preview.preview(session, lambda: service.reject(session, item, note=body.note))
+    )
+
+
+@router.post("/{review_item_id}/merge/preview")
+async def preview_review_item_merge(
+    review_item_id: uuid.UUID, body: MergeInput, session: SessionDep
+) -> DecisionPreviewOutput:
+    """What merging the item's entity into `into_id` would do, without doing it."""
+    item = await service.get_item(session, review_item_id)
+    return _preview(
+        await preview.preview(
+            session,
+            lambda: service.merge(session, item, into_id=body.into_id, note=body.note),
+        )
+    )

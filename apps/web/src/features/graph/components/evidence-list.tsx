@@ -24,8 +24,11 @@ import { evidenceContextQuery } from "../queries";
 export function EvidenceList({
   evidence,
   labels = {},
+  mark,
 }: {
   evidence: EvidenceOutput[];
+  /** A badge for the quotes to set apart, such as those the item under review was raised on. */
+  mark?: (item: EvidenceOutput) => ReactNode;
   /** What each `entity_id` is, for lists that mix an institution with its homepages and sources. */
   labels?: Record<string, ReactNode>;
 }) {
@@ -38,6 +41,7 @@ export function EvidenceList({
         <li key={item.id} className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <Badge variant="outline">{humanize(item.kind)}</Badge>
+            {mark?.(item)}
             {labels[item.entity_id] && (
               <span className="text-foreground">{labels[item.entity_id]}</span>
             )}

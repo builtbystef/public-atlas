@@ -1,8 +1,9 @@
 """The review queue (spec section 6.5): raising a question about one entity, and the decisions
 a reviewer makes. Raising an item sets the entity to `needs_review`; approving, rejecting and
 merging run the same `status_changes` functions the rules run, so nothing bypasses them. Items
-that ask one shared question carry a `kind` and are decided together; the type questions among
-them settle themselves when the country tables come to answer them.
+that ask one shared question carry a `kind`: the queue lists them as one row and they are decided
+together; the type questions among them settle themselves when the country tables come to answer
+them.
 
 The question is a JSON document the reviewer sees: `reasons`, one per time the rule fired, and
 the facts the rule wants decided (`institution_type` and `level`, `suggested_type`, the
@@ -13,19 +14,17 @@ import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from datetime import timedelta
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, FromClause, Select, Text, Uuid, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.db.base import utcnow
-from public_atlas.integrations.storage import ObjectStore
 from public_atlas.modules.assignments.service import Spawn
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.models import InstitutionType
-from public_atlas.modules.evidence import service as evidence
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
@@ -39,26 +38,26 @@ from public_atlas.modules.graph.models import (
     Source,
     Webpage,
 )
+from public_atlas.modules.graph.schemas import SortOrder
 from public_atlas.modules.review.models import ReviewItem, ReviewStatus
+from public_atlas.modules.review.schemas import Affects, RowSort
 from public_atlas.shared.exceptions import ConflictError, NotFoundError, UnprocessableError
 
 __all__ = [
     "Decision",
-    "ItemDetail",
-    "Kind",
     "KindDecision",
+    "Member",
+    "Row",
+    "RowFilters",
     "Rule",
     "approve",
     "country_of",
     "decide_kind",
-    "entity_kind_of",
     "kind_of",
-    "labels_of",
-    "list_items",
+    "list_rows",
     "merge",
-    "open_kinds",
     "raise_review",
-    "read_item",
+    "raised_at",
     "reject",
     "settle_type_items",
     "type_slug",
@@ -92,8 +91,8 @@ class Rule(StrEnum):
     AGENT = "agent"
 
 
-# Names a kind's summary shows, enough to recognise it by.
-SAMPLE_NAMES = 5
+# The items a row carries, enough to recognise it by; it counts every one.
+MEMBERS_SHOWN = 50
 MAX_TYPE_NAME = 64
 _NOT_A_WORD = re.compile(r"[^a-z0-9]+")
 
@@ -174,38 +173,225 @@ async def _entity(session: AsyncSession, entity_id: uuid.UUID) -> Entity:
 # --- Reading ---
 
 
-async def list_items(  # noqa: PLR0913
+@dataclass(frozen=True, slots=True)
+class RowFilters:
+    """What the queue narrows by, item by item; a row keeps the items that match. `q` matches
+    the entity's name or URL, or the question's text, case-folded, anywhere in it. `kind` keeps
+    the items of one shared question. `affects` keeps the rows of one item or of several."""
+
+    status: ReviewStatus | None = ReviewStatus.OPEN
+    q: str | None = None
+    rule: str | None = None
+    kind: str | None = None
+    entity_kind: EntityKind | None = None
+    country_code: str | None = None
+    affects: Affects | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Member:
+    """An item of a row, with what to recognise its entity by."""
+
+    item: ReviewItem
+    entity_kind: EntityKind
+    label: str
+    country_code: str | None
+
+
+@dataclass(slots=True)
+class Row:
+    """A line of the queue: an item on its own, or every item of one kind and status, which
+    are decided together."""
+
+    kind: str | None
+    rule: str
+    status: ReviewStatus
+    # The first few items, oldest first, to recognise the row by.
+    members: list[Member]
+    # Every item of the row.
+    item_ids: list[uuid.UUID]
+    # The facts every item of the row has, reasons aside.
+    question: dict[str, Any]
+    decided_at: datetime | None
+
+    @property
+    def count(self) -> int:
+        return len(self.item_ids)
+
+
+def raised_at(item_id: uuid.UUID) -> datetime:
+    """When the item was raised: its id is a UUIDv7, which starts with the time it was made."""
+    return datetime.fromtimestamp(item_id.time / 1000, UTC)
+
+
+# One row per kind, and each item without one a row of its own.
+_row_key = func.coalesce(ReviewItem.kind, cast(ReviewItem.id, Text))
+
+
+@dataclass(frozen=True, slots=True)
+class _Facts:
+    """The item's entity as SQL: its kind, `graph.label_of`, and `country_of`."""
+
+    joined: FromClause
+    entity_kind: ColumnElement[EntityKind]
+    label: ColumnElement[str]
+    country_code: ColumnElement[str | None]
+
+
+def _facts() -> _Facts:
+    entity = Entity.__table__
+    place = Place.__table__.alias("place")
+    institution = Institution.__table__.alias("institution")
+    domain = Domain.__table__.alias("domain")
+    homepage = Homepage.__table__.alias("homepage")
+    source = Source.__table__.alias("source")
+    homepage_page = Webpage.__table__.alias("homepage_page")
+    source_page = Webpage.__table__.alias("source_page")
+    # The homepage claim a domain's question names.
+    claim = Homepage.__table__.alias("claim")
+    owner = Institution.__table__.alias("owner")
+    owner_place = Place.__table__.alias("owner_place")
+    owner_id = func.coalesce(
+        institution.c.id,
+        homepage.c.institution_id,
+        source.c.institution_id,
+        claim.c.institution_id,
+    )
+    joined = (
+        ReviewItem.__table__.join(entity, entity.c.id == ReviewItem.entity_id)
+        .outerjoin(place, place.c.id == ReviewItem.entity_id)
+        .outerjoin(institution, institution.c.id == ReviewItem.entity_id)
+        .outerjoin(domain, domain.c.id == ReviewItem.entity_id)
+        .outerjoin(homepage, homepage.c.id == ReviewItem.entity_id)
+        .outerjoin(source, source.c.id == ReviewItem.entity_id)
+        .outerjoin(homepage_page, homepage_page.c.id == homepage.c.webpage_id)
+        .outerjoin(source_page, source_page.c.id == source.c.webpage_id)
+        .outerjoin(
+            claim,
+            domain.c.id.is_not(None)
+            & (claim.c.id == cast(ReviewItem.question["homepage_id"].astext, Uuid)),
+        )
+        .outerjoin(owner, owner.c.id == owner_id)
+        .outerjoin(owner_place, owner_place.c.id == owner.c.place_id)
+    )
+    return _Facts(
+        joined=joined,
+        entity_kind=entity.c.kind,
+        label=func.coalesce(
+            place.c.name,
+            institution.c.name,
+            domain.c.name,
+            homepage_page.c.url,
+            source.c.source_type + " " + source_page.c.url,
+        ),
+        country_code=func.coalesce(place.c.country_code, owner_place.c.country_code),
+    )
+
+
+def _matching[T: tuple[Any, ...]](
+    query: Select[T], facts: _Facts, filters: RowFilters
+) -> Select[T]:
+    query = query.select_from(facts.joined)
+    if filters.status is not None:
+        query = query.where(ReviewItem.status == filters.status)
+    if filters.q:
+        pattern = f"%{' '.join(filters.q.split())}%"
+        query = query.where(
+            facts.label.ilike(pattern) | cast(ReviewItem.question, Text).ilike(pattern)
+        )
+    if filters.rule is not None:
+        query = query.where(ReviewItem.rule == filters.rule)
+    if filters.kind is not None:
+        query = query.where(ReviewItem.kind == filters.kind)
+    if filters.entity_kind is not None:
+        query = query.where(facts.entity_kind == filters.entity_kind)
+    if filters.country_code is not None:
+        query = query.where(facts.country_code == filters.country_code)
+    return query
+
+
+def _shared(questions: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    """The facts every question has with the same value, reasons aside."""
+    first, *others = questions
+    return {
+        key: value
+        for key, value in first.items()
+        if key != "reasons" and all(other.get(key) == value for other in others)
+    }
+
+
+async def list_rows(  # noqa: PLR0913
     session: AsyncSession,
+    filters: RowFilters,
     *,
-    status: ReviewStatus | None = ReviewStatus.OPEN,
-    kind: str | None = None,
-    rule: str | None = None,
-    limit: int = 100,
+    sort: RowSort = "count",
+    order: SortOrder = "desc",
+    limit: int = 50,
     offset: int = 0,
-) -> tuple[list[ReviewItem], int]:
-    """A page of items, oldest first, and how many match."""
-    query = select(ReviewItem)
-    if status is not None:
-        query = query.where(ReviewItem.status == status)
-    if kind is not None:
-        query = query.where(ReviewItem.kind == kind)
-    if rule is not None:
-        query = query.where(ReviewItem.rule == rule)
-    rows = await session.scalars(query.order_by(ReviewItem.id).limit(limit).offset(offset))
-    total = await session.scalar(select(func.count()).select_from(query.subquery()))
-    return list(rows), int(total or 0)
+) -> tuple[list[Row], int]:
+    """A page of the queue and how many rows match. The items of one kind and status are one
+    row; the rest are a row each. A row counts the items that match, so a filter narrows a kind
+    to the items it admits. Rows of equal sort value come newest first."""
+    facts = _facts()
+    matching = _matching(
+        select(ReviewItem.id, _row_key.label("key"), ReviewItem.rule, ReviewItem.status),
+        facts,
+        filters,
+    ).subquery("matching")
+    count = func.count().label("count")
+    # PostgreSQL has no `min` of a uuid; the text of a UUIDv7 sorts as its time does.
+    first = func.min(cast(matching.c.id, Text)).label("first")
+    grouping = (matching.c.key, matching.c.rule, matching.c.status)
+    groups = select(*grouping, count, first).group_by(*grouping)
+    match filters.affects:
+        case "one":
+            groups = groups.having(func.count() == 1)
+        case "several":
+            groups = groups.having(func.count() > 1)
+        case None:
+            pass
+    total = await session.scalar(select(func.count()).select_from(groups.subquery()))
+    by = {"count": count, "raised_at": first}[sort]
+    page = (
+        await session.execute(
+            groups.order_by(by.desc() if order == "desc" else by.asc(), first.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+    ).all()
+    if not page:
+        return [], int(total or 0)
 
-
-async def entity_kind_of(session: AsyncSession, item: ReviewItem) -> EntityKind:
-    return (await _entity(session, item.entity_id)).kind
-
-
-async def labels_of(session: AsyncSession, items: Sequence[ReviewItem]) -> dict[uuid.UUID, str]:
-    """What to recognise each item's entity by, by item id."""
-    found: dict[uuid.UUID, str] = {}
-    for item in items:
-        found[item.id] = await graph.label_of(session, await _entity(session, item.entity_id))
-    return found
+    found = await session.execute(
+        _matching(
+            select(ReviewItem, facts.entity_kind, facts.label, facts.country_code, _row_key).where(
+                _row_key.in_({row.key for row in page})
+            ),
+            facts,
+            filters,
+        ).order_by(ReviewItem.id)
+    )
+    members: dict[tuple[str, str, ReviewStatus], list[Member]] = {}
+    for item, entity_kind, label, country_code, key in found:
+        members.setdefault((key, item.rule, item.status), []).append(
+            Member(item=item, entity_kind=entity_kind, label=label, country_code=country_code)
+        )
+    rows = []
+    for row in page:
+        items = members[row.key, row.rule, row.status]
+        decided = [member.item.decided_at for member in items if member.item.decided_at]
+        rows.append(
+            Row(
+                kind=items[0].item.kind,
+                rule=row.rule,
+                status=row.status,
+                members=items[:MEMBERS_SHOWN],
+                item_ids=[member.item.id for member in items],
+                question=_shared([member.item.question for member in items]),
+                decided_at=max(decided, default=None),
+            )
+        )
+    return rows, int(total or 0)
 
 
 async def get_item(session: AsyncSession, item_id: uuid.UUID) -> ReviewItem:
@@ -213,51 +399,6 @@ async def get_item(session: AsyncSession, item_id: uuid.UUID) -> ReviewItem:
     if item is None:
         raise NotFoundError("no such review item")
     return item
-
-
-@dataclass(frozen=True, slots=True)
-class ItemDetail:
-    item: ReviewItem
-    entity_kind: EntityKind
-    entity_status: str
-    label: str
-    names: list[str]
-    # The entity's own columns, as the reviewer sees them.
-    entity: dict[str, Any]
-    evidence: list[evidence.EvidenceDetail]
-
-
-async def read_item(
-    session: AsyncSession, store: ObjectStore, item: ReviewItem, *, url_ttl: timedelta
-) -> ItemDetail:
-    """The item with its entity and every quote for it, each linked to the stored page."""
-    entity = await _entity(session, item.entity_id)
-    details = await evidence.evidence_details(session, store, [entity.id], url_ttl=url_ttl)
-    names = (
-        [alias.text for alias in await graph.names_of(session, entity)]
-        if isinstance(entity, Place | Institution)
-        else []
-    )
-    return ItemDetail(
-        item=item,
-        entity_kind=entity.kind,
-        entity_status=entity.status.value,
-        label=await graph.label_of(session, entity),
-        names=names,
-        entity=await _columns(session, entity),
-        evidence=details,
-    )
-
-
-async def _columns(session: AsyncSession, entity: Entity) -> dict[str, Any]:
-    found: dict[str, Any] = {}
-    for table in type(entity).__table__.columns, Entity.__table__.columns:
-        for column in table:
-            value = getattr(entity, column.key, None)
-            found[column.key] = str(value) if isinstance(value, uuid.UUID) else value
-    if isinstance(entity, Homepage | Source):
-        found["url"] = (await session.get_one(Webpage, entity.webpage_id)).url
-    return found
 
 
 async def country_of(session: AsyncSession, item: ReviewItem) -> str | None:
@@ -414,71 +555,33 @@ async def merge(
 
 
 @dataclass(slots=True)
-class Kind:
-    """The open items of one kind, as the queue lists them."""
-
-    kind: str
-    rule: str
-    count: int
-    # The facts the items share, reasons aside.
-    question: dict[str, Any]
-    # The first few entities, to recognise the kind by.
-    names: list[str]
-    item_ids: list[uuid.UUID]
-
-
-@dataclass(slots=True)
 class KindDecision:
     kind: str
     items: list[ReviewItem]
     spawn: list[Spawn] = field(default_factory=list)
 
 
-async def open_kinds(session: AsyncSession) -> list[Kind]:
-    """Every kind with open items, the largest first."""
-    rows = await session.scalars(
-        select(ReviewItem)
-        .where(ReviewItem.status == ReviewStatus.OPEN, ReviewItem.kind.is_not(None))
-        .order_by(ReviewItem.kind, ReviewItem.id)
-    )
-    kinds: dict[str, Kind] = {}
-    for item in rows:
-        assert item.kind is not None  # noqa: S101 - filtered by the query
-        kind = kinds.get(item.kind)
-        if kind is None:
-            kind = kinds[item.kind] = Kind(
-                kind=item.kind,
-                rule=item.rule,
-                count=0,
-                question={k: v for k, v in item.question.items() if k != "reasons"},
-                names=[],
-                item_ids=[],
-            )
-        kind.count += 1
-        kind.item_ids.append(item.id)
-        if len(kind.names) < SAMPLE_NAMES:
-            entity = await _entity(session, item.entity_id)
-            kind.names.append(await graph.label_of(session, entity))
-    return sorted(kinds.values(), key=lambda kind: (-kind.count, kind.kind))
-
-
-async def decide_kind(
+async def decide_kind(  # noqa: PLR0913
     session: AsyncSession,
     kind: str,
     *,
     approved: bool,
     note: str | None = None,
     institution_type: str | None = None,
+    item_ids: Sequence[uuid.UUID] | None = None,
 ) -> KindDecision:
-    """Every open item of `kind` as one decision. Approving a `new_type` kind gives the bodies
-    `institution_type`, by default the suggested type as a type name, which must exist."""
-    items = list(
-        await session.scalars(
-            select(ReviewItem)
-            .where(ReviewItem.kind == kind, ReviewItem.status == ReviewStatus.OPEN)
-            .order_by(ReviewItem.id)
-        )
+    """Every open item of `kind` as one decision, or with `item_ids` those items, each of which
+    must be an open item of the kind: the reviewer decides what the queue showed them. Approving
+    a `new_type` kind gives the bodies `institution_type`, by default the suggested type as a
+    type name, which must exist."""
+    query = select(ReviewItem).where(
+        ReviewItem.kind == kind, ReviewItem.status == ReviewStatus.OPEN
     )
+    if item_ids is not None:
+        query = query.where(ReviewItem.id.in_(item_ids))
+    items = list(await session.scalars(query.order_by(ReviewItem.id)))
+    if item_ids is not None and len(items) != len(set(item_ids)):
+        raise ConflictError("some of the items are decided already or ask another question")
     if not items:
         raise NotFoundError(f"no open review items of kind {kind!r}")
     rule = items[0].rule

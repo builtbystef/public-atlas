@@ -4,8 +4,9 @@ import { Suspense } from "react";
 
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { ReviewQueue } from "@/features/review/components/review-queue";
-import { reviewKindsQuery, reviewListQuery } from "@/features/review/queries";
+import { reviewListQuery } from "@/features/review/queries";
 import { parseReviewSearch, reviewFilters } from "@/features/review/schemas";
+import { unwrap } from "@/lib/api/errors";
 import { getApi } from "@/lib/api/server";
 import { toSearchString, type SearchParams } from "@/lib/lists";
 import { getQueryClient } from "@/lib/query-client";
@@ -25,13 +26,18 @@ async function ReviewContent({ searchParams }: { searchParams: Promise<SearchPar
   const filters = parseReviewSearch(await searchParams);
   const [api, timeZone] = await Promise.all([getApi(), getTimeZone()]);
   const queryClient = getQueryClient();
-  await Promise.all([
-    queryClient.prefetchQuery(reviewKindsQuery(api)),
+  const [countries] = await Promise.all([
+    api.GET("/countries").then(unwrap),
     queryClient.prefetchQuery(reviewListQuery(api, reviewFilters(filters))),
   ]);
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ReviewQueue key={toSearchString(filters)} initialFilters={filters} timeZone={timeZone} />
+      <ReviewQueue
+        key={toSearchString(filters)}
+        initialFilters={filters}
+        countries={countries.map((c) => ({ code: c.country_code, name: c.name }))}
+        timeZone={timeZone}
+      />
     </HydrationBoundary>
   );
 }

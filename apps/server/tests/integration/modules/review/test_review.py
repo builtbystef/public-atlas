@@ -3,10 +3,12 @@ decision runs the status change the rules run and says what to spawn; kinds are 
 together; and an edit of the country tables settles the type questions it answers."""
 
 import uuid
+from functools import partial
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 
+from public_atlas.modules.assignments.models import AssignmentType
 from public_atlas.modules.evidence import service as evidence
 from public_atlas.modules.evidence.models import EvidenceKind
 from public_atlas.modules.graph import service as graph
@@ -98,12 +100,21 @@ def test_approving_a_domain_trusts_it_and_verifies_the_homepage_in_question(
             return item, towns, librarys, domain
 
     item, towns, librarys, domain = db.run(make)
-    listed = client.get("/review-items").json()
+    listed = client.get("/review-items", params={"status": "open"}).json()
     assert [row["id"] for row in listed["items"]] == [str(item.id)]
-    assert (listed["items"][0]["label"], listed["items"][0]["entity_kind"]) == (
+    [member] = listed["items"][0]["members"]
+    # A domain's country is that of the institution whose claim the question names.
+    assert (member["label"], member["entity_kind"], member["country_code"]) == (
         "oakville.example",
         "domain",
+        "CA",
     )
+    # Its page names the claim and the institution the claim is for.
+    page = client.get(f"/review-items/{item.id}").json()
+    assert page["subject"]["owner"]["label"] == "Town of Oakville"
+    assert [(r["fact"], r["entity"]["url"]) for r in page["related"]] == [
+        ("homepage_id", "https://www.oakville.example/")
+    ]
     assert client.get("/review-items", params={"status": "approved"}).json()["items"] == []
 
     approved = client.post(f"/review-items/{item.id}/approve", json={"note": "it is the town"})
@@ -132,6 +143,85 @@ def test_approving_a_domain_trusts_it_and_verifies_the_homepage_in_question(
     assert (towns.status, town.homepage_id) == (EntityStatus.VERIFIED, towns.id)
     # The library's claim is another question; its own assignment finds the domain trusted.
     assert librarys.status is EntityStatus.CANDIDATE
+
+
+def test_a_preview_says_what_a_decision_would_do_and_keeps_none_of_it(
+    client: TestClient, db: Database, world: World, build: type[Build]
+):
+    async def make() -> tuple[ReviewItem, ReviewItem, Homepage]:
+        async with db.session() as session:
+            town = await session.get_one(Institution, world.town.id)
+            towns = await build.claim(session, town, "https://www.oakville.example/")
+            domain = await graph.domain_of_host(session, "www.oakville.example")
+            assert domain is not None
+            item = await review.raise_review(
+                session,
+                domain,
+                rule=review.Rule.DOMAIN_CHECKS,
+                reason="no trusted page links to it",
+                question={"homepage_id": str(towns.id)},
+            )
+            # Work already open is left out of what the approval would start.
+            await build.open_assignment(
+                session, world.run, AssignmentType.FIND_INSTITUTIONS, world.oakville.id
+            )
+            library = await build.candidate_institution(session, world.oakville, "Oak Library")
+            other = await review.raise_review(
+                session, library, rule=review.Rule.AGENT, reason="a branch?"
+            )
+            await session.commit()
+            return item, other, towns
+
+    item, other, towns = db.run(make)
+    preview = client.post(f"/review-items/{item.id}/approve/preview", json={})
+    assert preview.status_code == 200, preview.text
+    body = preview.json()
+    assert [(c["entity"]["label"], c["before"], c["after"]) for c in body["changes"]] == [
+        ("oakville.example", "needs_review", "verified"),
+        ("https://www.oakville.example/", "candidate", "verified"),
+    ]
+    assert [(s["type"], s["subject"]["label"], s["skipped"]) for s in body["spawn"]] == [
+        ("find_sources", "Town of Oakville", None),
+        ("find_institutions", "Oakville", "already_open"),
+    ]
+    assert body["run"]["id"] == str(world.run.id)
+    rejecting = client.post(f"/review-items/{other.id}/reject/preview", json={}).json()
+    assert [(c["entity"]["label"], c["after"]) for c in rejecting["changes"]] == [
+        ("Oak Library", "rejected")
+    ]
+    assert rejecting["spawn"] == []
+    merging = client.post(
+        f"/review-items/{other.id}/merge/preview", json={"into_id": str(world.town.id)}
+    ).json()
+    assert [c["entity"]["label"] for c in merging["changes"]] == ["Oak Library"]
+    # A preview is refused as the decision would be.
+    typed = client.post(
+        f"/review-items/{other.id}/approve/preview", json={"institution_type": "no_such_type"}
+    )
+    assert typed.status_code == 422
+
+    async def statuses() -> tuple[str, str, str]:
+        async with db.session() as session:
+            return (
+                (await session.get_one(ReviewItem, item.id)).status.value,
+                (await session.get_one(Homepage, towns.id)).status.value,
+                (await session.get_one(ReviewItem, other.id)).status.value,
+            )
+
+    # Nothing was kept, and the decision does what its preview said.
+    assert db.run(statuses) == ("open", "candidate", "open")
+    approved = client.post(f"/review-items/{item.id}/approve", json={})
+    assert approved.status_code == 200, approved.text
+    assert [s["type"] for s in approved.json()["spawn"]] == ["find_sources", "find_institutions"]
+    assert client.post(f"/review-items/{item.id}/approve/preview", json={}).status_code == 409
+
+
+def _kind_preview(client: TestClient, kind: str) -> dict[str, list[str]]:
+    body = client.post("/review-items/kinds/approve/preview", json={"kind": kind}).json()
+    return {
+        "changes": [c["entity"]["label"] for c in body["changes"]],
+        "spawn": [s["type"] for s in body["spawn"]],
+    }
 
 
 def test_rejecting_a_domain_sends_the_claimant_looking_again(
@@ -275,9 +365,81 @@ def test_merging_through_the_api_closes_the_item_and_remembers_where_the_entity_
     assert client.get("/review-items").json()["items"][0]["id"] == str(domain_item.id)
 
 
-def test_a_kind_is_decided_once_for_every_item_of_it(
+def test_an_item_page_sets_the_entity_beside_the_ones_its_question_names(
     client: TestClient, db: Database, world: World, build: type[Build]
 ):
+    async def make() -> tuple[ReviewItem, ReviewItem, ReviewItem, uuid.UUID, uuid.UUID]:
+        async with db.session() as session:
+            first, second = [
+                await review.raise_review(
+                    session,
+                    await build.candidate_institution(session, world.elm, name),
+                    rule=review.Rule.TYPE_LEVEL,
+                    reason="a library under a region",
+                    question={"institution_type": "library", "level": "region"},
+                )
+                for name in ("Elm Public Library", "Elm Library Board")
+            ]
+            kept = await build.candidate_institution(
+                session, world.oakville, "Oakville Public Library"
+            )
+            await status_changes.verify_institution(session, kept, entered_by=AGENT)
+            duplicate = await build.candidate_institution(
+                session, world.oakville, "Oakville Library"
+            )
+            raiser = await build.open_assignment(
+                session, world.run, AssignmentType.FIND_INSTITUTIONS, world.oakville.id
+            )
+            item = await review.raise_review(
+                session,
+                duplicate,
+                rule=review.Rule.DUPLICATE,
+                reason="possible duplicate",
+                question={"duplicate_of": [str(kept.id), "not an id"]},
+                assignment_id=raiser.id,
+            )
+            await session.commit()
+            return first, second, item, kept.id, raiser.id
+
+    first, second, item, kept_id, raiser_id = db.run(make)
+    page = client.get(f"/review-items/{item.id}")
+    assert page.status_code == 200, page.text
+    body = page.json()
+    subject = body["subject"]
+    assert (subject["label"], subject["names"], subject["country_code"]) == (
+        "Oakville Library",
+        ["Oakville Library"],
+        "CA",
+    )
+    assert (subject["place"]["label"], subject["institution_type"]) == ("Oakville", "library")
+    [related] = body["related"]
+    assert (related["fact"], related["entity"]["id"], related["entity"]["status"]) == (
+        "duplicate_of",
+        str(kept_id),
+        "verified",
+    )
+    assert body["raised_by"]["id"] == str(raiser_id)
+    assert body["raised_by"]["subject"]["label"] == "Oakville"
+    # The queue lists newest first, so the next is the one raised before.
+    assert (body["same_kind_open"], body["next_open_id"]) == (0, str(second.id))
+    assert body["started_since"] == []
+    # An item of a kind goes on to another of its kind.
+    of_kind = client.get(f"/review-items/{second.id}").json()
+    assert (of_kind["same_kind_open"], of_kind["next_open_id"]) == (1, str(first.id))
+    assert len(_queue(client, kind="type_level:library@region")[0][2]) == 2
+
+    approved = client.post(f"/review-items/{item.id}/approve", json={})
+    assert approved.status_code == 200, approved.text
+    decided = client.get(f"/review-items/{item.id}").json()
+    assert [(a["type"], a["subject"]["label"]) for a in decided["started_since"]] == [
+        ("find_homepage", "Oakville Library")
+    ]
+
+
+def _raise_kinds(db: Database, world: World, build: type[Build]) -> dict[str, uuid.UUID]:
+    """Two libraries under regions, two bodies of a suggested type and one of another; the
+    bodies by name."""
+
     async def make() -> dict[str, uuid.UUID]:
         bodies: dict[str, uuid.UUID] = {}
         async with db.session() as session:
@@ -320,10 +482,28 @@ def test_a_kind_is_decided_once_for_every_item_of_it(
             await session.commit()
         return bodies
 
-    bodies = db.run(make)
-    kinds = client.get("/review-items/kinds")
-    assert kinds.status_code == 200, kinds.text
-    assert [(k["kind"], k["count"], k["names"], k["question"]) for k in kinds.json()] == [
+    return db.run(make)
+
+
+def _queue(
+    client: TestClient, **params: str
+) -> list[tuple[str | None, int, list[str], dict[str, str]]]:
+    listed = client.get("/review-items", params={"status": "open", **params})
+    assert listed.status_code == 200, listed.text
+    return [
+        (row["kind"], row["count"], [m["label"] for m in row["members"]], row["question"])
+        for row in listed.json()["items"]
+    ]
+
+
+def test_the_queue_lists_the_items_of_a_kind_as_one_row(
+    client: TestClient, db: Database, world: World, build: type[Build]
+):
+    _raise_kinds(db, world, build)
+    queue = partial(_queue, client)
+
+    # One row per kind, the largest first and the newest of equal size first.
+    assert queue() == [
         (
             "new_type:housing_corporation",
             2,
@@ -343,7 +523,52 @@ def test_a_kind_is_decided_once_for_every_item_of_it(
             {"suggested_type": "port authority", "level": "region"},
         ),
     ]
+    # A filter narrows a kind to the items it admits.
+    assert queue(q="elm") == [
+        (
+            "new_type:housing_corporation",
+            1,
+            ["Elm Housing Corporation"],
+            {"suggested_type": "Housing Corporation", "level": "region"},
+        ),
+        (
+            "type_level:library@region",
+            1,
+            ["Elm Public Library"],
+            {"institution_type": "library", "level": "region"},
+        ),
+    ]
+    assert [row[0] for row in queue(q="port AUTHORITY")] == ["new_type:port_authority"]
+    assert [row[0] for row in queue(affects="one")] == ["new_type:port_authority"]
+    assert len(queue(affects="several")) == 2
+    assert [row[0] for row in queue(rule="new_type", sort="raised_at", order="asc")] == [
+        "new_type:housing_corporation",
+        "new_type:port_authority",
+    ]
+    assert len(queue(country_code="CA", entity_kind="institution")) == 3
+    assert queue(country_code="US") == queue(entity_kind="domain") == []
 
+    # A reviewer decides the items the queue showed them, and only open items of the kind.
+    [elm_housing] = client.get(
+        "/review-items", params={"q": "Elm Housing", "status": "open"}
+    ).json()["items"]
+    mismatched = client.post(
+        "/review-items/kinds/reject",
+        json={"kind": "type_level:library@region", "item_ids": elm_housing["item_ids"]},
+    )
+    assert mismatched.status_code == 409
+
+
+def test_a_kind_is_decided_once_for_every_item_of_it(
+    client: TestClient, db: Database, world: World, build: type[Build]
+):
+    bodies = _raise_kinds(db, world, build)
+    queue = partial(_queue, client)
+
+    assert _kind_preview(client, "type_level:library@region") == {
+        "changes": ["Elm Public Library", "There Public Library"],
+        "spawn": ["find_homepage", "find_homepage"],
+    }
     libraries = client.post(
         "/review-items/kinds/approve",
         json={"kind": "type_level:library@region", "note": "a county library"},
@@ -381,7 +606,14 @@ def test_a_kind_is_decided_once_for_every_item_of_it(
     assert ports.json()["review_items"][0]["status"] == "rejected"
     gone = client.post("/review-items/kinds/reject", json={"kind": "new_type:port_authority"})
     assert gone.status_code == 404
-    assert client.get("/review-items/kinds").json() == []
+    assert queue() == []
+    # Decided, the items of a kind are still one row.
+    approved = client.get("/review-items", params={"status": "approved"}).json()
+    assert [(row["kind"], row["count"]) for row in approved["items"]] == [
+        ("new_type:housing_corporation", 2),
+        ("type_level:library@region", 2),
+    ]
+    assert approved["items"][0]["decided_at"] is not None
 
     async def check() -> dict[str, tuple[str, EntityStatus]]:
         async with db.session() as session:
@@ -522,9 +754,10 @@ def test_reading_an_item_shows_the_entity_and_its_quotes_with_links_to_the_store
     assert detail.status_code == 200, detail.text
     body = detail.json()
     assert body["entity_kind"] == "institution"
-    assert body["entity_status"] == "needs_review"
+    assert body["subject"]["status"] == "needs_review"
     assert body["label"] == "Oakville Library"
-    assert body["names"] == ["Oakville Library", "OPL"]
+    assert body["subject"]["names"] == ["Oakville Library", "OPL"]
+    assert body["subject"]["evidence_count"] == 1
     assert body["entity"]["institution_type"] == "library"
     assert body["entity"]["place_id"] == str(world.oakville.id)
     assert body["question"] == {"reasons": ["a branch or a body?"]}

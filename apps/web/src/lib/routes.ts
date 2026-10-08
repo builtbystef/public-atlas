@@ -19,6 +19,8 @@ export const paths = {
   places: "/places",
   place: (id: string) => `/places/${id}` as const,
   review: "/review",
+  /** The queue with a query string of filters, as `toSearchString` builds one. */
+  reviewWhere: (search: string) => `/review?${search}` as const,
   reviewItem: (id: string) => `/review/${id}` as const,
   countries: "/countries",
   /** A country's naming rules; its other tables are pages beside them. */

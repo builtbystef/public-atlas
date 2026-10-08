@@ -93,6 +93,14 @@ export const entityStatusLabels: Record<EntityStatus, string> = {
   needs_review: "Needs review",
 };
 
+export const entityKinds = [
+  "institution",
+  "place",
+  "homepage",
+  "source",
+  "domain",
+] as const satisfies readonly EntityKind[];
+
 export const entityKindLabels: Record<EntityKind, string> = {
   place: "Place",
   institution: "Institution",

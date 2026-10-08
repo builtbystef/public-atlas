@@ -352,7 +352,8 @@ at an unexpected level, a name misses its type's pattern, or an assignment
 ends with gaps. Raising an item sets the entity to `needs_review`. A reviewer
 approves, rejects or merges. Approval runs the same function the rules run,
 so nothing bypasses it. Items that ask one shared question ("may a library
-sit under a region") carry a `kind` and are decided together.
+sit under a region") carry a `kind`: the queue lists them as one row and they
+are decided together.
 
 ### 6.6 One door per state change
 
@@ -541,7 +542,7 @@ order:
 1. **Runs**: list and detail. Start a run with a filter and a mode, pause, stop, release held assignments, see progress and cost.
 2. **Assignments**: list with filters, detail with the events in order (prompt, the model's words, tool calls and results), the videos when recorded, findings, spend and result.
 3. **Institutions**: a table with search, filters by place, level, type and status; and a detail page with aliases, type, parent, homepage, sources by type, and every evidence quote linked to its snapshot.
-4. **Review queue**: open items with reason, snapshot and highlighted quote; approve, reject, merge; items grouped by kind with one decision for the group.
+4. **Review queue**: one table, searchable and filtered by status, reason, entity, country and size; an item is a row of its own, and the items of one kind share a row that expands to them and takes one decision for all; each item opens as its question in a sentence, its entity set beside the entities the question names (a duplicate beside its matches, each with a merge into it), why it was raised, its history from the raising assignment to the work started since the decision, and its evidence with snapshot and highlighted quote; approve, reject, merge, then on to the next open item.
 5. **Countries**: country settings, administrative levels with their expected types, institution types, source types, and each country's use of a type with its expected sources, editable with validation.
 6. **Evals**: runs over time with their scores and cost.
 

@@ -9,7 +9,10 @@ in motion land together or not at all.
 """
 
 import logging
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
+from contextlib import contextmanager
+from contextvars import ContextVar
+from dataclasses import dataclass
 
 from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -38,7 +41,9 @@ from public_atlas.modules.graph.models import (
 from public_atlas.shared.exceptions import ConflictError, UnprocessableError
 
 __all__ = [
+    "StatusChange",
     "merge_entities",
+    "previewing",
     "reject_domain",
     "reject_homepage",
     "reject_institution",
@@ -61,12 +66,41 @@ INSTITUTION_REJECTED = "the institution was rejected"
 MERGED = "the institution was merged into another"
 
 
+@dataclass(frozen=True, slots=True)
+class StatusChange:
+    entity: Entity
+    before: EntityStatus
+    after: EntityStatus
+
+
+# The changes of a decision being previewed; None when the changes are real.
+_previewed: ContextVar[list[StatusChange] | None] = ContextVar("previewed", default=None)
+
+
+@contextmanager
+def previewing() -> Iterator[list[StatusChange]]:
+    """Collect the status changes made inside, in order, for a preview of a decision the caller
+    rolls back. They are not logged, since they do not happen."""
+    changes: list[StatusChange] = []
+    token = _previewed.set(changes)
+    try:
+        yield changes
+    finally:
+        _previewed.reset(token)
+
+
 def _set_status(entity: Entity, status: EntityStatus, entered_by: EnteredBy) -> bool:
     """The one assignment to an entity's status. Whether it changed; a repeat is no change, so
     a decision made twice sets nothing in motion twice."""
     if entity.status is status:
         return False
-    logger.info("%s %s: %s -> %s by %s", entity.kind, entity.id, entity.status, status, entered_by)
+    previewed = _previewed.get()
+    if previewed is None:
+        logger.info(
+            "%s %s: %s -> %s by %s", entity.kind, entity.id, entity.status, status, entered_by
+        )
+    else:
+        previewed.append(StatusChange(entity, entity.status, status))
     entity.status = status
     entity.entered_by = entered_by
     return True

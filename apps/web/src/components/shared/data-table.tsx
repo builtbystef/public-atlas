@@ -12,7 +12,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { ArrowDownIcon, ArrowUpIcon, ArrowUpDownIcon } from "lucide-react";
-import { createContext, useContext, useRef, type ReactNode } from "react";
+import { createContext, Fragment, useContext, useRef, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,10 @@ interface DataTableProps<TData extends { id: string }> {
   onSortingChange?: (sorting: SortingState) => void;
   emptyMessage?: ReactNode;
   className?: string;
+  /** Classes for a row, to set some rows apart. */
+  rowClassName?: (row: TData) => string | undefined;
+  /** Shown under a row across every column, such as what an expanded row holds; null for none. */
+  renderSubRow?: (row: TData) => ReactNode;
 }
 
 const NO_SORTING: SortingState = [];
@@ -89,6 +93,8 @@ export function DataTable<TData extends { id: string }>({
   onSortingChange,
   emptyMessage = "Nothing here yet.",
   className,
+  rowClassName,
+  renderSubRow,
 }: DataTableProps<TData>) {
   const root = useRef<HTMLDivElement>(null);
   const pagination = { pageIndex: page - 1, pageSize };
@@ -149,15 +155,27 @@ export function DataTable<TData extends { id: string }>({
                   </TableCell>
                 </TableRow>
               ) : (
-                rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getAllCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        <table.FlexRender cell={cell} />
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
+                rows.map((row) => {
+                  const sub = renderSubRow?.(row.original);
+                  return (
+                    <Fragment key={row.id}>
+                      <TableRow className={rowClassName?.(row.original)}>
+                        {row.getAllCells().map((cell) => (
+                          <TableCell key={cell.id}>
+                            <table.FlexRender cell={cell} />
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                      {sub != null && (
+                        <TableRow className="hover:bg-transparent">
+                          <TableCell colSpan={columns.length} className="p-0 whitespace-normal">
+                            {sub}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </Fragment>
+                  );
+                })
               )}
             </TableBody>
           </Table>

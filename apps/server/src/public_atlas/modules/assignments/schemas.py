@@ -4,7 +4,7 @@ the `runs.filter` column stores it."""
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -17,6 +17,10 @@ from public_atlas.modules.assignments.models import (
     RunStatus,
 )
 from public_atlas.modules.graph.models import EntityKind, EntityStatus
+
+# Why `spawn` would not create an assignment it was asked for: no run would take the work, the
+# run is stopped, its filter leaves the work out, or the subject has that work open already.
+SkipReason = Literal["no_run", "run_stopped", "out_of_scope", "already_open"]
 
 
 class RunFilter(BaseModel):
