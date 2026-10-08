@@ -573,7 +573,9 @@ export interface paths {
         };
         /**
          * List Runs
-         * @description Every run, newest first, each with its progress and cost.
+         * @description Every run in the database, newest first, each with its progress and cost. An eval run's
+         *     row in the main database is only the record its scores hang from, with its assignments in
+         *     the eval database, so the main database lists none.
          */
         get: operations["runs-list_runs"];
         put?: never;

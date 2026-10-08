@@ -387,6 +387,33 @@ def test_the_runs_api_creates_controls_and_reads_runs(
     assert client.get(f"/runs/{uuid.uuid7()}").status_code == 404
 
 
+def test_the_main_database_lists_no_eval_runs(
+    client: TestClient, db: Database, world: World, queue: InlineConnector
+):
+    """An eval run's row in the main database is the record its scores hang from; its
+    assignments are in the eval database, so listed here it would only look empty."""
+    assert queue.resources is not None
+    jobs = queue.resources.jobs
+
+    async def record_an_eval_run() -> None:
+        async with db.session() as session:
+            await service.create_run(
+                session,
+                jobs,
+                name="eval",
+                country_code="CA",
+                mode=RunMode.AUTO,
+                is_eval=True,
+                seed=False,
+            )
+            await session.commit()
+
+    db.run(record_an_eval_run)
+    runs = client.get("/runs").json()
+    assert [row["id"] for row in runs["items"]] == [str(world.run.id)]
+    assert runs["total"] == 1
+
+
 def test_a_reviewers_decision_spawns_into_the_run_it_belongs_to(
     client: TestClient, db: Database, world: World, build: type[Build], queue: InlineConnector
 ):

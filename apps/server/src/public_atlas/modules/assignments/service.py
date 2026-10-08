@@ -243,13 +243,23 @@ async def _due_for_institution(session: AsyncSession, institution: Institution) 
 
 
 async def list_runs(
-    session: AsyncSession, *, limit: int = 100, offset: int = 0
+    session: AsyncSession,
+    *,
+    is_eval: bool | None = None,
+    limit: int = 100,
+    offset: int = 0,
 ) -> tuple[list[Run], int]:
-    """A page of runs, newest first, and how many there are."""
+    """A page of runs, newest first, and how many there are; only eval runs or only the others
+    when `is_eval` says which."""
+    where = [] if is_eval is None else [Run.is_eval.is_(is_eval)]
     rows = await session.scalars(
-        select(Run).order_by(Run.created_at.desc(), Run.id.desc()).limit(limit).offset(offset)
+        select(Run)
+        .where(*where)
+        .order_by(Run.created_at.desc(), Run.id.desc())
+        .limit(limit)
+        .offset(offset)
     )
-    total = await session.scalar(select(func.count()).select_from(Run))
+    total = await session.scalar(select(func.count()).select_from(Run).where(*where))
     return list(rows), int(total or 0)
 
 

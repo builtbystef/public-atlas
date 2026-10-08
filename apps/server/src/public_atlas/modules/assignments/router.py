@@ -8,7 +8,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from public_atlas.dependencies import ObjectStoreDep, ResourcesDep, SessionDep, SettingsDep
+from public_atlas.dependencies import (
+    DatabaseDep,
+    ObjectStoreDep,
+    ResourcesDep,
+    SessionDep,
+    SettingsDep,
+)
 from public_atlas.modules.agent.models import EventKind
 from public_atlas.modules.assignments import service
 from public_atlas.modules.assignments.models import (
@@ -59,11 +65,16 @@ async def _outputs(session: SessionDep, rows: Sequence[Assignment]) -> list[Assi
 @router.get("/runs")
 async def list_runs(
     session: SessionDep,
+    database: DatabaseDep,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[RunDetail]:
-    """Every run, newest first, each with its progress and cost."""
-    runs, total = await service.list_runs(session, limit=limit, offset=offset)
+    """Every run in the database, newest first, each with its progress and cost. An eval run's
+    row in the main database is only the record its scores hang from, with its assignments in
+    the eval database, so the main database lists none."""
+    runs, total = await service.list_runs(
+        session, is_eval=False if database == "main" else None, limit=limit, offset=offset
+    )
     progress = await service.progress_many(session, [run.id for run in runs])
     return Page(
         items=[
