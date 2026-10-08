@@ -142,8 +142,7 @@ export function RunForm({ countries }: { countries: CountrySettingsInput[] }) {
                 <div className="flex flex-col gap-1">
                   <FieldLabel htmlFor={field.name}>Record video</FieldLabel>
                   <FieldDescription>
-                    Keeps a recording of each browser session for a week. Slower, and worth it for a
-                    demo or a run you want to watch.
+                    Keeps a recording of each browser session for a week.
                   </FieldDescription>
                 </div>
               </Field>
