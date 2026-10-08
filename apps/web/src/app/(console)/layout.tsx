@@ -31,9 +31,13 @@ async function Shell({ children }: { children: ReactNode }) {
     <SidebarProvider defaultOpen={sidebarOpen}>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur-sm">
-          <SidebarTrigger className="-ml-1 text-muted-foreground" />
-          <Separator orientation="vertical" className="mr-1 data-[orientation=vertical]:h-4" />
+        <header className="sticky top-0 z-20 flex h-14 shrink-0 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur-sm md:px-6">
+          {/* On a phone the sidebar is a sheet, so it needs a way in from the page. */}
+          <SidebarTrigger className="-ml-1 text-muted-foreground md:hidden" />
+          <Separator
+            orientation="vertical"
+            className="mr-1 data-[orientation=vertical]:h-4 md:hidden"
+          />
           <Suspense>
             <PageTitle />
           </Suspense>
@@ -54,7 +58,9 @@ async function Shell({ children }: { children: ReactNode }) {
 function ShellFallback() {
   return (
     <div className="flex min-h-svh w-full">
-      <div className="hidden w-64 shrink-0 bg-sidebar md:block" />
+      <div className="hidden w-64 shrink-0 bg-sidebar md:block">
+        <div className="h-14 border-b border-sidebar-border" />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col bg-background">
         <div className="h-14 shrink-0 border-b" />
       </div>

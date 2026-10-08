@@ -14,8 +14,8 @@ export default function NotFound() {
       <p className="text-muted-foreground">
         This record does not exist in the database the console is reading.
       </p>
-      <Button variant="outline" nativeButton={false} render={<Link href={paths.home} />}>
-        Back to the overview
+      <Button variant="outline" nativeButton={false} render={<Link href={paths.lists} />}>
+        Back to the saved lists
       </Button>
     </div>
   );

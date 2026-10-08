@@ -66,7 +66,7 @@ export function InstitutionDetail({
             {institution.places.map((place, index) => (
               <span key={place.id}>
                 {index > 0 && " › "}
-                <Link href={paths.institutionsIn(place.id)} className="hover:underline">
+                <Link href={paths.place(place.id)} className="hover:underline">
                   {place.name}
                 </Link>
               </span>
@@ -105,7 +105,7 @@ export function InstitutionDetail({
                   institution.served_places.map((place, index) => (
                     <span key={place.id}>
                       {index > 0 && ", "}
-                      <Link href={paths.institutionsIn(place.id)} className="hover:underline">
+                      <Link href={paths.place(place.id)} className="hover:underline">
                         {place.name}
                       </Link>
                     </span>

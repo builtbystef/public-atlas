@@ -246,7 +246,7 @@ export interface paths {
         /**
          * List Institutions
          * @description A page of institutions. `q` matches a name or an alias; `place_id` admits the place and
-         *     every place under it.
+         *     every place under it; the population bounds are on the institution's own place.
          */
         get: operations["graph-list_institutions"];
         put?: never;
@@ -288,7 +288,8 @@ export interface paths {
         };
         /**
          * List Places
-         * @description A page of places by name; `q` matches a name or an alias.
+         * @description A page of places, by name unless sorted otherwise, each with its newest population
+         *     figure; `q` matches a name or an alias.
          */
         get: operations["graph-list_places"];
         put?: never;
@@ -308,7 +309,7 @@ export interface paths {
         };
         /**
          * Read Place
-         * @description The place with the places above it and its government.
+         * @description The place with its population, the places above it and its government.
          */
         get: operations["graph-read_place"];
         put?: never;
@@ -1232,6 +1233,8 @@ export interface components {
             status: components["schemas"]["EntityStatus"];
             entered_by: components["schemas"]["EnteredBy"];
             place: components["schemas"]["PlaceRef"];
+            /** Place Population */
+            place_population: number | null;
             /** Parent Institution Id */
             parent_institution_id: string | null;
             procurement_handled_by: components["schemas"]["ProcurementHandledBy"];
@@ -1283,6 +1286,8 @@ export interface components {
             status: components["schemas"]["EntityStatus"];
             entered_by: components["schemas"]["EnteredBy"];
             place: components["schemas"]["PlaceRef"];
+            /** Place Population */
+            place_population: number | null;
             /** Parent Institution Id */
             parent_institution_id: string | null;
             procurement_handled_by: components["schemas"]["ProcurementHandledBy"];
@@ -1504,6 +1509,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Population */
+            population: number | null;
             /** Parents */
             parents: components["schemas"]["PlaceRef"][];
             government: components["schemas"]["InstitutionRef"] | null;
@@ -1532,6 +1539,8 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            /** Population */
+            population: number | null;
         };
         /** PlaceRef */
         PlaceRef: {
@@ -2492,7 +2501,9 @@ export interface operations {
                 institution_type?: string | null;
                 status?: components["schemas"]["EntityStatus"] | null;
                 parent_institution_id?: string | null;
-                sort?: "name" | "institution_type" | "status" | "created_at" | "place";
+                min_population?: number | null;
+                max_population?: number | null;
+                sort?: "name" | "institution_type" | "status" | "created_at" | "place" | "population";
                 order?: "asc" | "desc";
                 limit?: number;
                 offset?: number;
@@ -2567,6 +2578,10 @@ export interface operations {
                 country_code?: string | null;
                 administrative_level?: string | null;
                 parent_place_id?: string | null;
+                min_population?: number | null;
+                max_population?: number | null;
+                sort?: "name" | "administrative_level" | "population";
+                order?: "asc" | "desc";
                 limit?: number;
                 offset?: number;
             };

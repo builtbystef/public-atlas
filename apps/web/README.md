@@ -38,7 +38,7 @@ The rewrite is fixed when Next.js builds, so `API_URL` is a build argument of
 ## The two databases
 
 Every page reads either the live graph or the eval harness's database (spec section 10). The
-switch in the sidebar footer sets a `db` cookie; both API clients send it as the API's
+switch on the settings page sets a `db` cookie; both API clients send it as the API's
 `X-Database` header (`lib/api/database.ts`). Switching clears the browser's query cache and
 re-renders every page from the server. The API answers 422 for `eval` when the server has no
 eval database configured.

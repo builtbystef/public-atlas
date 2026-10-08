@@ -1,5 +1,7 @@
 import type { SVGProps } from "react";
 
+import { cn } from "@/lib/utils";
+
 /**
  * The Public Atlas mark, copied from logo.svg at the repository root. It is inline so it
  * needs no request, and it fills with `currentColor` so it takes the text colour around it;
@@ -16,5 +18,22 @@ export function Logo(props: SVGProps<SVGSVGElement>) {
       <path d="M31.5336 419.887C29.1264 421.813 28.8857 423.136 28.8857 434.089V444.68H250.042H471.198V433.427V422.174L469.573 420.489L467.948 418.804H250.403C45.1339 418.804 32.7371 418.864 31.5336 419.887Z" />
       <path d="M18.3545 453.707C5.77714 454.008 4.99482 454.068 3.18946 455.392C0.541607 457.318 0 459.665 0 470.256C0 480.186 0.661964 482.773 3.61071 484.218C4.81428 484.819 48.6844 485 216.402 485C332.607 485 443.215 484.819 462.171 484.579L496.654 484.218L498.218 482.834L499.783 481.51L499.963 470.557C500.084 463.155 499.903 459.003 499.482 457.859C498.278 455.091 496.292 454.189 489.613 453.647C483.053 453.105 40.3196 453.105 18.3545 453.707Z" />
     </svg>
+  );
+}
+
+/**
+ * The mark on a rounded tile, as icon.svg draws it: the sidebar's brand, open
+ * or collapsed. The tile is bronze, the one warm surface on the sidebar's navy.
+ */
+export function LogoTile({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "flex size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-brand text-sidebar-brand-foreground",
+        className,
+      )}
+    >
+      <Logo className="size-[22px]" />
+    </span>
   );
 }

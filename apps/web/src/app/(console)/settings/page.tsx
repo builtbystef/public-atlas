@@ -10,7 +10,7 @@ import { getDatabase } from "@/lib/api/server";
 
 export const metadata: Metadata = { title: "Settings" };
 
-/** The console's own settings, kept in this browser; product data lives under Countries. */
+/** The console's own settings, kept in this browser; product data lives under Country config. */
 export default function SettingsPage() {
   return (
     <>

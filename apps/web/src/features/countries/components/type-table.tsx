@@ -21,7 +21,7 @@ import { humanize } from "@/lib/labels";
 
 import { useCountryMutation } from "../hooks/use-country-mutations";
 import { typeSchema, type TypeFormInput } from "../schemas";
-import { FormDialog } from "./form-dialog";
+import { FormDialog } from "@/components/shared/form-dialog";
 
 interface TypeRow {
   name: string;

@@ -4,9 +4,10 @@ a picker needs. Reads only; the writes are in `service.py` and `status_changes.p
 
 import uuid
 from dataclasses import dataclass
+from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import ColumnElement, Select, exists, func, select
+from sqlalchemy import ColumnElement, ScalarSelect, Select, exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, aliased
 
@@ -19,17 +20,20 @@ from public_atlas.modules.graph.models import (
     Institution,
     InstitutionServedPlace,
     Metric,
+    MetricName,
     Place,
     Source,
     Webpage,
 )
-from public_atlas.modules.graph.schemas import InstitutionSort, SortOrder
+from public_atlas.modules.graph.schemas import InstitutionSort, PlaceSort, SortOrder
 from public_atlas.shared.exceptions import NotFoundError
 
 __all__ = [
     "HomepageRow",
     "InstitutionFilters",
     "InstitutionRow",
+    "PlaceFilters",
+    "PlaceRow",
     "count_institutions",
     "descendant_place_ids",
     "get_place",
@@ -40,6 +44,7 @@ __all__ = [
     "list_places",
     "metrics_of",
     "place_parents",
+    "place_population",
     "served_places_of",
     "source_rows",
     "subject_of",
@@ -49,7 +54,8 @@ __all__ = [
 @dataclass(frozen=True, slots=True)
 class InstitutionFilters:
     """What the table narrows by. `q` matches a name or an alias, case-folded, anywhere in the
-    text. `place_id` admits the place and every place under it."""
+    text. `place_id` admits the place and every place under it. The population bounds are on
+    the institution's own place, inclusive, and leave out a place with no figure."""
 
     q: str | None = None
     country_code: str | None = None
@@ -58,6 +64,8 @@ class InstitutionFilters:
     institution_type: str | None = None
     status: EntityStatus | None = None
     parent_institution_id: uuid.UUID | None = None
+    min_population: int | None = None
+    max_population: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,6 +73,8 @@ class InstitutionRow:
     institution: Institution
     place: Place
     homepage_url: str | None
+    # The newest population figure of its place.
+    place_population: int | None
 
 
 def descendant_place_ids(place_id: uuid.UUID) -> Select[tuple[uuid.UUID]]:
@@ -73,6 +83,34 @@ def descendant_place_ids(place_id: uuid.UUID) -> Select[tuple[uuid.UUID]]:
     child = aliased(Place)
     tree = tree.union_all(select(child.id).where(child.parent_place_id == tree.c.id))
     return select(tree.c.id)
+
+
+def _population(
+    place_id: ColumnElement[uuid.UUID] | InstrumentedAttribute[uuid.UUID] | uuid.UUID,
+) -> ScalarSelect[Decimal]:
+    """The newest population figure of the place, as a correlated subquery; null without one."""
+    return (
+        select(Metric.value)
+        .where(Metric.place_id == place_id, Metric.name == MetricName.POPULATION)
+        .order_by(Metric.year.desc())
+        .limit(1)
+        .scalar_subquery()
+    )
+
+
+def _within(
+    population: ScalarSelect[Decimal], min_population: int | None, max_population: int | None
+) -> list[ColumnElement[bool]]:
+    bounds: list[ColumnElement[bool]] = []
+    if min_population is not None:
+        bounds.append(population >= min_population)
+    if max_population is not None:
+        bounds.append(population <= max_population)
+    return bounds
+
+
+def _whole(value: Decimal | None) -> int | None:
+    return int(value) if value is not None else None
 
 
 # Every entity extends `entities`, so a plain join of two kinds overlaps on it; a flat alias of
@@ -100,7 +138,8 @@ def _institutions_matching(filters: InstitutionFilters) -> Select[tuple[Institut
         query = query.where(Institution.status == filters.status)
     if filters.parent_institution_id is not None:
         query = query.where(Institution.parent_institution_id == filters.parent_institution_id)
-    return query
+    bounds = _within(_population(_place.id), filters.min_population, filters.max_population)
+    return query.where(*bounds) if bounds else query
 
 
 def _ordering(sort: InstitutionSort, order: SortOrder) -> list[ColumnElement[Any]]:
@@ -117,7 +156,19 @@ def _ordering(sort: InstitutionSort, order: SortOrder) -> list[ColumnElement[Any
             columns = [Institution.created_at]
         case "place":
             columns = [func.lower(_place.name), func.lower(Institution.name)]
+        case "population":
+            # A place with no figure comes last either way.
+            figure = _population(_place.id)
+            first = figure.desc() if order == "desc" else figure.asc()
+            rest = _directed([func.lower(Institution.name), Institution.id], order)
+            return [first.nulls_last(), *rest]
     columns.append(Institution.id)
+    return _directed(columns, order)
+
+
+def _directed(
+    columns: list[ColumnElement[Any] | InstrumentedAttribute[Any]], order: SortOrder
+) -> list[ColumnElement[Any]]:
     return [column.desc() if order == "desc" else column.asc() for column in columns]
 
 
@@ -135,14 +186,19 @@ async def list_institutions(  # noqa: PLR0913
         _institutions_matching(filters)
         .outerjoin(_homepage, _homepage.id == Institution.homepage_id)
         .outerjoin(Webpage, Webpage.id == _homepage.webpage_id)
-        .add_columns(Webpage.url)
+        .add_columns(Webpage.url, _population(_place.id))
         .order_by(*_ordering(sort, order))
         .limit(limit)
         .offset(offset)
     )
     return [
-        InstitutionRow(institution=institution, place=place, homepage_url=url)
-        for institution, place, url in rows.tuples()
+        InstitutionRow(
+            institution=institution,
+            place=place,
+            homepage_url=url,
+            place_population=_whole(population),
+        )
+        for institution, place, url, population in rows.tuples()
     ]
 
 
@@ -236,49 +292,83 @@ async def source_rows(session: AsyncSession, institution: Institution) -> list[t
 # --- Places ---
 
 
+@dataclass(frozen=True, slots=True)
+class PlaceFilters:
+    """What a list of places narrows by. `q` matches a name or an alias; `parent_place_id`
+    admits the places directly under it. The population bounds are inclusive and leave out a
+    place with no figure."""
+
+    q: str | None = None
+    country_code: str | None = None
+    administrative_level: str | None = None
+    parent_place_id: uuid.UUID | None = None
+    min_population: int | None = None
+    max_population: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class PlaceRow:
+    place: Place
+    # The newest population figure.
+    population: int | None
+
+
 async def list_places(  # noqa: PLR0913
     session: AsyncSession,
+    filters: PlaceFilters,
     *,
-    q: str | None = None,
-    country_code: str | None = None,
-    administrative_level: str | None = None,
-    parent_place_id: uuid.UUID | None = None,
+    sort: PlaceSort = "name",
+    order: SortOrder = "asc",
     limit: int = 50,
     offset: int = 0,
-) -> tuple[list[Place], int]:
-    """A page of places by name, and how many match. Rejected places are left out."""
-    query = _places_matching(
-        q=q,
-        country_code=country_code,
-        administrative_level=administrative_level,
-        parent_place_id=parent_place_id,
-    )
-    rows = await session.scalars(
-        query.order_by(func.lower(Place.name), Place.id).limit(limit).offset(offset)
+) -> tuple[list[PlaceRow], int]:
+    """A page of places with their population, and how many match. Rejected places are left
+    out."""
+    query = _places_matching(filters)
+    figure = _population(Place.id)
+    rows = await session.execute(
+        query.add_columns(figure)
+        .order_by(*_place_ordering(figure, sort, order))
+        .limit(limit)
+        .offset(offset)
     )
     total = await session.scalar(select(func.count()).select_from(query.subquery()))
-    return list(rows), int(total or 0)
+    places = [
+        PlaceRow(place=place, population=_whole(population)) for place, population in rows.tuples()
+    ]
+    return places, int(total or 0)
 
 
-def _places_matching(
-    *,
-    q: str | None,
-    country_code: str | None,
-    administrative_level: str | None,
-    parent_place_id: uuid.UUID | None,
-) -> Select[tuple[Place]]:
+def _place_ordering(
+    figure: ScalarSelect[Decimal], sort: PlaceSort, order: SortOrder
+) -> list[ColumnElement[Any]]:
+    """The columns a sort reads, with the id last so a page is stable."""
+    name = [func.lower(Place.name), Place.id]
+    match sort:
+        case "name":
+            return _directed(name, order)
+        case "administrative_level":
+            return _directed([Place.administrative_level, *name], order)
+        case "population":
+            # A place with no figure comes last either way.
+            first = figure.desc() if order == "desc" else figure.asc()
+            return [first.nulls_last(), *_directed(name, order)]
+
+
+def _places_matching(filters: PlaceFilters) -> Select[tuple[Place]]:
     query = select(Place).where(Place.status != EntityStatus.REJECTED)
-    if q:
-        pattern = f"%{' '.join(q.split())}%"
+    if filters.q:
+        pattern = f"%{' '.join(filters.q.split())}%"
         named = exists().where(Alias.place_id == Place.id, Alias.text.ilike(pattern))
         query = query.where(Place.name.ilike(pattern) | named)
-    if country_code is not None:
-        query = query.where(Place.country_code == country_code)
-    if administrative_level is not None:
-        query = query.where(Place.administrative_level == administrative_level)
-    if parent_place_id is not None:
-        query = query.where(Place.parent_place_id == parent_place_id)
-    return query
+    if filters.country_code is not None:
+        query = query.where(Place.country_code == filters.country_code)
+    if filters.administrative_level is not None:
+        query = query.where(Place.administrative_level == filters.administrative_level)
+    if filters.parent_place_id is not None:
+        query = query.where(Place.parent_place_id == filters.parent_place_id)
+    bounds = _within(_population(Place.id), filters.min_population, filters.max_population)
+    return query.where(*bounds) if bounds else query
 
 
 async def get_place(session: AsyncSession, place_id: uuid.UUID) -> Place:
@@ -286,6 +376,11 @@ async def get_place(session: AsyncSession, place_id: uuid.UUID) -> Place:
     if place is None:
         raise NotFoundError("no such place")
     return place
+
+
+async def place_population(session: AsyncSession, place_id: uuid.UUID) -> int | None:
+    """The place's newest population figure, if it has one."""
+    return _whole(await session.scalar(select(_population(place_id))))
 
 
 async def place_parents(session: AsyncSession, place: Place) -> list[Place]:

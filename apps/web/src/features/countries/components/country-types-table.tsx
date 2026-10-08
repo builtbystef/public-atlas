@@ -28,7 +28,7 @@ import { humanize } from "@/lib/labels";
 import { useCountryMutation } from "../hooks/use-country-mutations";
 import { deleteCountryInstitutionType, putCountryInstitutionType } from "../mutations";
 import { countryTypeSchema, type CountryTypeFormInput } from "../schemas";
-import { FormDialog } from "./form-dialog";
+import { FormDialog } from "@/components/shared/form-dialog";
 
 /**
  * The country's use of each institution type: the sources find_sources

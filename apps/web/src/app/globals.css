@@ -9,7 +9,8 @@
  * with it (an ochre for what waits on someone, a plum for what was merged or
  * is an eval), and the semantic colours are kept in the same low-chroma
  * register so a status reads as part of the scheme rather than as a traffic
- * light. The sidebar is the saturated surface; the main area stays neutral.
+ * light. The sidebar is the dark surface, a muted navy marked in bronze (the
+ * logo, the current page); the main area stays neutral.
  */
 @theme inline {
   --font-heading: var(--font-sans);
@@ -22,6 +23,9 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-warning: var(--sidebar-warning);
+  --color-sidebar-brand: var(--sidebar-brand);
+  --color-sidebar-brand-foreground: var(--sidebar-brand-foreground);
   --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -104,16 +108,20 @@
   --chart-4: var(--plum);
   --chart-5: var(--destructive);
 
-  /* The sidebar: the one saturated surface. */
-  --sidebar: oklch(0.255 0.045 242);
+  /* The sidebar: the one dark surface, its navy muted so the bronze sits well on it. */
+  --sidebar: oklch(0.24 0.025 248);
   --sidebar-foreground: oklch(0.9 0.012 240);
   --sidebar-muted: oklch(0.68 0.03 240);
-  --sidebar-primary: oklch(0.74 0.1 222);
+  --sidebar-warning: oklch(0.8 0.13 74);
+  --sidebar-primary: oklch(0.74 0.07 65);
   --sidebar-primary-foreground: oklch(0.17 0.035 242);
   --sidebar-accent: oklch(1 0 0 / 10%);
   --sidebar-accent-foreground: oklch(0.985 0.002 240);
   --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.74 0.1 222);
+  --sidebar-ring: oklch(0.74 0.07 65);
+  /* The logo's tile: bronze under a white mark; the current page is marked in a lighter bronze. */
+  --sidebar-brand: oklch(0.5 0.06 65);
+  --sidebar-brand-foreground: oklch(1 0 0);
 }
 
 .dark {
@@ -152,15 +160,16 @@
   --chart-4: var(--plum);
   --chart-5: var(--destructive);
 
-  --sidebar: oklch(0.12 0.022 250);
+  --sidebar: oklch(0.12 0.015 250);
   --sidebar-foreground: oklch(0.86 0.012 240);
   --sidebar-muted: oklch(0.6 0.025 242);
-  --sidebar-primary: oklch(0.74 0.1 222);
+  --sidebar-warning: oklch(0.78 0.12 74);
+  --sidebar-primary: oklch(0.74 0.07 65);
   --sidebar-primary-foreground: oklch(0.17 0.035 242);
   --sidebar-accent: oklch(1 0 0 / 8%);
   --sidebar-accent-foreground: oklch(0.985 0.002 240);
   --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.74 0.1 222);
+  --sidebar-ring: oklch(0.74 0.07 65);
 }
 
 @layer base {

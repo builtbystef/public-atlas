@@ -10,6 +10,8 @@ import { formatDateTime } from "@/lib/formatting/dates";
 import { enteredByLabels, humanize } from "@/lib/labels";
 import { paths } from "@/lib/routes";
 
+import { Population } from "./population";
+
 const column = createDataTableColumnHelper<InstitutionOutput>();
 
 export function institutionColumns({ timeZone }: { timeZone: string }) {
@@ -40,7 +42,7 @@ export function institutionColumns({ timeZone }: { timeZone: string }) {
       header: ({ column }) => <SortableHeader column={column}>Place</SortableHeader>,
       cell: ({ row }) => (
         <span className="flex flex-col">
-          <Link href={paths.institutionsIn(row.original.place.id)} className="hover:underline">
+          <Link href={paths.place(row.original.place.id)} className="hover:underline">
             {row.original.place.name}
           </Link>
           <span className="text-xs text-muted-foreground">
@@ -48,6 +50,11 @@ export function institutionColumns({ timeZone }: { timeZone: string }) {
           </span>
         </span>
       ),
+    }),
+    column.accessor("place_population", {
+      id: "population",
+      header: ({ column }) => <SortableHeader column={column}>Population</SortableHeader>,
+      cell: ({ row }) => <Population value={row.original.place_population} />,
     }),
     column.accessor("status", {
       header: ({ column }) => <SortableHeader column={column}>Status</SortableHeader>,

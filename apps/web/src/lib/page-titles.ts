@@ -15,11 +15,13 @@ export interface Crumb {
  * record title after it.
  */
 const sections: Record<string, { label: string; href: ListPath; record: string }> = {
+  lists: { label: "Saved lists", href: paths.lists, record: "Saved list" },
   runs: { label: "Runs", href: paths.runs, record: "Run" },
   assignments: { label: "Assignments", href: paths.assignments, record: "Assignment" },
   institutions: { label: "Institutions", href: paths.institutions, record: "Institution" },
+  places: { label: "Places", href: paths.places, record: "Place" },
   review: { label: "Review queue", href: paths.review, record: "Review item" },
-  countries: { label: "Countries", href: paths.countries, record: "Country" },
+  countries: { label: "Country config", href: paths.countries, record: "Country" },
   evals: { label: "Evals", href: paths.evals, record: "Eval run" },
   settings: { label: "Settings", href: paths.settings, record: "Settings" },
 };
@@ -27,7 +29,7 @@ const sections: Record<string, { label: string; href: ListPath; record: string }
 /** The breadcrumb the shell header shows for a pathname; null outside the console's pages. */
 export function crumbsFor(pathname: string): Crumb[] | null {
   const [section, id] = pathname.split("/").filter(Boolean);
-  if (section === undefined) return [{ label: "Overview" }];
+  if (section === undefined) return null;
   const known = sections[section];
   if (!known) return null;
   if (!id) return [{ label: known.label }];

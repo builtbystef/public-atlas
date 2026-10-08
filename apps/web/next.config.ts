@@ -16,6 +16,8 @@ const nextConfig: NextConfig = {
   // The sidebar's Settings link sits bottom-left; keep the dev badge off it.
   devIndicators: { position: "bottom-right" },
   typedRoutes: true,
+  // The saved lists are the front page.
+  redirects: async () => [{ source: "/", destination: "/lists", permanent: false }],
   reactCompiler: true,
   // The browser reaches the API through this same-origin path, so it needs neither the API's
   // address nor a CORS setup. The API's routes have no trailing slash (a rewrite would drop

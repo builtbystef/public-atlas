@@ -16,13 +16,13 @@ import { getApi } from "@/lib/api/server";
 import { getQueryClient } from "@/lib/query-client";
 import { paths } from "@/lib/routes";
 
-export const metadata: Metadata = { title: "Countries" };
+export const metadata: Metadata = { title: "Country config" };
 
-export default function CountriesPage() {
+export default function CountryConfigPage() {
   return (
     <>
       <PageHeader
-        title="Countries"
+        title="Country config"
         description="The tables the agent's rules are built from. Product data lives here, not in settings."
       />
       <div className="flex flex-col gap-8">

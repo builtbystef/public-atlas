@@ -25,6 +25,7 @@ from public_atlas.modules.graph.schemas import (
     PlaceDetail,
     PlaceOutput,
     PlaceRef,
+    PlaceSort,
     SortOrder,
     SourceOutput,
 )
@@ -47,6 +48,21 @@ def _institution_ref(institution: Institution) -> InstitutionRef:
     )
 
 
+def _place_output(place: Place, population: int | None) -> PlaceOutput:
+    return PlaceOutput(
+        id=place.id,
+        name=place.name,
+        country_code=place.country_code,
+        administrative_level=place.administrative_level,
+        parent_place_id=place.parent_place_id,
+        government_institution_id=place.government_institution_id,
+        status=place.status,
+        entered_by=place.entered_by,
+        created_at=place.created_at,
+        population=population,
+    )
+
+
 def _output(row: service.InstitutionRow) -> InstitutionOutput:
     institution = row.institution
     return InstitutionOutput(
@@ -57,6 +73,7 @@ def _output(row: service.InstitutionRow) -> InstitutionOutput:
         status=institution.status,
         entered_by=institution.entered_by,
         place=_place_ref(row.place),
+        place_population=row.place_population,
         parent_institution_id=institution.parent_institution_id,
         procurement_handled_by=institution.procurement_handled_by,
         homepage_id=institution.homepage_id,
@@ -75,13 +92,15 @@ async def list_institutions(  # noqa: PLR0913, PLR0917 - one argument per filter
     institution_type: Annotated[str | None, Query(max_length=64)] = None,
     status: Annotated[EntityStatus | None, Query()] = None,
     parent_institution_id: Annotated[uuid.UUID | None, Query()] = None,
+    min_population: Annotated[int | None, Query(ge=0)] = None,
+    max_population: Annotated[int | None, Query(ge=0)] = None,
     sort: InstitutionSort = "name",
     order: SortOrder = "asc",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[InstitutionOutput]:
     """A page of institutions. `q` matches a name or an alias; `place_id` admits the place and
-    every place under it."""
+    every place under it; the population bounds are on the institution's own place."""
     filters = service.InstitutionFilters(
         q=q,
         country_code=country_code,
@@ -90,6 +109,8 @@ async def list_institutions(  # noqa: PLR0913, PLR0917 - one argument per filter
         institution_type=institution_type,
         status=status,
         parent_institution_id=parent_institution_id,
+        min_population=min_population,
+        max_population=max_population,
     )
     rows = await service.list_institutions(
         session, filters, sort=sort, order=order, limit=limit, offset=offset
@@ -126,6 +147,7 @@ async def read_institution(
             institution=institution,
             place=place,
             homepage_url=verified.url if verified is not None else None,
+            place_population=await service.place_population(session, place.id),
         )
     )
     quoted = [institution.id, *(row.homepage.id for row in homepages), *(s.id for s, _ in sources)]
@@ -198,21 +220,28 @@ async def list_places(  # noqa: PLR0913, PLR0917 - one argument per filter
     country_code: Annotated[str | None, Query(pattern=r"^[A-Z]{2}$")] = None,
     administrative_level: Annotated[str | None, Query(max_length=64)] = None,
     parent_place_id: Annotated[uuid.UUID | None, Query()] = None,
+    min_population: Annotated[int | None, Query(ge=0)] = None,
+    max_population: Annotated[int | None, Query(ge=0)] = None,
+    sort: PlaceSort = "name",
+    order: SortOrder = "asc",
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> Page[PlaceOutput]:
-    """A page of places by name; `q` matches a name or an alias."""
-    rows, total = await service.list_places(
-        session,
+    """A page of places, by name unless sorted otherwise, each with its newest population
+    figure; `q` matches a name or an alias."""
+    filters = service.PlaceFilters(
         q=q,
         country_code=country_code,
         administrative_level=administrative_level,
         parent_place_id=parent_place_id,
-        limit=limit,
-        offset=offset,
+        min_population=min_population,
+        max_population=max_population,
+    )
+    rows, total = await service.list_places(
+        session, filters, sort=sort, order=order, limit=limit, offset=offset
     )
     return Page(
-        items=[PlaceOutput.model_validate(row) for row in rows],
+        items=[_place_output(row.place, row.population) for row in rows],
         total=total,
         limit=limit,
         offset=offset,
@@ -221,7 +250,7 @@ async def list_places(  # noqa: PLR0913, PLR0917 - one argument per filter
 
 @router.get("/places/{place_id}")
 async def read_place(place_id: uuid.UUID, session: SessionDep) -> PlaceDetail:
-    """The place with the places above it and its government."""
+    """The place with its population, the places above it and its government."""
     place = await service.get_place(session, place_id)
     government = (
         await session.get(Institution, place.government_institution_id)
@@ -229,7 +258,7 @@ async def read_place(place_id: uuid.UUID, session: SessionDep) -> PlaceDetail:
         else None
     )
     return PlaceDetail(
-        **PlaceOutput.model_validate(place).model_dump(),
+        **_place_output(place, await service.place_population(session, place.id)).model_dump(),
         parents=[_place_ref(row) for row in await service.place_parents(session, place)],
         government=_institution_ref(government) if government is not None else None,
     )

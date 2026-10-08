@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { PanelRightCloseIcon, PanelRightOpenIcon } from "lucide-react";
+import { PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 
 import { SIDEBAR_COOKIE_MAX_AGE, SIDEBAR_COOKIE_NAME } from "@/lib/sidebar-cookie";
 
@@ -253,7 +253,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
       }}
       {...props}
     >
-      {expanded ? <PanelRightOpenIcon /> : <PanelRightCloseIcon />}
+      {expanded ? <PanelLeftCloseIcon /> : <PanelLeftOpenIcon />}
       <span className="sr-only">{expanded ? "Collapse sidebar" : "Expand sidebar"}</span>
     </Button>
   );

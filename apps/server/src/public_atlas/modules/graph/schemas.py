@@ -16,7 +16,9 @@ from public_atlas.modules.graph.models import (
 )
 
 # The columns an institution list can be ordered by.
-InstitutionSort = Literal["name", "institution_type", "status", "created_at", "place"]
+InstitutionSort = Literal["name", "institution_type", "status", "created_at", "place", "population"]
+# The columns a place list can be ordered by.
+PlaceSort = Literal["name", "administrative_level", "population"]
 SortOrder = Literal["asc", "desc"]
 
 
@@ -45,6 +47,8 @@ class PlaceOutput(BaseModel):
     status: EntityStatus
     entered_by: EnteredBy
     created_at: datetime
+    # The newest population figure, when there is one.
+    population: int | None
 
 
 class PlaceDetail(PlaceOutput):
@@ -63,6 +67,8 @@ class InstitutionOutput(BaseModel):
     status: EntityStatus
     entered_by: EnteredBy
     place: PlaceRef
+    # The newest population figure of its place, when there is one.
+    place_population: int | None
     parent_institution_id: uuid.UUID | None
     procurement_handled_by: ProcurementHandledBy
     homepage_id: uuid.UUID | None

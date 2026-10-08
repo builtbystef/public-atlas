@@ -4,7 +4,7 @@ import Link from "next/link";
 import { entityKindLabels } from "@/lib/labels";
 import { paths } from "@/lib/routes";
 
-/** The subject's name, linking to its institution page or to the institutions under a place. */
+/** The subject's name, linking to its institution or place page. */
 export function SubjectLink({
   subject,
   subjectId,
@@ -18,9 +18,7 @@ export function SubjectLink({
     return <span className="font-mono text-xs text-muted-foreground">{subjectId}</span>;
   }
   const href =
-    subject.kind === "institution"
-      ? paths.institution(subject.id)
-      : paths.institutionsIn(subject.id);
+    subject.kind === "institution" ? paths.institution(subject.id) : paths.place(subject.id);
   return (
     <span className="inline-flex flex-wrap items-center gap-x-1.5">
       <Link href={href} className="font-medium hover:underline">

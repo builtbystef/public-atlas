@@ -4,12 +4,12 @@ import { Suspense } from "react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
-import { InstitutionsTable } from "@/features/graph/components/institutions-table";
-import { institutionListQuery } from "@/features/graph/queries";
+import { institutionListQuery, institutionTableFilters } from "@/features/graph/queries";
 import { parseInstitutionSearch } from "@/features/graph/schemas";
-import { unwrap } from "@/lib/api/errors";
-import { getApi } from "@/lib/api/server";
-import { paged, toSearchString, type SearchParams } from "@/lib/lists";
+import { getFilterOptions } from "@/features/graph/server";
+import { SavableInstitutionsTable } from "@/features/saved-lists/components/savable-institutions-table";
+import { getApi, getDatabase } from "@/lib/api/server";
+import { toSearchString, type SearchParams } from "@/lib/lists";
 import { getQueryClient } from "@/lib/query-client";
 import { getTimeZone } from "@/lib/time-zone/server";
 
@@ -35,24 +35,17 @@ export default function InstitutionsPage({
 
 async function InstitutionsContent({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseInstitutionSearch(await searchParams);
-  const [api, timeZone] = await Promise.all([getApi(), getTimeZone()]);
+  const [api, database, timeZone] = await Promise.all([getApi(), getDatabase(), getTimeZone()]);
   const queryClient = getQueryClient();
-  const [countryList, institutionTypes] = await Promise.all([
-    api.GET("/countries").then(unwrap),
-    api.GET("/institution-types").then(unwrap),
-    queryClient.prefetchQuery(institutionListQuery(api, paged(filters))),
+  const [{ countries, institutionTypes }] = await Promise.all([
+    getFilterOptions(api),
+    queryClient.prefetchQuery(institutionListQuery(api, institutionTableFilters(filters))),
   ]);
-  const countries = await Promise.all(
-    countryList.map((c) =>
-      api
-        .GET("/countries/{country_code}", { params: { path: { country_code: c.country_code } } })
-        .then(unwrap),
-    ),
-  );
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <InstitutionsTable
+      <SavableInstitutionsTable
         key={toSearchString(filters)}
+        database={database}
         initialFilters={filters}
         countries={countries}
         institutionTypes={institutionTypes}

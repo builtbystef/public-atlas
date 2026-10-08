@@ -4,9 +4,15 @@ import { queryOptions } from "@tanstack/react-query";
 import type { EntityOption } from "@/components/shared/entity-combobox";
 import { unwrap } from "@/lib/api/errors";
 import { humanize } from "@/lib/labels";
-import { PICKER_ROWS, queryParams, type ListPage, type SortOrder } from "@/lib/lists";
+import { paged, PICKER_ROWS, queryParams, type ListPage, type SortOrder } from "@/lib/lists";
 
-import type { InstitutionSort } from "./schemas";
+import type {
+  InstitutionFilterValues,
+  InstitutionSearch,
+  InstitutionSort,
+  PlaceSearch,
+  PlaceSort,
+} from "./schemas";
 
 export interface InstitutionListFilters extends ListPage {
   q?: string | undefined;
@@ -16,6 +22,8 @@ export interface InstitutionListFilters extends ListPage {
   institution_type?: string | undefined;
   status?: EntityStatus | undefined;
   parent_institution_id?: string | undefined;
+  min_population?: number | undefined;
+  max_population?: number | undefined;
   sort?: InstitutionSort | undefined;
   order?: SortOrder | undefined;
 }
@@ -25,6 +33,10 @@ export interface PlaceListFilters extends ListPage {
   country_code?: string | undefined;
   administrative_level?: string | undefined;
   parent_place_id?: string | undefined;
+  min_population?: number | undefined;
+  max_population?: number | undefined;
+  sort?: PlaceSort | undefined;
+  order?: SortOrder | undefined;
 }
 
 export const graphKeys = {
@@ -39,6 +51,26 @@ export const graphKeys = {
   subject: (id: string) => [...graphKeys.all, "subject", id] as const,
   evidenceContext: (id: string) => [...graphKeys.all, "evidence-context", id] as const,
 };
+
+/**
+ * The list an institutions table asks for: its URL search with the filters
+ * the page holds fixed on top. Server prefetch and the table build the same
+ * key through here.
+ */
+export function institutionTableFilters(
+  search: InstitutionSearch,
+  fixed: InstitutionFilterValues = {},
+): InstitutionListFilters {
+  return paged({ ...search, ...fixed });
+}
+
+/** The list a places table asks for, likewise. */
+export function placeTableFilters(
+  search: PlaceSearch,
+  fixed: Pick<PlaceListFilters, "parent_place_id"> = {},
+): PlaceListFilters {
+  return paged({ ...search, ...fixed });
+}
 
 export function institutionListQuery(api: ApiClient, filters: InstitutionListFilters) {
   return queryOptions({
@@ -65,6 +97,17 @@ export function placeListQuery(api: ApiClient, filters: PlaceListFilters) {
     queryKey: graphKeys.places(filters),
     queryFn: async () =>
       unwrap(await api.GET("/places", { params: { query: queryParams(filters) } })),
+  });
+}
+
+/** How many institutions match, without their rows: a saved list's count. */
+export function institutionCountQuery(
+  api: ApiClient,
+  filters: Omit<InstitutionListFilters, keyof ListPage>,
+) {
+  return queryOptions({
+    ...institutionListQuery(api, { ...filters, limit: 1, offset: 0 }),
+    select: (page) => page.total,
   });
 }
 

@@ -931,7 +931,7 @@
           "graph"
         ],
         "summary": "List Institutions",
-        "description": "A page of institutions. `q` matches a name or an alias; `place_id` admits the place and\nevery place under it.",
+        "description": "A page of institutions. `q` matches a name or an alias; `place_id` admits the place and\nevery place under it; the population bounds are on the institution's own place.",
         "operationId": "graph-list_institutions",
         "parameters": [
           {
@@ -1053,6 +1053,40 @@
             }
           },
           {
+            "name": "min_population",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Population"
+            }
+          },
+          {
+            "name": "max_population",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Population"
+            }
+          },
+          {
             "name": "sort",
             "in": "query",
             "required": false,
@@ -1062,7 +1096,8 @@
                 "institution_type",
                 "status",
                 "created_at",
-                "place"
+                "place",
+                "population"
               ],
               "type": "string",
               "default": "name",
@@ -1217,7 +1252,7 @@
           "graph"
         ],
         "summary": "List Places",
-        "description": "A page of places by name; `q` matches a name or an alias.",
+        "description": "A page of places, by name unless sorted otherwise, each with its newest population\nfigure; `q` matches a name or an alias.",
         "operationId": "graph-list_places",
         "parameters": [
           {
@@ -1286,6 +1321,69 @@
                 }
               ],
               "title": "Parent Place Id"
+            }
+          },
+          {
+            "name": "min_population",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Population"
+            }
+          },
+          {
+            "name": "max_population",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Population"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "name",
+                "administrative_level",
+                "population"
+              ],
+              "type": "string",
+              "default": "name",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Order"
             }
           },
           {
@@ -1360,7 +1458,7 @@
           "graph"
         ],
         "summary": "Read Place",
-        "description": "The place with the places above it and its government.",
+        "description": "The place with its population, the places above it and its government.",
         "operationId": "graph-read_place",
         "parameters": [
           {
@@ -4321,6 +4419,17 @@
           "place": {
             "$ref": "#/components/schemas/PlaceRef"
           },
+          "place_population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Population"
+          },
           "parent_institution_id": {
             "anyOf": [
               {
@@ -4447,6 +4556,7 @@
           "status",
           "entered_by",
           "place",
+          "place_population",
           "parent_institution_id",
           "procurement_handled_by",
           "homepage_id",
@@ -4499,6 +4609,17 @@
           },
           "place": {
             "$ref": "#/components/schemas/PlaceRef"
+          },
+          "place_population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place Population"
           },
           "parent_institution_id": {
             "anyOf": [
@@ -4553,6 +4674,7 @@
           "status",
           "entered_by",
           "place",
+          "place_population",
           "parent_institution_id",
           "procurement_handled_by",
           "homepage_id",
@@ -5097,6 +5219,17 @@
             "format": "date-time",
             "title": "Created At"
           },
+          "population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population"
+          },
           "parents": {
             "items": {
               "$ref": "#/components/schemas/PlaceRef"
@@ -5126,6 +5259,7 @@
           "status",
           "entered_by",
           "created_at",
+          "population",
           "parents",
           "government"
         ],
@@ -5184,6 +5318,17 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "population": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Population"
           }
         },
         "type": "object",
@@ -5196,7 +5341,8 @@
           "government_institution_id",
           "status",
           "entered_by",
-          "created_at"
+          "created_at",
+          "population"
         ],
         "title": "PlaceOutput"
       },

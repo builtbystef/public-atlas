@@ -24,7 +24,7 @@ import { humanize } from "@/lib/labels";
 import { useCountryMutation } from "../hooks/use-country-mutations";
 import { deleteAdministrativeLevel, putAdministrativeLevel } from "../mutations";
 import { levelSchema, type LevelFormInput } from "../schemas";
-import { FormDialog } from "./form-dialog";
+import { FormDialog } from "@/components/shared/form-dialog";
 
 /**
  * The hierarchy of places, rank by rank, each with the type its government
