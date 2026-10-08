@@ -75,10 +75,12 @@ export function CountryTypesTable({
               {sorted.map((row) => (
                 <TableRow key={row.institution_type}>
                   <TableCell className="font-medium">{humanize(row.institution_type)}</TableCell>
-                  <TableCell className="max-w-md text-muted-foreground">
+                  <TableCell className="min-w-48 max-w-md whitespace-normal text-muted-foreground">
                     {row.expected_source_types.map(humanize).join(", ") || "–"}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{row.name_pattern ?? "–"}</TableCell>
+                  <TableCell className="max-w-xs font-mono text-xs break-all whitespace-normal">
+                    {row.name_pattern ?? "–"}
+                  </TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-1">
                       <Button

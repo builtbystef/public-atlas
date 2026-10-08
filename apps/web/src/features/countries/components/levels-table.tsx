@@ -69,7 +69,7 @@ export function LevelsTable({
                   <TableCell className="tabular-nums">{level.rank}</TableCell>
                   <TableCell className="font-medium">{humanize(level.name)}</TableCell>
                   <TableCell>{humanize(level.government_institution_type)}</TableCell>
-                  <TableCell className="max-w-md text-muted-foreground">
+                  <TableCell className="min-w-48 max-w-md whitespace-normal text-muted-foreground">
                     {level.expected_institution_types.map(humanize).join(", ") || "–"}
                   </TableCell>
                   <TableCell>

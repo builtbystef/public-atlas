@@ -88,8 +88,8 @@ export function EvalRunDetail({ run, timeZone }: { run: EvalRunDetailOutput; tim
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <Card>
           <CardHeader>
             <CardTitle>Scores by subject</CardTitle>
             <CardDescription>

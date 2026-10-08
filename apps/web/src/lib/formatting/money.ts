@@ -26,3 +26,10 @@ export function formatPercent(value: number | null | undefined): string {
   if (value === null || value === undefined) return "";
   return `${Math.round(value * 100)}%`;
 }
+
+/** "4.6M" and "12.5k": for a figure whose exact count sits in a tooltip beside it. */
+export function formatCompact(value: number): string {
+  return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(
+    value,
+  );
+}

@@ -13,32 +13,28 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getDatabase } from "@/lib/api/server";
 import { paths } from "@/lib/routes";
 
-import { DatabaseSwitch } from "./database-switch";
 import { NavMenu, NavMenuFallback } from "./nav-menu";
 
 /**
- * The sidebar is a Server Component: the nav highlight and the database
- * switch depend on the request, and each streams in behind its own
- * <Suspense> so the rest of the shell is prerendered.
+ * The sidebar is a Server Component: the nav highlight depends on the
+ * request, so each menu streams in behind its own <Suspense> and the rest of
+ * the shell is prerendered.
  */
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
+      <SidebarHeader className="p-2 pt-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href={paths.home} />}>
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Logo className="size-5" />
-              </div>
-              <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">Public Atlas</span>
-                <span className="text-xs text-muted-foreground">Console</span>
-              </div>
+            <SidebarMenuButton
+              size="lg"
+              className="gap-3 px-2.5 hover:bg-sidebar-accent/60"
+              render={<Link href={paths.home} />}
+            >
+              <Logo className="size-7! shrink-0 text-white" />
+              <span className="text-lg font-semibold tracking-tight">Public Atlas</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -52,15 +48,11 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <Suspense fallback={<Skeleton className="h-8 w-full rounded-lg" />}>
-          <CurrentDatabaseSwitch />
+      <SidebarFooter className="border-t border-sidebar-border">
+        <Suspense fallback={<NavMenuFallback menu="footer" />}>
+          <NavMenu menu="footer" />
         </Suspense>
       </SidebarFooter>
     </Sidebar>
   );
-}
-
-async function CurrentDatabaseSwitch() {
-  return <DatabaseSwitch database={await getDatabase()} />;
 }

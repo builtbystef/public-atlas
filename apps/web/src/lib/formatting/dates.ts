@@ -92,3 +92,20 @@ export function isBeforeToday(iso: string | null | undefined, timeZone: string, 
   const today = wallClockAsUtc(new Date(now), timeZone);
   return Math.floor(target / 86_400_000) < Math.floor(today / 86_400_000);
 }
+
+/** "42 s", "17 min", "1 h 5 min": the time from one instant to another; "" without both. */
+export function formatDuration(
+  from: string | null | undefined,
+  to: string | null | undefined,
+): string {
+  if (!from || !to) return "";
+  const ms = new Date(to).getTime() - new Date(from).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "";
+  const seconds = Math.round(ms / 1000);
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}

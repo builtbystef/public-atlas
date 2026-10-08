@@ -48,7 +48,13 @@ export function assignmentColumns({
       header: "Subject",
       enableSorting: false,
       cell: ({ row }) => (
-        <SubjectLink subject={row.original.subject} subjectId={row.original.subject_id} showKind />
+        <span className="block min-w-40 whitespace-normal">
+          <SubjectLink
+            subject={row.original.subject}
+            subjectId={row.original.subject_id}
+            showKind
+          />
+        </span>
       ),
     }),
     ...(showRun ? [runColumn] : []),

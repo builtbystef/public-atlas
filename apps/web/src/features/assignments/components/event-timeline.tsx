@@ -2,15 +2,17 @@
 
 import type { EventOutput } from "@public-atlas/api-client";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { ChevronRightIcon } from "lucide-react";
 
 import { CollapsibleText } from "@/components/shared/collapsible-text";
 import { EmptyState } from "@/components/shared/empty-state";
 import { JsonView } from "@/components/shared/json-view";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { browserApi } from "@/lib/api/client";
 import { formatBytes } from "@/lib/formatting/bytes";
-import { formatDateTime } from "@/lib/formatting/dates";
+import { formatDateTime, formatDuration } from "@/lib/formatting/dates";
 import { eventKindLabels } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
@@ -21,7 +23,8 @@ const REFRESH_MS = 5_000;
 /**
  * Everything the agent saw, said and did, session by session: the prompt,
  * the model's words, each tool call with its result, and the recorded video
- * when the run asked for one.
+ * when the run asked for one. A session can run to hundreds of events, so
+ * each is folded until opened; the latest starts open.
  */
 export function EventTimeline({
   assignmentId,
@@ -39,7 +42,7 @@ export function EventTimeline({
   });
   if (events.length === 0) {
     return (
-      <EmptyState>
+      <EmptyState boxed>
         {live
           ? "Events are written when a session ends; none has yet."
           : "No events. They were purged, or the assignment never ran."}
@@ -52,38 +55,71 @@ export function EventTimeline({
     list.push(event);
     sessions.set(event.session, list);
   }
+  const entries = [...sessions.entries()];
   return (
-    <div className="flex flex-col gap-6">
-      {[...sessions.entries()].map(([session, list]) => (
-        <Card key={session}>
-          <CardHeader>
-            <CardTitle>Session {session}</CardTitle>
-            <CardDescription>
-              {list.length} {list.length === 1 ? "event" : "events"} from{" "}
-              {formatDateTime(list[0]?.at, timeZone)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ol className="flex flex-col divide-y">
-              {list.map((event) => (
-                <li key={event.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
-                  <EventRow event={event} timeZone={timeZone} />
-                </li>
-              ))}
-            </ol>
-          </CardContent>
-        </Card>
+    <div className="flex flex-col gap-3">
+      {entries.map(([session, list], index) => (
+        <SessionCard
+          key={session}
+          session={session}
+          events={list}
+          timeZone={timeZone}
+          defaultOpen={index === entries.length - 1}
+        />
       ))}
     </div>
   );
 }
 
+function SessionCard({
+  session,
+  events,
+  timeZone,
+  defaultOpen,
+}: {
+  session: number;
+  events: EventOutput[];
+  timeZone: string;
+  defaultOpen: boolean;
+}) {
+  const first = events[0]?.at;
+  const last = events.at(-1)?.at;
+  const duration = formatDuration(first, last);
+  return (
+    <Card className="gap-0 py-0">
+      <Collapsible defaultOpen={defaultOpen}>
+        <CollapsibleTrigger className="group/session flex w-full items-center gap-3 px-4 py-3 text-left transition-colors outline-none hover:bg-muted/40 focus-visible:bg-muted/40">
+          <ChevronRightIcon className="size-4 shrink-0 text-muted-foreground transition-transform group-data-panel-open/session:rotate-90" />
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+            <span className="font-medium">Session {session}</span>
+            <span className="text-xs text-muted-foreground">
+              {events.length} {events.length === 1 ? "event" : "events"}
+              {" · "}
+              {formatDateTime(first, timeZone)}
+              {duration && ` · ${duration}`}
+            </span>
+          </span>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="border-t">
+          <ol className="flex flex-col divide-y px-4">
+            {events.map((event) => (
+              <li key={event.id} className="flex flex-col gap-2 py-3">
+                <EventRow event={event} timeZone={timeZone} />
+              </li>
+            ))}
+          </ol>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
+
 const KIND_VARIANT = {
   prompt: "outline",
-  text: "default",
+  text: "info",
   tool_call: "secondary",
   tool_result: "secondary",
-  video: "outline",
+  video: "plum",
 } as const;
 
 function EventRow({ event, timeZone }: { event: EventOutput; timeZone: string }) {

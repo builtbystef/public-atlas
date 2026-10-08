@@ -18,7 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { browserApi } from "@/lib/api/client";
-import { entityKindLabels } from "@/lib/labels";
+import { entityKindLabels, humanize } from "@/lib/labels";
 import { paths } from "@/lib/routes";
 
 import { assignmentFindingsQuery } from "../queries";
@@ -32,72 +32,95 @@ export function FindingsList({ assignmentId, live }: { assignmentId: string; liv
     refetchInterval: live ? REFRESH_MS : false,
   });
   if (findings.length === 0) {
-    return <EmptyState>Nothing saved yet.</EmptyState>;
+    return <EmptyState boxed>Nothing saved yet.</EmptyState>;
   }
   return (
-    <div className="overflow-x-auto rounded-lg border">
+    <div className="overflow-x-auto rounded-lg border bg-card shadow-xs">
       <Table>
-        <TableHeader>
-          <TableRow>
+        <TableHeader className="bg-muted/50">
+          <TableRow className="hover:bg-transparent">
             <TableHead>Saved</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Quote</TableHead>
-            <TableHead>Page</TableHead>
+            <TableHead>Read on</TableHead>
             <TableHead className="w-0">Snapshot</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {findings.map((finding) => (
-            <TableRow key={finding.evidence_id}>
-              <TableCell className="max-w-72">
-                <div className="flex flex-col gap-1">
-                  <FindingLabel finding={finding} />
-                  <Badge variant="outline" className="w-fit">
-                    {entityKindLabels[finding.entity_kind]}
-                  </Badge>
-                </div>
-              </TableCell>
-              <TableCell>
-                <EntityStatusBadge status={finding.entity_status} />
-              </TableCell>
-              <TableCell className="max-w-md">
-                <blockquote className="line-clamp-3 text-sm whitespace-pre-wrap text-muted-foreground">
-                  “{finding.quote}”
-                </blockquote>
-              </TableCell>
-              <TableCell className="max-w-56">
-                <ExternalLink href={finding.page_url} className="text-xs" />
-              </TableCell>
-              <TableCell>
-                {finding.snapshot_url ? (
-                  <a
-                    href={finding.snapshot_url}
-                    className="inline-flex items-center gap-1 text-xs hover:underline"
-                    aria-label="Download the snapshot"
-                  >
-                    <DownloadIcon className="size-3.5" /> Download
-                  </a>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Pruned</span>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
+          {findings.map((finding) => {
+            const { title, url } = splitLabel(finding.label);
+            return (
+              <TableRow key={finding.evidence_id}>
+                <TableCell className="min-w-56 max-w-xs py-3 align-top whitespace-normal">
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <Badge variant="outline">{entityKindLabels[finding.entity_kind]}</Badge>
+                      <FindingLabel finding={finding}>{title}</FindingLabel>
+                    </div>
+                    {url && url !== finding.page_url && (
+                      <span className="font-mono text-xs wrap-anywhere text-muted-foreground">
+                        {url}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="py-3 align-top">
+                  <EntityStatusBadge status={finding.entity_status} />
+                </TableCell>
+                <TableCell className="min-w-72 max-w-md py-3 align-top whitespace-normal">
+                  <blockquote className="line-clamp-3 text-muted-foreground" title={finding.quote}>
+                    “{finding.quote}”
+                  </blockquote>
+                </TableCell>
+                <TableCell className="max-w-56 py-3 align-top">
+                  <ExternalLink href={finding.page_url} className="text-xs" />
+                </TableCell>
+                <TableCell className="py-3 align-top">
+                  {finding.snapshot_url ? (
+                    <a
+                      href={finding.snapshot_url}
+                      className="inline-flex items-center gap-1 text-xs hover:underline"
+                      aria-label="Download the snapshot"
+                    >
+                      <DownloadIcon className="size-3.5" /> Download
+                    </a>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Pruned</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
   );
 }
 
-function FindingLabel({ finding }: { finding: FindingOutput }) {
+const TYPED_URL = /^(\w+) (https?:\/\/\S+)$/;
+
+/**
+ * The API labels a saved source "type url"; split so the type reads as a
+ * name and the URL as a second line. Any other label is the name as given.
+ */
+function splitLabel(label: string): { title: string; url: string | null } {
+  const match = TYPED_URL.exec(label);
+  if (!match) return { title: label, url: null };
+  return { title: humanize(match[1]!), url: match[2]! };
+}
+
+function FindingLabel({ finding, children }: { finding: FindingOutput; children: string }) {
   const institutionId =
     finding.entity_kind === "institution" ? finding.entity_id : finding.institution_id;
   if (!institutionId) {
-    return <span className="break-all">{finding.label}</span>;
+    return <span className="font-medium wrap-anywhere">{children}</span>;
   }
   return (
-    <Link href={paths.institution(institutionId)} className="font-medium break-all hover:underline">
-      {finding.label}
+    <Link
+      href={paths.institution(institutionId)}
+      className="font-medium wrap-anywhere hover:underline"
+    >
+      {children}
     </Link>
   );
 }

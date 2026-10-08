@@ -13,6 +13,8 @@ const API_URL = process.env["API_URL"] ?? "http://127.0.0.1:8000";
 const nextConfig: NextConfig = {
   // Routes prerender a static shell; uncached reads stream behind <Suspense>.
   cacheComponents: true,
+  // The sidebar's Settings link sits bottom-left; keep the dev badge off it.
+  devIndicators: { position: "bottom-right" },
   typedRoutes: true,
   reactCompiler: true,
   // The browser reaches the API through this same-origin path, so it needs neither the API's

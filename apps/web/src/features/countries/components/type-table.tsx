@@ -67,7 +67,7 @@ export function TypeTable({
                     {humanize(row.name)}
                     <span className="ml-2 font-mono text-xs text-muted-foreground">{row.name}</span>
                   </TableCell>
-                  <TableCell className="max-w-lg text-muted-foreground">
+                  <TableCell className="min-w-64 max-w-lg whitespace-normal text-muted-foreground">
                     {row.description || "–"}
                   </TableCell>
                   <TableCell>

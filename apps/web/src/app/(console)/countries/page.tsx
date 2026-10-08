@@ -1,5 +1,5 @@
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { ChevronRightIcon } from "lucide-react";
+import { ChevronRightIcon, GlobeIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -27,7 +27,6 @@ export default function CountriesPage() {
       />
       <div className="flex flex-col gap-8">
         <section className="flex flex-col gap-4">
-          <h3 className="text-lg font-semibold">Countries</h3>
           <Suspense fallback={<Skeleton className="h-20" />}>
             <CountryList />
           </Suspense>
@@ -52,15 +51,20 @@ async function CountryList() {
         <Link
           key={country.country_code}
           href={paths.country(country.country_code)}
-          className="block rounded-xl transition-colors hover:bg-muted/40"
+          className="group/country block rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <Card>
-            <CardContent className="flex items-center justify-between">
-              <span className="flex flex-col">
-                <span className="font-medium">{country.name}</span>
-                <span className="text-sm text-muted-foreground">{country.country_code}</span>
+          <Card className="transition-[box-shadow] group-hover/country:shadow-md group-hover/country:ring-primary/30">
+            <CardContent className="flex items-center justify-between gap-3">
+              <span className="flex items-center gap-3">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <GlobeIcon className="size-4.5" />
+                </span>
+                <span className="flex flex-col">
+                  <span className="font-medium">{country.name}</span>
+                  <span className="text-sm text-muted-foreground">{country.country_code}</span>
+                </span>
               </span>
-              <ChevronRightIcon className="size-4 text-muted-foreground" />
+              <ChevronRightIcon className="size-4 text-muted-foreground transition-transform group-hover/country:translate-x-0.5" />
             </CardContent>
           </Card>
         </Link>

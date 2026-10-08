@@ -10,10 +10,10 @@ import { cn } from "@/lib/utils";
 
 const STATUS_COLOR = {
   held: "bg-muted-foreground/30",
-  queued: "bg-chart-1",
-  running: "bg-chart-3",
-  finished: "bg-primary",
-  cancelled: "bg-destructive/60",
+  queued: "bg-warning",
+  running: "bg-primary",
+  finished: "bg-success",
+  cancelled: "bg-destructive/70",
 } as const;
 
 export function totalAssignments(progress: Progress): number {

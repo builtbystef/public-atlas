@@ -104,7 +104,7 @@ function QuoteContext({ evidenceId }: { evidenceId: string }) {
               )}
               <p className="rounded-md bg-muted p-3 text-sm leading-relaxed break-words">
                 {context.data.before}
-                <mark className="rounded-sm bg-yellow-200 px-0.5 dark:bg-yellow-700/60 dark:text-foreground">
+                <mark className="rounded-sm bg-warning/30 px-0.5 text-foreground dark:bg-warning/35">
                   {context.data.quote}
                 </mark>
                 {context.data.after}

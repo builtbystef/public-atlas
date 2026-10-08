@@ -20,6 +20,7 @@ export const paths = {
   country: (code: string) => `/countries/${code}` as const,
   evals: "/evals",
   evalRun: (id: string) => `/evals/${id}` as const,
+  settings: "/settings",
 } as const;
 
 export type Paths = typeof paths;

@@ -23,6 +23,7 @@ import { QuestionFacts, reasonsOf, scalarText } from "./question-facts";
 
 const HIDDEN_COLUMNS = new Set(["id", "kind", "name", "status"]);
 const INSTITUTION_LINKS = new Set(["institution_id", "parent_institution_id"]);
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
 
 export function ReviewItemDetail({ id, timeZone }: { id: string; timeZone: string }) {
   const { data: item } = useSuspenseQuery(reviewItemQuery(browserApi, id));
@@ -115,7 +116,7 @@ export function ReviewItemDetail({ id, timeZone }: { id: string; timeZone: strin
                 .filter(([key, value]) => !HIDDEN_COLUMNS.has(key) && value !== null)
                 .map(([key, value]) => (
                   <Detail key={key} label={humanize(key)}>
-                    <EntityValue column={key} value={value} />
+                    <EntityValue column={key} value={value} timeZone={timeZone} />
                   </Detail>
                 ))}
               <Detail label="Raised by">
@@ -153,7 +154,18 @@ function isEntityStatus(
   return ["candidate", "verified", "rejected", "needs_review"].includes(value);
 }
 
-function EntityValue({ column, value }: { column: string; value: unknown }): ReactNode {
+function EntityValue({
+  column,
+  value,
+  timeZone,
+}: {
+  column: string;
+  value: unknown;
+  timeZone: string;
+}): ReactNode {
+  if (typeof value === "string" && ISO_INSTANT.test(value)) {
+    return formatDateTime(value, timeZone);
+  }
   if (typeof value === "string" && INSTITUTION_LINKS.has(column)) {
     return (
       <Link href={paths.institution(value)} className="font-mono text-xs hover:underline">

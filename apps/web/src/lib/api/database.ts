@@ -17,6 +17,12 @@ export const databaseLabels: Record<Database, string> = {
   eval: "Eval database",
 };
 
+/** What each database holds, for the settings page. */
+export const databaseDescriptions: Record<Database, string> = {
+  main: "The real graph: the places, institutions, sources and runs the console is for. Eval scores are kept here too.",
+  eval: "The graph the last eval run built, reset by each run. Read it to see why an eval scored as it did.",
+};
+
 export function isDatabase(value: string): value is Database {
   return (databases as readonly string[]).includes(value);
 }

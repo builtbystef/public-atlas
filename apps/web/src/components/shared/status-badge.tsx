@@ -15,20 +15,22 @@ import {
   reviewStatusLabels,
   runStatusLabels,
 } from "@/lib/labels";
+import { cn } from "@/lib/utils";
 
 type Variant = NonNullable<ComponentProps<typeof Badge>["variant"]>;
 
 /**
  * One badge per status enum, each with a fixed colour per value so a status
- * reads the same on every page: filled for the state that counts (verified,
- * running, active), outlined for the one that waits on someone, destructive
- * for the one that went wrong.
+ * reads the same on every page. The colours follow the palette's semantics:
+ * success for what is settled or went well, warning (the ochre accent) for
+ * what waits on someone, info for what is in motion, plum for what was
+ * merged, destructive for what went wrong, and neutral for the rest.
  */
 export function EntityStatusBadge({ status }: { status: EntityStatus }) {
   const variant: Record<EntityStatus, Variant> = {
-    verified: "default",
+    verified: "success",
     candidate: "secondary",
-    needs_review: "outline",
+    needs_review: "warning",
     rejected: "destructive",
   };
   return <Badge variant={variant[status]}>{entityStatusLabels[status]}</Badge>;
@@ -37,21 +39,26 @@ export function EntityStatusBadge({ status }: { status: EntityStatus }) {
 export function AssignmentStatusBadge({ status }: { status: AssignmentStatus }) {
   const variant: Record<AssignmentStatus, Variant> = {
     held: "outline",
-    queued: "secondary",
-    running: "default",
-    finished: "secondary",
+    queued: "warning",
+    running: "info",
+    finished: "success",
     cancelled: "destructive",
   };
-  return <Badge variant={variant[status]}>{assignmentStatusLabels[status]}</Badge>;
+  return (
+    <Badge variant={variant[status]}>
+      {status === "running" && <LiveDot />}
+      {assignmentStatusLabels[status]}
+    </Badge>
+  );
 }
 
 export function AssignmentResultBadge({ result }: { result: AssignmentResult | null }) {
   if (result === null) return null;
   const variant: Record<AssignmentResult, Variant> = {
-    complete: "default",
-    complete_with_gaps: "outline",
+    complete: "success",
+    complete_with_gaps: "warning",
     out_of_budget: "destructive",
-    needs_review: "outline",
+    needs_review: "warning",
     no_homepage: "outline",
     failed: "destructive",
   };
@@ -60,19 +67,34 @@ export function AssignmentResultBadge({ result }: { result: AssignmentResult | n
 
 export function RunStatusBadge({ status }: { status: RunStatus }) {
   const variant: Record<RunStatus, Variant> = {
-    active: "default",
-    paused: "outline",
+    active: "success",
+    paused: "warning",
     stopped: "secondary",
   };
-  return <Badge variant={variant[status]}>{runStatusLabels[status]}</Badge>;
+  return (
+    <Badge variant={variant[status]}>
+      {status === "active" && <LiveDot />}
+      {runStatusLabels[status]}
+    </Badge>
+  );
 }
 
 export function ReviewStatusBadge({ status }: { status: ReviewStatus }) {
   const variant: Record<ReviewStatus, Variant> = {
-    open: "default",
-    approved: "secondary",
+    open: "info",
+    approved: "success",
     rejected: "destructive",
-    merged: "secondary",
+    merged: "plum",
   };
   return <Badge variant={variant[status]}>{reviewStatusLabels[status]}</Badge>;
+}
+
+/** A pulsing dot for a state that is happening right now. */
+function LiveDot({ className }: { className?: string }) {
+  return (
+    <span className={cn("relative flex size-1.5", className)} aria-hidden="true">
+      <span className="absolute inline-flex size-full animate-ping rounded-full bg-current opacity-60" />
+      <span className="relative inline-flex size-1.5 rounded-full bg-current" />
+    </span>
+  );
 }

@@ -1,26 +1,32 @@
 "use client";
 
+import type { AssignmentOutput } from "@public-atlas/api-client";
 import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { UnlockIcon } from "lucide-react";
+import { AlertCircleIcon, UnlockIcon } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { toast } from "sonner";
 
+import { CollapsibleText } from "@/components/shared/collapsible-text";
 import { Detail } from "@/components/shared/detail-list";
+import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { TableSkeleton } from "@/components/shared/skeletons";
 import { AssignmentResultBadge, AssignmentStatusBadge } from "@/components/shared/status-badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { releaseAssignments } from "@/features/runs/mutations";
 import { runKeys } from "@/features/runs/queries";
 import { browserApi } from "@/lib/api/client";
 import { errorMessage } from "@/lib/api/errors";
-import { formatDateTime } from "@/lib/formatting/dates";
-import { formatCost, formatCount } from "@/lib/formatting/money";
+import { formatDateTime, formatDuration } from "@/lib/formatting/dates";
+import { formatCompact, formatCost, formatCount, formatPercent } from "@/lib/formatting/money";
 import { assignmentTypeLabels, humanize } from "@/lib/labels";
 import { paths } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
 import { assignmentKeys, assignmentQuery } from "../queries";
 import { EventTimeline } from "./event-timeline";
@@ -77,120 +83,254 @@ export function AssignmentDetail({ id, timeZone }: { id: string; timeZone: strin
         )}
       </PageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <Stat label="Cost" value={formatCost(assignment.cost) || "–"}>
+          {assignment.sessions === 1 ? "1 session" : `${assignment.sessions} sessions`}
+        </Stat>
+        <BudgetStat
+          label="Requests"
+          used={assignment.requests_used}
+          budget={assignment.budget_requests}
+        />
+        <BudgetStat
+          label="Tokens"
+          used={assignment.tokens_used}
+          budget={assignment.budget_tokens}
+        />
+        <DurationStat assignment={assignment} timeZone={timeZone} />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card>
+          <CardHeader>
+            <CardTitle>Outcome</CardTitle>
+            <CardDescription>What the agent reported when it stopped.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Outcome assignment={assignment} />
+          </CardContent>
+        </Card>
+        <Card className="self-start">
           <CardHeader>
             <CardTitle>Details</CardTitle>
           </CardHeader>
           <CardContent>
             <dl className="flex flex-col gap-3 text-sm">
               <Detail label="Run">
-                <Link
-                  href={paths.run(assignment.run_id)}
-                  className="font-mono text-xs hover:underline"
-                >
-                  {assignment.run_id}
-                </Link>
+                <IdLink href={paths.run(assignment.run_id)} id={assignment.run_id} />
               </Detail>
               <Detail label="Parent">
                 {assignment.parent_assignment_id && (
-                  <Link
+                  <IdLink
                     href={paths.assignment(assignment.parent_assignment_id)}
-                    className="font-mono text-xs hover:underline"
-                  >
-                    {assignment.parent_assignment_id}
-                  </Link>
+                    id={assignment.parent_assignment_id}
+                  />
                 )}
               </Detail>
               <Detail label="Created">{formatDateTime(assignment.created_at, timeZone)}</Detail>
               <Detail label="Started">{formatDateTime(assignment.started_at, timeZone)}</Detail>
               <Detail label="Finished">{formatDateTime(assignment.finished_at, timeZone)}</Detail>
-              <Detail label="Sessions">{String(assignment.sessions)}</Detail>
-            </dl>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Spend</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <p className="text-2xl font-semibold tabular-nums">{formatCost(assignment.cost)}</p>
-            <BudgetBar
-              label="Requests"
-              used={assignment.requests_used}
-              budget={assignment.budget_requests}
-            />
-            <BudgetBar
-              label="Tokens"
-              used={assignment.tokens_used}
-              budget={assignment.budget_tokens}
-            />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Outcome</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="flex flex-col gap-3 text-sm">
-              <Detail label="Summary">
-                {assignment.summary && (
-                  <span className="whitespace-pre-wrap">{assignment.summary}</span>
-                )}
-              </Detail>
-              <Detail label="Not found">
-                {assignment.types_not_found.map(humanize).join(", ")}
-              </Detail>
-              <Detail label="Handoff">
-                {assignment.handoff_note && (
-                  <span className="whitespace-pre-wrap text-muted-foreground">
-                    {assignment.handoff_note}
-                  </span>
-                )}
-              </Detail>
-              <Detail label="Last error">
-                {assignment.last_error && (
-                  <span className="break-words text-destructive">{assignment.last_error}</span>
-                )}
+              <Detail label="Assignment">
+                <code className="font-mono text-xs break-all text-muted-foreground">
+                  {assignment.id}
+                </code>
               </Detail>
             </dl>
           </CardContent>
         </Card>
       </div>
 
-      <section className="mt-8 flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Findings</h3>
+      <Section
+        title="Findings"
+        description="What the assignment saved, with the quote behind each save and the page it was read on."
+      >
         <Suspense fallback={<TableSkeleton rows={3} />}>
           <FindingsList assignmentId={assignment.id} live={live} />
         </Suspense>
-      </section>
+      </Section>
 
-      <section className="mt-8 flex flex-col gap-4">
-        <h3 className="text-lg font-semibold">Events</h3>
+      <Section
+        title="Events"
+        description="Everything the agent saw, said and did, session by session."
+      >
         <Suspense fallback={<Skeleton className="h-48" />}>
           <EventTimeline assignmentId={assignment.id} live={live} timeZone={timeZone} />
         </Suspense>
-      </section>
+      </Section>
     </>
   );
 }
 
-function BudgetBar({ label, used, budget }: { label: string; used: number; budget: number }) {
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="mt-10 flex flex-col gap-4">
+      <div className="flex flex-col gap-0.5">
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** A record's id as a link, shortened to its first block with the whole id on hover. */
+function IdLink({
+  href,
+  id,
+}: {
+  href: ReturnType<typeof paths.run> | ReturnType<typeof paths.assignment>;
+  id: string;
+}) {
+  return (
+    <Link href={href} title={id} className="font-mono text-xs hover:underline">
+      {id.slice(0, 8)}…
+    </Link>
+  );
+}
+
+/** One figure in the strip under the header: a label, a number and a line under it. */
+function Stat({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <Card size="sm" className="gap-2">
+      <CardHeader>
+        <CardDescription>{label}</CardDescription>
+        <div className="text-2xl font-semibold tracking-tight tabular-nums">{value}</div>
+      </CardHeader>
+      {children && <CardContent className="text-xs text-muted-foreground">{children}</CardContent>}
+    </Card>
+  );
+}
+
+function BudgetStat({ label, used, budget }: { label: string; used: number; budget: number }) {
   const ratio = budget > 0 ? Math.min(used / budget, 1) : 0;
   return (
-    <div className="flex flex-col gap-1">
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="tabular-nums">
-          {formatCount(used)} / {formatCount(budget)}
+    <Stat
+      label={label}
+      value={
+        <span title={`${formatCount(used)} of ${formatCount(budget)}`}>
+          {formatCompact(used)}
+          <span className="text-base font-normal text-muted-foreground">
+            {" "}
+            / {formatCompact(budget)}
+          </span>
         </span>
+      }
+    >
+      <div className="flex flex-col gap-1.5">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn(
+              "h-full rounded-full transition-[width]",
+              ratio >= 1 ? "bg-destructive" : ratio >= 0.8 ? "bg-warning" : "bg-primary",
+            )}
+            style={{ width: `${ratio * 100}%` }}
+          />
+        </div>
+        <span className="tabular-nums">{formatPercent(ratio)} of the budget</span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-        <div
-          className={ratio >= 1 ? "h-full bg-destructive" : "h-full bg-primary"}
-          style={{ width: `${ratio * 100}%` }}
-        />
-      </div>
+    </Stat>
+  );
+}
+
+function DurationStat({
+  assignment,
+  timeZone,
+}: {
+  assignment: AssignmentOutput;
+  timeZone: string;
+}) {
+  const duration = formatDuration(assignment.started_at, assignment.finished_at);
+  const note = assignment.finished_at
+    ? `Finished ${formatDateTime(assignment.finished_at, timeZone)}`
+    : assignment.started_at
+      ? `Started ${formatDateTime(assignment.started_at, timeZone)}`
+      : assignment.status === "held"
+        ? "Waiting to be released"
+        : "Not started yet";
+  return (
+    <Stat label="Duration" value={duration || (assignment.started_at ? "Running" : "–")}>
+      {note}
+    </Stat>
+  );
+}
+
+/** The summary, the gaps, the handoff note and the error, each only when there is one. */
+function Outcome({ assignment }: { assignment: AssignmentOutput }) {
+  const empty =
+    !assignment.summary &&
+    !assignment.handoff_note &&
+    !assignment.last_error &&
+    assignment.types_not_found.length === 0;
+  if (empty) {
+    return (
+      <EmptyState>
+        {assignment.status === "finished" || assignment.status === "cancelled"
+          ? "The agent left no summary."
+          : "The agent writes its summary when the assignment finishes."}
+      </EmptyState>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-5">
+      {assignment.last_error && (
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Last error</AlertTitle>
+          <AlertDescription className="break-words">{assignment.last_error}</AlertDescription>
+        </Alert>
+      )}
+      {assignment.summary && (
+        <OutcomeBlock title="Summary">
+          <CollapsibleText text={assignment.summary} limit={600} className="leading-relaxed" />
+        </OutcomeBlock>
+      )}
+      {assignment.types_not_found.length > 0 && (
+        <OutcomeBlock title="Not found">
+          <ul className="flex flex-wrap gap-1.5">
+            {assignment.types_not_found.map((type) => (
+              <li key={type}>
+                <Badge variant="warning">{humanize(type)}</Badge>
+              </li>
+            ))}
+          </ul>
+        </OutcomeBlock>
+      )}
+      {assignment.handoff_note && (
+        <OutcomeBlock title="Handoff note">
+          <div className="rounded-lg bg-muted/60 p-3">
+            <CollapsibleText
+              text={assignment.handoff_note}
+              limit={400}
+              className="leading-relaxed text-muted-foreground"
+            />
+          </div>
+        </OutcomeBlock>
+      )}
+    </div>
+  );
+}
+
+function OutcomeBlock({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h4 className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</h4>
+      {children}
     </div>
   );
 }

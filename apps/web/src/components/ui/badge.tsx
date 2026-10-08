@@ -13,6 +13,12 @@ const badgeVariants = cva(
         destructive:
           "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
         outline: "border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground",
+        // Tinted: a wash of the colour behind text in the colour, so a status
+        // reads at a glance without a block of solid colour in every row.
+        info: "border-primary/15 bg-primary/10 text-primary dark:bg-primary/15",
+        success: "border-success/15 bg-success/10 text-success dark:bg-success/15",
+        warning: "border-warning/20 bg-warning/12 text-warning dark:bg-warning/15",
+        plum: "border-plum/15 bg-plum/10 text-plum dark:bg-plum/15",
         ghost: "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
       },

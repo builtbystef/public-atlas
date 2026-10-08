@@ -1,3 +1,10 @@
+import {
+  BuildingIcon,
+  FlaskConicalIcon,
+  ListChecksIcon,
+  PlayIcon,
+  ShieldQuestionIcon,
+} from "lucide-react";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -57,25 +64,39 @@ async function Counts() {
         label="Runs"
         value={runs.total}
         href={paths.runs}
+        icon={<PlayIcon />}
         detail={latestRun ? `Latest: ${latestRun.name}` : "Start one from the runs page."}
       />
       <StatCard
         label="Assignments running"
         value={running.total}
         href={`${paths.assignments}?status=running`}
+        icon={<ListChecksIcon />}
+        detail={running.total === 0 ? "Nothing in flight right now." : "In flight right now."}
       />
       <StatCard
         label="Institutions"
         value={institutions.total}
         href={paths.institutions}
+        icon={<BuildingIcon />}
+        tone="success"
         detail={`${needsReview.total} awaiting review`}
       />
-      <StatCard label="Open review items" value={open.total} href={paths.review} />
+      <StatCard
+        label="Open review items"
+        value={open.total}
+        href={paths.review}
+        icon={<ShieldQuestionIcon />}
+        tone="warning"
+        detail={open.total === 0 ? "The queue is clear." : "Waiting on a decision."}
+      />
       <StatCard
         label="Eval runs"
         value={evalRuns.total}
         href={paths.evals}
-        detail={latestEval ? `Latest cost ${formatCost(latestEval.cost)}` : undefined}
+        icon={<FlaskConicalIcon />}
+        tone="plum"
+        detail={latestEval ? `Latest cost ${formatCost(latestEval.cost)}` : "None scored yet."}
       />
     </div>
   );

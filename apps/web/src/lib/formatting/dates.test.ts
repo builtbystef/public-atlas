@@ -3,6 +3,7 @@ import { expect, test } from "vite-plus/test";
 import {
   formatDate,
   formatDateTime,
+  formatDuration,
   formatRelativeDays,
   isBeforeToday,
   isoToWallClock,
@@ -66,4 +67,13 @@ test("relative days count whole days either way", () => {
   expect(formatRelativeDays(null, "UTC", now)).toBe("");
   expect(isBeforeToday(null, "UTC", now)).toBe(false);
   expect(isBeforeToday("2026-09-07T00:00:00Z", "UTC", now)).toBe(false);
+});
+
+test("durations between two instants", () => {
+  expect(formatDuration("2026-10-07T08:00:00Z", "2026-10-07T08:00:42Z")).toBe("42 s");
+  expect(formatDuration("2026-10-07T08:00:33Z", "2026-10-07T08:17:53Z")).toBe("17 min");
+  expect(formatDuration("2026-10-07T08:00:00Z", "2026-10-07T09:05:00Z")).toBe("1 h 5 min");
+  expect(formatDuration("2026-10-07T08:00:00Z", "2026-10-07T10:00:00Z")).toBe("2 h");
+  expect(formatDuration("2026-10-07T08:00:00Z", null)).toBe("");
+  expect(formatDuration("2026-10-07T08:00:00Z", "2026-10-07T07:00:00Z")).toBe("");
 });

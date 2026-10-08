@@ -30,7 +30,7 @@ export function ReviewKinds({ actions }: { actions: ReturnType<typeof useReviewA
     refetchInterval: REFRESH_MS,
   });
   if (kinds.length === 0) {
-    return <EmptyState>No shared questions are open.</EmptyState>;
+    return <EmptyState boxed>No shared questions are open.</EmptyState>;
   }
   return (
     <div className="grid gap-4 md:grid-cols-2">

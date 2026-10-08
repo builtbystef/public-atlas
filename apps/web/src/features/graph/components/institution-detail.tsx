@@ -203,7 +203,7 @@ export function InstitutionDetail({
       <section className="mt-8 flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Homepages</h3>
         {institution.homepages.length === 0 ? (
-          <EmptyState>No homepage claimed yet.</EmptyState>
+          <EmptyState boxed>No homepage claimed yet.</EmptyState>
         ) : (
           <div className="overflow-x-auto rounded-lg border">
             <Table>
@@ -262,7 +262,7 @@ export function InstitutionDetail({
       <section className="mt-8 flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Sources</h3>
         {sourcesByType.size === 0 ? (
-          <EmptyState>No sources saved yet.</EmptyState>
+          <EmptyState boxed>No sources saved yet.</EmptyState>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {[...sourcesByType.entries()].map(([sourceType, sources]) => (

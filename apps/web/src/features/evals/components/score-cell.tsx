@@ -10,7 +10,7 @@ export function ScoreCell({ value }: { value: number | null | undefined }) {
     <span
       className={cn(
         "tabular-nums",
-        value >= 0.9 ? "text-foreground" : value >= 0.7 ? "text-amber-600" : "text-destructive",
+        value >= 0.9 ? "text-success" : value >= 0.7 ? "text-warning" : "text-destructive",
       )}
     >
       {formatPercent(value)}

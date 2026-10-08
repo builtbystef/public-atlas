@@ -45,7 +45,7 @@ export function RunDetail({
           <span className="flex flex-wrap items-center gap-3">
             {run.name}
             <RunStatusBadge status={run.status} />
-            {run.is_eval && <Badge variant="outline">Eval</Badge>}
+            {run.is_eval && <Badge variant="plum">Eval</Badge>}
           </span>
         }
         description={`Created ${formatDateTime(run.created_at, timeZone)}`}

@@ -25,7 +25,7 @@ export function runColumns({ timeZone }: { timeZone: string }) {
           <Link href={paths.run(row.original.id)} className="font-medium hover:underline">
             {row.original.name}
           </Link>
-          {row.original.is_eval && <Badge variant="outline">Eval</Badge>}
+          {row.original.is_eval && <Badge variant="plum">Eval</Badge>}
           {row.original.record_video && <Badge variant="outline">Video</Badge>}
         </span>
       ),

@@ -28,7 +28,7 @@ export function reviewColumns({
       header: "Entity",
       enableSorting: false,
       cell: ({ row }) => (
-        <span className="flex flex-col gap-0.5">
+        <span className="flex min-w-48 flex-col gap-0.5 whitespace-normal">
           <Link
             href={paths.reviewItem(row.original.id)}
             className="line-clamp-2 max-w-sm font-medium break-all hover:underline"
@@ -45,7 +45,7 @@ export function reviewColumns({
       header: "Rule",
       enableSorting: false,
       cell: ({ row }) => (
-        <span className="flex flex-col gap-1">
+        <span className="flex min-w-36 flex-col gap-1 whitespace-normal">
           {labelOf(reviewRuleLabels, row.original.rule)}
           {row.original.kind && (
             <Badge variant="outline" className="w-fit font-mono text-[10px]">
@@ -61,7 +61,7 @@ export function reviewColumns({
       cell: ({ row }) => {
         const reasons = reasonsOf(row.original.question);
         return (
-          <ul className="flex max-w-md flex-col gap-0.5 text-sm text-muted-foreground">
+          <ul className="flex min-w-64 flex-col gap-0.5 text-sm whitespace-normal text-muted-foreground">
             {reasons.map((reason) => (
               <li key={reason} className="line-clamp-2">
                 {reason}
@@ -102,11 +102,12 @@ export function reviewColumns({
     }),
     column.display({
       id: "actions",
+      header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => {
         const item = row.original;
         if (item.status !== "open") return null;
         return (
-          <div className="flex justify-end gap-1">
+          <div className="flex justify-end gap-1.5">
             <Button size="sm" variant="outline" onClick={() => actions.approve(item)}>
               Approve
             </Button>
