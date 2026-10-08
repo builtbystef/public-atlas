@@ -626,6 +626,11 @@ def test_report_and_json_carry_the_totals_and_the_gates(rules: countries.Country
     assert document["files"]["fixture"]["measures"]["find_homepage"]["buckets"]["trap not met"] == 1
     # Three of four gated sources found: 75%, under the 90% floor.
     assert [gate["verdict"] for gate in document["gates"]] == ["fail", "fail", "fail"]
+    assert [gate["assignment_type"] for gate in document["gates"]] == [
+        "find_homepage",
+        "find_institutions",
+        "find_sources",
+    ]
 
 
 def test_a_tally_records_the_bucket_of_every_miss_and_false_positive(card: scorer.Scorecard):
@@ -636,7 +641,11 @@ def test_a_tally_records_the_bucket_of_every_miss_and_false_positive(card: score
         "institution not found",
         "expected reject, got confirm",
     }
-    assert all(set(entry) == {"line", "bucket", "group"} for entry in misses)
-    assert [entry["bucket"] for entry in tally.false_positives_json()] == [
-        "expected reject, got confirm"
+    assert all(set(entry) == {"kind", "line", "bucket", "group"} for entry in misses)
+    # A wrong decision is in both lists, and says so.
+    assert [(entry["kind"], entry["bucket"]) for entry in tally.false_positives_json()] == [
+        ("wrong", "expected reject, got confirm")
     ]
+    assert {entry["kind"] for entry in misses} == {"miss", "wrong"}
+    assert all(entry["kind"] == "hit" for entry in tally.hits_json())
+    assert len(tally.hits_json()) == tally.hits

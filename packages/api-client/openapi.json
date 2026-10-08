@@ -3959,6 +3959,47 @@
         ],
         "title": "EntityStatus"
       },
+      "EvalEntry": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "hit",
+              "miss",
+              "false_positive",
+              "wrong"
+            ],
+            "title": "Kind"
+          },
+          "line": {
+            "type": "string",
+            "title": "Line"
+          },
+          "bucket": {
+            "type": "string",
+            "title": "Bucket"
+          },
+          "group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Group"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "line",
+          "bucket"
+        ],
+        "title": "EvalEntry",
+        "description": "One judged thing (`scorer.Entry`): a hit, a miss, a false positive, or `wrong` (saved,\nbut not what the dataset expects: a miss and a false positive at once). The bucket says\nwhy it counts as it does; the group is what it is (an institution or source type, or\n`parent`, `homepage`, `domain`)."
+      },
       "EvalRunDetail": {
         "properties": {
           "id": {
@@ -4017,12 +4058,32 @@
             "title": "Summary",
             "default": {}
           },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateOutput"
+            },
+            "type": "array",
+            "title": "Gates",
+            "default": []
+          },
           "scores": {
             "items": {
               "$ref": "#/components/schemas/EvalScoreOutput"
             },
             "type": "array",
             "title": "Scores"
+          },
+          "previous_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Id"
           }
         },
         "type": "object",
@@ -4035,7 +4096,8 @@
           "cost",
           "started_at",
           "finished_at",
-          "scores"
+          "scores",
+          "previous_id"
         ],
         "title": "EvalRunDetail"
       },
@@ -4096,6 +4158,14 @@
             "type": "object",
             "title": "Summary",
             "default": {}
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateOutput"
+            },
+            "type": "array",
+            "title": "Gates",
+            "default": []
           }
         },
         "type": "object",
@@ -4147,18 +4217,30 @@
             ],
             "title": "Precision"
           },
+          "hits": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EvalEntry"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hits"
+          },
           "misses": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/EvalEntry"
             },
             "type": "array",
             "title": "Misses"
           },
           "false_positives": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/EvalEntry"
             },
             "type": "array",
             "title": "False Positives"
@@ -4171,6 +4253,7 @@
           "assignment_type",
           "recall",
           "precision",
+          "hits",
           "misses",
           "false_positives"
         ],
@@ -4431,6 +4514,86 @@
         ],
         "title": "FindingOutput",
         "description": "One thing the assignment saved, with the quote it gave for it."
+      },
+      "GateOutput": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "assignment_type": {
+            "$ref": "#/components/schemas/AssignmentType"
+          },
+          "what": {
+            "type": "string",
+            "title": "What"
+          },
+          "floor": {
+            "type": "number",
+            "title": "Floor"
+          },
+          "hits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hits"
+          },
+          "misses": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Misses"
+          },
+          "recall": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recall"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "pass",
+                  "fail"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "assignment_type",
+          "what",
+          "floor",
+          "hits",
+          "misses",
+          "recall",
+          "verdict"
+        ],
+        "title": "GateOutput",
+        "description": "A pilot target the run is judged on: a recall floor on one assignment type. Hits and\nmisses are null when the run was not judged on it: still running, or recorded before\ngates were kept, in which case the floor is today's. The verdict is null when there was\nnothing to judge."
       },
       "HTTPValidationError": {
         "properties": {
@@ -6423,16 +6586,38 @@
               }
             ],
             "title": "Mean Precision"
+          },
+          "hits": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hits"
+          },
+          "misses": {
+            "type": "integer",
+            "title": "Misses"
+          },
+          "false_positives": {
+            "type": "integer",
+            "title": "False Positives"
           }
         },
         "type": "object",
         "required": [
           "subjects",
           "mean_recall",
-          "mean_precision"
+          "mean_precision",
+          "hits",
+          "misses",
+          "false_positives"
         ],
         "title": "TypeSummary",
-        "description": "One assignment type's scores over the subjects of a run: how many subjects were judged\non it, and the mean of their recall and precision (unweighted: each subject counts once)."
+        "description": "One assignment type's scores over the subjects of a run: how many subjects were judged\non it, the mean of their recall and precision (unweighted: each subject counts once), and\nthe entries summed over them (hits null when no score kept them)."
       },
       "ValidationError": {
         "properties": {

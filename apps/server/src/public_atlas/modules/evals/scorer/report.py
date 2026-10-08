@@ -119,6 +119,18 @@ class GateResult:
             return "-"
         return "pass" if recall >= self.gate.floor else "fail"
 
+    def as_json(self) -> dict[str, Any]:
+        return {
+            "name": self.gate.name,
+            "assignment_type": self.gate.measure.value,
+            "what": self.gate.what(),
+            "floor": self.gate.floor,
+            "hits": self.hits,
+            "misses": self.misses,
+            "recall": self.recall,
+            "verdict": self.verdict,
+        }
+
     def render(self) -> str:
         return (
             f"   {self.gate.name}: {self.gate.what()} >= {self.gate.floor:.0%}: "
@@ -224,16 +236,5 @@ def as_json(cards: Sequence[Scorecard]) -> dict[str, Any]:
             for card in cards
         },
         "totals": {m.value: tally_json(t) for m, t in totals(cards).items()},
-        "gates": [
-            {
-                "name": result.gate.name,
-                "what": result.gate.what(),
-                "floor": result.gate.floor,
-                "hits": result.hits,
-                "misses": result.misses,
-                "recall": result.recall,
-                "verdict": result.verdict,
-            }
-            for result in gates(cards)
-        ],
+        "gates": [result.as_json() for result in gates(cards)],
     }

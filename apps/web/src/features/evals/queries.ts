@@ -10,6 +10,9 @@ export const evalKeys = {
   detail: (id: string) => [...evalKeys.all, "detail", id] as const,
 };
 
+/** The runs a run can be compared with: the newest, a page's worth. */
+export const COMPARE_ROWS = { limit: 100, offset: 0 } as const;
+
 /** Eval runs newest first, each with its mean scores per assignment type. */
 export function evalRunListQuery(api: ApiClient, page: ListPage) {
   return queryOptions({

@@ -48,7 +48,7 @@ class Entry:
         return f"{MARKS[self.kind]} {self.line}"
 
     def as_json(self) -> dict[str, Any]:
-        return {"line": self.line, "bucket": self.bucket, "group": self.group}
+        return {"kind": self.kind, "line": self.line, "bucket": self.bucket, "group": self.group}
 
 
 @dataclass(slots=True)
@@ -142,6 +142,9 @@ class Tally:
     def precision(self) -> float | None:
         total = self.hits + self.false_positives
         return self.hits / total if total else None
+
+    def hits_json(self) -> list[dict[str, Any]]:
+        return [entry.as_json() for entry in self.entries if entry.kind == "hit"]
 
     def misses_json(self) -> list[dict[str, Any]]:
         return [entry.as_json() for entry in self.entries if entry.counts_as_miss]

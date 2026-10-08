@@ -375,8 +375,8 @@ async def record_results(
     costs: Iterable[CostLine],
 ) -> list[EvalScore]:
     """The scores of `cards` as `eval_scores` rows, one per subject and assignment type that
-    had anything to judge, and the cost and the finish on the eval run. Flushed, not
-    committed."""
+    had anything to judge, and the gates, the cost and the finish on the eval run. Flushed,
+    not committed."""
     rows: list[EvalScore] = []
     for card in cards:
         for measure, tally in card.tallies.items():
@@ -389,11 +389,13 @@ async def record_results(
                     assignment_type=measure,
                     recall=tally.recall,
                     precision=tally.precision,
+                    hits=tally.hits_json(),
                     misses=tally.misses_json(),
                     false_positives=tally.false_positives_json(),
                 )
             )
     session.add_all(rows)
+    eval_run.gates = [result.as_json() for result in scorer.gates(cards)]
     eval_run.cost = sum((line.cost for line in costs), Decimal(0))
     eval_run.finished_at = utcnow()
     await session.flush()
@@ -434,16 +436,23 @@ async def _summaries(
             func.count(),
             func.avg(EvalScore.recall),
             func.avg(EvalScore.precision),
+            func.sum(func.jsonb_array_length(EvalScore.hits)),
+            func.sum(func.jsonb_array_length(EvalScore.misses)),
+            func.sum(func.jsonb_array_length(EvalScore.false_positives)),
         )
         .where(EvalScore.eval_run_id.in_(list(eval_run_ids)))
         .group_by(EvalScore.eval_run_id, EvalScore.assignment_type)
     )
     found: dict[uuid.UUID, dict[AssignmentType, TypeSummary]] = {}
-    for eval_run_id, assignment_type, subjects, recall, precision in rows.tuples():
+    for row in rows.tuples():
+        eval_run_id, assignment_type, subjects, recall, precision, hits, misses, wrong = row
         found.setdefault(eval_run_id, {})[AssignmentType(assignment_type)] = TypeSummary(
             subjects=int(subjects),
             mean_recall=float(recall) if recall is not None else None,
             mean_precision=float(precision) if precision is not None else None,
+            hits=int(hits) if hits is not None else None,
+            misses=int(misses or 0),
+            false_positives=int(wrong or 0),
         )
     return found
 
@@ -460,9 +469,16 @@ async def read_eval_run(session: AsyncSession, eval_run_id: uuid.UUID) -> EvalRu
     summaries = await _summaries(session, [eval_run_id])
     output = EvalRunOutput.model_validate(eval_run)
     output.summary = summaries.get(eval_run_id, {})
+    previous_id = await session.scalar(
+        select(EvalRun.id)
+        .where(EvalRun.finished_at.is_not(None), EvalRun.started_at < eval_run.started_at)
+        .order_by(EvalRun.started_at.desc(), EvalRun.id.desc())
+        .limit(1)
+    )
     return EvalRunDetail(
         **output.model_dump(),
         scores=[EvalScoreOutput.model_validate(row) for row in scores],
+        previous_id=previous_id,
     )
 
 

@@ -196,8 +196,8 @@ and sits with the import tables.
 | `review_items` | entity_id, rule, question (JSON: what the reviewer sees), kind (the shared question, when there is one), status (`open`, `approved`, `rejected`, `merged`), raised_by_assignment_id, decided_at, note |
 | `usage` | assignment_id, kind (`model`, `search`), provider, purpose, units (tokens or requests), cached_units, cost, at |
 | `agent_run_events` | assignment_id, session, position, kind (`prompt`, `text`, `tool_call`, `tool_result`, `video`), tool, content (JSON: the prompt, the model's words, the arguments, the result, or a storage key), at. Everything the agent saw, said and did, in order, written from the session's message list when it ends |
-| `eval_runs` | run_id, dataset_version, model, settings (JSON), cost, started_at, finished_at |
-| `eval_scores` | eval_run_id, subject, assignment_type, recall, precision, misses (JSON), false_positives (JSON) |
+| `eval_runs` | run_id, dataset_version, model, settings (JSON), cost, started_at, finished_at, gates (JSON) |
+| `eval_scores` | eval_run_id, subject, assignment_type, recall, precision, hits (JSON), misses (JSON), false_positives (JSON) |
 
 Assignment `status` is the lifecycle: `held`, `queued`, `running`, `finished`,
 `cancelled`. `result` says how a finished one ended: `complete`,

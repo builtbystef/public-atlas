@@ -10,6 +10,7 @@ import { formatCost } from "@/lib/formatting/money";
 import { assignmentTypeLabels, assignmentTypes } from "@/lib/labels";
 import { paths } from "@/lib/routes";
 
+import { floorsByType } from "../scores";
 import { ScoreCell } from "./score-cell";
 
 const column = createDataTableColumnHelper<EvalRunOutput>();
@@ -55,8 +56,11 @@ export function evalRunColumns({ timeZone }: { timeZone: string }) {
           const summary = row.original.summary[type];
           return (
             <span className="block text-right whitespace-nowrap">
-              <ScoreCell value={summary?.mean_recall} /> ·{" "}
-              <ScoreCell value={summary?.mean_precision} />
+              <ScoreCell
+                value={summary?.mean_recall}
+                floor={floorsByType(row.original.gates)[type]}
+              />{" "}
+              · <ScoreCell value={summary?.mean_precision} />
             </span>
           );
         },

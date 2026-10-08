@@ -1037,6 +1037,26 @@ export interface components {
          * @enum {string}
          */
         EntityStatus: "candidate" | "verified" | "rejected" | "needs_review";
+        /**
+         * EvalEntry
+         * @description One judged thing (`scorer.Entry`): a hit, a miss, a false positive, or `wrong` (saved,
+         *     but not what the dataset expects: a miss and a false positive at once). The bucket says
+         *     why it counts as it does; the group is what it is (an institution or source type, or
+         *     `parent`, `homepage`, `domain`).
+         */
+        EvalEntry: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "hit" | "miss" | "false_positive" | "wrong";
+            /** Line */
+            line: string;
+            /** Bucket */
+            bucket: string;
+            /** Group */
+            group?: string | null;
+        };
         /** EvalRunDetail */
         EvalRunDetail: {
             /**
@@ -1073,8 +1093,15 @@ export interface components {
             summary: {
                 [key: string]: components["schemas"]["TypeSummary"];
             };
+            /**
+             * Gates
+             * @default []
+             */
+            gates: components["schemas"]["GateOutput"][];
             /** Scores */
             scores: components["schemas"]["EvalScoreOutput"][];
+            /** Previous Id */
+            previous_id: string | null;
         };
         /** EvalRunOutput */
         EvalRunOutput: {
@@ -1112,6 +1139,11 @@ export interface components {
             summary: {
                 [key: string]: components["schemas"]["TypeSummary"];
             };
+            /**
+             * Gates
+             * @default []
+             */
+            gates: components["schemas"]["GateOutput"][];
         };
         /** EvalScoreOutput */
         EvalScoreOutput: {
@@ -1127,14 +1159,12 @@ export interface components {
             recall: number | null;
             /** Precision */
             precision: number | null;
+            /** Hits */
+            hits: components["schemas"]["EvalEntry"][] | null;
             /** Misses */
-            misses: {
-                [key: string]: unknown;
-            }[];
+            misses: components["schemas"]["EvalEntry"][];
             /** False Positives */
-            false_positives: {
-                [key: string]: unknown;
-            }[];
+            false_positives: components["schemas"]["EvalEntry"][];
         };
         /**
          * EventKind
@@ -1235,6 +1265,30 @@ export interface components {
             link_url: string | null;
             /** Snapshot Url */
             snapshot_url: string | null;
+        };
+        /**
+         * GateOutput
+         * @description A pilot target the run is judged on: a recall floor on one assignment type. Hits and
+         *     misses are null when the run was not judged on it: still running, or recorded before
+         *     gates were kept, in which case the floor is today's. The verdict is null when there was
+         *     nothing to judge.
+         */
+        GateOutput: {
+            /** Name */
+            name: string;
+            assignment_type: components["schemas"]["AssignmentType"];
+            /** What */
+            what: string;
+            /** Floor */
+            floor: number;
+            /** Hits */
+            hits: number | null;
+            /** Misses */
+            misses: number | null;
+            /** Recall */
+            recall: number | null;
+            /** Verdict */
+            verdict: ("pass" | "fail") | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1986,7 +2040,8 @@ export interface components {
         /**
          * TypeSummary
          * @description One assignment type's scores over the subjects of a run: how many subjects were judged
-         *     on it, and the mean of their recall and precision (unweighted: each subject counts once).
+         *     on it, the mean of their recall and precision (unweighted: each subject counts once), and
+         *     the entries summed over them (hits null when no score kept them).
          */
         TypeSummary: {
             /** Subjects */
@@ -1995,6 +2050,12 @@ export interface components {
             mean_recall: number | null;
             /** Mean Precision */
             mean_precision: number | null;
+            /** Hits */
+            hits: number | null;
+            /** Misses */
+            misses: number;
+            /** False Positives */
+            false_positives: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -2032,6 +2093,7 @@ export type DecisionOutput = components['schemas']['DecisionOutput'];
 export type EnteredBy = components['schemas']['EnteredBy'];
 export type EntityKind = components['schemas']['EntityKind'];
 export type EntityStatus = components['schemas']['EntityStatus'];
+export type EvalEntry = components['schemas']['EvalEntry'];
 export type EvalRunDetail = components['schemas']['EvalRunDetail'];
 export type EvalRunOutput = components['schemas']['EvalRunOutput'];
 export type EvalScoreOutput = components['schemas']['EvalScoreOutput'];
@@ -2039,6 +2101,7 @@ export type EventKind = components['schemas']['EventKind'];
 export type EventOutput = components['schemas']['EventOutput'];
 export type EvidenceOutput = components['schemas']['EvidenceOutput'];
 export type FindingOutput = components['schemas']['FindingOutput'];
+export type GateOutput = components['schemas']['GateOutput'];
 export type HttpValidationError = components['schemas']['HTTPValidationError'];
 export type Health = components['schemas']['Health'];
 export type HomepageOutput = components['schemas']['HomepageOutput'];

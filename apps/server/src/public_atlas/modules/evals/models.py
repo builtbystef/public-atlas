@@ -27,6 +27,9 @@ class EvalRun(UUIDPrimaryKey, Base):
     cost: Mapped[Decimal] = mapped_column(Numeric(12, 6))
     started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # The pilot's gates as the run was judged on them (`scorer.GateResult.as_json`); null until
+    # the run is scored, and on runs recorded before gates were kept.
+    gates: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB(none_as_null=True))
 
 
 class EvalScore(UUIDPrimaryKey, Base):
@@ -40,6 +43,8 @@ class EvalScore(UUIDPrimaryKey, Base):
     assignment_type: Mapped[AssignmentType] = checked_string(AssignmentType, "assignment_type")
     recall: Mapped[float | None]
     precision: Mapped[float | None]
-    # Every miss and every false positive, each with its bucket (`scorer.Entry`).
+    # Every hit, miss and false positive, each with its kind and bucket (`scorer.Entry`). A
+    # `wrong` entry is in both lists. Hits are null on scores recorded before they were kept.
+    hits: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB(none_as_null=True))
     misses: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)
     false_positives: Mapped[list[dict[str, Any]]] = mapped_column(JSONB)

@@ -1,48 +1,104 @@
-import type {
-  EvalRunDetail as EvalRunDetailOutput,
-  EvalScoreOutput,
-} from "@public-atlas/api-client";
-import Link from "next/link";
+"use client";
 
-import { Detail } from "@/components/shared/detail-list";
-import { EmptyState } from "@/components/shared/empty-state";
+import type { EvalRunDetail as EvalRunDetailOutput } from "@public-atlas/api-client";
+import { keepPreviousData, useQuery, useSuspenseQuery } from "@tanstack/react-query";
+import { ChevronDownIcon, InfoIcon, LoaderIcon } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+
 import { JsonView } from "@/components/shared/json-view";
 import { PageHeader } from "@/components/shared/layout/page-header";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { formatDateTime } from "@/lib/formatting/dates";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useUrlFilters } from "@/hooks/use-url-filters";
+import { browserApi } from "@/lib/api/client";
+import { formatDateTime, formatDuration } from "@/lib/formatting/dates";
 import { formatCost } from "@/lib/formatting/money";
-import { assignmentTypeLabels, assignmentTypes } from "@/lib/labels";
 import { paths } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
-import { ScoreCell } from "./score-cell";
+import { COMPARE_ROWS, evalRunListQuery, evalRunQuery } from "../queries";
+import {
+  NO_COMPARISON,
+  parseEvalRunSearch,
+  type EvalRunSearch,
+  type SubjectSort,
+} from "../schemas";
+import { floorsByType, isBelowTarget, sortRows, subjectRows } from "../scores";
+import { EvalScoreSheet } from "./eval-score-sheet";
+import { EvalScoresTable, type OpenScore } from "./eval-scores-table";
+import { EvalSummary, GatesVerdict } from "./eval-summary";
 
-interface Entry {
-  line?: unknown;
-  bucket?: unknown;
-  group?: unknown;
-}
+const REFRESH_MS = 15_000;
 
 /**
- * One eval run (spec section 10): the mean per assignment type, then every
- * subject's recall and precision with the misses and false positives
- * behind them, grouped by the bucket the scorer put each in.
+ * One eval run (spec section 10): whether it met the pilot's targets, the
+ * mean per assignment type, then each subject's recall and precision, all
+ * set against an earlier run (the one before, unless another is chosen).
+ * A score opens beside the table with the entries behind it. What is
+ * compared, the order, the filter and the open score live in the URL, so a
+ * view can be shared.
  */
-export function EvalRunDetail({ run, timeZone }: { run: EvalRunDetailOutput; timeZone: string }) {
-  const subjects = new Map<string, EvalScoreOutput[]>();
-  for (const score of run.scores) {
-    const list = subjects.get(score.subject) ?? [];
-    list.push(score);
-    subjects.set(score.subject, list);
-  }
+export function EvalRunDetail({
+  id,
+  initialSearch,
+  timeZone,
+}: {
+  id: string;
+  initialSearch: EvalRunSearch;
+  timeZone: string;
+}) {
+  const { data: run } = useSuspenseQuery({
+    ...evalRunQuery(browserApi, id),
+    refetchInterval: (query) => (query.state.data?.finished_at ? false : REFRESH_MS),
+  });
+  const [compare, setCompare] = useState(initialSearch.compare);
+  const [sort, setSort] = useState<SubjectSort>(initialSearch.sort ?? "lowest");
+  const [belowOnly, setBelowOnly] = useState(initialSearch.below === "1");
+  const [open, setOpen] = useState<OpenScore | null>(
+    initialSearch.subject && initialSearch.type
+      ? { subject: initialSearch.subject, type: initialSearch.type }
+      : null,
+  );
+  const baselineId = compare === NO_COMPARISON ? null : (compare ?? run.previous_id ?? null);
+  const baselineQuery = useQuery({
+    ...evalRunQuery(browserApi, baselineId ?? ""),
+    enabled: baselineId !== null,
+    placeholderData: keepPreviousData,
+  });
+  const baseline = baselineId !== null ? baselineQuery.data : undefined;
+  const { data: candidates } = useQuery(evalRunListQuery(browserApi, COMPARE_ROWS));
+
+  const floors = floorsByType(run.gates);
+  const all = subjectRows(run.scores, baseline?.scores);
+  const rows = sortRows(
+    belowOnly ? all.filter((row) => isBelowTarget(row, floors)) : all,
+    sort === "change" && !baseline ? "lowest" : sort,
+  );
+  const openRow = open ? all.find((row) => row.subject === open.subject) : undefined;
+  // A link to a score this run does not have opens nothing, and leaves the URL.
+  const shown = open && openRow?.scores[open.type] ? open : null;
+  useUrlFilters(
+    {
+      compare,
+      sort: sort === "lowest" ? undefined : sort,
+      below: belowOnly ? "1" : undefined,
+      subject: shown?.subject,
+      type: shown?.type,
+    },
+    parseEvalRunSearch,
+  );
+  // The subject above or below the open one in the table, scored on the same type.
+  const neighbour = (direction: 1 | -1): OpenScore | null => {
+    if (!shown) return null;
+    const scored = rows.filter((row) => row.scores[shown.type]);
+    const index = scored.findIndex((row) => row.subject === shown.subject);
+    const row = index < 0 ? undefined : scored[index + direction];
+    return row ? { subject: row.subject, type: shown.type } : null;
+  };
+  const subjects = Array.isArray(run.settings["subjects"]) ? run.settings["subjects"].length : 0;
 
   return (
     <>
@@ -50,182 +106,130 @@ export function EvalRunDetail({ run, timeZone }: { run: EvalRunDetailOutput; tim
         title={
           <span className="flex flex-wrap items-center gap-3">
             Eval run of {formatDateTime(run.started_at, timeZone)}
-            {!run.finished_at && <Badge variant="outline">Running</Badge>}
+            {run.finished_at ? (
+              <GatesVerdict gates={run.gates} />
+            ) : (
+              <Badge variant="outline">
+                <LoaderIcon className="animate-spin" /> Running
+              </Badge>
+            )}
           </span>
         }
-        description={`${run.model} on dataset ${run.dataset_version}`}
+        description={
+          <>
+            {run.model} · dataset <span className="font-mono text-xs">{run.dataset_version}</span>
+            {subjects > 0 && ` · ${subjects} ${subjects === 1 ? "subject" : "subjects"}`}
+            {run.finished_at && ` · took ${formatDuration(run.started_at, run.finished_at)}`} ·{" "}
+            {formatCost(run.cost)} ·{" "}
+            <Link href={paths.run(run.run_id)} className="underline-offset-3 hover:underline">
+              its run
+            </Link>
+          </>
+        }
+      >
+        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+          Compare with
+          <NativeSelect
+            value={baselineId ?? NO_COMPARISON}
+            onChange={(event) => setCompare(event.target.value)}
+          >
+            <NativeSelectOption value={NO_COMPARISON}>Nothing</NativeSelectOption>
+            {compareOptions(run, candidates?.items ?? [], baseline).map((option) => (
+              <NativeSelectOption key={option.id} value={option.id}>
+                {formatDateTime(option.started_at, timeZone)}
+                {option.id === run.previous_id && " (previous)"}
+                {option.dataset_version !== run.dataset_version && " · other dataset"}
+                {!option.finished_at && " · running"}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+        </label>
+      </PageHeader>
+
+      <div className="flex flex-col gap-4">
+        {!run.finished_at && (
+          <Alert>
+            <LoaderIcon className="animate-spin" />
+            <AlertTitle>This run is still going</AlertTitle>
+            <AlertDescription>
+              The subjects are worked in the eval database, and their scores are recorded together
+              when every one is done. This page refreshes until then.
+            </AlertDescription>
+          </Alert>
+        )}
+        {baseline && baseline.dataset_version !== run.dataset_version && (
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <InfoIcon className="size-4 shrink-0" />
+            The run compared with scored dataset{" "}
+            <span className="font-mono text-xs">{baseline.dataset_version}</span>: the labels
+            changed since, so some of the change is the dataset&apos;s.
+          </p>
+        )}
+        {baselineId !== null && baselineQuery.isError && (
+          <p className="text-sm text-destructive">The run to compare with could not be read.</p>
+        )}
+        <div className={cn(baselineQuery.isPlaceholderData && "opacity-60 transition-opacity")}>
+          <EvalSummary run={run} baseline={baseline} />
+        </div>
+      </div>
+
+      <section className="mt-8 flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h3 className="text-lg font-semibold">Scores by subject</h3>
+          <p className="text-sm text-muted-foreground">
+            Open a score to see what was found, missed and saved wrongly.
+            {baseline && " Arrows show the change in recall since the run compared with."}
+          </p>
+        </div>
+        <EvalScoresTable
+          rows={rows}
+          total={all.length}
+          floors={floors}
+          comparing={baseline !== undefined}
+          sort={sort}
+          onSortChange={setSort}
+          belowOnly={belowOnly}
+          onBelowOnlyChange={setBelowOnly}
+          open={shown}
+          onOpen={setOpen}
+          running={!run.finished_at}
+        />
+      </section>
+
+      <Collapsible className="mt-8 flex flex-col gap-3">
+        <CollapsibleTrigger className="group flex w-fit items-center gap-1.5 text-sm font-medium hover:underline">
+          <ChevronDownIcon className="size-4 transition-transform group-data-[panel-open]:rotate-180" />
+          Settings the run was started with
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <JsonView value={run.settings} />
+        </CollapsibleContent>
+      </Collapsible>
+
+      <EvalScoreSheet
+        open={shown}
+        score={shown ? openRow?.scores[shown.type] : undefined}
+        baseline={shown ? openRow?.baseline[shown.type] : undefined}
+        floor={shown ? floors[shown.type] : undefined}
+        previous={neighbour(-1)}
+        next={neighbour(1)}
+        onOpen={setOpen}
+        onClose={() => setOpen(null)}
       />
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {assignmentTypes.map((type) => {
-          const summary = run.summary[type];
-          return (
-            <Card key={type}>
-              <CardHeader>
-                <CardDescription>{assignmentTypeLabels[type]}</CardDescription>
-                <CardTitle className="text-2xl">
-                  <ScoreCell value={summary?.mean_recall} />
-                  <span className="text-base font-normal text-muted-foreground"> recall</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                <ScoreCell value={summary?.mean_precision} /> precision over{" "}
-                {summary?.subjects ?? 0} {summary?.subjects === 1 ? "subject" : "subjects"}
-              </CardContent>
-            </Card>
-          );
-        })}
-        <Card>
-          <CardHeader>
-            <CardDescription>Cost</CardDescription>
-            <CardTitle className="text-2xl tabular-nums">{formatCost(run.cost)}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            {run.finished_at
-              ? `Finished ${formatDateTime(run.finished_at, timeZone)}`
-              : "Still running"}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Scores by subject</CardTitle>
-            <CardDescription>
-              Open a row to see what was missed and what was saved wrongly.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {subjects.size === 0 ? (
-              <EmptyState>No scores yet.</EmptyState>
-            ) : (
-              <div className="overflow-x-auto rounded-lg border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Subject</TableHead>
-                      <TableHead>Assignment type</TableHead>
-                      <TableHead className="text-right">Recall</TableHead>
-                      <TableHead className="text-right">Precision</TableHead>
-                      <TableHead className="text-right">Misses</TableHead>
-                      <TableHead className="text-right">False positives</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {[...subjects.entries()].flatMap(([subject, scores]) =>
-                      scores.map((score, index) => (
-                        <ScoreRow
-                          key={score.id}
-                          score={score}
-                          subject={index === 0 ? subject : null}
-                        />
-                      )),
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Run</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <dl className="flex flex-col gap-3 text-sm">
-              <Detail label="Run">
-                <Link href={paths.run(run.run_id)} className="font-mono text-xs hover:underline">
-                  {run.run_id}
-                </Link>
-              </Detail>
-              <Detail label="Model">{run.model}</Detail>
-              <Detail label="Dataset">{run.dataset_version}</Detail>
-              <Detail label="Started">{formatDateTime(run.started_at, timeZone)}</Detail>
-              <Detail label="Finished">{formatDateTime(run.finished_at, timeZone)}</Detail>
-            </dl>
-            <div className="flex flex-col gap-1">
-              <h4 className="text-xs font-medium text-muted-foreground uppercase">Settings</h4>
-              <JsonView value={run.settings} />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </>
   );
 }
 
-function ScoreRow({ score, subject }: { score: EvalScoreOutput; subject: string | null }) {
-  const misses = score.misses as Entry[];
-  const falsePositives = score.false_positives as Entry[];
-  const open = misses.length > 0 || falsePositives.length > 0;
-  return (
-    <>
-      <TableRow>
-        <TableCell className="font-medium">{subject ?? ""}</TableCell>
-        <TableCell>{assignmentTypeLabels[score.assignment_type]}</TableCell>
-        <TableCell className="text-right">
-          <ScoreCell value={score.recall} />
-        </TableCell>
-        <TableCell className="text-right">
-          <ScoreCell value={score.precision} />
-        </TableCell>
-        <TableCell className="text-right tabular-nums">{misses.length}</TableCell>
-        <TableCell className="text-right tabular-nums">{falsePositives.length}</TableCell>
-      </TableRow>
-      {open && (
-        <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={6} className="p-0">
-            <details className="group">
-              <summary className="cursor-pointer px-3 py-2 text-xs text-muted-foreground select-none hover:text-foreground">
-                Show the misses and false positives
-              </summary>
-              <div className="grid gap-4 px-3 pb-3 md:grid-cols-2">
-                <EntryList title="Missed" entries={misses} />
-                <EntryList title="Saved wrongly" entries={falsePositives} />
-              </div>
-            </details>
-          </TableCell>
-        </TableRow>
-      )}
-    </>
-  );
-}
-
-function EntryList({ title, entries }: { title: string; entries: Entry[] }) {
-  const buckets = new Map<string, Entry[]>();
-  for (const entry of entries) {
-    const bucket = typeof entry.bucket === "string" ? entry.bucket : "other";
-    const list = buckets.get(bucket) ?? [];
-    list.push(entry);
-    buckets.set(bucket, list);
-  }
-  return (
-    <div className="flex flex-col gap-2 text-sm">
-      <h4 className="font-medium">
-        {title} <span className="text-muted-foreground">({entries.length})</span>
-      </h4>
-      {entries.length === 0 ? (
-        <EmptyState>None.</EmptyState>
-      ) : (
-        [...buckets.entries()].map(([bucket, list]) => (
-          <div key={bucket} className="flex flex-col gap-1">
-            <p className="text-xs text-muted-foreground">
-              {bucket} · {list.length}
-            </p>
-            <ul className="flex list-disc flex-col gap-0.5 pl-5">
-              {list.map((entry, index) => (
-                <li key={index} className="break-words">
-                  {typeof entry.line === "string" ? entry.line : JSON.stringify(entry.line)}
-                  {typeof entry.group === "string" && (
-                    <span className="ml-1 text-xs text-muted-foreground">({entry.group})</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
-      )}
-    </div>
-  );
+/**
+ * The runs this one can be compared with: the others listed, newest first,
+ * and the one compared with now even when it is too old to be listed.
+ */
+function compareOptions(
+  run: EvalRunDetailOutput,
+  listed: { id: string; started_at: string; dataset_version: string; finished_at: string | null }[],
+  baseline: EvalRunDetailOutput | undefined,
+) {
+  const options = listed.filter((other) => other.id !== run.id);
+  if (baseline && !options.some((other) => other.id === baseline.id)) options.push(baseline);
+  return options;
 }

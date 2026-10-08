@@ -433,14 +433,27 @@ def test_results_are_recorded_and_read_back(
     assert detail.finished_at is not None
     by_type = {score.assignment_type: score for score in detail.scores}
     assert by_type[FIND_INSTITUTIONS].recall == 0
-    assert {entry["bucket"] for entry in by_type[FIND_INSTITUTIONS].misses} == {
+    assert {entry.bucket for entry in by_type[FIND_INSTITUTIONS].misses} == {
         "not found",
         "institution not found",
     }
     assert by_type[FIND_SOURCES].precision is None  # nothing saved, nothing wrong
+    # Hits are kept beside the misses, every entry with its kind.
+    institutions = by_type[FIND_INSTITUTIONS]
+    assert institutions.hits is not None
+    assert {entry.kind for entry in institutions.hits} <= {"hit"}
+    assert {entry.kind for entry in institutions.misses} <= {"miss", "wrong"}
+    # The gates the run was judged on: a subject file only, so no list file for homepages.
+    assert [(gate.name, gate.verdict) for gate in detail.gates] == [
+        ("homepages", None),
+        ("institutions", "fail"),
+        ("sources", "fail"),
+    ]
+    assert detail.gates[1].hits == 0
+    assert detail.previous_id is None
     listed = client.get("/eval-runs").json()
     assert [row["id"] for row in listed["items"]] == [str(eval_run_id)]
-    assert [entry["bucket"] for entry in by_type[FIND_HOMEPAGE].misses] == ["institution not found"]
+    assert [entry.bucket for entry in by_type[FIND_HOMEPAGE].misses] == ["institution not found"]
     page = client.get(f"/eval-runs/{eval_run_id}").json()
     assert len(page["scores"]) == 3
     # The per-type means the console shows, on the list and the detail alike.
@@ -448,9 +461,51 @@ def test_results_are_recorded_and_read_back(
         "subjects": 1,
         "mean_recall": 0.0,
         "mean_precision": None,
+        "hits": len(institutions.hits),
+        "misses": len(institutions.misses),
+        "false_positives": len(institutions.false_positives),
     }
     assert listed["items"][0]["summary"] == page["summary"]
+    assert listed["items"][0]["gates"] == page["gates"]
     assert client.get(f"/eval-runs/{uuid.uuid4()}").status_code == 404
+
+    async def record_later(session: AsyncSession) -> uuid.UUID:
+        # A run from before hits and gates were kept, started after the first.
+        eval_run = EvalRun(
+            run_id=world.run.id,
+            dataset_version="older",
+            model="scripted",
+            settings={},
+            cost=Decimal(0),
+            started_at=datetime.now(UTC),
+        )
+        session.add(eval_run)
+        await session.flush()
+        session.add(
+            EvalScore(
+                eval_run_id=eval_run.id,
+                subject="fixture",
+                assignment_type=FIND_SOURCES,
+                recall=0.5,
+                precision=None,
+                hits=None,
+                misses=[{"kind": "miss", "line": "a", "bucket": "not found", "group": None}],
+                false_positives=[],
+            )
+        )
+        return eval_run.id
+
+    later_id = in_session(record_later)
+    later = client.get(f"/eval-runs/{later_id}").json()
+    # Unfinished runs are not compared against; the first, finished, is.
+    assert later["previous_id"] == str(eval_run_id)
+    assert later["summary"]["find_sources"]["hits"] is None
+    # No gates were recorded: today's floors, unjudged.
+    assert [(gate["floor"], gate["verdict"], gate["hits"]) for gate in later["gates"]] == [
+        (0.99, None, None),
+        (0.95, None, None),
+        (0.9, None, None),
+    ]
 
 
 def test_progress_and_cost_lines(
