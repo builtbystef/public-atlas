@@ -3,11 +3,13 @@
 import type { QueryKey } from "@tanstack/react-query";
 import type { ComponentProps } from "react";
 
+import { ChipInput } from "@/components/shared/chip-input";
 import {
   EntityCombobox,
   type EntityComboboxProps,
   type EntityOption,
 } from "@/components/shared/entity-combobox";
+import { MultiCombobox, type MultiComboboxOption } from "@/components/shared/multi-combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -23,7 +25,7 @@ import { useFieldContext } from "./contexts";
 
 interface CommonProps {
   label: string;
-  description?: string;
+  description?: string | undefined;
   /** Marks the label; validation itself is the schema's job. */
   required?: boolean;
 }
@@ -103,9 +105,72 @@ export function TextareaField({
   );
 }
 
+/** A list of words entered as chips; the value is the list. */
+export function ChipsField({
+  label,
+  description,
+  required = false,
+  placeholder,
+}: CommonProps & { placeholder?: string }) {
+  const field = useFieldContext<string[]>();
+  const invalid = field.state.meta.isTouched && !field.state.meta.isValid;
+  return (
+    <Field data-invalid={invalid}>
+      <FieldLabel htmlFor={field.name}>
+        {label}
+        {required && <RequiredMark />}
+      </FieldLabel>
+      <ChipInput
+        id={field.name}
+        value={field.state.value}
+        onChange={field.handleChange}
+        onBlur={field.handleBlur}
+        placeholder={placeholder}
+        invalid={invalid}
+      />
+      {description && <FieldDescription>{description}</FieldDescription>}
+      {invalid && <FieldError errors={field.state.meta.errors} />}
+    </Field>
+  );
+}
+
 export interface SelectOption {
   value: string;
   label: string;
+}
+
+/** Several options picked from a searchable list, shown as chips; the value is the list. */
+export function MultiSelectField({
+  label,
+  description,
+  required = false,
+  options,
+  placeholder,
+}: CommonProps & {
+  options: readonly MultiComboboxOption[];
+  placeholder?: string | undefined;
+}) {
+  const field = useFieldContext<string[]>();
+  const invalid = field.state.meta.isTouched && !field.state.meta.isValid;
+  return (
+    <Field data-invalid={invalid}>
+      <FieldLabel htmlFor={field.name}>
+        {label}
+        {required && <RequiredMark />}
+      </FieldLabel>
+      <MultiCombobox
+        id={field.name}
+        options={options}
+        value={field.state.value}
+        onValueChange={field.handleChange}
+        onBlur={field.handleBlur}
+        placeholder={placeholder}
+        invalid={invalid}
+      />
+      {description && <FieldDescription>{description}</FieldDescription>}
+      {invalid && <FieldError errors={field.state.meta.errors} />}
+    </Field>
+  );
 }
 
 export function SelectField({

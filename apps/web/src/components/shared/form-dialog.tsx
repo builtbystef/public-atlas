@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 /** A dialog around a `useAppForm` form: title, fields, cancel and submit. */
 export function FormDialog({
@@ -24,6 +25,7 @@ export function FormDialog({
   form,
   serverError,
   submit,
+  className,
   children,
 }: {
   open: boolean;
@@ -34,11 +36,13 @@ export function FormDialog({
   serverError: string | null;
   /** The submit button, rendered by the caller so it is bound to its form. */
   submit: ReactNode;
+  /** For the dialog box: a wider one than `sm:max-w-lg`. */
+  className?: string;
   children: ReactNode;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90svh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className={cn("max-h-[90svh] overflow-y-auto sm:max-w-lg", className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}

@@ -6,12 +6,14 @@ Seeding adds what is missing and never deletes or rewrites, so an edit made in t
 survives a reseed.
 """
 
+import re
 from dataclasses import dataclass, fields
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from public_atlas.modules.countries.models import (
     AdministrativeLevel,
@@ -20,6 +22,7 @@ from public_atlas.modules.countries.models import (
     InstitutionType,
     SourceType,
 )
+from public_atlas.modules.countries.naming import Naming
 from public_atlas.modules.countries.rules import CountryRules, build_rules
 from public_atlas.modules.countries.schemas import (
     AdministrativeLevelInput,
@@ -28,6 +31,10 @@ from public_atlas.modules.countries.schemas import (
     CountrySeed,
     CountrySettingsInput,
     InstitutionTypeInput,
+    NamePatternCheck,
+    NamePatternMiss,
+    NamingPreview,
+    NamingPreviewInput,
     PlaceSeed,
     SharedSeed,
     SourceTypeInput,
@@ -35,12 +42,21 @@ from public_atlas.modules.countries.schemas import (
 from public_atlas.modules.countries.seeds import shared as shared_seed
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
-from public_atlas.modules.graph.models import Domain, DomainKind, EnteredBy, Institution, Place
+from public_atlas.modules.graph.models import (
+    Domain,
+    DomainKind,
+    EnteredBy,
+    EntityStatus,
+    Institution,
+    Place,
+)
 from public_atlas.shared.exceptions import ConflictError, NotFoundError, UnprocessableError
 
 __all__ = [
     "CountryRules",
     "SeedReport",
+    "check_name_pattern",
+    "default_expected_source_types",
     "delete_administrative_level",
     "delete_country_institution_type",
     "delete_institution_type",
@@ -49,6 +65,7 @@ __all__ = [
     "list_institution_types",
     "list_source_types",
     "load_rules",
+    "preview_naming",
     "put_administrative_level",
     "put_country_institution_type",
     "put_country_settings",
@@ -271,6 +288,77 @@ def rules_from_seed(country: dict[str, Any]) -> CountryRules:
 async def list_countries(session: AsyncSession) -> list[CountrySettingsInput]:
     rows = await session.scalars(select(CountrySettings).order_by(CountrySettings.country_code))
     return [CountrySettingsInput.model_validate(row, from_attributes=True) for row in rows]
+
+
+async def default_expected_source_types(session: AsyncSession) -> dict[str, list[str]]:
+    """The sources a country expects per type unless it says otherwise (the shared seed's
+    defaults), kept to the types and sources the tables hold now: a console edit may have
+    renamed or deleted one the seed names."""
+    types = set(await session.scalars(select(InstitutionType.name)))
+    sources = set(await session.scalars(select(SourceType.name)))
+    return {
+        institution_type: [source for source in expected if source in sources]
+        for institution_type, expected in shared_seed.DEFAULT_EXPECTED_SOURCE_TYPES.items()
+        if institution_type in types
+    }
+
+
+def preview_naming(data: NamingPreviewInput) -> list[NamingPreview]:
+    """How rules not yet saved read each name: the place name inside it, the designators it
+    uses, and the forms it is compared in."""
+    naming = Naming(data.naming_rules)
+    return [
+        NamingPreview(
+            name=name,
+            core=naming.core(name),
+            designator_groups=sorted(naming.designators_in(name)),
+            forms=sorted(naming.forms(name)),
+        )
+        for name in data.names
+    ]
+
+
+# How many of a name pattern's misses the check lists.
+PATTERN_MISSES_SHOWN = 25
+
+
+async def check_name_pattern(
+    session: AsyncSession, country_code: str, institution_type: str, name_pattern: str
+) -> NamePatternCheck:
+    """A name pattern tried on the country's institutions of the type, as `CountryRules`
+    applies it: searched, case-insensitively. The type need not be one the country uses yet."""
+    await _settings(session, country_code)
+    try:
+        pattern = re.compile(name_pattern, re.IGNORECASE)
+    except re.error as exc:
+        return NamePatternCheck(
+            error=f"not a regular expression: {exc}", total=0, matching=0, misses=[]
+        )
+    place = aliased(Place, flat=True)
+    rows = (
+        await session.execute(
+            select(Institution.id, Institution.name)
+            .join(place, place.id == Institution.place_id)
+            .where(
+                place.country_code == country_code,
+                Institution.institution_type == institution_type,
+                Institution.status != EntityStatus.REJECTED,
+            )
+            .order_by(Institution.name, Institution.id)
+        )
+    ).tuples()
+    misses: list[NamePatternMiss] = []
+    total = 0
+    for institution_id, name in rows:
+        total += 1
+        if pattern.search(name) is None:
+            misses.append(NamePatternMiss(id=institution_id, name=name))
+    return NamePatternCheck(
+        error=None,
+        total=total,
+        matching=total - len(misses),
+        misses=misses[:PATTERN_MISSES_SHOWN],
+    )
 
 
 async def read_country(session: AsyncSession, country_code: str) -> CountryOutput:

@@ -76,6 +76,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/naming-rules/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Naming
+         * @description How naming rules, saved or not, read some names: what the console shows while the rules
+         *     are edited. Nothing is written.
+         */
+        post: operations["countries-preview_naming"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/countries/{country_code}": {
         parameters: {
             query?: never;
@@ -151,6 +172,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/countries/{country_code}/institution-types/{institution_type}/name-pattern-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Name Pattern
+         * @description Try a name pattern, saved or not, on the country's institutions of the type: how many
+         *     match and which would go to review. Nothing is written.
+         */
+        post: operations["countries-check_name_pattern"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/institution-types": {
         parameters: {
             query?: never;
@@ -163,6 +205,27 @@ export interface paths {
          * @description Global: one `hospital` for every country.
          */
         get: operations["countries-list_institution_types"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/default-expected-source-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Default Expected Source Types
+         * @description The sources a country expects per institution type unless it says otherwise: what a type
+         *     newly added to a country starts with.
+         */
+        get: operations["countries-default_expected_source_types"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1391,6 +1454,59 @@ export interface components {
             value: string;
         };
         /**
+         * NamePatternCheck
+         * @description A name pattern tried on the country's institutions of a type. An invalid pattern is an
+         *     answer, not a failed request: the console shows `error` as the pattern is typed.
+         */
+        NamePatternCheck: {
+            /** Error */
+            error: string | null;
+            /** Total */
+            total: number;
+            /** Matching */
+            matching: number;
+            /** Misses */
+            misses: components["schemas"]["NamePatternMiss"][];
+        };
+        /** NamePatternCheckInput */
+        NamePatternCheckInput: {
+            /** Name Pattern */
+            name_pattern: string;
+        };
+        /** NamePatternMiss */
+        NamePatternMiss: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /**
+         * NamingPreview
+         * @description How the rules read one name.
+         */
+        NamingPreview: {
+            /** Name */
+            name: string;
+            /** Core */
+            core: string;
+            /** Designator Groups */
+            designator_groups: number[];
+            /** Forms */
+            forms: string[];
+        };
+        /**
+         * NamingPreviewInput
+         * @description Rules as the form holds them, saved or not, and the names to read with them.
+         */
+        NamingPreviewInput: {
+            naming_rules: components["schemas"]["NamingRules"];
+            /** Names */
+            names: string[];
+        };
+        /**
          * NamingRules
          * @description How the country writes its public bodies' names, in its languages. A government's name is
          *     a place name with a designator around it ("Township of Elmwood", "Elmwood, Township of");
@@ -1935,6 +2051,11 @@ export type KindDecisionOutput = components['schemas']['KindDecisionOutput'];
 export type KindOutput = components['schemas']['KindOutput'];
 export type MergeInput = components['schemas']['MergeInput'];
 export type MetricOutput = components['schemas']['MetricOutput'];
+export type NamePatternCheck = components['schemas']['NamePatternCheck'];
+export type NamePatternCheckInput = components['schemas']['NamePatternCheckInput'];
+export type NamePatternMiss = components['schemas']['NamePatternMiss'];
+export type NamingPreview = components['schemas']['NamingPreview'];
+export type NamingPreviewInput = components['schemas']['NamingPreviewInput'];
 export type NamingRules = components['schemas']['NamingRules'];
 export type PageAssignmentOutput = components['schemas']['Page_AssignmentOutput_'];
 export type PageEvalRunOutput = components['schemas']['Page_EvalRunOutput_'];
@@ -2058,6 +2179,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CountrySettingsInput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "countries-preview_naming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NamingPreviewInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NamingPreview"][];
                 };
             };
             /** @description Validation Error */
@@ -2287,6 +2441,45 @@ export interface operations {
             };
         };
     };
+    "countries-check_name_pattern": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path: {
+                country_code: string;
+                institution_type: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NamePatternCheckInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NamePatternCheck"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     "countries-list_institution_types": {
         parameters: {
             query?: never;
@@ -2306,6 +2499,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InstitutionTypeInput"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    "countries-default_expected_source_types": {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description `main` (the default) or `eval`: which database the request reads. */
+                "x-database"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string[];
+                    };
                 };
             };
             /** @description Validation Error */

@@ -206,3 +206,65 @@ def test_renaming_a_source_type_rewrites_the_expected_sources(client: TestClient
         client.put("/source-types/nope", json={"name": "budget", "description": "x"}).status_code
         == 404
     )
+
+
+def test_default_sources_are_the_shared_seeds(client: TestClient, db: Database):
+    db.run(seed, db)
+    defaults = client.get("/default-expected-source-types").json()
+    assert defaults["hospital"] == shared.DEFAULT_EXPECTED_SOURCE_TYPES["hospital"]
+    # A source deleted from the tables is left out of the defaults. The country stops
+    # expecting it first, or the delete is refused.
+    for row in client.get("/countries/CA").json()["institution_types"]:
+        kept = [source for source in row["expected_source_types"] if source != "news"]
+        path = f"/countries/CA/institution-types/{row['institution_type']}"
+        assert client.put(path, json={**row, "expected_source_types": kept}).status_code == 200
+    assert client.delete("/source-types/news").status_code == 204
+    defaults = client.get("/default-expected-source-types").json()
+    assert all("news" not in sources for sources in defaults.values())
+
+
+def test_naming_rules_are_previewed_unsaved(client: TestClient):
+    rules = canada.SETTINGS["naming_rules"]
+    names = ["The Corporation of the Township of Elmwood", "Elmwood, Township of", "Ville de Laval"]
+    response = client.post("/naming-rules/preview", json={"naming_rules": rules, "names": names})
+    assert response.status_code == 200
+    township = next(i for i, group in enumerate(rules["designators"]) if group[0] == "Township")
+    first, second, third = response.json()
+    assert first["core"] == second["core"] == "elmwood"
+    assert first["designator_groups"] == second["designator_groups"] == [township]
+    assert "elmwood" in first["forms"]
+    # "Ville" is a city and a town.
+    assert len(third["designator_groups"]) == 2
+    # Rules the form has not saved are read as given.
+    response = client.post(
+        "/naming-rules/preview",
+        json={"naming_rules": {"designators": [["Hamlet"]], "connectors": ["of"]}, "names": names},
+    )
+    assert [row["designator_groups"] for row in response.json()] == [[], [], []]
+    assert (
+        client.post("/naming-rules/preview", json={"naming_rules": {}, "names": []}).status_code
+        == 422
+    )
+
+
+def test_a_name_pattern_is_tried_on_the_countrys_institutions(client: TestClient, db: Database):
+    db.run(seed, db)
+    url = "/countries/CA/institution-types/provincial_government/name-pattern-check"
+
+    # Searched case-insensitively, as the rules apply it.
+    check = client.post(url, json={"name_pattern": "^government of"}).json()
+    assert check == {"error": None, "total": 1, "matching": 1, "misses": []}
+
+    check = client.post(url, json={"name_pattern": "^Ministry of"}).json()
+    assert (check["total"], check["matching"]) == (1, 0)
+    assert [miss["name"] for miss in check["misses"]] == ["Government of Ontario"]
+
+    check = client.post(url, json={"name_pattern": "("}).json()
+    assert check["error"].startswith("not a regular expression")
+
+    # A type no institution has yet is an empty answer, not an error.
+    zoo = client.post(
+        "/countries/CA/institution-types/hospital/name-pattern-check", json={"name_pattern": "x"}
+    ).json()
+    assert (zoo["total"], zoo["error"]) == (0, None)
+    assert client.post(url.replace("/CA/", "/XX/"), json={"name_pattern": "x"}).status_code == 404

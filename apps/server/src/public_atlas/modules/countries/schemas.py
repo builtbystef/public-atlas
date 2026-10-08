@@ -3,6 +3,7 @@ validated. The schema lives here once: a seed module is a plain dictionary check
 models an edit from the console goes through."""
 
 import re
+import uuid
 from typing import Annotated, Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -111,6 +112,54 @@ class CountryOutput(BaseModel):
     settings: CountrySettingsInput
     administrative_levels: list[AdministrativeLevelInput]
     institution_types: list[CountryInstitutionTypeInput]
+
+
+# --- Previews: what an unsaved edit would do ---
+
+
+class NamingPreviewInput(BaseModel):
+    """Rules as the form holds them, saved or not, and the names to read with them."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    naming_rules: NamingRules
+    names: list[Annotated[str, Field(min_length=1, max_length=300)]] = Field(
+        min_length=1, max_length=20
+    )
+
+
+class NamingPreview(BaseModel):
+    """How the rules read one name."""
+
+    name: str
+    # The place name inside it: "Township of Elmwood" and "Elmwood, Township of" are "elmwood".
+    core: str
+    # The positions in `naming_rules.designators` of the groups whose words the name uses.
+    designator_groups: list[int]
+    # Every form the name is compared in; two names are one when they share a form.
+    forms: list[str]
+
+
+class NamePatternCheckInput(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name_pattern: str = Field(min_length=1)
+
+
+class NamePatternMiss(BaseModel):
+    id: uuid.UUID
+    name: str
+
+
+class NamePatternCheck(BaseModel):
+    """A name pattern tried on the country's institutions of a type. An invalid pattern is an
+    answer, not a failed request: the console shows `error` as the pattern is typed."""
+
+    error: str | None
+    total: int
+    matching: int
+    # The first misses by name, each a body the pattern would send to review.
+    misses: list[NamePatternMiss]
 
 
 # --- Seeds (spec section 5.1) ---

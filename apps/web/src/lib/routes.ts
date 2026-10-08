@@ -21,7 +21,10 @@ export const paths = {
   review: "/review",
   reviewItem: (id: string) => `/review/${id}` as const,
   countries: "/countries",
+  /** A country's naming rules; its other tables are pages beside them. */
   country: (code: string) => `/countries/${code}` as const,
+  countryLevels: (code: string) => `/countries/${code}/levels` as const,
+  countryInstitutionTypes: (code: string) => `/countries/${code}/institution-types` as const,
   evals: "/evals",
   evalRun: (id: string) => `/evals/${id}` as const,
   settings: "/settings",

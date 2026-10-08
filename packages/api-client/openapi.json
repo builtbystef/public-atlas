@@ -156,6 +156,52 @@
         }
       }
     },
+    "/naming-rules/preview": {
+      "post": {
+        "tags": [
+          "countries"
+        ],
+        "summary": "Preview Naming",
+        "description": "How naming rules, saved or not, read some names: what the console shows while the rules\nare edited. Nothing is written.",
+        "operationId": "countries-preview_naming",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NamingPreviewInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NamingPreview"
+                  },
+                  "type": "array",
+                  "title": "Response Countries-Preview Naming"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/countries/{country_code}": {
       "get": {
         "tags": [
@@ -568,6 +614,86 @@
         }
       }
     },
+    "/countries/{country_code}/institution-types/{institution_type}/name-pattern-check": {
+      "post": {
+        "tags": [
+          "countries"
+        ],
+        "summary": "Check Name Pattern",
+        "description": "Try a name pattern, saved or not, on the country's institutions of the type: how many\nmatch and which would go to review. Nothing is written.",
+        "operationId": "countries-check_name_pattern",
+        "parameters": [
+          {
+            "name": "country_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Country Code"
+            }
+          },
+          {
+            "name": "institution_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Institution Type"
+            }
+          },
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NamePatternCheckInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NamePatternCheck"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/institution-types": {
       "get": {
         "tags": [
@@ -607,6 +733,65 @@
                     "$ref": "#/components/schemas/InstitutionTypeInput"
                   },
                   "title": "Response Countries-List Institution Types"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/default-expected-source-types": {
+      "get": {
+        "tags": [
+          "countries"
+        ],
+        "summary": "Default Expected Source Types",
+        "description": "The sources a country expects per institution type unless it says otherwise: what a type\nnewly added to a country starts with.",
+        "operationId": "countries-default_expected_source_types",
+        "parameters": [
+          {
+            "name": "x-database",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`main` (the default) or `eval`: which database the request reads.",
+              "title": "X-Database"
+            },
+            "description": "`main` (the default) or `eval`: which database the request reads."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "Response Countries-Default Expected Source Types"
                 }
               }
             }
@@ -4935,6 +5120,140 @@
           "value"
         ],
         "title": "MetricOutput"
+      },
+      "NamePatternCheck": {
+        "properties": {
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "matching": {
+            "type": "integer",
+            "title": "Matching"
+          },
+          "misses": {
+            "items": {
+              "$ref": "#/components/schemas/NamePatternMiss"
+            },
+            "type": "array",
+            "title": "Misses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "total",
+          "matching",
+          "misses"
+        ],
+        "title": "NamePatternCheck",
+        "description": "A name pattern tried on the country's institutions of a type. An invalid pattern is an\nanswer, not a failed request: the console shows `error` as the pattern is typed."
+      },
+      "NamePatternCheckInput": {
+        "properties": {
+          "name_pattern": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name Pattern"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name_pattern"
+        ],
+        "title": "NamePatternCheckInput"
+      },
+      "NamePatternMiss": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "NamePatternMiss"
+      },
+      "NamingPreview": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "core": {
+            "type": "string",
+            "title": "Core"
+          },
+          "designator_groups": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Designator Groups"
+          },
+          "forms": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Forms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "core",
+          "designator_groups",
+          "forms"
+        ],
+        "title": "NamingPreview",
+        "description": "How the rules read one name."
+      },
+      "NamingPreviewInput": {
+        "properties": {
+          "naming_rules": {
+            "$ref": "#/components/schemas/NamingRules"
+          },
+          "names": {
+            "items": {
+              "type": "string",
+              "maxLength": 300,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Names"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "naming_rules",
+          "names"
+        ],
+        "title": "NamingPreviewInput",
+        "description": "Rules as the form holds them, saved or not, and the names to read with them."
       },
       "NamingRules": {
         "properties": {

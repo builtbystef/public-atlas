@@ -13,6 +13,10 @@ from public_atlas.modules.countries.schemas import (
     CountryOutput,
     CountrySettingsInput,
     InstitutionTypeInput,
+    NamePatternCheck,
+    NamePatternCheckInput,
+    NamingPreview,
+    NamingPreviewInput,
     SourceTypeInput,
 )
 from public_atlas.modules.review import service as review
@@ -37,6 +41,13 @@ async def _settle(session: SessionDep, resources: ResourcesDep, country_code: st
 @router.get("/countries")
 async def list_countries(session: SessionDep) -> list[CountrySettingsInput]:
     return await service.list_countries(session)
+
+
+@router.post("/naming-rules/preview")
+async def preview_naming(data: NamingPreviewInput) -> list[NamingPreview]:
+    """How naming rules, saved or not, read some names: what the console shows while the rules
+    are edited. Nothing is written."""
+    return service.preview_naming(data)
 
 
 @router.get("/countries/{country_code}")
@@ -101,6 +112,17 @@ async def put_country_institution_type(
     return result
 
 
+@router.post("/countries/{country_code}/institution-types/{institution_type}/name-pattern-check")
+async def check_name_pattern(
+    country_code: str, institution_type: str, data: NamePatternCheckInput, session: SessionDep
+) -> NamePatternCheck:
+    """Try a name pattern, saved or not, on the country's institutions of the type: how many
+    match and which would go to review. Nothing is written."""
+    return await service.check_name_pattern(
+        session, country_code, institution_type, data.name_pattern
+    )
+
+
 @router.delete(
     "/countries/{country_code}/institution-types/{institution_type}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -117,6 +139,13 @@ async def delete_country_institution_type(
 async def list_institution_types(session: SessionDep) -> list[InstitutionTypeInput]:
     """Global: one `hospital` for every country."""
     return await service.list_institution_types(session)
+
+
+@router.get("/default-expected-source-types")
+async def default_expected_source_types(session: SessionDep) -> dict[str, list[str]]:
+    """The sources a country expects per institution type unless it says otherwise: what a type
+    newly added to a country starts with."""
+    return await service.default_expected_source_types(session)
 
 
 @router.put("/institution-types/{name}")

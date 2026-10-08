@@ -48,11 +48,3 @@ export const optionalDateTime = (timeZone: string) =>
 export const TYPE_NAME = /^[a-z][a-z0-9_]*$/;
 
 export const typeNameMessage = "Lowercase letters, digits and underscores, starting with a letter";
-
-/** A comma-separated input as a list of trimmed, non-empty words. */
-export const commaList = text.transform((value) =>
-  value
-    .split(",")
-    .map((word) => word.trim())
-    .filter(Boolean),
-);

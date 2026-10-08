@@ -1,7 +1,15 @@
 import { createFormHook } from "@tanstack/react-form";
 
 import { fieldContext, formContext } from "./contexts";
-import { ComboboxField, DateTimeField, SelectField, TextareaField, TextField } from "./fields";
+import {
+  ChipsField,
+  ComboboxField,
+  DateTimeField,
+  MultiSelectField,
+  SelectField,
+  TextareaField,
+  TextField,
+} from "./fields";
 import { SubmitButton } from "./submit-button";
 
 /**
@@ -15,7 +23,15 @@ import { SubmitButton } from "./submit-button";
 export const { useAppForm, withForm } = createFormHook({
   fieldContext,
   formContext,
-  fieldComponents: { TextField, TextareaField, SelectField, ComboboxField, DateTimeField },
+  fieldComponents: {
+    TextField,
+    TextareaField,
+    SelectField,
+    ChipsField,
+    ComboboxField,
+    DateTimeField,
+    MultiSelectField,
+  },
   formComponents: { SubmitButton },
 });
 

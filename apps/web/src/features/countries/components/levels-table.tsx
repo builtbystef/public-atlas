@@ -5,11 +5,11 @@ import { revalidateLogic } from "@tanstack/react-form";
 import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
-import { CheckboxGroup } from "@/components/shared/checkbox-group";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useAppForm } from "@/components/shared/form";
 import { Button } from "@/components/ui/button";
+import { FieldSeparator } from "@/components/ui/field";
 import {
   Table,
   TableBody,
@@ -32,12 +32,17 @@ import { FormDialog } from "@/components/shared/form-dialog";
  */
 export function LevelsTable({
   countryCode,
+  countryName,
   levels,
   institutionTypes,
+  countryTypes,
 }: {
   countryCode: string;
+  countryName: string;
   levels: AdministrativeLevelInput[];
   institutionTypes: InstitutionTypeInput[];
+  /** The types the country uses: a level may only name these. */
+  countryTypes: readonly string[];
 }) {
   const [editing, setEditing] = useState<AdministrativeLevelInput | "new" | null>(null);
   const [deleting, setDeleting] = useState<AdministrativeLevelInput | null>(null);
@@ -46,6 +51,8 @@ export function LevelsTable({
     "Level deleted",
   );
   const sorted = [...levels].sort((a, b) => a.rank - b.rank);
+  // A new level goes below the lowest one, the usual place to add one.
+  const nextRank = Math.max(0, ...levels.map((level) => level.rank)) + 1;
 
   return (
     <div className="flex flex-col gap-3">
@@ -106,8 +113,11 @@ export function LevelsTable({
       {editing && (
         <LevelDialog
           countryCode={countryCode}
+          countryName={countryName}
           level={editing === "new" ? null : editing}
+          nextRank={nextRank}
           institutionTypes={institutionTypes}
+          countryTypes={countryTypes}
           onClose={() => setEditing(null)}
         />
       )}
@@ -127,15 +137,26 @@ export function LevelsTable({
   );
 }
 
+/** A type for a place's own government, by the shared seed's naming: `municipal_government`. */
+function isGovernmentType(name: string) {
+  return name.endsWith("_government");
+}
+
 function LevelDialog({
   countryCode,
+  countryName,
   level,
+  nextRank,
   institutionTypes,
+  countryTypes,
   onClose,
 }: {
   countryCode: string;
+  countryName: string;
   level: AdministrativeLevelInput | null;
+  nextRank: number;
   institutionTypes: InstitutionTypeInput[];
+  countryTypes: readonly string[];
   onClose: () => void;
 }) {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -146,7 +167,7 @@ function LevelDialog({
   const form = useAppForm({
     defaultValues: {
       name: level?.name ?? "",
-      rank: String(level?.rank ?? 0),
+      rank: String(level?.rank ?? nextRank),
       government_institution_type: level?.government_institution_type ?? "",
       expected_institution_types: level?.expected_institution_types ?? [],
     } satisfies LevelFormInput as LevelFormInput,
@@ -162,66 +183,107 @@ function LevelDialog({
       }
     },
   });
-  const typeOptions = institutionTypes.map((t) => ({
-    value: t.name,
-    label: humanize(t.name),
-    description: t.description || undefined,
-  }));
+
+  const describe = (name: string) =>
+    institutionTypes.find((type) => type.name === name)?.description || undefined;
+  const option = (name: string) => ({
+    value: name,
+    label: humanize(name),
+    description: describe(name),
+  });
+  // Only the types the country uses: the API refuses any other. A level being edited keeps
+  // the types it has, so none of them drops out of view.
+  const governmentOptions = countryTypes
+    .filter((name) => isGovernmentType(name) || name === level?.government_institution_type)
+    .map(option);
+  const expectedOptions = countryTypes
+    .filter((name) => !isGovernmentType(name) || level?.expected_institution_types.includes(name))
+    .map(option);
+
   return (
     <FormDialog
       open
       onOpenChange={(open) => {
         if (!open) onClose();
       }}
-      title={level ? `Edit ${humanize(level.name).toLowerCase()}` : "Add a level"}
+      title={level ? `Edit the ${humanize(level.name).toLowerCase()} level` : "Add a level"}
+      description={
+        level ? (
+          <>
+            <span className="font-mono text-xs">{level.name}</span> · rank {level.rank} in{" "}
+            {countryName}&apos;s hierarchy of places
+          </>
+        ) : (
+          `A step in ${countryName}'s hierarchy of places, with the bodies to look for at each place on it.`
+        )
+      }
+      className="sm:max-w-xl"
       form={form}
       serverError={serverError}
       submit={
         <form.AppForm>
-          <form.SubmitButton>{level ? "Save" : "Add"}</form.SubmitButton>
+          <form.SubmitButton requireChanges={level !== null}>
+            {level ? "Save" : "Add level"}
+          </form.SubmitButton>
         </form.AppForm>
       }
     >
-      <div className="grid gap-4 sm:grid-cols-[1fr_6rem]">
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
         <form.AppField name="name">
           {(field) => (
             <field.TextField
               label="Name"
               required
-              placeholder="municipality"
+              placeholder="regional_district"
               autoComplete="off"
               disabled={level !== null}
+              description={
+                field.state.value.trim()
+                  ? `Shown as “${humanize(field.state.value.trim())}”.`
+                  : "Lower case, words joined by underscores."
+              }
             />
           )}
         </form.AppField>
         <form.AppField name="rank">
-          {(field) => <field.TextField label="Rank" required type="number" min={0} />}
+          {(field) => (
+            <field.TextField
+              label="Rank"
+              required
+              type="number"
+              min={1}
+              description="The country is 1."
+            />
+          )}
         </form.AppField>
       </div>
+      <FieldSeparator />
       <form.AppField name="government_institution_type">
         {(field) => (
           <field.SelectField
-            label="Government's type"
+            label="Government"
             required
-            options={typeOptions}
-            placeholder="Choose a type"
-            description="The institution type of a place's own government at this level."
+            options={governmentOptions}
+            placeholder="Choose the government's type"
+            description={
+              governmentOptions.length === 0
+                ? `${countryName} uses no government type yet. Add one under Institution types first.`
+                : (describe(field.state.value) ??
+                  "The type of a place's own government at this level.")
+            }
           />
         )}
       </form.AppField>
-      <form.Field name="expected_institution_types">
+      <form.AppField name="expected_institution_types">
         {(field) => (
-          <CheckboxGroup
-            name={field.name}
+          <field.MultiSelectField
             label="Expected institution types"
-            description="What find_institutions looks for under a place at this level."
-            options={typeOptions}
-            value={field.state.value}
-            onChange={field.handleChange}
-            errors={field.state.meta.errors}
+            options={expectedOptions}
+            placeholder="Search the country's types…"
+            description="The checklist find_institutions works through under each place at this level. The government is found on its own."
           />
         )}
-      </form.Field>
+      </form.AppField>
     </FormDialog>
   );
 }

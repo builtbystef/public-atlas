@@ -1,57 +1,127 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import type { ReactNode } from "react";
 
 import { PageHeader } from "@/components/shared/layout/page-header";
-import { SettingsSection, SettingsSections } from "@/components/shared/layout/settings-section";
+import { SectionSidebar } from "@/components/shared/layout/section-sidebar";
+import { SettingsSection } from "@/components/shared/layout/settings-section";
 import { browserApi } from "@/lib/api/client";
+import { paths } from "@/lib/routes";
 
-import { countryQuery, institutionTypesQuery, sourceTypesQuery } from "../queries";
-import { CountrySettingsForm } from "./country-settings-form";
+import {
+  countryQuery,
+  defaultSourcesQuery,
+  institutionTypesQuery,
+  sourceTypesQuery,
+} from "../queries";
+import { CountryNameTitle, NamingRulesForm } from "./country-settings-form";
 import { CountryTypesTable } from "./country-types-table";
 import { LevelsTable } from "./levels-table";
 
-export function CountryDetail({ code }: { code: string }) {
+/** The country's header and the list of its pages, around the page being shown. */
+export function CountryShell({
+  code,
+  flag,
+  children,
+}: {
+  code: string;
+  flag: ReactNode;
+  children: ReactNode;
+}) {
   const { data: country } = useSuspenseQuery(countryQuery(browserApi, code));
-  const { data: institutionTypes } = useSuspenseQuery(institutionTypesQuery(browserApi));
-  const { data: sourceTypes } = useSuspenseQuery(sourceTypesQuery(browserApi));
+  const pages = [
+    { href: paths.country(code), label: "Naming rules" },
+    {
+      href: paths.countryLevels(code),
+      label: "Levels",
+      count: country.administrative_levels.length,
+    },
+    {
+      href: paths.countryInstitutionTypes(code),
+      label: "Institution types",
+      count: country.institution_types.length,
+    },
+  ];
   return (
     <>
       <PageHeader
-        title={country.settings.name}
-        description={`${country.settings.country_code} · every edit takes effect on the next assignment.`}
+        title={
+          <CountryNameTitle
+            key={country.settings.country_code}
+            settings={country.settings}
+            flag={flag}
+          />
+        }
+        description="Edits apply from the next assignment; running ones keep the rules they started with."
       />
-      <SettingsSections>
-        <SettingsSection
-          title="Settings"
-          description="The name, and the naming rules that tell one place from another."
-        >
-          <CountrySettingsForm key={country.settings.country_code} settings={country.settings} />
-        </SettingsSection>
-        <SettingsSection
-          wide
-          title="Administrative levels"
-          description="The hierarchy of places, with the government's type and the bodies expected at each level."
-        >
-          <LevelsTable
-            countryCode={code}
-            levels={country.administrative_levels}
-            institutionTypes={institutionTypes}
-          />
-        </SettingsSection>
-        <SettingsSection
-          wide
-          title="Institution types in this country"
-          description="Which types the country uses, the sources expected on each, and the name pattern a body should match."
-        >
-          <CountryTypesTable
-            countryCode={code}
-            rows={country.institution_types}
-            institutionTypes={institutionTypes}
-            sourceTypes={sourceTypes}
-          />
-        </SettingsSection>
-      </SettingsSections>
+      <SectionSidebar pages={pages}>{children}</SectionSidebar>
     </>
+  );
+}
+
+/** The country the page is under, as the shell's layout read it. */
+function useCountry() {
+  const { code } = useParams<{ code: string }>();
+  const { data: country } = useSuspenseQuery(countryQuery(browserApi, code));
+  return { code, country };
+}
+
+export function CountryNamingRulesPage() {
+  const { country } = useCountry();
+  return (
+    <SettingsSection
+      wide
+      title="Naming rules"
+      description="How the country writes its public bodies' names, in each of its languages. The duplicate search and the name checks read them to tell one place from another."
+    >
+      <div className="max-w-2xl">
+        <NamingRulesForm key={country.settings.country_code} settings={country.settings} />
+      </div>
+    </SettingsSection>
+  );
+}
+
+export function CountryLevelsPage() {
+  const { code, country } = useCountry();
+  const { data: institutionTypes } = useSuspenseQuery(institutionTypesQuery(browserApi));
+  return (
+    <SettingsSection
+      wide
+      title="Administrative levels"
+      description="The hierarchy of places, with the government's type and the bodies expected at each level."
+    >
+      <LevelsTable
+        countryCode={code}
+        countryName={country.settings.name}
+        levels={country.administrative_levels}
+        institutionTypes={institutionTypes}
+        countryTypes={country.institution_types.map((row) => row.institution_type)}
+      />
+    </SettingsSection>
+  );
+}
+
+export function CountryInstitutionTypesPage() {
+  const { code, country } = useCountry();
+  const { data: institutionTypes } = useSuspenseQuery(institutionTypesQuery(browserApi));
+  const { data: sourceTypes } = useSuspenseQuery(sourceTypesQuery(browserApi));
+  const { data: defaultSources } = useSuspenseQuery(defaultSourcesQuery(browserApi));
+  return (
+    <SettingsSection
+      wide
+      title="Institution types in this country"
+      description="Which types the country uses, the sources expected on each, and the name pattern a body should match."
+    >
+      <CountryTypesTable
+        countryCode={code}
+        countryName={country.settings.name}
+        rows={country.institution_types}
+        institutionTypes={institutionTypes}
+        sourceTypes={sourceTypes}
+        defaultSources={defaultSources}
+      />
+    </SettingsSection>
   );
 }

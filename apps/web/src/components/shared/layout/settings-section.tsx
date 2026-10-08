@@ -13,12 +13,15 @@ export function SettingsSections({ children }: { children: ReactNode }) {
 }
 
 export function SettingsSection({
+  id,
   title,
   description,
   actions,
   wide = false,
   children,
 }: {
+  /** For a link to the section; it scrolls in below the sticky headers. */
+  id?: string;
   title: ReactNode;
   description?: ReactNode;
   actions?: ReactNode;
@@ -27,8 +30,9 @@ export function SettingsSection({
 }) {
   return (
     <section
+      id={id}
       className={cn(
-        "grid gap-4 py-8 first:pt-0 last:pb-0",
+        "grid scroll-mt-20 gap-4 py-8 first:pt-0 last:pb-0",
         !wide && "md:grid-cols-[minmax(0,16rem)_minmax(0,1fr)] md:gap-x-12",
       )}
     >
