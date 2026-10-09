@@ -657,7 +657,9 @@ class Loader:
         """The institution of the entry's type at the place that goes by its name, else a new
         verified one. Whether it was created."""
         found = await self._institutions_named(
-            place, self._entry_forms(entry.name, entry.aliases), entry.institution_type
+            place,
+            self._keys([entry.name, *(alias.text for alias in entry.aliases)]),
+            entry.institution_type,
         )
         if len(found) > 1:
             raise Skip(f"{len(found)} institutions go by that name at {place.name}")
@@ -678,8 +680,13 @@ class Loader:
         return institution, True
 
     async def _institutions_named(
-        self, place: Place, forms: AbstractSet[str], institution_type: str | None
+        self, place: Place, keys: AbstractSet[str], institution_type: str | None
     ) -> list[Institution]:
+        """The institutions at the place, of the type when given, whose name or an alias is one
+        of `keys`. Names are compared whole (`_keys`): the forms a place's name takes inside a
+        government's name ("City of Elmwood" is "Elmwood") would read "Centennial College of
+        Applied Arts and Technology" as "Applied Arts and Technology" and merge every college
+        so named at one place."""
         query = select(Institution).where(
             Institution.place_id == place.id, Institution.status != EntityStatus.REJECTED
         )
@@ -687,15 +694,18 @@ class Loader:
             query = query.where(Institution.institution_type == institution_type)
         rows = list(await self.session.scalars(query))
         aliases = await graph.aliases_of(self.session, rows)
-        return [row for row in rows if self._forms([row.name, *aliases[row.id]]) & forms]
+        return [row for row in rows if self._keys([row.name, *aliases[row.id]]) & keys]
+
+    def _keys(self, names: Iterable[str]) -> set[str]:
+        """Whole names as they are compared: case, whitespace, punctuation and the and-words
+        evened out, nothing stripped."""
+        return {self.rules.naming.key(name) for name in names}
 
     async def _parent_institution(self, entry: InstitutionEntry, place: Place) -> uuid.UUID | None:
         """The body the entry says it sits under, or the place's government."""
         if entry.parent_institution is None:
             return place.government_institution_id
-        found = await self._institutions_named(
-            place, self.rules.naming.forms(entry.parent_institution), None
-        )
+        found = await self._institutions_named(place, self._keys([entry.parent_institution]), None)
         if len(found) != 1:
             raise Skip(
                 f"parent institution {entry.parent_institution!r} is not one body at {place.name}"

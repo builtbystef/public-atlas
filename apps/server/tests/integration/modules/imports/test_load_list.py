@@ -205,6 +205,39 @@ def tiny_libraries(cache_dir: Path) -> ModuleType:
     return list_module("tiny_libraries", source, entries)
 
 
+def tiny_colleges(cache_dir: Path, rows: list[list[str]]) -> ModuleType:
+    """Institutions placed by name: columns name, alias, place."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["name", "alias", "place"])
+    writer.writerows(rows)
+    data = buffer.getvalue().encode()
+    source = ListFile(
+        name="tiny_colleges",
+        title="The tiny college list",
+        url="https://colleges.example/list.csv",
+        sha256=evidence.content_hash(data),
+        format=Format.CSV,
+    )
+    source.cache_path(cache_dir).write_bytes(data)
+
+    def entries(
+        files: Mapping[str, OpenedFile], rules: countries.CountryRules
+    ) -> list[InstitutionEntry]:
+        return [
+            InstitutionEntry(
+                name=row["name"],
+                aliases=(AliasEntry(text=row["alias"]),) if row["alias"] else (),
+                institution_type="college",
+                place=row["place"],
+                citations={"institution": Citation(source=source.name, line=row.line)},
+            )
+            for row in files[source.name].rows
+        ]
+
+    return list_module("tiny_colleges", source, entries)
+
+
 async def seed(db: Database) -> None:
     async with db.session() as session:
         await countries.seed(session, canada.SEED)
@@ -529,6 +562,60 @@ def test_an_institution_list_loads_under_the_places(
 
     again = db.run(apply, db, object_store, tiny_libraries(tmp_path), tmp_path)
     assert again.changes == []
+
+
+async def institutions_named(db: Database, name: str) -> list[tuple[str, list[str]]]:
+    """Each institution of the name with the name of its place and its aliases."""
+    async with db.session() as session:
+        found = []
+        for institution in await session.scalars(
+            select(Institution).where(Institution.name == name)
+        ):
+            place = await session.get_one(Place, institution.place_id)
+            aliases = list(
+                await session.scalars(
+                    select(Alias.text)
+                    .where(Alias.institution_id == institution.id)
+                    .order_by(Alias.text)
+                )
+            )
+            found.append((place.name, sorted(aliases)))
+        return sorted(found)
+
+
+def test_institutions_are_matched_by_their_whole_names(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    """Two colleges "of Applied Arts and Technology" at one place are two bodies; a body is
+    found again by its name or an alias, however the list spells it."""
+    db.run(seed, db)
+    db.run(apply, db, object_store, tiny_places(ROWS_V1, tmp_path), tmp_path)
+    rows = [
+        ["Centennial College of Applied Arts and Technology", "", "Oakville"],
+        ["Seneca Polytechnic", "Seneca College of Applied Arts and Technology", "Oakville"],
+    ]
+    report = db.run(apply, db, object_store, tiny_colleges(tmp_path, rows), tmp_path)
+    assert report.count("add", "institution") == 2
+    assert report.skipped == []
+
+    renamed = [
+        ["seneca  college of applied arts & technology", "", "Oakville"],
+        ["Centennial College of Applied Arts and Technology", "CCAAT", "Oakville"],
+    ]
+    again = db.run(apply, db, object_store, tiny_colleges(tmp_path, renamed), tmp_path)
+    assert again.count("add", "institution") == 0
+    assert again.count("add", "institution alias") == 2
+    assert db.run(count, db, Institution, Institution.institution_type == "college") == 2
+    assert db.run(institutions_named, db, "Seneca Polytechnic") == [
+        (
+            "Oakville",
+            [
+                "Seneca College of Applied Arts and Technology",
+                "Seneca Polytechnic",
+                "seneca college of applied arts & technology",
+            ],
+        )
+    ]
 
 
 async def read_lists(db: Database) -> list[tuple[str, Retrieval]]:
