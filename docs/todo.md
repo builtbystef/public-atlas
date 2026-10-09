@@ -119,10 +119,7 @@ is `product-and-tech-spec.md`. Code to port lives in
 ## Phase 8: demo and application
 
 - [ ] A top section in the README for a reader who does not know the project: what it does, the verification idea in two sentences, the eval numbers, how it would scale to the United States, the known gaps.
-- [ ] Deploy with the pilot database loaded (R2 for storage), or a read-only local build the recording can use.
 - [ ] Record a three-minute demo: start a step-mode run on one city with video on and release an assignment; watch the assignment detail fill with events and play the video; open the institution page and click a quote through to its snapshot; decide a review item; show the eval page with two runs.
-- [ ] Make the repository public. Check nothing secret is in history.
 - [ ] Write the application: a short cover note that links the repository, the README section and the recording, and maps the project to the Data Mining Software Engineer posting (crawling and extraction, entity resolution, a verified graph, evals, cost control).
-- [ ] Submit at the posting and note the date here.
 
 **Done when** the application is submitted.
