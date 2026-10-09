@@ -291,6 +291,12 @@ published in 2023 to 2025 or hold a `.gov` domain in their own name, each under 
 the country), `lists/us/universities.py` (IPEDS' public campuses, each with its IPEDS id at
 its county) and `lists/us/transit.py` (the National Transit Database's public reporters, one
 body per agency, at the government it serves or the city of its address) do the same.
+Canada continues with `lists/canada/federal.py` (the Treasury Board's inventory of federal
+organizations, each under the department heading its portfolio at Canada) and
+`lists/canada/quebec/places.py` (the census joined to the province's municipal directory by
+code: the 81 MRCs the census counts as divisions as regions, the municipalities under the MRC
+the directory names, and the communautés métropolitaines, the Kativik administration and the
+six MRCs with no census code as `regional_government` institutions with served places).
 
 
 This is also where the bodies under a body come from. `find_institutions`

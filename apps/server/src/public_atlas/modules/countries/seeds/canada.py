@@ -18,13 +18,15 @@ SETTINGS: dict[str, Any] = {
     # and a site that writes the place name with another designator ("Elmwood Township" for
     # "Township of Elmwood") may still name the body when its domain is verified.
     "naming_rules": {
-        # One group per kind of body; "Ville" is a city or a town.
+        # One group per kind of body; "Ville" is a city or a town. A Quebec paroisse is a
+        # kind of its own: the ville and the paroisse of Disraeli are two municipalities.
         "designators": [
             ["City", "Ville", "Cité"],
             ["Town", "Ville", "Separated Town"],
             ["Township", "Canton"],
             ["United Townships", "Cantons unis"],
             ["Village"],
+            ["Paroisse", "Parish"],
             ["Municipality", "Municipalité"],
             ["Regional Municipality", "Municipalité régionale"],
             ["District Municipality", "Municipalité de district"],

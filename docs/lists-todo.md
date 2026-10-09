@@ -529,14 +529,14 @@ scores in the database.
 
 ## Session 7: Canada's federal institutions and Quebec
 
-- [ ] **`canada/federal`**: the TBS *Inventory of Federal Organizations and Interests* CSV
+- [x] **`canada/federal`**: the TBS *Inventory of Federal Organizations and Interests* CSV
       (277 active rows): ministerial departments as `department`; departmental, service and
       special operating agencies and departmental corporations as `agency`; Crown
       corporations as `crown_corporation`; shared-governance corporations, international
       organizations and parliamentary entities as `other`. Parent = the portfolio's
       department (`min_port`), place = Canada, `legal_title` as the name with
       `applied_title` and `abbr_en` as aliases, website from `website`.
-- [ ] **`canada/quebec/places`**: MRCs as regions from `MRC_CM_Arg.csv` (87 with websites; the
+- [x] **`canada/quebec/places`**: MRCs as regions from `MRC_CM_Arg.csv` (87 with websites; the
       two communautés métropolitaines and Kativik as `regional_government` institutions with
       `served_places`, not places); municipalities from the census joined to `MUN.csv` by
       `mcode` (the last five digits of the SGC code), parent MRC from the `mrc` column (not
@@ -544,6 +544,79 @@ scores in the database.
       French elision, website from `mweb`, `mpopul` as a second population year. Overrides
       for the renames and mergers since 2021. The file updates daily, so the operator
       re-pins the hash at load time; say so in the docstring.
+
+The session changed the loader not at all and the Canada seed once, and found these things
+about the sources and the plan:
+
+- **A paroisse is a kind of its own.** The first Quebec dry run merged three pairs of one name
+  under one MRC (the ville and the paroisse of Disraeli and of Senneterre, the paroisse and the
+  village of Notre-Dame-du-Bon-Conseil) into three places: the loader tells two places of one
+  name apart by the designators around their governments' names, and "Paroisse" was none of
+  Canada's. The seed's naming rules gain the group `["Paroisse", "Parish"]`, and the live
+  `country_settings` row was given the seed's rules through `put_country_settings` (re-seeding
+  never changes a row that exists). The Quebec rule test replays the loader's order over every
+  pair of siblings, as the US municipalities test does, and pins the nine pairs that stay two.
+- **Six MRCs have no census code.** The directory's MRC code is the census division's last two
+  digits and a trailing digit (460 is 2446), and 81 of the 87 MRCs are divisions. Des Chenaux
+  (372, inside the CDR Francheville with Trois-Rivières), Le Fjord-du-Saguenay (942, with
+  Saguenay), Sept-Rivières and Caniapiscau (971, 972, one CDR), Minganie and Le
+  Golfe-du-Saint-Laurent (981, 982, one CDR) are not, and a place needs a code in a scheme the
+  graph has. They are loaded as `regional_government` institutions under Quebec with their
+  municipalities as served places, as the communautés métropolitaines are, and their 40
+  municipalities sit under Quebec with the TÉ cities and Nord-du-Québec. A `mamh` identifier
+  scheme (a `graph.models.IdentifierScheme` value and a migration) would make them regions;
+  that is a schema change this session did not make.
+- **The directory wins over the census.** Where the two name a municipality differently (seven
+  renames: Mont-Blanc for Saint-Faustin--Lac-Carré, Clarenceville, Ristigouche-Sud-Est,
+  Saint-Germain-de-Kamouraska, Sainte-Jeanne-d'Arc-de-la-Mitis, Dollard-des-Ormeaux, and the
+  MRC Beauce-Centre for Robert-Cliche) the directory's name is the place's and the census's an
+  alias, by rule, not override; and the government's designator is the directory's (fourteen
+  paroisses are municipalités now, Crabtree, Saint-Antonin and Saint-Zotique are villes).
+- **Mergers are overrides keyed by the new municipality.** Seventeen census municipalities are
+  gone from the directory (Amos and Saint-Félix-de-Dalquier, La Pocatière and its two
+  neighbours, the two Plessisvilles, Hébertville with Hébertville-Station and Saint-Bruno,
+  Lac-des-Aigles and Saint-Guy, Courcelles and Saint-Évariste-de-Forsyth, La Morandière and
+  Rochebaucourt, and Notre-Dame-de-la-Salette recoded when it changed MRC). The loader logs an
+  override whose key no entry carries, so `OVERRIDES` is keyed by the new municipality's census
+  code with `merged_from` naming the old ones; an unexplained census municipality is an error.
+  The nine municipalities the directory has and the census has not (the eight mergers' results
+  and the Cree village of Oujé-Bougoumou, created 2023) are loaded from the directory alone,
+  with the décret population and no census figure.
+- **The décret population** is the figure the Décret de population pour 2026 gives (decree
+  1499-2025, published 2025-12-24, resting on the ISQ's estimate at 2025-07-01), stored for
+  2026 beside the census's 2021 count; the 81 region MRCs carry both too.
+- **French connectors.** "de" before a name, "d'" before a vowel and before the French-origin
+  names in H a hand table lists (Hébertville, Hérouxville, Henryville, Honfleur, Huberdeau,
+  Hudson; "Ville de Hampstead" otherwise), "du" and "des" for a leading "Le", "Les" or "Des"
+  ("MRC du Granit", "Municipalité des Îles-de-la-Madeleine", "MRC des Chenaux"), and "de" kept
+  before "La", "L'" and "D'" ("Ville de La Tuque", "MRC de D'Autray"). An MRC's government is
+  "Municipalité régionale de comté de ..." with "MRC de ..." as an alias. The Canada naming
+  rules still lack the Quebec designators other than Paroisse (Village nordique, Municipalité
+  régionale de comté, Communauté métropolitaine), so `Naming.core` does not strip them; the
+  rule test asserts the place name sits whole inside its government's name instead.
+- **The Kativik administration** serves the fourteen northern villages and the Naskapi village
+  of Kawawachikamach, as the directory's `admregionale` column says; the communautés
+  métropolitaines serve 82 and 28 municipalities by `mcm`. A served place names its parent, so
+  the Saint-Lambert of Longueuil is not the paroisse of Abitibi-Ouest.
+- **The federal inventory** holds more structures than the plan named: the six agents of
+  Parliament are `agency`, the two joint enterprises and the ten "other organizations" (legal
+  entities such as the Director of Soldier Settlement, with no website or portfolio) are
+  `other` with the structure as the suggested type, by the convention that nothing is dropped
+  silently. Five portfolios have no ministerial department (the Privy Council Office, the
+  Canada Revenue Agency and Housing, Infrastructure and Communities Canada head theirs;
+  Parliament's entities and the five rows with no portfolio have no head) and one has two
+  (the Department of Industry heads Innovation, Science and Economic Development; Prairies
+  Economic Development Canada is a department under it): a hand table. "HC" is Health
+  Canada's and the House of Commons' abbreviation and goes to neither. The file ends in a
+  blank row. The Senate and the House of Commons both link www.parl.gc.ca, two candidate
+  claims on one page that the reviewer settles.
+- **Applied**, each with its dry run read first and a rerun that changed nothing (Ontario's
+  places rerun unchanged too). `canada/federal`: 277 bodies (22 departments, 95 agencies, 45
+  Crown corporations, 115 `other`), 240 under a portfolio head, 253 candidate homepages on 132
+  domains, 134 aliases, no skips. `canada/quebec/places` (46 s): 81 regions and 1,123
+  municipalities with their codes (108 municipalities under Quebec, 1,015 under an MRC), 1,204
+  governments, 2,399 population figures, 1,189 candidate homepages on 1,175 domains, 9
+  spanning bodies with 165 served places, 87 census names as aliases, no skips.
 
 **Done when** both loads are applied, Quebec has its 87 MRCs and about 1,120 municipalities
 with codes, and the federal bodies sit under their portfolio departments.
