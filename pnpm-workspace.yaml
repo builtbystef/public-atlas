@@ -14,7 +14,7 @@ catalog:
   "@tanstack/react-table": ^9.2.4
   "@types/node": ^24
   class-variance-authority: ^0.7.1
-  cn: ^0.2.4
+  cn: ^0.4.0
   concurrently: ^10.0.5
   country-flag-icons: ^1.6.20
   lucide-react: ^1.48.0
