@@ -2,8 +2,10 @@
 added. It opens the module's files (fetched, hash-checked and cached, or collected by hand and
 read from the cache), stores each as a snapshot and an `official_lists` row, asks the module
 for its entries, and writes what the database lacks: a place by its code, then by its name
-under the same parent, with its government, identifier, metrics, aliases, candidate homepage
-and an evidence row quoting the list's own line for each fact.
+under the same parent, with its government, identifiers, metrics, aliases, candidate homepage
+and an evidence row quoting the list's own line for each fact; an institution by its codes, then
+by its name at its place, with its identifiers, served places and candidate homepage.
+
 
 Every run writes in the session and reports what it changed; the caller commits an apply and
 rolls a dry run back, so the diff a dry run prints is exactly what an apply would do. A second
@@ -190,6 +192,7 @@ def idle_overrides(overrides: Mapping[str, object], entries: Sequence[Entry]) ->
     for entry in entries:
         keyed.add(entry.name)
         keyed.update(alias.text for alias in entry.aliases)
+        keyed.update(code.value for code in entry.codes)
         if isinstance(entry, PlaceEntry):
             keyed.add(entry.code.value)
     return [key for key in overrides if key not in keyed]
@@ -361,6 +364,7 @@ class Loader:
         await self._aliases(place, entry.name, entry.language, entry.aliases)
         official_list, snapshot, quote = self.cited(entry.citations["place"])
         await self._identifier(place, entry.code, official_list, label)
+        await self._identifiers(place, entry.codes, official_list, label)
         for figure in entry.figures:
             await self._metric(place, figure, label)
         await self._cite(place.id, snapshot, quote, entry.citations["place"], label)
@@ -550,39 +554,49 @@ class Loader:
                     known.forms |= self._forms(alias.text for alias in wanted)
 
     async def _identifier(
-        self, place: Place, code: Code, official_list: OfficialList, label: str
+        self, owner: Place | Institution, code: Code, official_list: OfficialList, label: str
     ) -> None:
-        """The place's code: added, or changed when the place held another in the scheme. A code
-        another place holds is left to it and reported."""
+        """The owner's code: added, or changed when the owner held another in the scheme. A code
+        another entity holds is left to it and reported."""
+        column = Identifier.place_id if isinstance(owner, Place) else Identifier.institution_id
         held = await self.session.scalar(
             select(Identifier).where(
                 Identifier.scheme == code.scheme, Identifier.value == code.value
             )
         )
         if held is not None:
-            if held.place_id != place.id:
+            if (held.place_id or held.institution_id) != owner.id:
                 raise Skip(f"code {code.value} is held by another entity")
             return
         mine = await self.session.scalar(
-            select(Identifier).where(
-                Identifier.place_id == place.id, Identifier.scheme == code.scheme
-            )
+            select(Identifier).where(column == owner.id, Identifier.scheme == code.scheme)
         )
         if mine is None:
-            self.session.add(
-                Identifier(
-                    place_id=place.id,
-                    scheme=code.scheme,
-                    value=code.value,
-                    official_list_id=official_list.id,
-                )
+            identifier = Identifier(
+                scheme=code.scheme, value=code.value, official_list_id=official_list.id
             )
+            setattr(identifier, column.key, owner.id)
+            self.session.add(identifier)
             self.changed("add", "identifier", label, f"{code.scheme} {code.value}")
         else:
             self.changed("change", "identifier", label, f"{mine.value} -> {code.value}")
             mine.value = code.value
             mine.official_list_id = official_list.id
         await self.session.flush()
+
+    async def _identifiers(
+        self,
+        owner: Place | Institution,
+        codes: Iterable[Code],
+        official_list: OfficialList,
+        label: str,
+    ) -> None:
+        """The owner's further codes; one another entity holds is reported and the rest go on."""
+        for code in codes:
+            try:
+                await self._identifier(owner, code, official_list, label)
+            except Skip as skip:
+                self.report.skipped.append(f"{label}: {skip}")
 
     async def _metric(self, place: Place, figure: Figure, label: str) -> None:
         official_list, _, _ = self.cited(figure.citation)
@@ -727,20 +741,36 @@ class Loader:
             institution.parent_institution_id = await self._parent_institution(entry, place)
         for served in entry.served_places:
             await self._served_place(institution, served, label)
-        _, snapshot, quote = self.cited(entry.citations["institution"])
+        official_list, snapshot, quote = self.cited(entry.citations["institution"])
+        await self._identifiers(institution, entry.codes, official_list, label)
         await self._cite(institution.id, snapshot, quote, entry.citations["institution"], label)
+
         if entry.homepage is not None:
             await self._homepage(institution, entry.homepage, entry.citations["homepage"])
 
     async def _match_institution(
         self, entry: InstitutionEntry, place: Place, label: str
     ) -> tuple[Institution, bool]:
-        """The institution of the entry's type at the place that goes by its name, else a new
-        verified one. Whether it was created."""
+        """The institution holding one of the entry's codes, else the one of the entry's type at
+        the place that goes by its name and holds no code in the entry's schemes (two districts
+        of one name in one county are two bodies when the list codes them), else a new verified
+        one. Whether it was created."""
+        for code in entry.codes:
+            coded = await self._institution_by_code(code)
+            if coded is None:
+                continue
+            if coded.institution_type != entry.institution_type:
+                raise Skip(
+                    f"code {code.value} is held by {coded.name!r}, a {coded.institution_type}"
+                )
+            if coded.place_id != place.id:
+                raise Skip(f"code {code.value} is held by {coded.name!r} at another place")
+            return coded, False
         found = await self._institutions_named(
             place,
             self._keys([entry.name, *(alias.text for alias in entry.aliases)]),
             entry.institution_type,
+            without_schemes={code.scheme for code in entry.codes},
         )
         if len(found) > 1:
             raise Skip(f"{len(found)} institutions go by that name at {place.name}")
@@ -752,28 +782,57 @@ class Loader:
             institution_type=entry.institution_type,
             place=place,
             entered_by=EnteredBy.SCRIPT,
+            suggested_type=entry.suggested_type,
             language=entry.language,
         )
+
         await status_changes.verify_institution(
             self.session, institution, entered_by=EnteredBy.SCRIPT
         )
         self.changed("add", "institution", label, f"at {place.name}")
         return institution, True
 
+    async def _institution_by_code(self, code: Code) -> Institution | None:
+        held = await self.session.scalar(
+            select(Identifier).where(
+                Identifier.scheme == code.scheme,
+                Identifier.value == code.value,
+                Identifier.institution_id.is_not(None),
+            )
+        )
+        if held is None or held.institution_id is None:
+            return None
+        return await self.session.get(Institution, held.institution_id)
+
     async def _institutions_named(
-        self, place: Place, keys: AbstractSet[str], institution_type: str | None
+        self,
+        place: Place,
+        keys: AbstractSet[str],
+        institution_type: str | None,
+        *,
+        without_schemes: AbstractSet[str] = frozenset(),
     ) -> list[Institution]:
         """The institutions at the place, of the type when given, whose name or an alias is one
-        of `keys`. Names are compared whole (`_keys`): the forms a place's name takes inside a
-        government's name ("City of Elmwood" is "Elmwood") would read "Centennial College of
-        Applied Arts and Technology" as "Applied Arts and Technology" and merge every college
-        so named at one place."""
+        of `keys`, leaving out those holding a code in `without_schemes`. Names are compared
+        whole (`_keys`): the forms a place's name takes inside a government's name ("City of
+        Elmwood" is "Elmwood") would read "Centennial College of Applied Arts and Technology"
+        as "Applied Arts and Technology" and merge every college so named at one place."""
         query = select(Institution).where(
             Institution.place_id == place.id, Institution.status != EntityStatus.REJECTED
         )
         if institution_type is not None:
             query = query.where(Institution.institution_type == institution_type)
         rows = list(await self.session.scalars(query))
+        if rows and without_schemes:
+            coded = set(
+                await self.session.scalars(
+                    select(Identifier.institution_id).where(
+                        Identifier.institution_id.in_([row.id for row in rows]),
+                        Identifier.scheme.in_(list(without_schemes)),
+                    )
+                )
+            )
+            rows = [row for row in rows if row.id not in coded]
         aliases = await graph.aliases_of(self.session, rows)
         return [row for row in rows if self._keys([row.name, *aliases[row.id]]) & keys]
 
@@ -818,10 +877,12 @@ class Loader:
         """Places this list loaded before that it no longer lists. Reported, never deleted: a
         place that left a list may have merged into another, which a reviewer decides."""
         listed = {
-            (entry.code.scheme, entry.code.value)
+            (code.scheme, code.value)
             for entry in entries
             if isinstance(entry, PlaceEntry)
+            for code in (entry.code, *entry.codes)
         }
+
         rows = await self.session.execute(
             select(Identifier, Place)
             .join(Place, Place.id == Identifier.place_id)

@@ -242,6 +242,43 @@ def tiny_colleges(cache_dir: Path, rows: list[list[str]]) -> ModuleType:
     return list_module("tiny_colleges", source, entries)
 
 
+def tiny_districts(cache_dir: Path, rows: list[list[str]]) -> ModuleType:
+    """Institutions with a code, typed by a function: columns code, name, type, function,
+    place."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(["code", "name", "type", "function", "place"])
+    writer.writerows(rows)
+    data = buffer.getvalue().encode()
+    source = ListFile(
+        name="tiny_districts",
+        title="The tiny district list",
+        url="https://districts.example/list.csv",
+        sha256=evidence.content_hash(data),
+        format=Format.CSV,
+    )
+    source.cache_path(cache_dir).write_bytes(data)
+
+    def entries(
+        files: Mapping[str, OpenedFile], rules: countries.CountryRules
+    ) -> list[InstitutionEntry]:
+        return [
+            InstitutionEntry(
+                name=row["name"],
+                institution_type=row["type"],
+                suggested_type=row["function"] or None,
+                codes=(Code(scheme=IdentifierScheme.CENSUS_GID, value=row["code"]),)
+                if row["code"]
+                else (),
+                place=row["place"],
+                citations={"institution": Citation(source=source.name, line=row.line)},
+            )
+            for row in files[source.name].rows
+        ]
+
+    return list_module("tiny_districts", source, entries)
+
+
 async def seed(db: Database) -> None:
     async with db.session() as session:
         await countries.seed(session, canada.SEED)
@@ -747,6 +784,122 @@ def test_institutions_are_matched_by_their_whole_names(
             ],
         )
     ]
+
+
+async def districts(db: Database) -> list[tuple[str, str, str | None, list[str], list[str]]]:
+    """Each district: name, type, suggested type, its codes and its aliases."""
+    async with db.session() as session:
+        found = []
+        for institution in await session.scalars(
+            select(Institution).where(Institution.institution_type.in_(["fire_service", "other"]))
+        ):
+            codes = list(
+                await session.scalars(
+                    select(Identifier.value).where(Identifier.institution_id == institution.id)
+                )
+            )
+            aliases = list(
+                await session.scalars(
+                    select(Alias.text).where(Alias.institution_id == institution.id)
+                )
+            )
+            found.append(
+                (
+                    institution.name,
+                    institution.institution_type,
+                    institution.suggested_type,
+                    sorted(codes),
+                    sorted(aliases),
+                )
+            )
+        return sorted(found)
+
+
+def test_an_institution_is_found_by_its_code_before_its_name(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    """Two districts of one name with two codes are two bodies; a renamed district is found by
+    its code; a body of type other carries the list's suggested type."""
+    db.run(seed, db)
+    db.run(apply, db, object_store, tiny_places(ROWS_V1, tmp_path), tmp_path)
+    rows = [
+        ["0140001", "Oakville Fire District", "fire_service", "", "Oakville"],
+        ["0140002", "Oakville Fire District", "fire_service", "", "Oakville"],
+        ["0140003", "Oakville Drainage District", "other", "drainage", "Oakville"],
+    ]
+    report = db.run(apply, db, object_store, tiny_districts(tmp_path, rows), tmp_path)
+    assert report.count("add", "institution") == 3
+    assert report.count("add", "identifier") == 3
+    assert report.skipped == []
+    assert db.run(districts, db) == [
+        (
+            "Oakville Drainage District",
+            "other",
+            "drainage",
+            ["0140003"],
+            ["Oakville Drainage District"],
+        ),
+        ("Oakville Fire District", "fire_service", None, ["0140001"], ["Oakville Fire District"]),
+        ("Oakville Fire District", "fire_service", None, ["0140002"], ["Oakville Fire District"]),
+    ]
+
+    again = db.run(apply, db, object_store, tiny_districts(tmp_path, rows), tmp_path)
+    assert again.changes == []
+
+    renamed = [
+        ["0140001", "Oakville Fire Protection District", "fire_service", "", "Oakville"],
+        ["0140002", "Oakville Fire District", "fire_service", "", "Oakville"],
+        # A code held by a body of another type is refused; one at another place too.
+        ["0140003", "Oakville Drainage District", "fire_service", "", "Oakville"],
+        ["0140002", "Oakville Fire District", "fire_service", "", "Pine"],
+    ]
+    third = db.run(apply, db, object_store, tiny_districts(tmp_path, renamed), tmp_path)
+    assert third.count("add", "institution") == 0
+    assert third.count("add", "institution alias") == 1
+    assert [line.split(":")[0] for line in third.skipped] == [
+        "Oakville Drainage District",
+        "Oakville Fire District",
+    ]
+    assert "a other" in third.skipped[0]
+    assert "at another place" in third.skipped[1]
+    assert db.run(districts, db)[1] == (
+        "Oakville Fire District",
+        "fire_service",
+        None,
+        ["0140001"],
+        ["Oakville Fire District", "Oakville Fire Protection District"],
+    )
+
+
+def test_a_place_may_carry_further_codes(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    db.run(seed, db)
+    db.run(apply, db, object_store, tiny_places(ROWS_V1, tmp_path), tmp_path)
+    module = tiny_places(ROWS_V1, tmp_path, name="tiny_units")
+    plain = module.entries
+
+    def entries(files: Mapping[str, OpenedFile], rules: countries.CountryRules) -> list[PlaceEntry]:
+        found = []
+        for entry in plain(files, rules):
+            codes = (Code(scheme=IdentifierScheme.CENSUS_GID, value=f"gid-{entry.code.value}"),)
+            # Oakville claims the code Elm, loaded before it, holds: reported, the rest goes on.
+            if entry.name == "Oakville":
+                codes = (Code(scheme=IdentifierScheme.CENSUS_GID, value="gid-3598"),)
+
+            found.append(entry.model_copy(update={"codes": codes}))
+        return found
+
+    module.__dict__["entries"] = entries
+    report = db.run(apply, db, object_store, module, tmp_path)
+    assert report.count("add", "identifier") == 3
+    assert report.count("add", "place") == 0
+    assert report.count("add", "institution") == 0
+    assert report.skipped == ["Oakville (municipality): code gid-3598 is held by another entity"]
+
+    assert db.run(count, db, Identifier) == 4 + 3
+    again = db.run(apply, db, object_store, module, tmp_path)
+    assert again.changes == []
 
 
 def test_an_institution_names_the_place_it_means_by_level_and_parent(

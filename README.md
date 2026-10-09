@@ -81,6 +81,8 @@ cd apps/server && uv run public-atlas seed united_states   # the United States, 
 cd apps/server && uv run public-atlas load-list canada/ontario/places           # what loading Ontario's places would change
 cd apps/server && uv run public-atlas load-list canada/ontario/places --apply   # load them; a rerun changes nothing
 cd apps/server && uv run public-atlas load-list us/states_counties --apply      # the states and county equivalents, then us/municipalities
+cd apps/server && uv run public-atlas load-list us/government_units --apply     # then the governments' legal names and websites, us/school_districts and us/special_districts
+
 cd apps/server && uv run public-atlas lists manifest                            # every list's files: the URLs to fetch with their hashes, and the steps for the hand-collected ones
 cd apps/server && uv run public-atlas run create pilot --mode step --level municipality   # a run, seeded with the work due (--video records the browser)
 cd apps/server && uv run public-atlas run release <run id> --limit 2      # queue held assignments of a step-mode run

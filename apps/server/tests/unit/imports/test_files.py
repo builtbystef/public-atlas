@@ -168,7 +168,76 @@ def test_a_table_may_start_below_a_title_and_a_note():
     assert opened.rows[0].line == 3
 
 
+def test_a_workbooks_named_sheets_are_read_one_after_another():
+    workbook = openpyxl.Workbook()
+    first = workbook.active
+    assert first is not None
+    first.title = "General Purpose"
+    first.append(["id", "name", "type", "web"])
+    first.append([1, "Elmwood", "county", "http://elmwood.example"])
+    second = workbook.create_sheet("Special District")
+    second.append(["id", "name", "function", "web"])
+    second.append([2, "Elmwood Fire District", "fire", None])
+    workbook.create_sheet("Notes").append(["Not a table"])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    data = buffer.getvalue()
+    both = source(
+        data,
+        format=Format.SPREADSHEET,
+        url="https://x.test/units.xlsx",
+        sheets=("General Purpose", "Special District"),
+        columns=("id", "name", "type", "function"),
+    )
+    opened = files.render(both, data)
+    # Each sheet keeps the columns it has; the line numbers run on through the text.
+    assert opened.lines == [
+        "id | name | type",
+        "1 | Elmwood | county",
+        "id | name | function",
+        "2 | Elmwood Fire District | fire",
+    ]
+    assert opened.rows == [
+        files.Row(
+            line=2, cells={"id": "1", "name": "Elmwood", "type": "county"}, sheet="General Purpose"
+        ),
+        files.Row(
+            line=4,
+            cells={"id": "2", "name": "Elmwood Fire District", "function": "fire"},
+            sheet="Special District",
+        ),
+    ]
+    # One sheet by name reads as the first does, every column required.
+    one = files.render(source(data, format=Format.SPREADSHEET, sheets=("Special District",)), data)
+    assert [row.sheet for row in one.rows] == ["Special District"]
+    assert one.lines[0] == "id | name | function | web"
+    with pytest.raises(ListFileError, match="no column"):
+        files.render(
+            source(
+                data, format=Format.SPREADSHEET, sheets=("Special District",), columns=("type",)
+            ),
+            data,
+        )
+    with pytest.raises(ListFileError, match="no sheet has the columns \\['area'\\]"):
+        files.render(
+            source(
+                data,
+                format=Format.SPREADSHEET,
+                sheets=("General Purpose", "Special District"),
+                columns=("name", "area"),
+            ),
+            data,
+        )
+    with pytest.raises(ListFileError, match="no sheet 'Roads'"):
+        files.render(source(data, format=Format.SPREADSHEET, sheets=("Roads",)), data)
+    with pytest.raises(ValueError, match="names a spreadsheet's worksheets"):
+        source(data, sheets=("General Purpose",))
+    with pytest.raises(ValueError, match="names a spreadsheet's worksheets"):
+        source(data, format=Format.SPREADSHEET, sheets=())
+
+
 def test_a_pdf_goes_through_the_parser_one_line_per_line_of_its_pages():
+
     data = b"Hospitals\nToronto General\fOttawa Civic\n"
     pdf = source(data, format=Format.PDF, url="https://x.test/list.pdf")
     with pytest.raises(ListFileError, match="needs a parser"):

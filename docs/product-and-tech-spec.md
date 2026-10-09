@@ -279,7 +279,15 @@ boards) and `health_units.py` follow, the last two with the places each body ser
 United States starts the same way: `lists/us/states_counties.py` and `lists/us/municipalities.py`
 read the Census Bureau's population estimates and code files through `lists/us/census.py`
 and return the 3,197 states and county equivalents and the 35,643 municipalities as
-`PlaceEntry` records, each with its FIPS code and 2025 population.
+`PlaceEntry` records, each with its FIPS code and 2025 population. `lists/us/government_units.py`
+returns those places again from the Census of Governments' list of government units and the
+`.gov` registry, each with its government's legal name, its Census of Governments id and its
+website as a candidate homepage: a `PlaceEntry` for a place already loaded is found by its code
+and adds only what is new. `lists/us/school_districts.py` (the NCES directory of local education
+agencies, each with its NCES id) and `lists/us/special_districts.py` (the Census of Governments'
+special districts, typed by function) return `InstitutionEntry` records under the county of
+each body's office.
+
 
 This is also where the bodies under a body come from. `find_institutions`
 takes a place and finds the types its level expects; it is never pointed at a

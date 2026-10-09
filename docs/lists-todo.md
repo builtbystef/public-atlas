@@ -286,7 +286,8 @@ and the exception counts are pinned.
 All three read the Census of Governments *Government Units* workbook or NCES, so they share
 one parsing pass.
 
-- [ ] **`us/government_units`**: the General Purpose sheet (38,736 rows) matched to the
+- [x] **`us/government_units`**: the General Purpose sheet (38,736 rows) matched to the
+
       places of session 4 (counties and municipalities by `FIPS_STATE` + `FIPS_PLACE`,
       townships by state + county + normalized name): legal `UNIT_NAME` as the government's
       name or alias, `CENSUS_ID_GIDID` as a `census_gid` identifier, `WEB_ADDRESS` as the
@@ -296,12 +297,14 @@ one parsing pass.
       an existing place only adds the name, identifier and homepage; if the legal name must
       not replace the composed one, add a `government_aliases` field to the entry (the one
       loader change this plan allows).
-- [ ] **`us/school_districts`**: the NCES CCD LEA directory 2023-24 (19,637 rows) as
+- [x] **`us/school_districts`**: the NCES CCD LEA directory 2023-24 (19,637 rows) as
+
       `school_board` with `LEAID` in `nces`; `LEA_TYPE` 1 and 2 as boards, 7 (charter
       districts) kept with a marking alias, 4 (service agencies) as `other`; website from
       `WEBSITE`; place = the county of the location address, the city as a served place
       where it matches a loaded municipality.
-- [ ] **`us/special_districts`**: the Special District sheet (39,555 rows) typed by
+- [x] **`us/special_districts`**: the Special District sheet (39,555 rows) typed by
+
       `FUNCTION_NAME`: fire → `fire_service`; water supply, sewerage, electric, gas, solid
       waste → `public_utility`; transit → `transit_agency`; libraries → `library`; hospitals
       → `hospital`; parks and recreation, natural resources → `park_district`; housing,
@@ -309,8 +312,94 @@ one parsing pass.
       → `other` with the function as the suggested type. Place = county; website from
       `WEB_ADDRESS`; `census_gid` identifier.
 
+The session changed the loader three times, each before the list that needed it, and found
+these things about the sources and the plan:
+
+- **A workbook names its sheets.** The Census of Governments workbook holds both lists' sheets,
+  and a file's bytes have one stored text (`store_snapshot` shares the text of identical bytes),
+  so two `ListFile`s over one workbook cannot each cite their own sheet. `ListFile` gained
+  `sheets` (the worksheets to read, in order, each a table of its own in the text with the
+  kept columns it has) and `Row` a `sheet`; `us/governments.py` declares the one `GOVT_UNITS`
+  file both lists share, and each keeps the rows of its sheet.
+- **A place carries further codes.** `PlaceEntry.codes`, foreseen in session 4: the FIPS code
+  finds the place and the Census of Governments id is stored beside it. The
+  `government_aliases` field the plan allowed was not needed: a `PlaceEntry` for a loaded
+  place, found by its code, adds the entry's government name as an alias and never renames.
+- **An institution carries codes and a suggested type.** `InstitutionEntry.codes` and
+  `suggested_type`: the loader finds an institution by a code before its name, a name match
+  leaves out the bodies already coded in the entry's schemes (the two "Acequia del Llano" in
+  one county are two bodies), identifiers are written for institutions as for places, and a
+  body of type `other` carries the list's suggested type.
+- **The sheet's township key is the subdivision code.** `FIPS_PLACE` on a township row is the
+  county subdivision code, so 16,095 of 16,144 townships and 19,424 municipalities match by
+  code; 4 more match by name under their county; 5 are overrides (the consolidated cities the
+  sheet keys by their balance, Honolulu by Urban Honolulu, Terrebonne by Houma); the City of
+  Washington is left out (the District is its state-level anchor); Echols County, consolidated
+  with Statenville, has no government to name; 96 rows are inactive; and 80 active rows name no
+  2025 unit (townships dissolved in Kansas and Nebraska, towns that became cities, a few
+  recoded) and are dropped with their names logged.
+- **Legal names.** 3,707 differ from the composed name and become aliases: every county
+  ("County of Autauga" beside "Autauga County") and 676 municipalities and townships, mostly a
+  designator the state's law gives ("Town of Liberty" for a village so called by the census,
+  "City of Chireno" for a town). The place name inside a legal name is the census's spelling
+  where the two agree but for case and punctuation ("City of St. Martin", "Town of Sewall's
+  Point"), else the sheet's words recased.
+- **The .gov registry changes daily**, so its URL is pinned at a commit of
+  `cisagov/dotgov-data` and the hash holds. Its City and County rows (11,846) are matched to a
+  loaded government by state, the place name inside the organization's name and the designator
+  group, after a trailing state ("Adams County, IL") or body name ("Henry County Government",
+  "Alachua County BOCC", "Assumption Parish Police Jury") is taken off: 9,463 rows name one
+  government, 270 several (the Washington Townships) and are skipped, 1,539 name no government
+  (sheriffs, fire departments, libraries) and 574 a government that is not loaded. The registry
+  gives 2,201 governments a candidate homepage the sheet did not.
+- **Websites** are self-reported: cleaned of notes, e-mail addresses and schemes missing their
+  slashes ("http:www.x.org"), 13,900 municipal and 2,225 county governments have one in the
+  sheet. With the registry, 2,538 of 3,031 county governments (84%) and 15,788 of 35,549
+  municipal governments (44%) have a candidate homepage.
+- **The NCES directory has no county.** The EDGE geocode file NCES publishes beside it
+  (`EDGE_GEOCODE_PUBLICLEA_2324`) gives every agency's county; `us/loaded.py` turns a county
+  code into the loaded place (the county; the municipality of the office where the county is no
+  place, as in Connecticut, Massachusetts and the independent cities; else the state), shared
+  with the special districts. 18,228 agencies: 13,162 regular districts, 173 components of a
+  supervisory union, 4,212 charter districts (alias "Independent charter district") and 681
+  service agencies as `other`; 1,224 rows of the other types (supervisory unions, state and
+  federal operated, specialized, other) are left out and counted, 234 closed, inactive or
+  future rows too, and 184 rows of the Bureau of Indian Education (state "BI") and the
+  territories have no seeded state. 189 agencies with an office in another state sit under
+  their own state. 12,863 serve the city of their office as a loaded municipality under the
+  county, emitted only where the loader's own lookup would find one place. Two dry runs taught
+  the index what the loader knows: the first skipped 1,813 agencies whose city is a town and
+  the city or village inside it (Groton, Junction City), folded into one record until the
+  unit's code told them apart; the second skipped four whose county name the loader reads by
+  form, so "Union County" finds the places under Union Parish too, and showed that the
+  consolidated governments (Nashville-Davidson, Macon-Bibb County) go by their city's alias.
+
+- **Special districts** (39,313 active of 39,555): fire 5,998, utilities 7,583, transit 365,
+  libraries 1,668, hospitals 641, park districts 1,901, municipal corporations 4,088, police 35
+  and 17,034 `other` with the function as the suggested type. Two readings of the plan: the
+  census's "natural resources" group is drainage, flood control, irrigation, reclamation and
+  soil and water conservation besides "other natural resources", and only the last is a park
+  district (the rest are `other` with their function); police protection (62) has a type of
+  its own, `police_service`, and takes it. 36 districts have no Census of Governments id and
+  are loaded without one. Names are recased from the sheet's capitals (`title_case`, best
+  effort: the abbreviations districts are known by are kept, "MUD", "PUD", "ISD").
+- **Applied**, each with its dry run read first and a rerun that changed nothing.
+  `us/government_units` (649 s): 38,558 census ids, 3,707 legal names as aliases, 18,326
+  homepages, no skips. `us/school_districts` (686 s): 18,228 agencies with their NCES id,
+  16,106 homepages, 12,863 served places, no skips. `us/special_districts` (647 s): 39,312
+  new institutions and one that joined an existing agency (the Southwest Transportation
+  Agency of Fresno County, in the NCES directory and the census sheet alike, `other` in
+  both), 39,277 census ids, 11,209 homepages, no skips. In the database: county governments
+  3,033 with 2,538 candidate homepages (83.7%), municipal governments 35,722 with 15,788
+  (44.2%), state and federal none yet (Session 6). School districts: 17,547 `school_board`
+  (15,638 with a homepage), 681 `other`. Special districts with a census id: `other` 17,015,
+  `public_utility` 7,577, `fire_service` 5,997, `municipal_corporation` 4,082,
+  `park_district` 1,898, `library` 1,667, `hospital` 641, `transit_agency` 365,
+  `police_service` 35.
+
 **Done when** the three loads are applied, the share of governments with a candidate
 homepage is reported per level, and school and special districts are counted per type.
+
 
 ## Session 6: US federal, campuses, transit and an eval
 

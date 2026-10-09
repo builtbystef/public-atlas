@@ -74,7 +74,10 @@ class PlaceEntry(BaseModel):
     parent_parent: str | None = None
     # The government's name; None for a unit nothing governs (a territorial district).
     government: str | None = Field(default=None, min_length=1, max_length=300)
+    # The code the place is found by, and its codes in other schemes, stored beside it.
     code: Code
+    codes: tuple[Code, ...] = ()
+
     figures: tuple[Figure, ...] = ()
     # The government's official page, as the list links it.
     homepage: str | None = None
@@ -92,11 +95,19 @@ class PlaceEntry(BaseModel):
             raise ValueError(f"{self.name}: homepage is not a URL: {self.homepage!r}")
         if self.homepage is not None and self.government is None:
             raise ValueError(f"{self.name}: a homepage but no government to claim it")
+        one_per_scheme(self.name, (self.code, *self.codes))
         return self
 
     @property
     def government_citation(self) -> Citation:
         return self.citations.get("government", self.citations["place"])
+
+
+def one_per_scheme(name: str, codes: tuple[Code, ...]) -> None:
+    """An entry holds one code per scheme, as a row does."""
+    schemes = [code.scheme for code in codes]
+    if len(set(schemes)) != len(schemes):
+        raise ValueError(f"{name}: two codes in one scheme")
 
 
 class ServedPlace(BaseModel):
@@ -121,8 +132,15 @@ class InstitutionEntry(BaseModel):
     aliases: tuple[AliasEntry, ...] = ()
     language: str = "en"
     institution_type: str
+    # For a body of type `other`: the type the list suggests, in the list's own words (the
+    # function the Census of Governments gives a district), for the reviewer.
+    suggested_type: str | None = Field(default=None, min_length=1, max_length=300)
+    # The body's codes in outside schemes: it is found by them before its name, and they are
+    # stored.
+    codes: tuple[Code, ...] = ()
     # The name of a loaded or seeded place.
     place: str
+
     # Which place of that name, when the name alone does not say: its administrative level
     # (the City of Thunder Bay, not the district) and the name of its parent (the City of
     # Hamilton under Ontario, not the township under Northumberland).
@@ -142,6 +160,9 @@ class InstitutionEntry(BaseModel):
             raise ValueError(f"{self.name}: a homepage with no citation")
         if self.homepage is not None and not self.homepage.startswith(("http://", "https://")):
             raise ValueError(f"{self.name}: homepage is not a URL: {self.homepage!r}")
+        if self.suggested_type is not None and self.institution_type != "other":
+            raise ValueError(f"{self.name}: a suggested type belongs to a body of type 'other'")
+        one_per_scheme(self.name, self.codes)
         return self
 
 

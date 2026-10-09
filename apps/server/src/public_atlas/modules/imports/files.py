@@ -1,9 +1,10 @@
 """The files an official list is read from: what a list module declares about each
 (`ListFile`), fetching it once into a local cache and checking its hash, and turning it into
 lines of text with one renderer per format. A CSV or spreadsheet is one line per row with the
-header first, JSON is one line per record, a web page is its visible text; a ZIP names the
-member to use. The text is what the snapshot stores, so a citation's line can be checked
-against it.
+header first (a workbook's named sheets one after another, each with its own header), JSON is
+one line per record, a web page is its visible text; a ZIP names the member to use. The text is
+what the snapshot stores, so a citation's line can be checked against it.
+
 
 A file is `fetched` (the URL is the file: the loader downloads it and checks its pinned hash)
 or `manual` (a site that blocks scripts or only offers an interactive export: a person obtains
@@ -121,6 +122,13 @@ class ListFile:
     min_rows: int = 0
     # The file inside the ZIP at `url`, when it is one.
     member: str | None = None
+    # Spreadsheets: the worksheets to read, by name and in order, each a table of its own in
+    # the text (its header, then its rows; `Row.sheet` says which); None reads the first. With
+    # several, the kept columns are those each sheet has, and every one must be in some sheet.
+    # Two lists that read two sheets of one workbook share one `ListFile`: a file's bytes have
+    # one stored text, so the sheets are rendered together.
+    sheets: tuple[str, ...] | None = None
+
     # Text formats only.
     encoding: str = "utf-8-sig"
     # CSV: what separates the cells ("|" for the Census Bureau's code files).
@@ -140,6 +148,9 @@ class ListFile:
     def __post_init__(self) -> None:
         if self.header_row < 1:
             raise ValueError(f"{self.name}: the header row is counted from 1")
+        if self.sheets is not None and (self.format is not Format.SPREADSHEET or not self.sheets):
+            raise ValueError(f"{self.name}: `sheets` names a spreadsheet's worksheets")
+
         if self.retrieval is Retrieval.FETCHED:
             if self.sha256 is None or not SHA256.match(self.sha256):
                 raise ValueError(f"{self.name}: a fetched file needs its sha256 pinned")
@@ -180,10 +191,11 @@ class ListFile:
 
 @dataclass(frozen=True, slots=True)
 class Row:
-    """One row of a table, with the line of the text it is."""
+    """One row of a table, with the line of the text it is and, in a workbook, its sheet."""
 
     line: int
     cells: dict[str, str]
+    sheet: str = ""
 
     def __getitem__(self, column: str) -> str:
         return self.cells[column].strip()
@@ -266,13 +278,14 @@ def render(file: ListFile, data: bytes, *, parser: Parser | None = None) -> Open
         raise ListFileError(f"{file.name}: sha256 {digest} is not the recorded {file.sha256}")
     with _member(file, data) as stream:
         if file.format in TABLE_FORMATS:
-            raw = (
-                _csv_rows(stream, file.encoding, file.delimiter)
-                if file.format is Format.CSV
-                else _sheet_rows(stream)
-            )
-            lines, rows = _table(file, raw)
+            tables: list[tuple[str, Iterable[list[str]]]]
+            if file.format is Format.CSV:
+                tables = [("", _csv_rows(stream, file.encoding, file.delimiter))]
+            else:
+                tables = _sheet_rows(file, stream)
+            lines, rows = _tables(file, tables)
             return OpenedFile(file=file, data=data, sha256=digest, lines=lines, rows=rows)
+
         if file.format is Format.JSON:
             document = json.loads(stream.read().decode(file.encoding))
             return OpenedFile(
@@ -308,23 +321,70 @@ def _csv_rows(stream: IO[bytes], encoding: str, delimiter: str) -> Iterator[list
     yield from reader
 
 
-def _sheet_rows(stream: IO[bytes]) -> Iterator[list[str]]:
-    """The first worksheet, each cell as text."""
+def _sheet_rows(file: ListFile, stream: IO[bytes]) -> list[tuple[str, Iterable[list[str]]]]:
+    """The worksheets the file names, or the first, each by its title with every cell as
+    text."""
     workbook = openpyxl.load_workbook(io.BytesIO(stream.read()), read_only=True, data_only=True)
     try:
-        sheet = workbook.worksheets[0]
-        for row in sheet.iter_rows(values_only=True):
-            yield ["" if cell is None else str(cell) for cell in row]
+        if file.sheets is None:
+            sheets = [workbook.worksheets[0]]
+        else:
+            for name in file.sheets:
+                if name not in workbook.sheetnames:
+                    raise ListFileError(f"{file.name}: the workbook has no sheet {name!r}")
+            sheets = [workbook[name] for name in file.sheets]
+        return [
+            (
+                # A row says which sheet it is from when the file names its sheets.
+                sheet.title if file.sheets is not None else "",
+                [
+                    ["" if cell is None else str(cell) for cell in row]
+                    for row in sheet.iter_rows(values_only=True)
+                ],
+            )
+            for sheet in sheets
+        ]
     finally:
         workbook.close()
 
 
-def _table(file: ListFile, raw: Iterable[list[str]]) -> tuple[list[str], list[Row]]:
-    """Lines and rows from a table: the rows before the header as they are, the header, then
-    each row's cells joined, the columns kept as the file says and repeats dropped when it
-    asks. Fewer rows than the file's `min_rows` is a wrong or truncated export."""
-    rows_iter = iter(raw)
+def _tables(
+    file: ListFile, tables: Iterable[tuple[str, Iterable[list[str]]]]
+) -> tuple[list[str], list[Row]]:
+    """Lines and rows from a file's tables: a CSV's one, a workbook's sheets one after another.
+    With several sheets, each keeps the columns it has, and a column no sheet has is an error.
+    Fewer rows in all than the file's `min_rows` is a wrong or truncated export."""
     lines: list[str] = []
+    rows: list[Row] = []
+    several = file.sheets is not None and len(file.sheets) > 1
+    found: set[str] = set()
+    for sheet, raw in tables:
+        found |= _table(file, raw, sheet, lines, rows, strict=not several)
+    if file.columns is not None:
+        missing = [column for column in file.columns if column not in found]
+        if missing:
+            raise ListFileError(f"{file.name}: no sheet has the columns {missing}")
+    if len(rows) < file.min_rows:
+        raise ListFileError(
+            f"{file.name}: the table has {len(rows)} rows, fewer than the {file.min_rows} "
+            "expected: a wrong or truncated export"
+        )
+    return lines, rows
+
+
+def _table(  # noqa: PLR0913 - the accumulators and what fills them
+    file: ListFile,
+    raw: Iterable[list[str]],
+    sheet: str,
+    lines: list[str],
+    rows: list[Row],
+    *,
+    strict: bool,
+) -> set[str]:
+    """One table onto `lines` and `rows`: the rows before the header as they are, the header,
+    then each row's cells joined, the columns kept as the file says (every one when `strict`,
+    else those the table has) and repeats dropped when it asks. The columns kept."""
+    rows_iter = iter(raw)
     for _ in range(file.header_row - 1):
         before = next(rows_iter, None)
         if before is None:
@@ -335,15 +395,15 @@ def _table(file: ListFile, raw: Iterable[list[str]]) -> tuple[list[str], list[Ro
         raise ListFileError(f"{file.name}: the table has no row {file.header_row} to head it")
     header = [cell.strip() for cell in header]
     if file.columns is not None:
+        wanted = [column for column in file.columns if strict or column in header]
         try:
-            keep = [header.index(column) for column in file.columns]
+            keep = [header.index(column) for column in wanted]
         except ValueError as exc:
             raise ListFileError(f"{file.name}: the table has no column {exc}") from None
-        header = list(file.columns)
+        header = wanted
     else:
         keep = None
     lines.append(CELL_SEPARATOR.join(header))
-    rows: list[Row] = []
     seen: set[tuple[str, ...]] = set()
     for raw_cells in rows_iter:
         cells = raw_cells if keep is None else [_cell(raw_cells, index) for index in keep]
@@ -353,13 +413,8 @@ def _table(file: ListFile, raw: Iterable[list[str]]) -> tuple[list[str], list[Ro
                 continue
             seen.add(key)
         lines.append(CELL_SEPARATOR.join(cells))
-        rows.append(Row(line=len(lines), cells=dict(zip(header, cells, strict=False))))
-    if len(rows) < file.min_rows:
-        raise ListFileError(
-            f"{file.name}: the table has {len(rows)} rows, fewer than the {file.min_rows} "
-            "expected: a wrong or truncated export"
-        )
-    return lines, rows
+        rows.append(Row(line=len(lines), cells=dict(zip(header, cells, strict=False)), sheet=sheet))
+    return set(header)
 
 
 def _cell(cells: list[str], index: int) -> str:

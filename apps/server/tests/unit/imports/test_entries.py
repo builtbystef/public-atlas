@@ -63,7 +63,45 @@ def test_a_homepage_needs_a_citation_a_scheme_and_a_government():
         )
 
 
+def test_a_place_holds_one_code_per_scheme():
+    further = Code(scheme=IdentifierScheme.CENSUS_GID, value="01100100100000")
+    assert place(codes=(further,)).codes == (further,)
+    with pytest.raises(ValidationError, match="two codes in one scheme"):
+        place(codes=(Code(scheme=IdentifierScheme.STATCAN_SGC, value="3502"),))
+
+
+def test_an_institution_holds_codes_and_a_suggested_type_only_when_other():
+    code = Code(scheme=IdentifierScheme.NCES, value="0100005")
+    entry = InstitutionEntry(
+        name="Elmwood Drainage District",
+        institution_type="other",
+        suggested_type="drainage",
+        codes=(code,),
+        place="Elmwood",
+        citations={"institution": DIRECTORY},
+    )
+    assert entry.codes == (code,)
+    assert entry.suggested_type == "drainage"
+    with pytest.raises(ValidationError, match="belongs to a body of type 'other'"):
+        InstitutionEntry(
+            name="Elmwood Fire District",
+            institution_type="fire_service",
+            suggested_type="fire",
+            place="Elmwood",
+            citations={"institution": DIRECTORY},
+        )
+    with pytest.raises(ValidationError, match="two codes in one scheme"):
+        InstitutionEntry(
+            name="Elmwood Fire District",
+            institution_type="fire_service",
+            codes=(code, Code(scheme=IdentifierScheme.NCES, value="0100006")),
+            place="Elmwood",
+            citations={"institution": DIRECTORY},
+        )
+
+
 def test_a_place_must_be_cited():
+
     with pytest.raises(ValidationError, match="no citation for the place"):
         place(citations={"government": DIRECTORY})
     with pytest.raises(ValidationError, match="line"):
