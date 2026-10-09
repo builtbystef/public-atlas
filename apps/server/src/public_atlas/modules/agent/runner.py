@@ -1,9 +1,15 @@
 """Runs an assignment as fresh sessions until it ends (spec section 7.4). The budget is shared
 across the sessions; a session that passes half the model's context window hands off with a
 note; one job runs at most twenty sessions, then requeues itself; a job that fails on its last
-attempt finishes the assignment `failed`. A session ends in one of three ways, collapsed into
-one signal: a finishing tool set `ended`, the budget ran out (an exception), or the window
-filled (a handoff)."""
+attempt finishes the assignment `failed`. A session ends in one of four ways, collapsed into
+one signal: a finishing tool set `ended`, the budget ran out (an exception), the window filled
+(a handoff), or the assignment stalled.
+
+The stall rule: a discovery assignment that keeps making requests without saving a finding is
+first told so in a tool result (`STALL_WARNING_REQUESTS` in `context.py`) and then, at
+`STALL_END_REQUESTS`, ended `complete` by the runner with a summary the handoff model writes
+from the session. The count runs across sessions: the row remembers the spend at the last
+finding."""
 
 import logging
 import uuid
@@ -47,6 +53,13 @@ HANDOFF_PROMPT = (
     "hunches. Plain text, no more than 300 words."
 )
 HANDOFF_FAILED = "The previous session ended with its context full; check status()."
+STALL_PROMPT = (
+    "This assignment ends now: {count} requests have gone by without a finding, so the pages "
+    "left are not worth their cost. Everything you saved is in the database already. Write a "
+    "short summary of the assignment: what was found, each type you looked for and did not "
+    "find, and where you looked for it. Plain text, no more than 300 words."
+)
+STALL_FAILED = "Ended by the stall rule: {count} requests without a finding; no summary written."
 # After this many sessions in one job the assignment is queued again, so others get a turn.
 MAX_SESSIONS_PER_JOB = 20
 # What the job returns when it put a paused run's assignment back.
@@ -252,14 +265,15 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
                 async with agent.iter(prompt, deps=ctx, usage_limits=limits) as agent_run:
                     try:
                         async for node in agent_run:
-                            # `total_tokens` is input plus output; input counts cached tokens.
-                            if (
-                                isinstance(node, CallToolsNode)
-                                and node.model_response.usage.total_tokens > threshold
-                            ):
-                                over_threshold = True
+                            if isinstance(node, CallToolsNode):
+                                # One model response is one move of the stall rule.
+                                ctx.requests_since_finding += 1
+                                # `total_tokens` is input plus output; input counts cached
+                                # tokens.
+                                if node.model_response.usage.total_tokens > threshold:
+                                    over_threshold = True
                             if isinstance(node, ModelRequestNode) and (
-                                ctx.ended is not None or over_threshold
+                                ctx.ended is not None or over_threshold or ctx.stalled
                             ):
                                 # The tool returns are not in the history yet; without them the
                                 # handoff run would see unanswered calls.
@@ -272,6 +286,7 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
                         text_output = agent_run.result is not None
             finally:
                 await account(res, assignment, messages, purpose=assignment.type.value)
+                await record_stall_count(res, assignment, ctx)
     finally:
         videos = (
             await video.store_videos(
@@ -286,6 +301,8 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
         await write_session_events(res, assignment, messages, instructions=standing, videos=videos)
     if ctx.ended is not None:
         return SessionOutcome(ended=ctx.ended)
+    if ctx.stalled:
+        return await stalled(res, assignment, ctx, messages)
     if not over_threshold:
         # Stopped without a finishing tool and with context to spare: the next session keeps the
         # old note and tries again.
@@ -298,6 +315,25 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
         return SessionOutcome(ended=None, handoff=assignment.handoff_note)
     note = await handoff(res, assignment, messages)
     return SessionOutcome(ended=None, handoff=note)
+
+
+async def stalled(
+    res: Resources, assignment: Assignment, ctx: SessionContext, messages: Sequence[ModelMessage]
+) -> SessionOutcome:
+    """The stall rule's end: the assignment is `complete`, with the summary the handoff model
+    writes from what the session saw."""
+    count = ctx.requests_since_finding
+    logger.info(
+        "Assignment %s stalled: %d requests without a finding; ending it", assignment.id, count
+    )
+    summary = await handoff(
+        res,
+        assignment,
+        messages,
+        prompt=STALL_PROMPT.format(count=count),
+        fallback=STALL_FAILED.format(count=count),
+    )
+    return SessionOutcome(ended=Ended(AssignmentResult.COMPLETE, summary))
 
 
 def remaining_budget(assignment: Assignment) -> UsageLimits:
@@ -349,6 +385,16 @@ async def account(
         assignment.tokens_used = row.tokens_used
 
 
+async def record_stall_count(res: Resources, assignment: Assignment, ctx: SessionContext) -> None:
+    """Where the stall count stood when the session ended, so the next session carries it on.
+    The handoff request that may follow is not a move."""
+    async with res.session() as session:
+        row = await session.get_one(Assignment, assignment.id)
+        row.requests_since_finding = ctx.requests_since_finding
+        await session.commit()
+        assignment.requests_since_finding = ctx.requests_since_finding
+
+
 async def write_session_events(
     res: Resources,
     assignment: Assignment,
@@ -369,13 +415,20 @@ async def write_session_events(
         await session.commit()
 
 
-async def handoff(res: Resources, assignment: Assignment, messages: Sequence[ModelMessage]) -> str:
-    """Ask the handoff model for the note the next session starts from. The request counts
-    against the assignment's spend but the budget does not gate it: the note is wanted most
-    when the budget is nearly gone. On failure the next session is told to start from
-    `status()`."""
+async def handoff(
+    res: Resources,
+    assignment: Assignment,
+    messages: Sequence[ModelMessage],
+    *,
+    prompt: str = HANDOFF_PROMPT,
+    fallback: str = HANDOFF_FAILED,
+) -> str:
+    """Ask the handoff model for the note the next session starts from, or, with the stall
+    rule's prompt, the summary the assignment ends with. The request counts against the
+    assignment's spend but the budget does not gate it: the note is wanted most when the budget
+    is nearly gone. On failure the next session is told to start from `status()`."""
     if res.models is None:  # pragma: no cover - `_run` checked
-        return HANDOFF_FAILED
+        return fallback
     writer = Agent(
         res.models.model(HANDOFF_MODEL),
         output_type=str,
@@ -385,10 +438,10 @@ async def handoff(res: Resources, assignment: Assignment, messages: Sequence[Mod
         ),
     )
     try:
-        result = await writer.run(HANDOFF_PROMPT, message_history=without_reasoning(messages))
+        result = await writer.run(prompt, message_history=without_reasoning(messages))
     except Exception:
         logger.exception("Handoff note for %s failed", assignment.id)
-        return HANDOFF_FAILED
+        return fallback
     await account(res, assignment, result.new_messages(), purpose="handoff")
     return result.output
 

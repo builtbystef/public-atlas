@@ -194,7 +194,9 @@ async def add_quote(  # noqa: PLR0913
     kind: EvidenceKind = EvidenceKind.APPEARS_ON,
     link_url: str | None = None,
 ) -> bool:
-    """The quote as this assignment's evidence for the entity."""
+    """The quote as this assignment's evidence for the entity. Every save passes through here,
+    so this is where the stall rule learns that something was found."""
+    ctx.note_finding()
     return await evidence.add_evidence(
         session,
         entity_id=entity_id,

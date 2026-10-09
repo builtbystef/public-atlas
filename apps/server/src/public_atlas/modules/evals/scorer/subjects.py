@@ -262,9 +262,13 @@ def _score_institutions(
 
 def _score_traps(tally: Tally, graph: Graph, expected: SubjectFile, match: SubjectMatch) -> None:
     """The precision side: `out_of_scope` entries saved anyway and, for a place's file, rows the
-    file does not label."""
+    file does not label. A trap counts only when it was saved under the subject's place: a
+    school board under the province, a police service under the region or another place's own
+    government is where the goal text says it belongs, and another file judges it."""
     matched_ids = {row.id for row in match.rows.values()}
     place = match.place
+    if place is None:
+        return
     # A trap's URL names it only off the dataset institutions' own sites: on one of those, a row
     # is a duplicate of the institution, not the trap.
     expected_sites = {site_of(i.homepage) for i in expected.institutions if i.homepage}
@@ -276,6 +280,7 @@ def _score_traps(tally: Tally, graph: Graph, expected: SubjectFile, match: Subje
             row
             for row in graph.institutions.values()
             if _live(row)
+            and row.place_id == place.id
             and row.id not in matched_ids
             and (
                 any(normalize_name(text) == wanted for text in row.names)
@@ -293,7 +298,7 @@ def _score_traps(tally: Tally, graph: Graph, expected: SubjectFile, match: Subje
                 f"{trap.name}: saved as {describe(row)}; out of scope: {trap.reason.strip()}",
                 "out of scope, saved",
             )
-    if expected.subject.kind != "place" or place is None:
+    if expected.subject.kind != "place":
         # A ministry's file labels its own slice of the province, not every body under it, so
         # what else is there cannot be judged.
         return

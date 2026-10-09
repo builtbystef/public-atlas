@@ -649,3 +649,18 @@ def test_a_tally_records_the_bucket_of_every_miss_and_false_positive(card: score
     assert {entry["kind"] for entry in misses} == {"miss", "wrong"}
     assert all(entry["kind"] == "hit" for entry in tally.hits_json())
     assert len(tally.hits_json()) == tally.hits
+
+
+def test_a_trap_saved_under_another_place_is_not_counted(rules: countries.CountryRules):
+    """A school board under the province or a police service under the region is where the goal
+    text says such a body belongs: the subject's file does not judge it, whatever it is called."""
+    graph = subject_graph()
+    bia = graph.institutions[BIA]
+    graph.institutions[BIA] = InstitutionRow(
+        bia.id, ONTARIO, bia.type, bia.status, bia.homepage_url, bia.parent_id, bia.names
+    )
+    (card,) = scorer.score_files(graph, rules, {"fixture": subject_file()}, {})
+    tally = card.tallies[FIND_INSTITUTIONS].only(exclude=(PARENT,))
+    assert "out of scope, saved" not in tally.buckets
+    assert (tally.hits, tally.misses, tally.false_positives) == (2, 1, 0)
+    assert tally.precision == pytest.approx(1.0)

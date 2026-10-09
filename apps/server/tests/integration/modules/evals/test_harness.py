@@ -664,7 +664,8 @@ def test_an_eval_needs_the_main_database_at_the_latest_migration(
 
     async def behind(connection: AsyncConnection) -> None:
         await connection.run_sync(migrations.check_head)
-        await connection.execute(text("UPDATE alembic_version SET version_num = 'b3e8d1f4a627'"))
+        # Any revision but the head reads as behind: the check compares, it does not look it up.
+        await connection.execute(text("UPDATE alembic_version SET version_num = '000000000000'"))
         with pytest.raises(migrations.NotMigratedError, match="alembic upgrade head"):
             await connection.run_sync(migrations.check_head)
 

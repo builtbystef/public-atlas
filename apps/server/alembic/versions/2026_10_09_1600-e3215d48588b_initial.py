@@ -1,25 +1,66 @@
-"""schema
+"""initial
 
-The graph, its evidence, the country tables and the work (spec section 4).
+The job queue's tables (Procrastinate's own schema), then the graph, its evidence, the country
+tables and the work (spec section 4).
 
-Revision ID: 7c4e2a9b1d08
-Revises: 5b1a0c2d9e3f
-Create Date: 2026-10-06 13:00:00
+The migrations of 2026-10-06 to 2026-10-09 were squashed into this one on 2026-10-09, before the
+first real data. A database stamped with one of those revisions has this schema once it was at
+their head (`a2c4e6f8b013`); it is marked as at this one with `alembic stamp --purge e3215d48588b`.
+
+Revision ID: e3215d48588b
+Revises:
+Create Date: 2026-10-09 16:00:00
 """
 
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from alembic import op
+from procrastinate.schema import SchemaManager
 from sqlalchemy.dialects import postgresql
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-revision: str = "7c4e2a9b1d08"
-down_revision: str | Sequence[str] | None = "5b1a0c2d9e3f"
+revision: str = "e3215d48588b"
+down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
+
+# What Procrastinate 3.9's schema creates, for `downgrade`. On a Procrastinate upgrade, add a
+# migration that runs the new files from `procrastinate/sql/migrations/`
+# (`procrastinate schema --migrations-path`).
+PROCRASTINATE_TABLES = [
+    "procrastinate_workers",
+    "procrastinate_jobs",
+    "procrastinate_periodic_defers",
+    "procrastinate_events",
+]
+PROCRASTINATE_TYPES = [
+    "procrastinate_job_status",
+    "procrastinate_job_event_type",
+    "procrastinate_job_to_defer_v1",
+]
+PROCRASTINATE_FUNCTIONS = [
+    "procrastinate_defer_jobs_v1",
+    "procrastinate_defer_periodic_job_v2",
+    "procrastinate_fetch_job_v2",
+    "procrastinate_finish_job_v1",
+    "procrastinate_cancel_job_v1",
+    "procrastinate_retry_job_v1",
+    "procrastinate_retry_job_v2",
+    "procrastinate_notify_queue_job_inserted_v1",
+    "procrastinate_notify_queue_abort_job_v1",
+    "procrastinate_trigger_function_status_events_insert_v1",
+    "procrastinate_trigger_function_status_events_update_v1",
+    "procrastinate_trigger_function_scheduled_events_v1",
+    "procrastinate_trigger_abort_requested_events_procedure_v1",
+    "procrastinate_unlink_periodic_defers_v1",
+    "procrastinate_register_worker_v1",
+    "procrastinate_unregister_worker_v1",
+    "procrastinate_update_heartbeat_v1",
+    "procrastinate_prune_stalled_workers_v1",
+]
 
 
 def checked(table: str, column: str, values: list[str], *, nullable: bool = False) -> sa.Column:
@@ -32,6 +73,9 @@ def checked(table: str, column: str, values: list[str], *, nullable: bool = Fals
 
 
 def upgrade() -> None:  # noqa: PLR0915 - one statement per table
+    # The job queue. Straight to the driver, which reads `%` as a placeholder even with no
+    # parameters, so the schema's own are doubled.
+    op.get_bind().exec_driver_sql(SchemaManager.get_schema().replace("%", "%%"))
     # For the trigram index on aliases.
     op.execute("CREATE EXTENSION IF NOT EXISTS pg_trgm")
     op.create_table(
@@ -154,12 +198,16 @@ def upgrade() -> None:  # noqa: PLR0915 - one statement per table
         sa.Column("budget_tokens", sa.Integer(), nullable=False),
         sa.Column("requests_used", sa.Integer(), nullable=False),
         sa.Column("tokens_used", sa.Integer(), nullable=False),
+        sa.Column("requests_since_finding", sa.Integer(), nullable=False),
         sa.Column("sessions", sa.Integer(), nullable=False),
         sa.Column("handoff_note", sa.Text(), nullable=True),
         sa.Column("summary", sa.Text(), nullable=True),
         sa.Column("types_not_found", postgresql.JSONB(), nullable=False),
         sa.Column("last_error", sa.Text(), nullable=True),
         sa.Column("parent_assignment_id", sa.Uuid(), nullable=True),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("started_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(
             ["parent_assignment_id"],
             ["assignments.id"],
@@ -190,6 +238,7 @@ def upgrade() -> None:  # noqa: PLR0915 - one statement per table
         sa.Column("cost", sa.Numeric(12, 6), nullable=False),
         sa.Column("started_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("finished_at", sa.DateTime(timezone=True), nullable=True),
+        sa.Column("gates", postgresql.JSONB(), nullable=True),
         sa.ForeignKeyConstraint(["run_id"], ["runs.id"], name=op.f("fk_eval_runs_run_id_runs")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_eval_runs")),
     )
@@ -260,8 +309,9 @@ def upgrade() -> None:  # noqa: PLR0915 - one statement per table
         checked(
             "eval_scores", "assignment_type", ["find_homepage", "find_institutions", "find_sources"]
         ),
-        sa.Column("recall", sa.Float(), nullable=False),
-        sa.Column("precision", sa.Float(), nullable=False),
+        sa.Column("recall", sa.Float(), nullable=True),
+        sa.Column("precision", sa.Float(), nullable=True),
+        sa.Column("hits", postgresql.JSONB(), nullable=True),
         sa.Column("misses", postgresql.JSONB(), nullable=False),
         sa.Column("false_positives", postgresql.JSONB(), nullable=False),
         sa.ForeignKeyConstraint(
@@ -349,7 +399,7 @@ def upgrade() -> None:  # noqa: PLR0915 - one statement per table
         "webpages",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("url", sa.Text(), nullable=False),
-        sa.Column("domain_id", sa.Uuid(), nullable=False),
+        sa.Column("domain_id", sa.Uuid(), nullable=True),
         sa.Column("redirects_to_url", sa.Text(), nullable=True),
         sa.Column("first_seen_assignment_id", sa.Uuid(), nullable=True),
         sa.ForeignKeyConstraint(
@@ -457,9 +507,10 @@ def upgrade() -> None:  # noqa: PLR0915 - one statement per table
         sa.Column("filename", sa.Text(), nullable=True),
         sa.Column("bytes_key", sa.Text(), nullable=False),
         sa.Column("text_key", sa.Text(), nullable=True),
-        checked("snapshots", "text_status", ["ready", "parsing", "failed"]),
+        checked("snapshots", "text_status", ["ready", "parsing", "partial", "failed"]),
         sa.Column("text_error", sa.Text(), nullable=True),
         sa.Column("page_count", sa.Integer(), nullable=True),
+        sa.Column("parsed_pages", sa.Integer(), nullable=True),
         sa.Column("pruned_at", sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(
             ["assignment_id"],
@@ -663,3 +714,11 @@ def downgrade() -> None:
     op.drop_table("entities")
     op.drop_table("country_settings")
     op.execute("DROP EXTENSION IF EXISTS pg_trgm")
+    # The job queue: functions first, with the triggers on them, since some return a table's
+    # row type and would go with the table.
+    for function in PROCRASTINATE_FUNCTIONS:
+        op.execute(f"DROP FUNCTION {function} CASCADE")
+    for table in PROCRASTINATE_TABLES:
+        op.execute(f"DROP TABLE {table} CASCADE")
+    for type_ in PROCRASTINATE_TYPES:
+        op.execute(f"DROP TYPE {type_}")

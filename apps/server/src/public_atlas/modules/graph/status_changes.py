@@ -182,11 +182,37 @@ async def verify_homepage(
     for claim in await graph.homepages_of(session, institution):
         if claim.id != homepage.id and claim.status in OPEN:
             await reject_homepage(session, claim, entered_by=entered_by, reason=SUPERSEDED)
+            await _reject_superseded_domain(session, claim, webpage, entered_by)
     spawns = [Spawn(AssignmentType.FIND_SOURCES, institution.id)]
     place = await session.get_one(Place, institution.place_id)
     if place.government_institution_id == institution.id:
         spawns.append(Spawn(AssignmentType.FIND_INSTITUTIONS, place.id))
     return spawns
+
+
+async def _reject_superseded_domain(
+    session: AsyncSession, claim: Homepage, verified_page: Webpage, entered_by: EnteredBy
+) -> None:
+    """A superseded claim on a candidate official domain, such as the directory's old address of
+    a government whose homepage was verified on another domain, would leave that domain
+    undecided for good: no assignment opens it again. It is rejected with the claim, unless
+    another institution still has an open claim on it, which that institution's own
+    `find_homepage` decides."""
+    old_page = await session.get_one(Webpage, claim.webpage_id)
+    domain = await graph.domain_of_webpage(session, old_page)
+    if (
+        domain is None
+        or domain.domain_kind is not DomainKind.OFFICIAL
+        or domain.status is not EntityStatus.CANDIDATE
+        or await _open_homepages_on(session, domain)
+    ):
+        return
+    await reject_domain(
+        session,
+        domain,
+        entered_by=entered_by,
+        reason=f"{SUPERSEDED}: {verified_page.url} is verified instead",
+    )
 
 
 async def _homepage_checks(

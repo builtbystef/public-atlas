@@ -192,7 +192,7 @@ and sits with the import tables.
 | Table | Fields |
 | --- | --- |
 | `runs` | name, country_code, mode (`step`, `auto`), status (`active`, `paused`, `stopped`), filter (JSON: administrative levels, institution types, assignment types, subject ids), is_eval, record_video, created_at |
-| `assignments` | run_id, type, subject_id (an entity), status, result, budget_requests, budget_tokens, requests_used, tokens_used, sessions, handoff_note, summary, types_not_found (JSON), last_error, parent_assignment_id |
+| `assignments` | run_id, type, subject_id (an entity), status, result, budget_requests, budget_tokens, requests_used, tokens_used, requests_since_finding (the stall rule's count, section 7.4), sessions, handoff_note, summary, types_not_found (JSON), last_error, parent_assignment_id |
 | `review_items` | entity_id, rule, question (JSON: what the reviewer sees), kind (the shared question, when there is one), status (`open`, `approved`, `rejected`, `merged`), raised_by_assignment_id, decided_at, note |
 | `usage` | assignment_id, kind (`model`, `search`), provider, purpose, units (tokens or requests), cached_units, cost, at |
 | `agent_run_events` | assignment_id, session, position, kind (`prompt`, `text`, `tool_call`, `tool_result`, `video`), tool, content (JSON: the prompt, the model's words, the arguments, the result, or a storage key), at. Everything the agent saw, said and did, in order, written from the session's message list when it ends |
@@ -320,7 +320,7 @@ vouch for anything.
 
 Before a candidate domain becomes trusted:
 
-- a trusted page links to the candidate homepage, and the link is in the stored copy of that page, or the claim came from a search and a reviewer must approve;
+- a trusted page links the institution to the candidate domain, to the homepage or to any other page on it, and the link is in the stored copy of that page, or the claim came from a search and a reviewer must approve;
 - every quote the agent gives exists in the candidate's own stored pages;
 - at least one quote names the institution, allowing the opening words of a recorded name or the place name with another designator;
 - no other verified institution owns that homepage.
@@ -329,7 +329,10 @@ A redirect from the candidate to another domain, on record in the browser,
 moves the claim to the new domain. A dead site is rejected. A site that
 belongs to another public body withdraws this institution's claim only.
 Disagreement between the agent and the checks goes to review, never to
-`rejected`.
+`rejected`. When a homepage is verified, the institution's other open claims
+are superseded, and a superseded claim's candidate domain (the directory's
+old address of a government that moved) is rejected with it unless another
+institution still claims a page there.
 
 ### 6.4 Third-party platforms
 
@@ -426,11 +429,16 @@ duplicates.
 
 Each assignment has a request budget and a token budget, set per type. A
 session runs until the agent calls its finishing tool, the budget runs out,
-or the context passes half the model's window. At half full the agent writes
-a handoff note and a fresh session starts from the database and the note. One
-job runs at most twenty sessions, then requeues itself. A job that fails five
-times finishes the assignment as `failed`. Work spawned on finish runs for
-every result except `failed`.
+the context passes half the model's window, or the assignment stalls. At half
+full the agent writes a handoff note and a fresh session starts from the
+database and the note. A discovery assignment stalls when it keeps making
+requests without saving a finding: at thirty requests since the last finding,
+counted across sessions, the next tool result tells the agent to finish unless
+it has a concrete page left to open; at sixty the runner ends the assignment
+`complete` with a summary the handoff model writes. One job runs at most
+twenty sessions, then requeues itself. A job that fails five times finishes
+the assignment as `failed`. Work spawned on finish runs for every result
+except `failed`.
 
 ---
 
@@ -439,8 +447,10 @@ every result except `failed`.
 A worker on the `assignment` queue picks up an assignment and runs a Pydantic
 AI agent. The briefing is the standing instructions for the type, the
 country's levels, types and descriptions, the subject, the checklist of
-types still to account for, the pages already visited, and the last handoff
-note. Never the old transcript.
+types still to account for, the types already recorded under the place as
+counts (with "from an official list" where the loader wrote them, so the agent
+skips the directories that list a loaded type), the pages already visited, and
+the last handoff note. Never the old transcript.
 
 ### 8.1 Tools
 

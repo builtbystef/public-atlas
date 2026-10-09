@@ -4,9 +4,10 @@ the homepages claimed before, the pages already visited and the last handoff not
 transcript. The standing instructions are in `prompts.py`."""
 
 import uuid
+from collections import Counter
 from collections.abc import Callable
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.modules.agent import findings
@@ -18,6 +19,7 @@ from public_atlas.modules.evidence.models import Evidence, Snapshot
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph.models import (
     Domain,
+    EnteredBy,
     EntityStatus,
     Homepage,
     Institution,
@@ -25,7 +27,14 @@ from public_atlas.modules.graph.models import (
     Webpage,
 )
 
-__all__ = ["briefing", "earlier_claims", "instructions", "places_to_save_under", "where_to_look"]
+__all__ = [
+    "briefing",
+    "earlier_claims",
+    "instructions",
+    "places_to_save_under",
+    "recorded_under",
+    "where_to_look",
+]
 
 # Records a domain with a reason to look there; a domain that is not allowed is dropped.
 type Note = Callable[[str | None, str], None]
@@ -44,6 +53,10 @@ async def briefing(ctx: SessionContext, session: AsyncSession) -> str:
             "the subject, or under the place above it that the body serves) or named in "
             "types_not_found when you finish."
         )
+    if ctx.descriptor.checklist is Checklist.INSTITUTION_TYPES:
+        recorded = await recorded_under(session, ctx.place)
+        if recorded is not None:
+            parts.append(recorded)
     parts.extend(await where_to_look(ctx, session))
     visited = list(
         await session.scalars(
@@ -187,6 +200,41 @@ def _source_types_line(ctx: SessionContext, institution: Institution) -> str:
     return (
         f"The country lists no source types for a {institution.institution_type}: look for a "
         "page of each source type listed above and save the ones you find."
+    )
+
+
+async def recorded_under(session: AsyncSession, place: Place) -> str | None:
+    """The institution types with rows under the place already, as counts, never names: a list
+    of names does not scale to a city with hundreds of bodies, a line of types does. A count
+    from an official list means the loader read the authority's own list, which beats anything
+    a directory page would add, so the agent is told to skip that type's directories. The list
+    is not named: the agent cannot open it and could only be led astray by its name."""
+    rows = await session.execute(
+        select(Institution.institution_type, Institution.entered_by, func.count())
+        .where(Institution.place_id == place.id, Institution.status != EntityStatus.REJECTED)
+        .group_by(Institution.institution_type, Institution.entered_by)
+    )
+    totals: Counter[str] = Counter()
+    listed: Counter[str] = Counter()
+    for institution_type, entered_by, count in rows.all():
+        totals[institution_type] += count
+        if entered_by is EnteredBy.SCRIPT:
+            listed[institution_type] += count
+    if not totals:
+        return None
+    parts = []
+    for institution_type in sorted(totals):
+        total, from_list = totals[institution_type], listed[institution_type]
+        if from_list == total:
+            parts.append(f"{institution_type} ({total}, from an official list)")
+        elif from_list:
+            parts.append(f"{institution_type} ({total}, {from_list} from an official list)")
+        else:
+            parts.append(f"{institution_type} ({total})")
+    return (
+        "Already recorded under this place: " + ", ".join(parts) + ". A type with a count from "
+        "an official list is done: skip the directory pages that list that type and do not "
+        "save its bodies again."
     )
 
 

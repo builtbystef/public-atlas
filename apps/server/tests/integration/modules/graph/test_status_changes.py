@@ -559,3 +559,37 @@ def test_merging_places_moves_children_and_merges_their_governments(
     assert bare_twin.government_institution_id == bare_government.id
     assert bare_government.place_id == bare_twin.id
     assert out["bare"].status is EntityStatus.REJECTED
+
+
+def test_verifying_a_homepage_elsewhere_rejects_the_superseded_candidate_domain(
+    db: Database, world: World, build: type[Build]
+):
+    """The directory's old address of a government whose homepage was verified on another
+    domain is a candidate domain nothing would decide again: it is rejected with the claim. A
+    domain another institution still claims is left to that institution's own search."""
+
+    async def scenario() -> tuple[Homepage, Homepage, Domain, Domain, list[Spawn]]:
+        async with db.session() as session:
+            town = await session.get_one(Institution, world.town.id)
+            old = await build.claim(session, town, "https://www.oakville-old.ca/")
+            await build.claim(session, town, "https://www.oakville-shared.ca/")
+            library = await build.candidate_institution(session, world.oakville, "Oakville Library")
+            theirs = await build.claim(session, library, "https://www.oakville-shared.ca/library")
+            current = await build.claim(session, town, "https://www.elmcounty.ca/oakville/")
+            spawn = await status_changes.verify_homepage(session, current, entered_by=AGENT)
+            old_domain = await graph.domain_by_name(session, "oakville-old.ca")
+            shared_domain = await graph.domain_by_name(session, "oakville-shared.ca")
+            assert old_domain is not None
+            assert shared_domain is not None
+            await session.commit()
+            return old, theirs, old_domain, shared_domain, spawn
+
+    old, theirs, old_domain, shared_domain, spawn = db.run(scenario)
+    assert (old.status, old.rejected_reason) == (EntityStatus.REJECTED, status_changes.SUPERSEDED)
+    assert (old_domain.status, old_domain.entered_by) == (EntityStatus.REJECTED, AGENT)
+    assert (shared_domain.status, theirs.status) == (EntityStatus.CANDIDATE, EntityStatus.CANDIDATE)
+    # The town has its homepage: nothing sends it looking again.
+    assert [s.type for s in spawn] == [
+        AssignmentType.FIND_SOURCES,
+        AssignmentType.FIND_INSTITUTIONS,
+    ]

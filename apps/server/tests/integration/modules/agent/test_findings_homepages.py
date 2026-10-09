@@ -847,3 +847,71 @@ def claimed_again(db: Database, world: World, build: type[Build], ctx: SessionCo
             return claim
 
     return db.run(make)
+
+
+def test_a_trusted_link_to_any_page_on_the_domain_vouches_for_the_root_claim(
+    db: Database,
+    world: World,
+    build: type[Build],
+    make_assignment: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+    capture: Capture,
+    call: Callable[..., Any],
+    in_session,
+):
+    """The county's site links to a deep page on the utility's domain, and the agent claims the
+    root page it found there. The link to the deep page is the trusted link for the domain
+    (spec section 6.3), so the root page is verified without a human."""
+    deep = "https://www.oakvillehydro.ca/rates/residential"
+    root = "https://www.oakvillehydro.ca/"
+    _, snapshot = capture(
+        "https://www.elmcounty.ca/hydro",
+        '<html><body><p>Rates: <a href="https://www.oakvillehydro.ca/rates/residential">'
+        "Oakville Hydro residential rates</a></p></body></html>",
+        "Rates: Oakville Hydro residential rates",
+    )
+
+    async def claimed_deep(session) -> tuple[Institution, Homepage]:
+        oakville = await session.get_one(Place, world.oakville.id)
+        utility = await build.candidate_institution(
+            session, oakville, "Oakville Hydro", "public_utility"
+        )
+        await status_changes.verify_institution(session, utility, entered_by=EnteredBy.SCRIPT)
+        linking = await session.get_one(Webpage, snapshot.webpage_id)
+        claim = await build.claim(session, utility, deep, found_on=linking)
+        await evidence.add_evidence(
+            session,
+            entity_id=claim.id,
+            snapshot=snapshot,
+            kind=EvidenceKind.LINKS_TO,
+            quote="Oakville Hydro residential rates",
+            entered_by=EnteredBy.AGENT,
+            link_url=deep,
+        )
+        return utility, claim
+
+    utility, deep_claim = in_session(claimed_deep)
+    ctx = context(make_assignment(FIND_HOMEPAGE, utility.id))
+    assert ctx.candidate is not None
+    assert ctx.candidate.homepage_id == deep_claim.id
+    capture.page(root, "Oakville Hydro: powering the town since 1914", ctx.assignment_id)
+    # The root page claimed from the candidate domain itself, as the goal text asks.
+    saved = call(ctx, findings.record_homepage, url=root)
+    assert saved.claim_status is EntityStatus.CANDIDATE
+    assert ctx.candidate is not None
+    assert ctx.candidate.homepage_id != deep_claim.id
+    outcome = call(
+        ctx,
+        findings.confirm_candidate,
+        quotes=[Quote(url=root, quote="Oakville Hydro: powering the town")],
+    )
+    assert str(outcome).startswith(
+        "Verified oakvillehydro.ca as an official domain of 'Oakville Hydro'"
+    )
+    institution, claims = homepage_of(db, utility.id)
+    verified = [claim for claim in claims if claim.status is EntityStatus.VERIFIED]
+    assert len(verified) == 1
+    assert institution.homepage_id == verified[0].id
+    assert verified[0].id != deep_claim.id
+    superseded = next(claim for claim in claims if claim.id == deep_claim.id)
+    assert superseded.rejected_reason == status_changes.SUPERSEDED

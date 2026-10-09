@@ -8,7 +8,7 @@ from public_atlas.modules.agent import briefing, findings, prompts
 from public_atlas.modules.assignments.models import Assignment, AssignmentType
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
-from public_atlas.modules.graph.models import EnteredBy, Homepage, Institution
+from public_atlas.modules.graph.models import EnteredBy, Homepage, Institution, Place
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -162,3 +162,60 @@ def test_a_find_homepage_briefing_names_the_candidate_and_the_claims_rejected_be
     ) in text
     assert f"Found as a link on the trusted page {TOWNS_URL}." in text
     assert "- oakville.ca: the candidate domain, yours to decide" in text
+
+
+def test_a_place_subject_is_told_what_is_recorded_under_it_as_counts(
+    db: Database,
+    world: World,
+    make_assignment: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+    in_session,
+):
+    """Types with counts, never names, and which came from an official list: a loaded type is
+    done, so the agent skips the directories that list it."""
+
+    async def recorded(session) -> None:
+        oakville = await session.get_one(Place, world.oakville.id)
+        for name, entered_by in (
+            ("Oakville Housing", EnteredBy.SCRIPT),
+            ("Oakville Parking", EnteredBy.SCRIPT),
+            ("Oakville Arena", EnteredBy.AGENT),
+        ):
+            await graph.create_institution(
+                session,
+                name=name,
+                institution_type="municipal_corporation",
+                place=oakville,
+                entered_by=entered_by,
+            )
+        library = await graph.create_institution(
+            session,
+            name="Oakville Public Library",
+            institution_type="library",
+            place=oakville,
+            entered_by=EnteredBy.AGENT,
+        )
+        gone = await graph.create_institution(
+            session,
+            name="Oakville Zoo",
+            institution_type="municipal_corporation",
+            place=oakville,
+            entered_by=EnteredBy.AGENT,
+        )
+        await status_changes.reject_institution(session, gone, entered_by=EnteredBy.MANUAL)
+        assert library is not None
+
+    in_session(recorded)
+    ctx = context(make_assignment(FIND_INSTITUTIONS, world.oakville.id))
+    text = prompt_of(db, ctx)
+    assert (
+        "Already recorded under this place: library (1), municipal_corporation (3, 2 from an "
+        "official list), municipal_government (1, from an official list). A type with a count "
+        "from an official list is done: skip the directory pages that list that type and do "
+        "not save its bodies again." in text
+    )
+    assert "Types still to account for: conservation_authority, fire_service" in text
+    assert text.index("Types still to account for") < text.index("Already recorded")
+    # An institution subject is not told: its checklist is of sources.
+    sources = context(make_assignment(FIND_SOURCES, world.county.id))
+    assert "Already recorded" not in prompt_of(db, sources)

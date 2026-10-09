@@ -76,6 +76,25 @@ DOWNLOAD_FIRST = (
     "the counts disagree (a file can lag the page). "
 )
 
+# What gets a row (eval dataset README, "Scope"): a body with buying power of its own. The
+# first eval run saved eighteen arenas and community centres from one city's agencies page and
+# filled a village of 579 people's checklist with a provincial contractor and an old health unit.
+BUYING_POWER = (
+    "What counts as an institution: a body gets a row only when it buys on its own account, "
+    "which shows as its own procurement page, its own budget, or its own board that approves "
+    "spending. Not institutions, so never saved: a board of management for one facility (an "
+    "arena, a community centre, a theatre, one street); a non-profit the government funds but "
+    "does not control; a holding company above a utility (save the operating utility the "
+    "public deals with); a subsidiary that buys through its parent; a board that invests or "
+    "grants the government's money; a partnership or contractor the government does not "
+    "control; and business improvement areas, council committees, tribunals and advisory "
+    "boards. When in doubt, the consolidated financial statements decide: a body not "
+    "consolidated there is not the government's. Most small municipalities have only a fire "
+    "service and a library of their own; transit, police, health and utilities are run by a "
+    "place above or a contractor, and naming those types in types_not_found is the right "
+    "answer, not a provincial body or a contractor saved to fill the slot. "
+)
+
 DESCRIPTORS: dict[AssignmentType, Descriptor] = {
     AssignmentType.FIND_HOMEPAGE: Descriptor(
         type=AssignmentType.FIND_HOMEPAGE,
@@ -133,16 +152,20 @@ DESCRIPTORS: dict[AssignmentType, Descriptor] = {
         tools=(*BROWSING, *SHARED, "save_institution", "save_homepage", "finish"),
         finishing_tools=("finish",),
         goal=(
-            "Find every public body under the place: each institution type expected at the "
-            "place's level, from the government's own pages (organization charts, 'ministries "
-            "and agencies', 'boards and committees', 'departments', 'agencies, boards and "
-            "commissions', the budget, the annual report, directories). Save each body with "
-            "save_institution: its type, the body it sits under (parent_institution_id, when a "
-            "page says so), whether it buys for itself or its parent buys for it "
-            "(procurement_handled_by), and a quote from the page that names it; pass "
-            "homepage_url when the page links to its site. A body on the government's own "
-            "domain (a ministry, a department) has its page there: open it and save it with "
-            "save_homepage and page_quote. "
+            "Find every public body under the place that buys on its own account: each "
+            "institution type expected at the place's level, from the government's own pages "
+            "(organization charts, 'ministries and agencies', 'boards and committees', "
+            "'departments', 'agencies, boards and commissions', the budget, the annual report, "
+            "directories). The page that lists every body the government owns is its "
+            "consolidated financial statements (in the annual financial report): the entities "
+            "consolidated there are its bodies, so open it early and work from its list. "
+            "Save each body with save_institution: its type, the body it sits under "
+            "(parent_institution_id, when a page says so), whether it buys for itself or its "
+            "parent buys for it (procurement_handled_by), and a quote from the page that names "
+            "it; pass homepage_url whenever the page links to the body, as the exact href in "
+            "snapshot's link list. A body on the government's own domain (a ministry, a "
+            "department) has its page there: open it and save it with save_homepage and "
+            "page_quote. "
             + DOWNLOAD_FIRST
             + "A directory's short label ('Transportation', 'Health') is not a name: open the "
             "body's own page and save the full name it writes ('Ministry of Transportation'), "
@@ -150,19 +173,24 @@ DESCRIPTORS: dict[AssignmentType, Descriptor] = {
             "below. A body of a municipality or region (a housing corporation, a parking "
             "authority, a city-owned corporation) is never a provincial type such as agency. A "
             "police, transit or library board is part of the service it governs: save the "
-            "service, not the board. Business improvement areas, council committees, tribunals "
-            "and advisory boards are not institutions: do not save them. A public body that "
-            "buys things and fits none of the listed types is still saved: pass 'other' with "
-            "suggested_type, and a human adds the type. Never drop a body for want of a type; "
-            "never use 'other' when a listed type fits. A body is saved under the place it "
-            "serves, not the page it was found on: one serving the whole of a place above the "
-            "subject goes under that place, with its id from the briefing's 'Places to save "
-            "under' line as place_id. Finish only when every expected type is saved or named "
-            "in types_not_found, with a summary of what was found and where you looked for "
-            "the rest; a finish that leaves a type out is refused once."
+            "service, not the board.\n"
+            + BUYING_POWER
+            + "A public body that passes that test and fits none of the listed types is still "
+            "saved: pass 'other' with suggested_type, and a human adds the type. Never use "
+            "'other' when a listed type fits. A body is saved under the place it serves, not "
+            "the page it was found on: one serving the whole of a place above the subject goes "
+            "under that place, with its id from the briefing's 'Places to save under' line as "
+            "place_id. A type the briefing lists as already recorded from an official list is "
+            "done: skip the directory pages that list that type. Finish only when every "
+            "expected type is saved or named in types_not_found, with a summary of what was "
+            "found and where you looked for the rest; a finish that leaves a type out is "
+            "refused once."
         ),
         checklist=Checklist.INSTITUTION_TYPES,
-        budget=Budget(requests=150, tokens=12_000_000),
+        # 250 requests: Toronto's discovery spent 150 with bodies still unfound. The stall rule
+        # in `agent/runner.py` ends an assignment that has stopped finding things, so the
+        # larger cap is not spent on nothing.
+        budget=Budget(requests=250, tokens=20_000_000),
         model=ModelChoice(LUNA, "xhigh", LUNA_WINDOW),
     ),
     AssignmentType.FIND_SOURCES: Descriptor(
@@ -186,11 +214,18 @@ DESCRIPTORS: dict[AssignmentType, Descriptor] = {
             "capital plan. When an institution has two pages of one type (its own meetings page "
             "and the portal it links to), save both. A document published at more than one URL, "
             "or in more than one edition (accessible, condensed, French), is one source: save "
-            "one, the full edition on the institution's own site. Save a body you meet that is "
-            "missing with save_institution, then return to the sources. Finish only when every "
-            "expected source type is saved or named in types_not_found, with a summary of what "
-            "was found and where you looked for the rest; a finish that leaves a type out is "
-            "refused once."
+            "one, the full edition on the institution's own site. Not sources, so never saved: "
+            "a platform's root or front page (the Biddingo or MERX home page), a single meeting "
+            "or a single tender, and a search results page (a MERX search URL); save the "
+            "institution's standing page on the platform instead, or name the type in "
+            "types_not_found. The parent's page is never saved as the child's: when a body's "
+            "budget, tenders or procurement run through the body it sits under (a transit "
+            "agency's budget in the city's), do not save the parent's page for it; name the "
+            "type in types_not_found and say in the summary that the parent covers it. Save a "
+            "body you meet that is missing with save_institution, then return to the sources. "
+            "Finish only when every expected source type is saved or named in "
+            "types_not_found, with a summary of what was found and where you looked for the "
+            "rest; a finish that leaves a type out is refused once."
         ),
         checklist=Checklist.SOURCE_TYPES,
         budget=Budget(requests=120, tokens=10_000_000),

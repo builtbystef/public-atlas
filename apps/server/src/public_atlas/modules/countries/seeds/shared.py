@@ -121,21 +121,35 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
     {"name": "university", "description": "A public university"},
     {"name": "college", "description": "A public college"},
     {"name": "school_board", "description": "A public school board or school district"},
-    # Bodies of a municipality or region that buy on their own account. Business improvement
+    # Bodies of a municipality or region that buy on their own account: their own procurement
+    # page, their own budget, or their own board that approves spending. Business improvement
     # areas, council committees and tribunals are not institutions: they spend little and buy
     # through the municipality. A paramedic service has no type either: it is a department of its
-    # municipality or region, which buys and budgets for it.
+    # municipality or region, which buys and budgets for it. Nor is a board of management for
+    # one facility, a non-profit the municipality only funds, a holding company above a utility,
+    # a subsidiary that buys through its parent, or a board that invests or grants the
+    # municipality's money (eval dataset README, "Scope").
     {
         "name": "transit_agency",
-        "description": "A public transit operator, with the board that governs it",
+        "description": (
+            "A public transit operator the municipality or region runs or owns, with the board "
+            "that governs it; not a provincial or contracted operator serving the place"
+        ),
     },
-    {"name": "police_service", "description": "A police service, with the board that governs it"},
+    {
+        "name": "police_service",
+        "description": (
+            "A municipal or regional police service, with the board that governs it; not a "
+            "provincial force policing the place under contract"
+        ),
+    },
     {"name": "fire_service", "description": "A fire department or fire and rescue service"},
     {
         "name": "public_utility",
         "description": (
             "A publicly owned utility (electricity, water, gas, telecommunications, waste) that "
-            "presents under its own name"
+            "presents under its own name: the operating utility the public deals with, not the "
+            "holding company above it, and not a provincial utility that serves the place"
         ),
     },
     {"name": "library", "description": "A public library, with the board that governs it"},
@@ -145,21 +159,28 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
             "A watershed or conservation authority, usually shared by several municipalities"
         ),
     },
-    {"name": "public_health_unit", "description": "A public health unit or board of health"},
+    {
+        "name": "public_health_unit",
+        "description": "The current public health unit or board of health; not a former one",
+    },
     {
         "name": "municipal_corporation",
         "description": (
             "A corporation, authority or board a municipality or region owns or controls that "
-            "runs a business of its own: community housing, real estate, parking, an airport, a "
-            "venue, a zoo, economic development"
+            "runs a business of its own and buys on its own account: community housing, real "
+            "estate, parking, an airport, a venue, a zoo, economic development. Not a board of "
+            "management for one arena, community centre, theatre or street, a non-profit the "
+            "municipality only funds, a holding company above a utility, a subsidiary that buys "
+            "through its parent, or a board that invests or grants the municipality's money"
         ),
     },
-    # Never drop a public body for want of a type: one that fits none is saved as `other`, with
-    # the type the agent would have given it in `suggested_type`, and sent to review.
+    # A public body with buying power of its own that fits no type is saved as `other`, with the
+    # type the agent would have given it in `suggested_type`, and sent to review.
     {
         "name": "other",
         "description": (
-            "A public body that fits no other type; say what it is in the suggested type"
+            "A public body that buys on its own account and fits no other type; say what it is "
+            "in the suggested type"
         ),
     },
 ]

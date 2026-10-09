@@ -16,7 +16,7 @@ from public_atlas.config import Settings
 from public_atlas.integrations.browser import BrowserPolicy
 from public_atlas.integrations.search import Searcher
 from public_atlas.integrations.storage import ObjectStore
-from public_atlas.modules.assignments.descriptors import Descriptor, descriptor_for
+from public_atlas.modules.assignments.descriptors import Checklist, Descriptor, descriptor_for
 from public_atlas.modules.assignments.models import (
     Assignment,
     AssignmentResult,
@@ -40,6 +40,13 @@ from public_atlas.resources import Resources
 
 # Nothing here hides behind TYPE_CHECKING: the tools' schemas are built at run time from
 # `RunContext[SessionContext]`.
+
+# The stall rule of a discovery assignment (`runner.py`): model requests since the assignment
+# last saved a finding, counted across its sessions. At the first number the next tool result
+# tells the agent to finish unless it has a concrete page left; at the second the runner ends
+# the assignment `complete` with a summary the handoff model writes. Tuned on each eval run.
+STALL_WARNING_REQUESTS = 30
+STALL_END_REQUESTS = 60
 
 
 class SubjectMissingError(Exception):
@@ -98,6 +105,10 @@ class SessionContext:
     # Finishes refused for leaving a type unaccounted for; the second ends `complete_with_gaps`.
     short_closes: int = 0
     tool_calls: int = 0
+    # Model requests since the assignment last saved a finding, over every session (the stall
+    # rule): started from the row, counted up by the runner, reset by a save.
+    requests_since_finding: int = 0
+    stall_warned: bool = False
 
     def session(self) -> AsyncSession:
         return self.session_factory()
@@ -109,6 +120,37 @@ class SessionContext:
     @property
     def finding_homepage(self) -> bool:
         return self.descriptor.type is AssignmentType.FIND_HOMEPAGE
+
+    @property
+    def has_stall_rule(self) -> bool:
+        """Only a discovery assignment can stall: `find_homepage` ends by its own decision tools
+        and its budget is small."""
+        return self.descriptor.checklist is not Checklist.NONE
+
+    @property
+    def stalled(self) -> bool:
+        return self.has_stall_rule and self.requests_since_finding >= STALL_END_REQUESTS
+
+    def note_finding(self) -> None:
+        """A finding was saved: the stall count starts over."""
+        self.requests_since_finding = 0
+        self.stall_warned = False
+
+    def stall_notice(self) -> str | None:
+        """The line the next tool result carries once the assignment has gone a long way without
+        a finding; said once per stall in each session, since a new session starts with no
+        memory of the last one's notice."""
+        if (
+            not self.has_stall_rule
+            or self.stall_warned
+            or self.requests_since_finding < STALL_WARNING_REQUESTS
+        ):
+            return None
+        self.stall_warned = True
+        return (
+            f"{self.requests_since_finding} moves without a finding; finish with a summary "
+            "unless you have a concrete page left to open."
+        )
 
     def end(self, result: AssignmentResult, summary: str | None = None) -> None:
         self.ended = Ended(result, summary)
@@ -178,6 +220,7 @@ async def build_context(
         allowed_domains=allowed,
         searcher=res.searcher,
         candidate=candidate,
+        requests_since_finding=assignment.requests_since_finding,
     )
 
 

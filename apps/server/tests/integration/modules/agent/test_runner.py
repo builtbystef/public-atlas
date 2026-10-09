@@ -569,3 +569,60 @@ def test_a_recording_run_stores_the_videos_and_notes_them(
     played = [event for event in listed if event["video_url"] is not None]
     assert [event["kind"] for event in played] == ["video"]
     assert played[0]["video_url"].startswith("memory://videos/")
+
+
+def test_a_stalled_assignment_is_told_once_then_ended_complete_across_sessions(
+    db: Database,
+    scripted: Callable[[Script], Resources],
+    make: Callable[..., Assignment],
+    reload: Callable[[uuid.UUID], Assignment],
+    events_of: Callable[[uuid.UUID], list[AgentRunEvent]],
+    prompt_of: Callable[[list[ModelMessage]], str],
+):
+    """A session that keeps calling tools without saving anything: the 30th move's result
+    carries the notice, a handoff at 40 does not reset the count, and at 60 the runner ends the
+    assignment `complete` with the summary the handoff model writes."""
+    moves = 0
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal moves
+        prompt = prompt_of(messages)
+        if prompt.startswith("Your context is nearly full"):
+            return ModelResponse(parts=[TextPart("Paging the boards list.")])
+        if prompt.startswith("This assignment ends now"):
+            assert "60 requests have gone by without a finding" in prompt
+            return ModelResponse(
+                parts=[TextPart("Looked at every board page; no tender page found.")]
+            )
+        moves += 1
+        if moves == 40:
+            return ModelResponse(
+                parts=[ToolCallPart("status", {})],
+                usage=RequestUsage(input_tokens=WINDOW // 2 + 1, output_tokens=10),
+            )
+        return ModelResponse(parts=[ToolCallPart("status", {})])
+
+    res = scripted(script)
+    assignment = make(budget_requests=100)
+    assert db.run(runner.run_assignment, res, assignment.id) == "complete"
+    row = reload(assignment.id)
+    assert (row.status, row.result, row.sessions) == (
+        AssignmentStatus.FINISHED,
+        AssignmentResult.COMPLETE,
+        2,
+    )
+    assert row.summary == "Looked at every board page; no tender page found."
+    assert moves == 60
+    assert row.requests_since_finding == 60
+    # Sixty moves, the handoff note and the summary.
+    assert row.requests_used == 62
+    assert row.handoff_note == "Paging the boards list."
+    results = [e for e in events_of(assignment.id) if e.kind is EventKind.TOOL_RESULT]
+    noticed = [e for e in results if "moves without a finding" in str(e.content)]
+    # Once per session: the second session starts with no memory of the first's notice.
+    assert [e.session for e in noticed] == [1, 2]
+    assert (
+        "30 moves without a finding; finish with a summary unless you have a concrete page "
+        "left to open." in str(noticed[0].content)
+    )
+    assert "41 moves without a finding" in str(noticed[1].content)

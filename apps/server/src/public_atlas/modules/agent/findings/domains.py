@@ -191,7 +191,7 @@ async def confirm_candidate(  # noqa: C901, PLR0912, PLR0915 - one pass over eve
     fixable: list[str] = []
     fatal: list[str] = []
     matches: list[tuple[Quote, evidence.QuoteMatch]] = []
-    unlinked = await _linking_failures(ctx, session, homepage, webpage)
+    unlinked = await _linking_failures(ctx, session, homepage, webpage, domain)
 
     for quote in quotes:
         try:
@@ -327,46 +327,76 @@ def _site_name(naming: Naming, name_used: str, names: Sequence[Alias]) -> tuple[
     )
 
 
+@dataclass(frozen=True, slots=True)
+class TrustedLink:
+    """A trusted page's link that vouches for the claim: the page, the `links_to` evidence, the
+    stored copy it was found in, and the URL the link points at."""
+
+    page: Webpage
+    evidence: Evidence
+    snapshot: Snapshot
+    target: str
+    # Whether the link points at the candidate domain itself, or at another domain the browser
+    # must have been redirected from.
+    on_domain: bool
+
+
 async def _trusted_link(
-    session: AsyncSession, homepage: Homepage
-) -> tuple[Webpage, Evidence, Snapshot] | None:
-    """The trusted page on record as linking to the claim, with the `links_to` quote and the
-    stored copy it was found in: the page the claim was found on when it has one, else any
-    trusted page a `links_to` quote cites, such as the official list the loader read (a register
-    is trusted from the start, spec section 6.1). The linking page's domain must be trusted now,
+    session: AsyncSession, homepage: Homepage, domain: Domain
+) -> TrustedLink | None:
+    """The trusted page on record as linking the institution to the candidate domain, with the
+    `links_to` quote and the stored copy it was found in. Any claim of the institution may carry
+    the link, to any page on the domain: a city's site links to a deep page on the utility's
+    domain, and the agent then claims the root page it found there, so the link to the deep
+    page is what vouches for the domain. A link to another domain is taken when there is no
+    better; the caller checks the redirect. The claim's own evidence is read first, the page it
+    was found on before the rest, such as the official list the loader read (a register is
+    trusted from the start, spec section 6.1). The linking page's domain must be trusted now,
     not just then."""
     rows = await session.execute(
-        select(Evidence, Snapshot)
+        select(Evidence, Snapshot, Homepage, Webpage)
         .join(Snapshot, Snapshot.id == Evidence.snapshot_id)
-        .where(Evidence.entity_id == homepage.id, Evidence.kind == EvidenceKind.LINKS_TO)
+        .join(Homepage, Homepage.id == Evidence.entity_id)
+        .join(Webpage, Webpage.id == Homepage.webpage_id)
+        .where(
+            Homepage.institution_id == homepage.institution_id,
+            Evidence.kind == EvidenceKind.LINKS_TO,
+        )
         .order_by(Evidence.id)
     )
-    found = rows.all()
-    preferred = [
-        (row, snapshot)
-        for row, snapshot in found
-        if snapshot.webpage_id == homepage.found_on_webpage_id
-    ]
-    for row, snapshot in [*preferred, *found]:
+    found: list[tuple[tuple[bool, bool, bool], Evidence, Snapshot, str, bool]] = []
+    for row, snapshot, claim, claimed in rows.all():
+        target = row.link_url or claimed.url
+        on_domain = _covers(graph.host_of(target), domain.name)
+        rank = (
+            not on_domain,
+            claim.id != homepage.id,
+            snapshot.webpage_id != homepage.found_on_webpage_id,
+        )
+        found.append((rank, row, snapshot, target, on_domain))
+    found.sort(key=lambda item: item[0])
+    for _, row, snapshot, target, on_domain in found:
         linking = await session.get_one(Webpage, snapshot.webpage_id)
         if (await page_of(session, linking)).trusted:
-            return linking, row, snapshot
+            return TrustedLink(linking, row, snapshot, target, on_domain)
     return None
 
 
 async def _linking_failures(
-    ctx: SessionContext, session: AsyncSession, homepage: Homepage, webpage: Webpage
+    ctx: SessionContext, session: AsyncSession, homepage: Homepage, webpage: Webpage, domain: Domain
 ) -> list[str]:
     """Why no trusted page vouches for the candidate homepage, as one failure or none (spec
-    section 6.3). The link is checked in the copy the evidence cites. A link to a URL the
-    browser was redirected from counts when the redirect to the candidate is on record."""
-    link = await _trusted_link(session, homepage)
+    section 6.3). The link is checked in the copy the evidence cites. A trusted link to any
+    page on the candidate domain for this institution counts; a link to a URL on another domain
+    counts when the redirect from it to the candidate is on record."""
+    link = await _trusted_link(session, homepage, domain)
     if link is None:
         if homepage.found_on_webpage_id is None:
             return [
                 (
-                    f"no trusted page links to {webpage.url}: it was found by a web search or on "
-                    "an untrusted page, so a human decides, with the quotes recorded here"
+                    f"no trusted page links to {domain.name} for this institution: {webpage.url} "
+                    "was found by a web search or on an untrusted page, so a human decides, "
+                    "with the quotes recorded here"
                 )
             ]
         found_on = await session.get_one(Webpage, homepage.found_on_webpage_id)
@@ -376,20 +406,20 @@ async def _linking_failures(
                 "trusted domain"
             )
         ]
-    found_on, row, snapshot = link
-    target = row.link_url or webpage.url
-    if not await evidence.check_link(ctx.store, snapshot, found_on.url, target, quote=row.quote):
+    if not await evidence.check_link(
+        ctx.store, link.snapshot, link.page.url, link.target, quote=link.evidence.quote
+    ):
         return [
             (
-                f"the trusted page {found_on.url} does not link to {target} in the stored copy "
-                "the finding cites"
+                f"the trusted page {link.page.url} does not link to {link.target} in the stored "
+                "copy the finding cites"
             )
         ]
-    if target != webpage.url and not await graph.redirects_to(session, target, webpage.url):
+    if not link.on_domain and not await graph.redirects_to(session, link.target, webpage.url):
         return [
             (
-                f"the trusted page {found_on.url} links to {target}, which is not on record as "
-                f"redirecting to {webpage.url}"
+                f"the trusted page {link.page.url} links to {link.target}, which is not on record "
+                f"as redirecting to {webpage.url}"
             )
         ]
     return []
@@ -488,20 +518,19 @@ async def candidate_moved(ctx: SessionContext, session: AsyncSession, url: str) 
     new_claim = await graph.create_homepage(
         session, institution, moved, entered_by=EnteredBy.AGENT, found_on=found_on
     )
-    link = await _trusted_link(session, homepage)
+    link = await _trusted_link(session, homepage, domain)
     if link is not None:
         # The trusted page's link to the old URL is what vouches for the new one; the redirect
         # between them is the browser's own record.
-        _, row, snapshot = link
         await evidence.add_evidence(
             session,
             entity_id=new_claim.id,
-            snapshot=snapshot,
+            snapshot=link.snapshot,
             kind=EvidenceKind.LINKS_TO,
-            quote=row.quote,
+            quote=link.evidence.quote,
             entered_by=EnteredBy.AGENT,
-            locator=row.locator,
-            link_url=row.link_url or webpage.url,
+            locator=link.evidence.locator,
+            link_url=link.target,
             assignment_id=ctx.assignment_id,
         )
     new_domain = await graph.domain_of_host(session, graph.host_of(target))

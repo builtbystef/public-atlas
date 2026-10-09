@@ -45,7 +45,8 @@ def render(result: object) -> str | BinaryContent:
 
 
 class Adapter(FunctionToolset[SessionContext]):
-    """The agent's toolset: counts the calls and renders what each tool returns."""
+    """The agent's toolset: counts the calls, renders what each tool returns, and adds the stall
+    rule's notice to a result once the assignment has gone a long way without a finding."""
 
     async def call_tool(
         self,
@@ -55,7 +56,12 @@ class Adapter(FunctionToolset[SessionContext]):
         tool: ToolsetTool[SessionContext],
     ) -> Any:  # noqa: ANN401 - the base class's signature
         ctx.deps.tool_calls += 1
-        return render(await super().call_tool(name, tool_args, ctx, tool))
+        result = render(await super().call_tool(name, tool_args, ctx, tool))
+        if isinstance(result, str):
+            notice = ctx.deps.stall_notice()
+            if notice is not None:
+                result = f"{result}\n{notice}"
+        return result
 
 
 def toolset(ctx: SessionContext, browser: Browser) -> Adapter:

@@ -93,6 +93,9 @@ class Assignment(UUIDPrimaryKey, Base):
     budget_tokens: Mapped[int]
     requests_used: Mapped[int] = mapped_column(default=0)
     tokens_used: Mapped[int] = mapped_column(default=0)
+    # Model requests since the assignment last saved a finding, written when a session ends so
+    # the stall rule counts across sessions (agent/runner.py).
+    requests_since_finding: Mapped[int] = mapped_column(default=0)
     sessions: Mapped[int] = mapped_column(default=0)
     # Written at half a context window, read by the next session.
     handoff_note: Mapped[str | None] = mapped_column(Text)
