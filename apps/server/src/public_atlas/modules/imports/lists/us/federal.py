@@ -24,12 +24,14 @@ names as its parent. The rules:
   bureau. A body with no parent sits under the Government of the United States, the loader's
   default.
 - The website is the list's `agency_url`, cleaned (`governments.website`), a candidate homepage
-  like any other list's. The .gov registry's federal domains (`current-federal.csv`, pinned at a
-  commit since the file changes daily) say which body holds each domain; the loader stores the
-  file as a snapshot on a trusted host, so a registry line that names the body and its domain
-  is the linking evidence its `find_homepage` assignment needs (spec section 6.3). The domain is
-  trusted the spec's way, by that assignment, never by this list: the bodies whose website sits
-  on a registered domain are counted in the notes.
+  like any other list's. The Federal Register's own line names the body and its website, and
+  the list's host is trusted as a list's, so that line is the trusted link a `find_homepage`
+  assignment needs (spec section 6.3); the domain is trusted the spec's way, by that
+  assignment, never by this list. The .gov registry's federal domains (`current-federal.csv`,
+  pinned at a commit since the file changes daily) say which body holds each domain and serve
+  the keep rule only: the file is fetched from GitHub, a shared host the loader admits as a
+  platform, not trusted. The bodies whose website sits on a registered domain are counted in
+  the notes.
 """
 
 import logging
@@ -91,6 +93,7 @@ DOTGOV_FEDERAL = ListFile(
     sha256="f8fd8cd9e24ecf373605bec61c165e56f2dd99ffc5cd35b7069bb1cca4364152",
     format=Format.CSV,
     columns=("Domain name", "Domain type", "Organization name"),
+    shared_host=True,
 )
 SOURCES = (AGENCIES, DOCUMENTS, DOTGOV_FEDERAL)
 

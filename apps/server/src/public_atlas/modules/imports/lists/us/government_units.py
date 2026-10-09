@@ -73,6 +73,7 @@ DOTGOV = ListFile(
     sha256="fe844af95a86b32ef6aa8ffe6471eabf9f81a5817cb788b29b7c863d1422d1fa",
     format=Format.CSV,
     columns=("Domain name", "Domain type", "Organization name", "City", "State"),
+    shared_host=True,
 )
 SOURCES = (GOVT_UNITS, DOTGOV, *states_counties.SOURCES, PLACE_CODES, COUSUB_CODES)
 # The registry's domain types that are a government's own.

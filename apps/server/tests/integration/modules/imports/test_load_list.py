@@ -615,6 +615,44 @@ def test_a_district_has_no_government_and_the_lists_domain_is_trusted(
     )
 
 
+def test_a_shared_host_is_a_platform_and_a_list_domain_trusted_earlier_becomes_one(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    """A list fetched from a code host: the host is admitted as a platform, never trusted; and
+    a host the old rule trusted as a list's domain is turned into one on the next apply."""
+    db.run(seed, db)
+    module = tiny_places(ROWS_V1, tmp_path)
+    source = module.SOURCES[0]
+    db.run(apply, db, object_store, module, tmp_path)
+    shared = ListFile(
+        name=source.name,
+        title=source.title,
+        url=source.url,
+        sha256=source.sha256,
+        format=source.format,
+        shared_host=True,
+    )
+    module.__dict__["SOURCES"] = (shared,)
+
+    report = db.run(apply, db, object_store, module, tmp_path)
+
+    rendered = [change.render() for change in report.changes]
+    assert "~ domain register.example (a platform: a shared host, not trusted)" in rendered
+
+    async def read(db: Database) -> Domain:
+        async with db.session() as session:
+            return (
+                await session.execute(select(Domain).where(Domain.name == "register.example"))
+            ).scalar_one()
+
+    register = db.run(read, db)
+    assert register.domain_kind is DomainKind.PLATFORM
+    assert register.status is EntityStatus.VERIFIED
+
+    report = db.run(apply, db, object_store, module, tmp_path)
+    assert not [change for change in report.changes if change.table == "domain"]
+
+
 def test_a_new_release_changes_what_moved_and_reports_what_left(
     db: Database, object_store: MemoryObjectStore, tmp_path: Path
 ):

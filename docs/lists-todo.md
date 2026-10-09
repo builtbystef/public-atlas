@@ -434,11 +434,16 @@ plan:
   has no door for a list to verify a domain, and it should not get one: a domain is trusted
   when a person lists it as an anchor, a reviewer approves it or a `find_homepage` assignment
   passes the four checks of spec section 6.3, and a script matching a registry's organization
-  name to an agency's name is none of those. The registry's part is evidence: the loader stores
-  the file as a snapshot on a trusted host, so the line that names a body and its domain is the
-  trusted link that assignment's first check needs. The homepages are loaded as candidates like
-  any other list's, the module counts the registered ones in its notes, and the next run's
-  `find_homepage` works them with a quote from each site.
+  name to an agency's name is none of those. The trusted link that assignment's first check
+  needs is the Federal Register's own line, which names the body and its website on a host the
+  loader trusts as the list's. The registry serves the keep rule only. The homepages are loaded
+  as candidates like any other list's, the module counts the registered ones in its notes, and
+  the next run's `find_homepage` works them with a quote from each site.
+- **A shared host is a platform, not a list's domain.** The loader trusts a list's host from
+  the start, the publisher's own; the two .gov registry files are fetched from
+  `raw.githubusercontent.com`, which that rule had made a trusted official domain, where anyone
+  publishes. `ListFile.shared_host` now admits such a host as a platform (fetchable, never
+  trusted), and a rerun of either list turned the existing row into one.
 - **Names.** The list inverts names ("Agriculture Department", "Procurement and Property
   Management, Office of"); the fifteen cabinet departments, the three military departments and
   the three comma-inverted offices take their official names from hand tables, with the list's

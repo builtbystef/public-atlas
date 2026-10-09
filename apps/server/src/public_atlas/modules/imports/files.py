@@ -144,6 +144,10 @@ class ListFile:
     distinct: bool = False
     # Manual files: the name the file has in the cache when its URL does not end in one.
     filename_override: str | None = None
+    # The file sits on a host that is not its publisher's own (a code host such as
+    # raw.githubusercontent.com, where anyone publishes). The loader admits the host as a
+    # platform, fetchable and never trusted, instead of trusting it as the list's domain.
+    shared_host: bool = False
 
     def __post_init__(self) -> None:
         if self.header_row < 1:

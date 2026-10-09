@@ -36,6 +36,7 @@ from public_atlas.modules.evidence.models import EvidenceKind, Snapshot
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
+    DomainKind,
     EnteredBy,
     EntityStatus,
     Homepage,
@@ -255,18 +256,31 @@ class Loader:
     async def store_sources(self, sources: Iterable[files.ListFile]) -> None:
         """Each file as a snapshot on a webpage of its own domain, and its `official_lists` row
         with the hash of the file as given, fetched or by hand. A list's domain is trusted from
-        the start (spec section 6.1)."""
+        the start (spec section 6.1): the publisher's own host. A shared host (`shared_host`)
+        is a platform instead, fetchable and never trusted; one trusted earlier as a list's
+        domain is made a platform."""
         for file in sources:
             opened = self.files[file.name]
             domain, created = await graph.ensure_domain(
                 self.session, graph.host_of(file.url), entered_by=EnteredBy.SCRIPT
             )
-            if not graph.is_trusted(domain):
-                await status_changes.verify_domain(
-                    self.session, domain, entered_by=EnteredBy.SCRIPT
-                )
-            if created:
-                self.changed("add", "domain", domain.name, "trusted: an official list's")
+            if file.shared_host:
+                if domain.domain_kind is not DomainKind.PLATFORM:
+                    domain.domain_kind = DomainKind.PLATFORM
+                    await self.session.flush()
+                    self.changed(
+                        "add" if created else "change",
+                        "domain",
+                        domain.name,
+                        "a platform: a shared host, not trusted",
+                    )
+            else:
+                if not graph.is_trusted(domain):
+                    await status_changes.verify_domain(
+                        self.session, domain, entered_by=EnteredBy.SCRIPT
+                    )
+                if created:
+                    self.changed("add", "domain", domain.name, "trusted: an official list's")
             webpage = await graph.ensure_webpage(self.session, file.url, domain=domain)
             snapshot, created = await evidence.store_snapshot(
                 self.session,
