@@ -212,11 +212,14 @@ here.
 
 ### Candidate domains
 
-Only the anchor's domains are trusted at the start: `ontario.ca`, and
-`pas.gov.on.ca`, the provincial agency directory. Any other Ontario government
-host (`infogo.gov.on.ca`, an old ministry domain) is a candidate like any other,
-`expected: confirm` for the Government of Ontario or the ministry it serves. A
-domain on the seed's platforms is never a candidate: it is fetchable already. A
+Only the anchor's domains are trusted at the start: `ontario.ca` and
+`gov.on.ca`. The allowlist takes subdomains, so `gov.on.ca` covers every host
+of the Government of Ontario: the provincial agency directory
+(`pas.gov.on.ca`), INFO-GO (`infogo.gov.on.ca`) and the ministries' legacy
+sites (`mto.gov.on.ca`). None of them is a candidate domain. An agency's own
+domain (`supplyontario.ca`) is a candidate like any other, `expected: confirm`
+for the agency. A domain on the seed's platforms is never a candidate: it is
+fetchable already. A
 trap domain that belongs to no institution is attached to the institution whose
 page links to it.
 

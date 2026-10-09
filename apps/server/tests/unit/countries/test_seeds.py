@@ -23,7 +23,7 @@ def test_the_canada_seed_validates_against_the_shared_seed():
     assert seed.institution_type_names == shared_seed.institution_type_names
     ontario = next(place for place in seed.places if place.name == "Ontario")
     assert ontario.government == "Government of Ontario"
-    assert ontario.domains == ["ontario.ca", "pas.gov.on.ca"]
+    assert ontario.domains == ["ontario.ca", "gov.on.ca"]
 
 
 def test_every_registered_seed_validates():

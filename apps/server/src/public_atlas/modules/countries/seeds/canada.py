@@ -144,8 +144,12 @@ PLATFORMS: list[str] = [
 ]
 
 # The country as a place, and the anchor: a place whose government and domains were verified by
-# hand. pas.gov.on.ca is the Public Appointments Secretariat's list of every provincial agency by
-# ministry, where ontario.ca's "Agencies, boards and commissions" page sends readers.
+# hand. Every host under gov.on.ca is the Government of Ontario, and the allowlist takes
+# subdomains, so the one entry covers the Public Appointments Secretariat (pas.gov.on.ca, the
+# list of every provincial agency by ministry, where ontario.ca's "Agencies, boards and
+# commissions" page sends readers), INFO-GO (www.infogo.gov.on.ca) and the ministries' legacy
+# sites such as www.mto.gov.on.ca. Agency domains such as supplyontario.ca stay out:
+# find_homepage verifies them like any other candidate.
 PLACES: list[dict[str, Any]] = [
     {"name": "Canada", "level": "country"},
     {
@@ -153,7 +157,7 @@ PLACES: list[dict[str, Any]] = [
         "level": "province_territory",
         "parent": "Canada",
         "government": "Government of Ontario",
-        "domains": ["ontario.ca", "pas.gov.on.ca"],
+        "domains": ["ontario.ca", "gov.on.ca"],
     },
 ]
 

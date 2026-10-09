@@ -71,7 +71,7 @@ async def read_ontario(db: Database) -> tuple[Place, Place, Institution, list[Do
         domains = list(
             (
                 await session.execute(
-                    select(Domain).where(Domain.name.in_(["ontario.ca", "pas.gov.on.ca"]))
+                    select(Domain).where(Domain.name.in_(["ontario.ca", "gov.on.ca"]))
                 )
             ).scalars()
         )
