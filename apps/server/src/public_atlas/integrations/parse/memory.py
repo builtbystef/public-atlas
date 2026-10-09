@@ -18,11 +18,20 @@ class MemoryParser:
         data: bytes,
         filename: str,
         *,
+        start: int = 1,
+        limit: int | None = None,
         page_batch: int | None = None,  # noqa: ARG002 - the text has no ranges to hold
     ) -> ParsedDocument:
         try:
             text = data.decode()
         except UnicodeDecodeError as exc:
             raise ParseFailed(f"{filename}: not text ({exc.reason})") from None
-        pages = tuple(page.strip() for page in text.split(PAGE_SEPARATOR))
-        return ParsedDocument(pages=pages, parser=self.name, version=self.version)
+        pages = [page.strip() for page in text.split(PAGE_SEPARATOR)]
+        end = len(pages) if limit is None else min(len(pages), start - 1 + limit)
+        return ParsedDocument(
+            pages=tuple(pages[start - 1 : end]),
+            parser=self.name,
+            version=self.version,
+            first=start,
+            total=len(pages),
+        )

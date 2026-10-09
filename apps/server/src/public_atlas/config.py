@@ -78,6 +78,8 @@ class Settings(BaseSettings):
     # call is done: a long budget book parsed in one call took the worker past 10 GB. A call is
     # cheap, so few pages. A file whose first attempt took the worker down is retried one page
     # per call.
+    # Also how far each parse job goes: the first range when the file is fetched, the next when
+    # the agent reads past it, so a budget book is parsed only as far as it is read.
     parse_page_batch: int = Field(10, ge=1)
     # Per range of `parse_page_batch` pages; a range that runs longer fails the parse.
     parse_timeout: timedelta = timedelta(minutes=3)

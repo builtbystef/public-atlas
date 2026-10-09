@@ -1,10 +1,12 @@
 # The eval dataset
 
 The hand-labelled dataset of spec section 10: what a perfect run should yield
-for ten Ontario municipalities, two Ontario ministries, and the homepages and
-domains of 25 Ontario municipal governments. Every prompt, tool or model change
-re-runs the agent against it and scores recall and precision per assignment
-type. These YAML files are the only YAML in the project: hand-labelled data
+for ten Ontario municipalities, and the homepages and domains of 25 Ontario
+municipal governments. Every prompt, tool or model change re-runs the agent
+against it and scores recall and precision per assignment type. `eval run`
+works the quick set by default, five subjects chosen for coverage over size
+(`QUICK_SUBJECTS` in `__init__.py`) plus the places file; `--all` works every
+file. These YAML files are the only YAML in the project: hand-labelled data
 edited over time is the one place a data file beats a table.
 
 Started in the `public-atlas-gold` repository, moved into v1 with its work item
@@ -17,7 +19,8 @@ uv run public-atlas eval evidence                 # fetch each evidence URL and 
 uv run public-atlas eval score                    # score the main database against the dataset
 uv run public-atlas eval score --evals            # score the eval database a run left, and record it on that run
 uv run public-atlas eval run --subject mcgarry    # reset and seed the eval database, work it, score it (model key, Chromium)
-uv run public-atlas eval run --json scores.json   # every subject, with the numbers written as JSON
+uv run public-atlas eval run --json scores.json   # the quick set and the places file, with the numbers written as JSON
+uv run public-atlas eval run --all                # every subject and the places file
 ```
 
 ## Layout
@@ -30,20 +33,28 @@ uv run public-atlas eval run --json scores.json   # every subject, with the numb
 
 ### Subjects
 
-| Slug                                                               | Subject                                                          | Level                                 | Why it is here                                                             |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------------- |
-| `toronto`                                                          | City of Toronto                                                  | municipality (single-tier)            | Largest; many agencies, boards and corporations on their own domains       |
-| `ottawa`                                                           | City of Ottawa                                                   | municipality (single-tier)            | Officially bilingual: English and French names and pages                   |
-| `greater-sudbury`                                                  | City of Greater Sudbury                                          | municipality (single-tier)            | Bilingual names, mid-size, own utility                                     |
-| `kingston`                                                         | City of Kingston                                                 | municipality (single-tier, separated) | Separated city; Utilities Kingston                                         |
-| `region-of-waterloo`                                               | Regional Municipality of Waterloo                                | region (upper-tier)                   | Upper-tier with transit and police                                         |
-| `county-of-simcoe`                                                 | County of Simcoe                                                 | region (upper-tier)                   | A county as the `region` level                                             |
-| `kitchener`                                                        | City of Kitchener                                                | municipality (lower-tier)             | Lower-tier inside Waterloo; shared bodies                                  |
-| `oakville`                                                         | Town of Oakville                                                 | municipality (lower-tier)             | Lower-tier inside Halton; own transit and hydro                            |
-| `hawkesbury`                                                       | Town of Hawkesbury                                               | municipality (lower-tier)             | French-majority; pages mostly in French                                    |
-| `mcgarry`                                                          | Township of McGarry                                              | municipality (single-tier)            | 579 people; site built by a municipal web vendor, tenders only on Biddingo |
-| `ministry-of-transportation`                                       | Ministry of Transportation                                       | province_territory                    | Ministry on `ontario.ca` with agencies on their own domains                |
-| `ministry-of-public-and-business-service-delivery-and-procurement` | Ministry of Public and Business Service Delivery and Procurement | province_territory                    | Procurement ministry: Supply Ontario                                       |
+The quick set is marked; the rest run with `--all`.
+
+| Slug                 | Subject                           | Level                                 | Quick | Why it is here                                                             |
+| -------------------- | --------------------------------- | ------------------------------------- | ----- | -------------------------------------------------------------------------- |
+| `toronto`            | City of Toronto                   | municipality (single-tier)            |       | Largest; many agencies, boards and corporations on their own domains       |
+| `ottawa`             | City of Ottawa                    | municipality (single-tier)            |       | Officially bilingual: English and French names and pages                   |
+| `greater-sudbury`    | City of Greater Sudbury           | municipality (single-tier)            | yes   | Bilingual names, mid-size, own utility                                     |
+| `kingston`           | City of Kingston                  | municipality (single-tier, separated) |       | Separated city; Utilities Kingston                                         |
+| `region-of-waterloo` | Regional Municipality of Waterloo | region (upper-tier)                   |       | Upper-tier with transit and police                                         |
+| `county-of-simcoe`   | County of Simcoe                  | region (upper-tier)                   | yes   | A county as the `region` level                                             |
+| `kitchener`          | City of Kitchener                 | municipality (lower-tier)             | yes   | Lower-tier inside Waterloo; shared bodies                                  |
+| `oakville`           | Town of Oakville                  | municipality (lower-tier)             |       | Lower-tier inside Halton; own transit and hydro                            |
+| `hawkesbury`         | Town of Hawkesbury                | municipality (lower-tier)             | yes   | French-majority; pages mostly in French                                    |
+| `mcgarry`            | Township of McGarry               | municipality (single-tier)            | yes   | 579 people; site built by a municipal web vendor, tenders only on Biddingo |
+
+The two ministry subjects of the first full run (Transportation, and Public and
+Business Service Delivery and Procurement) were dropped on 2026-10-09: a
+ministry's agencies are an official list's to load, not the agent's to find,
+so until the provincial agency directory is loaded (`ontario_agencies`, a
+Phase 7 item) they scored zero by design and only muddied the numbers. The
+files are in the history before that date, and the harness still seeds an
+institution subject should one return.
 
 ## Labelling rules
 
@@ -242,13 +253,13 @@ an institution does:
 ### Subjects
 
 - A place subject names itself in `place`; its `institution` is its government.
-- An institution subject (a ministry) names its place (`Ontario`) and its
-  `government_homepage`, the homepage of the place's government: the harness
-  seeds it verified so the ministry's page sits under a verified government.
-  Only the ministry's `find_sources` is queued. Its agencies are an official
-  list's to load (the provincial agency directory, `ontario_agencies` in the
-  Phase 7 plan), not the agent's to find, so until that list is loaded the
-  file's agencies score as misses with that reason.
+- An institution subject (a ministry; none shipped at present) names its place
+  (`Ontario`) and its `government_homepage`, the homepage of the place's
+  government: the harness seeds it verified so the ministry's page sits under a
+  verified government. Only the ministry's `find_sources` is queued. Its
+  agencies are an official list's to load (the provincial agency directory,
+  `ontario_agencies` in the Phase 7 plan), not the agent's to find, so until
+  that list is loaded such a file's agencies score as misses with that reason.
 
 ### Evidence quotes
 

@@ -1,5 +1,5 @@
 """`read_file` against a local site: downloads, parsing, chunks, redirects, reuse between
-assignments, and refusals."""
+assignments, a long file parsed as far as it is read, and refusals."""
 
 from dataclasses import replace
 from datetime import timedelta
@@ -100,6 +100,54 @@ def test_read_file_downloads_parses_and_chunks_within_the_allowlist(
     assert f"{site.outside}/notes.txt" not in urls
     assert sorted(statuses) == [TextStatus.FAILED, TextStatus.READY, TextStatus.READY]
     assert parses(queue) == 1
+
+
+def test_a_long_file_is_parsed_as_far_as_the_agent_reads(
+    db: Database,
+    site: FixtureSite,
+    assignment: Assignment,
+    another_assignment: Assignment,
+    queue: InlineConnector,
+):
+    """One page per range: the fetch parses page 1 and the file is partial. A chunk past the
+    parsed text has the next range parsed and waited for; the text is then whole."""
+    res = resources(queue, read_file_chunk_chars=1000, parse_page_batch=1)
+    queue.resources = res  # the inline parse jobs read the range size from these settings
+    url = f"{site.allowed}/budget.pdf"
+    first = read(db, res, assignment, url)
+    assert first.startswith(
+        f"File: {url} (application/pdf, 2 page(s), 1 parsed so far, chunk 1 of 1 so far). "
+        "Call read_file(url, chunk=2) to have the next pages parsed"
+    )
+    assert "Operating budget 2026" in first
+    assert "Capital plan page" not in first
+    assert parses(queue) == 1
+
+    async def rows() -> list[tuple[TextStatus, int | None, int | None]]:
+        async with db.session() as session:
+            found = await session.execute(
+                select(Snapshot.text_status, Snapshot.parsed_pages, Snapshot.page_count)
+                .where(Snapshot.media_type == "application/pdf")
+                .order_by(Snapshot.fetched_at)
+            )
+            return [tuple(row) for row in found.all()]
+
+    assert db.run(rows) == [(TextStatus.PARTIAL, 1, 2)]
+    # Another assignment's snapshot of the same bytes shares the partial text.
+    assert read(db, res, another_assignment, url) == first
+    assert db.run(rows) == [(TextStatus.PARTIAL, 1, 2), (TextStatus.PARTIAL, 1, 2)]
+    # Reading past it: chunk 2 does not exist until page 2 is parsed, which it now is. The
+    # whole text makes one chunk of 1000 characters, so chunk 2 is past the end after all.
+    assert read(db, res, assignment, url, chunk=2) == (
+        f"Error: {url} has 1 chunk(s); there is no chunk 2."
+    )
+    assert parses(queue) == 2
+    assert db.run(rows) == [(TextStatus.READY, 2, 2), (TextStatus.READY, 2, 2)]
+    whole = read(db, res, assignment, url)
+    assert whole.startswith(f"File: {url} (application/pdf, 2 page(s), chunk 1 of 1)")
+    assert "[page 2]\nCapital plan page" in whole
+    assert read(db, res, another_assignment, url) == whole
+    assert parses(queue) == 2
 
 
 def test_a_redirect_is_checked_hop_by_hop_and_stored_under_the_url_that_answered(

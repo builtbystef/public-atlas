@@ -1,6 +1,6 @@
 """The eval dataset as shipped: every file reads under its schema, passes the cross-reference
-checks against the Canada seed's rules, and holds the twelve subjects and 25 governments of
-spec section 10."""
+checks against the Canada seed's rules, and holds the ten subjects and 25 governments of spec
+section 10."""
 
 import pytest
 
@@ -8,8 +8,7 @@ from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.seeds import canada
 from public_atlas.modules.evals import dataset
 
-SUBJECTS = 12
-MINISTRIES = 2
+SUBJECTS = 10
 GOVERNMENTS = 25
 
 
@@ -25,14 +24,13 @@ def test_every_file_reads_and_validates(rules: countries.CountryRules):
     assert errors == []
     assert len(subjects) == SUBJECTS
     assert len(lists) == 1
-    assert sum(s.subject.kind == "institution" for s in subjects.values()) == MINISTRIES
+    assert all(s.subject.kind == "place" for s in subjects.values())
     (places,) = lists.values()
     assert len(places.municipalities) == GOVERNMENTS
 
 
 def test_parent_labels_replace_relationships(rules: countries.CountryRules):
-    """Every labelled parent is an institution of its file, and a ministry's agencies sit under
-    the ministry."""
+    """Every labelled parent is an institution of its file."""
     subjects, _, _ = dataset.load_all(dataset.all_files())
     labelled = 0
     for expected in subjects.values():
@@ -44,14 +42,6 @@ def test_parent_labels_replace_relationships(rules: countries.CountryRules):
             assert row.parent.institution in keys or ":" in row.parent.institution
             assert row.parent.evidence.quote
     assert labelled > 0
-    mto = next(s for p, s in subjects.items() if p.stem == "ministry-of-transportation")
-    assert all(
-        row.parent is not None and row.parent.institution == "ministry-of-transportation"
-        for row in mto.institutions
-        if row.key != "ministry-of-transportation" and row.type == "agency"
-    )
-    ministries = [s for s in subjects.values() if s.subject.kind == "institution"]
-    assert all(s.subject.government_homepage for s in ministries)
 
 
 def test_a_wrong_label_is_refused(rules: countries.CountryRules):
@@ -80,6 +70,13 @@ def test_files_are_chosen_by_stem():
     assert any(path.parent == dataset.PLACES for path in everything)
     with pytest.raises(ValueError, match="unknown subject"):
         dataset.files_named(["atlantis"], lists_by_default=False)
+
+
+def test_the_quick_set_is_five_subjects_and_the_places_file():
+    quick = dataset.quick_files()
+    assert [path.stem for path in quick] == [*dataset.QUICK_SUBJECTS, "ontario-municipalities"]
+    assert quick[-1].parent == dataset.PLACES
+    assert set(dataset.QUICK_SUBJECTS) < {path.stem for path in dataset.all_files()}
 
 
 def test_the_version_follows_the_files_contents():

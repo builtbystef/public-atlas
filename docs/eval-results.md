@@ -4,6 +4,12 @@ The numbers of each full eval run (spec section 10), newest first. The rows them
 `eval_runs` and `eval_scores`; the eval database holds the graph each run built until the next
 run resets it.
 
+Since 2026-10-09 the dataset is ten municipalities (the two ministry subjects of run 1 are
+gone: zero by design until the agency directory is loaded) and `eval run` works a quick set of
+five of them plus the places file by default, `--all` for every subject. Files are parsed
+lazily since the same date, one range of pages at a time as the agent reads; the parse job logs
+the seconds each range took, so the next run can put a number on the parse worker per subject.
+
 ## Run 1: 2026-10-07, the twelve subjects
 
 Dataset `b5a0696d5d64`, model `gpt-6-luna`, eval run `01a1141b-4d75-7043-8e7a-19263a57d60e`.

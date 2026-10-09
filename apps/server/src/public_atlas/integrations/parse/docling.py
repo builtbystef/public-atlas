@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 
 # What the parse image and CI download with `docling-tools models download`, into the
 # directory `DOCLING_ARTIFACTS_PATH` names (unset, Docling uses its Hugging Face cache). Keep
-# in step with `converter`.
-MODELS = ("layout", "tableformer", "rapidocr")
+# in step with `converter`: no table model, since table structure is off.
+MODELS = ("layout", "rapidocr")
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,9 @@ class DoclingParser:
             # OCR runs only where a page has no text layer.
             do_ocr=True,
             ocr_options=RapidOcrOptions(rapidocr_params=ocr_params()),
-            do_table_structure=True,
+            # The agent reads a file to classify it and to quote a line; neither needs a
+            # table's cells reconstructed, and the table model cost minutes per budget book.
+            do_table_structure=False,
             heading_hierarchy_options=HeadingHierarchyOptions(enabled=True),
             do_code_enrichment=False,
             do_formula_enrichment=False,
@@ -103,19 +105,42 @@ class DoclingParser:
 
         self.converter.initialize_pipeline(InputFormat.PDF)
 
-    def parse(self, data: bytes, filename: str, *, page_batch: int | None = None) -> ParsedDocument:
-        """`page_batch` overrides the parser's range size for this file: the parse job passes 1
-        when an earlier attempt took the worker down, so the peak is one page's worth."""
+    def parse(
+        self,
+        data: bytes,
+        filename: str,
+        *,
+        start: int = 1,
+        limit: int | None = None,
+        page_batch: int | None = None,
+    ) -> ParsedDocument:
+        """The pages from `start`, at most `limit` of them, in ranges of `page_batch` pages
+        (the parser's own size unless given: the parse job passes 1 when an earlier attempt
+        took the worker down, so the peak is one page's worth)."""
         batch = page_batch or self.page_batch
-        pages, total = self._convert(data, filename, start=1, batch=batch)
+
+        def span(from_page: int) -> int:
+            return batch if limit is None else max(1, min(batch, start + limit - from_page))
+
+        pages, total = self._convert(data, filename, start=start, batch=span(start))
         if total > self.max_pages:
             raise ParseFailed(
                 f"the file has {total} pages; files over {self.max_pages} pages are not parsed"
             )
-        while len(pages) < total:
-            more, _ = self._convert(data, filename, start=len(pages) + 1, batch=batch)
+        if total == 0:
+            # A format without pages: the one call was the whole document.
+            return ParsedDocument(pages=tuple(pages), parser=self.name, version=self.version)
+        end = total if limit is None else min(total, start - 1 + limit)
+        while start + len(pages) <= end:
+            more, _ = self._convert(
+                data, filename, start=start + len(pages), batch=span(start + len(pages))
+            )
+            if not more:
+                break
             pages.extend(more)
-        return ParsedDocument(pages=tuple(pages), parser=self.name, version=self.version)
+        return ParsedDocument(
+            pages=tuple(pages), parser=self.name, version=self.version, first=start, total=total
+        )
 
     def _convert(
         self, data: bytes, filename: str, *, start: int, batch: int

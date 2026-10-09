@@ -48,7 +48,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 RUN --mount=type=cache,target=/root/.cache/huggingface \
     /app/.venv/bin/docling-tools models download --quiet --output-dir /app/models \
-        layout tableformer rapidocr
+        layout rapidocr
 
 # --- Runtime ------------------------------------------------------------------
 FROM python:3.14-slim-bookworm AS runtime

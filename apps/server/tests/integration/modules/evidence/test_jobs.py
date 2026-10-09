@@ -1,5 +1,6 @@
 """The parse job's paths: a parse that raises, a retry one page at a time, a worker that died,
-and bytes another job parsed while this one waited."""
+bytes another job parsed while this one waited, and a long file parsed one range at a time as
+it is read."""
 
 from dataclasses import replace
 from typing import TYPE_CHECKING
@@ -31,7 +32,15 @@ class Crashing:
     def warm_up(self) -> None:
         return
 
-    def parse(self, data: bytes, filename: str, *, page_batch: int | None = None) -> ParsedDocument:  # noqa: ARG002
+    def parse(
+        self,
+        data: bytes,  # noqa: ARG002
+        filename: str,  # noqa: ARG002
+        *,
+        start: int = 1,  # noqa: ARG002
+        limit: int | None = None,  # noqa: ARG002
+        page_batch: int | None = None,  # noqa: ARG002
+    ) -> ParsedDocument:
         raise MemoryError("the file was too large")
 
 
@@ -47,9 +56,19 @@ class Recording:
     def warm_up(self) -> None:
         return
 
-    def parse(self, data: bytes, filename: str, *, page_batch: int | None = None) -> ParsedDocument:  # noqa: ARG002
+    def parse(
+        self,
+        data: bytes,
+        filename: str,  # noqa: ARG002
+        *,
+        start: int = 1,
+        limit: int | None = None,  # noqa: ARG002
+        page_batch: int | None = None,
+    ) -> ParsedDocument:
         self.batches.append(page_batch)
-        return ParsedDocument(pages=(data.decode(),), parser=self.name, version=self.version)
+        return ParsedDocument(
+            pages=(data.decode(),), parser=self.name, version=self.version, first=start
+        )
 
 
 @pytest.fixture
@@ -95,6 +114,24 @@ def state(
         async with db.session() as session:
             row = await session.get_one(Snapshot, snapshot.id)
             return row.text_status, row.text_error, row.page_count, row.text_key
+
+    return db.run(check)
+
+
+def progress(
+    db: Database, store: MemoryObjectStore, snapshot: Snapshot
+) -> tuple[TextStatus, int | None, int | None, str]:
+    """Status, pages parsed, pages in all, and the stored text."""
+
+    async def check() -> tuple[TextStatus, int | None, int | None, str]:
+        async with db.session() as session:
+            row = await session.get_one(Snapshot, snapshot.id)
+            return (
+                row.text_status,
+                row.parsed_pages,
+                row.page_count,
+                await service.snapshot_text(store, row),
+            )
 
     return db.run(check)
 
@@ -166,6 +203,105 @@ def test_a_parse_whose_worker_died_is_recorded_failed_without_loading_the_parser
     assert state(db, stored)[:2] == (TextStatus.FAILED, parse_jobs.WORKER_DIED)
 
 
+def with_batch(res: Resources, pages: int) -> Resources:
+    return replace(res, settings=res.settings.model_copy(update={"parse_page_batch": pages}))
+
+
+def test_a_long_file_is_parsed_one_range_at_a_time_as_it_is_asked_for(
+    db: Database, queue: InlineConnector, assignment: Assignment, object_store: MemoryObjectStore
+):
+    res = with_batch(resources(queue), 2)
+
+    async def store() -> Snapshot:
+        async with db.session() as session:
+            webpage = await graph.ensure_webpage(session, "https://x.example/plan.pdf")
+            snapshot, _ = await service.store_snapshot(
+                session,
+                object_store,
+                webpage,
+                b"one\ftwo\fthree\ffour\ffive",
+                text=None,
+                media_type="application/pdf",
+                filename="plan.pdf",
+                assignment_id=assignment.id,
+            )
+            await session.commit()
+            return snapshot
+
+    snapshot = db.run(store)
+    # The first job parses the first range and leaves the file partial.
+    assert parse_as(db, res, snapshot, Attempt(1, last=False)) == "ok"
+    assert progress(db, object_store, snapshot) == (TextStatus.PARTIAL, 2, 5, "one\ftwo")
+    # A job for the first range again, or for pages parsed already, does nothing.
+    assert parse_as(db, res, snapshot, Attempt(1, last=False)) == "already done"
+    assert parse_through(db, res, snapshot, through=2) == "already done"
+    # The next range is appended to the stored text; the status stays partial.
+    assert parse_through(db, res, snapshot, through=4) == "ok"
+    assert progress(db, object_store, snapshot) == (
+        TextStatus.PARTIAL,
+        4,
+        5,
+        "one\ftwo\fthree\ffour",
+    )
+    # The last range completes it.
+    assert parse_through(db, res, snapshot, through=5) == "ok"
+    assert progress(db, object_store, snapshot) == (
+        TextStatus.READY,
+        5,
+        5,
+        "one\ftwo\fthree\ffour\ffive",
+    )
+    assert parse_through(db, res, snapshot, through=5) == "already done"
+
+
+def parse_through(db: Database, res: Resources, snapshot: Snapshot, *, through: int) -> str:
+    async def run() -> str:
+        token = current_attempt.set(Attempt(1, last=False))
+        try:
+            return await parse_jobs.parse(res, snapshot.id, through=through)
+        finally:
+            current_attempt.reset(token)
+
+    return db.run(run)
+
+
+def test_a_range_that_fails_keeps_the_pages_parsed_before_it(
+    db: Database, queue: InlineConnector, assignment: Assignment, object_store: MemoryObjectStore
+):
+    res = with_batch(resources(queue), 1)
+
+    async def store() -> Snapshot:
+        async with db.session() as session:
+            webpage = await graph.ensure_webpage(session, "https://x.example/mixed.pdf")
+            snapshot, _ = await service.store_snapshot(
+                session,
+                object_store,
+                webpage,
+                b"readable\fmore",
+                text=None,
+                media_type="application/pdf",
+                filename="mixed.pdf",
+                assignment_id=assignment.id,
+            )
+            await session.commit()
+            return snapshot
+
+    snapshot = db.run(store)
+    assert parse_as(db, res, snapshot, Attempt(1, last=False)) == "ok"
+    assert progress(db, object_store, snapshot) == (TextStatus.PARTIAL, 1, 2, "readable")
+    crashing = replace(res, parser=Crashing())
+    with pytest.raises(MemoryError):
+        parse_through(db, crashing, snapshot, through=2)
+
+    async def abandon() -> None:
+        await parse_jobs.abandoned(crashing, snapshot_id=str(snapshot.id))
+
+    db.run(abandon)
+    status, parsed, total, text = progress(db, object_store, snapshot)
+    assert (status, parsed, total, text) == (TextStatus.FAILED, 1, 2, "readable")
+    assert state(db, snapshot)[1] == parse_jobs.WORKER_DIED
+
+
 def test_bytes_parsed_while_the_job_waited_are_shared_not_parsed_again(
     db: Database,
     queue: InlineConnector,
@@ -174,8 +310,8 @@ def test_bytes_parsed_while_the_job_waited_are_shared_not_parsed_again(
     site: FixtureSite,
 ):
     """The first assignment's parse is still queued when a second reads the same URL: it gets a
-    snapshot of the stored bytes, nothing is downloaded, and its parse runs. By the time the
-    first job runs, the text exists and is shared."""
+    snapshot of the stored bytes, nothing is downloaded, and its parse runs. Its text goes to
+    the first snapshot as it is made, so the first job finds nothing left to do."""
     res = resources(queue)
     policy = BrowserPolicy(["127.0.0.1"], block_private_addresses=False, min_interval=0)
 
@@ -188,10 +324,9 @@ def test_bytes_parsed_while_the_job_waited_are_shared_not_parsed_again(
 
     assert "Operating budget 2026" in db.run(read)
     assert "/budget.pdf" not in site.requested
-    assert state(db, stored)[0] is TextStatus.PARSING
-    crashing = replace(res, parser=Crashing())
-    # No MemoryError: the parser is not called.
-    assert parse_as(db, crashing, stored, Attempt(1, last=False)) == "shared"
     status, _, pages, key = state(db, stored)
     assert (status, pages) == (TextStatus.READY, 1)
     assert key == service.text_key(stored.content_hash)
+    crashing = replace(res, parser=Crashing())
+    # No MemoryError: the parser is not called.
+    assert parse_as(db, crashing, stored, Attempt(1, last=False)) == "already done"

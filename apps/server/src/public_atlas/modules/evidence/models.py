@@ -13,8 +13,13 @@ from public_atlas.modules.graph.models import EnteredBy
 
 
 class TextStatus(StrEnum):
+    # Every page's text is stored.
     READY = "ready"
+    # Nothing is stored yet; the parse queue has the file.
     PARSING = "parsing"
+    # The first pages' text is stored; the rest is parsed when the agent reads that far.
+    PARTIAL = "partial"
+    # No more text will be made; what was parsed before the failure, if anything, stays.
     FAILED = "failed"
 
 
@@ -45,7 +50,10 @@ class Snapshot(UUIDPrimaryKey, Base):
     text_status: Mapped[TextStatus] = checked_string(TextStatus, "text_status")
     # Why extraction failed.
     text_error: Mapped[str | None] = mapped_column(Text)
+    # How many pages the document has, and how many of them the stored text holds, from the
+    # first: equal once the text is `ready`.
     page_count: Mapped[int | None]
+    parsed_pages: Mapped[int | None]
     # Set when the bytes were dropped because no evidence cites them; the hash and metadata stay.
     pruned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

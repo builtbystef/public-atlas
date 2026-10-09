@@ -391,9 +391,9 @@ def test_the_real_dataset_scores_against_a_bare_database(
     cards = scorer.score_files(graph_read, world.rules, subjects, lists)
     assert len(cards) == len(subjects) + len(lists)
     by_slug = {card.slug: card for card in cards}
-    # The municipalities are not there; the ministries' province is.
+    # The municipalities are not there; the places file's province is.
     assert "not in the database" in by_slug["toronto"].notes[0]
-    assert by_slug["ministry-of-transportation"].notes == []
+    assert by_slug["ontario-municipalities"].notes == []
     assert scorer.totals(cards)[FIND_INSTITUTIONS].hits == 0
     assert "institutions: find_institutions recall" in scorer.render(cards)
 

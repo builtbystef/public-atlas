@@ -150,6 +150,6 @@ jobs:
           path: models
           key: docling-models-${{ hashFiles('uv.lock') }}
       - if: steps.models.outputs.cache-hit != 'true'
-        run: uv run docling-tools models download --quiet --output-dir models layout tableformer rapidocr
+        run: uv run docling-tools models download --quiet --output-dir models layout rapidocr
 
       - run: uv run pytest -m parse

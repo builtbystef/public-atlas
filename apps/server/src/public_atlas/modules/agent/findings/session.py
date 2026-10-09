@@ -121,16 +121,26 @@ async def status_of(
 
 async def _files(session: AsyncSession, assignment_id: uuid.UUID) -> list[str]:
     rows = await session.execute(
-        select(Webpage.url, Snapshot.text_status, Snapshot.text_error)
+        select(
+            Webpage.url,
+            Snapshot.text_status,
+            Snapshot.text_error,
+            Snapshot.parsed_pages,
+            Snapshot.page_count,
+        )
         .join(Snapshot, Snapshot.webpage_id == Webpage.id)
         .where(Snapshot.assignment_id == assignment_id, Snapshot.media_type != evidence.HTML)
         .order_by(Snapshot.fetched_at)
     )
     found: dict[str, str] = {}
-    for url, text_status, error in rows.all():
+    for url, text_status, error, parsed, total in rows.all():
         state = text_status.value
-        if text_status is TextStatus.FAILED and error:
+        if text_status is TextStatus.PARTIAL:
+            state = f"partial: pages 1-{parsed} of {total} parsed, the rest when read"
+        elif text_status is TextStatus.FAILED and error:
             state = f"failed: {error}"
+            if parsed:
+                state = f"failed after page {parsed} of {total}: {error}"
         found[url] = state
     return [f"{url}: {state}" for url, state in found.items()]
 

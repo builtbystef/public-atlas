@@ -489,9 +489,16 @@ assignment's summary are never purged.
 PDFs and spreadsheets go through `read_file`. The type is detected from the
 bytes, the original is stored, structured text (CSV, JSON, XML) is its own
 text, and everything else is parsed by Docling on the `parse` queue in ranges
-of ten pages with the memory guards from v1. A file already parsed by any
-assignment shares its text. `read_file` waits up to ninety seconds and then
-tells the agent to check `status` later.
+of ten pages with the memory guards from v1. A file is parsed only as far as
+the agent reads it: the first range when it is fetched, and the next each time
+`read_file` is asked for a chunk past the parsed pages, so a 400-page budget
+book the agent opens to classify costs one range, not forty. Its text is
+`partial` in between and the agent is told how far it goes. OCR stays on for
+scanned minutes; table structure recognition is off, since the agent reads a
+file to classify it and to quote a line, and neither needs a table's cells
+reconstructed. A file already parsed by any assignment shares its text, as far
+as it goes. `read_file` waits up to ninety seconds and then tells the agent to
+check `status` later.
 
 ### 8.4 Model
 
@@ -516,9 +523,11 @@ The console renders these as a tree and the eval scores parent links.
 
 ## 10. Evaluation
 
-The dataset is twelve hand-labelled Ontario subjects (ten municipalities, two
-ministries) with every institution, parent link, homepage and source each
-should yield, plus a list of 25 governments scored on `find_homepage` alone.
+The dataset is ten hand-labelled Ontario municipalities with every
+institution, parent link, homepage and source each should yield, plus a list
+of 25 governments scored on `find_homepage` alone. An eval run works a quick
+set of five subjects and the list by default, chosen for coverage over size so
+a run finishes in an hour or two, and every subject with `--all`.
 It is ported from v1 with its labelling rules, as YAML files: hand-labelled data edited over time is the one place a data file beats a table, and these are the only YAML files in the project.
 
 An eval run is a run with `is_eval` set. It uses a separate database for the

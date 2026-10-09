@@ -1,6 +1,8 @@
 """The fetch behind `read_file`: download a document on an allowed domain under the browser's
 policy, store it as a snapshot, have it parsed on the `parse` queue, and return one chunk of
-its text. A recent snapshot of the same URL is read instead of fetched again."""
+its text. A long file is parsed as far as the agent reads: the first pages at once, the next
+range when a chunk past them is asked for. A recent snapshot of the same URL is read instead
+of fetched again."""
 
 import asyncio
 import logging
@@ -42,8 +44,34 @@ POLL_INTERVAL = 2.0
 
 
 @dataclass(frozen=True, slots=True)
+class Progress:
+    """How far a file's parse has come: `parsed` of its `total` pages are text, and `error` is
+    why the rest never will be."""
+
+    parsed: int
+    total: int
+    error: str | None = None
+
+    @property
+    def complete(self) -> bool:
+        return self.parsed >= self.total
+
+    @classmethod
+    def of(cls, snapshot: Snapshot) -> Progress | None:
+        """The snapshot's progress, or None for a text that is whole."""
+        if snapshot.text_status is TextStatus.READY or snapshot.page_count is None:
+            return None
+        parsed = snapshot.parsed_pages or 0
+        if parsed >= snapshot.page_count:
+            return None
+        error = snapshot.text_error if snapshot.text_status is TextStatus.FAILED else None
+        return cls(parsed=parsed, total=snapshot.page_count, error=error)
+
+
+@dataclass(frozen=True, slots=True)
 class FileText:
-    """One chunk of a file's text, each page labelled."""
+    """One chunk of a file's text, each page labelled. `progress` is set while the file is not
+    parsed to its end."""
 
     url: str
     # The URL the caller asked for, when the site redirected it elsewhere.
@@ -53,14 +81,34 @@ class FileText:
     chunk: int
     chunks: int
     body: str
+    progress: Progress | None = None
 
     def __str__(self) -> str:
-        header = (
-            f"File: {self.url} ({self.media_type}, {self.page_count} page(s), "
-            f"chunk {self.chunk} of {self.chunks})"
-        )
-        if self.chunk < self.chunks:
-            header += f". Call read_file(url, chunk={self.chunk + 1}) for the next chunk"
+        if self.progress is None:
+            header = (
+                f"File: {self.url} ({self.media_type}, {self.page_count} page(s), "
+                f"chunk {self.chunk} of {self.chunks})"
+            )
+            if self.chunk < self.chunks:
+                header += f". Call read_file(url, chunk={self.chunk + 1}) for the next chunk"
+        else:
+            header = (
+                f"File: {self.url} ({self.media_type}, {self.progress.total} page(s), "
+                f"{self.progress.parsed} parsed so far, chunk {self.chunk} of {self.chunks} "
+                "so far)"
+            )
+            if self.chunk < self.chunks:
+                header += f". Call read_file(url, chunk={self.chunk + 1}) for the next chunk"
+            elif self.progress.error is not None:
+                header += (
+                    f". Pages {self.progress.parsed + 1}-{self.progress.total} could not be "
+                    f"parsed: {self.progress.error}"
+                )
+            else:
+                header += (
+                    f". Call read_file(url, chunk={self.chunk + 1}) to have the next pages "
+                    "parsed and read them"
+                )
         if self.requested_url is not None:
             header = (
                 f"{self.requested_url} redirected to {self.url}; quote it by that URL.\n{header}"
@@ -70,14 +118,21 @@ class FileText:
 
 @dataclass(frozen=True, slots=True)
 class FileParsing:
-    """The file is stored and queued; its text is not ready yet."""
+    """The file is stored and queued; the text asked for is not ready yet."""
 
     url: str
+    # The pages being parsed, when the first ones are readable already.
+    pages: tuple[int, int] | None = None
 
     def __str__(self) -> str:
+        what = (
+            f"{self.url} is still being parsed"
+            if self.pages is None
+            else f"Pages {self.pages[0]}-{self.pages[1]} of {self.url} are still being parsed"
+        )
         return (
-            f"{self.url} is still being parsed. Carry on with something else and call read_file "
-            "again in a while; status() lists the file as parsing, ready or failed."
+            f"{what}. Carry on with something else and call read_file again in a while; "
+            "status() lists the file as parsing, partial, ready or failed."
         )
 
 
@@ -134,12 +189,10 @@ async def read_file(  # noqa: PLR0911 - each return is an answer for the model
         await session.commit()
         snapshot_id = snapshot.id
 
-    ready = await _wait_for_text(res, snapshot_id)
-    if ready is None:
-        return FileParsing(final_url)
-    if ready.text_status is TextStatus.FAILED:
-        return FileRefusal(f"{final_url} could not be parsed: {ready.text_error}")
-    text = await snapshots.snapshot_text(res.object_store, ready)
+    parsed = await _text_for_chunk(res, snapshot_id, url=final_url, chunk=chunk)
+    if not isinstance(parsed, tuple):
+        return parsed
+    ready, text = parsed
     return chunk_of(
         final_url,
         ready.media_type,
@@ -147,7 +200,33 @@ async def read_file(  # noqa: PLR0911 - each return is an answer for the model
         chunk=chunk,
         size=res.settings.read_file_chunk_chars,
         requested_url=normalized if final_url != normalized else None,
+        progress=Progress.of(ready),
     )
+
+
+async def _text_for_chunk(
+    res: Resources, snapshot_id: uuid.UUID, *, url: str, chunk: int
+) -> tuple[Snapshot, str] | FileParsing | FileRefusal:
+    """The snapshot and its text once it reaches chunk `chunk`, or its end: the first pages
+    are waited for, and each next range is queued and waited for while the chunk is past the
+    pages parsed, within `read_file_wait` altogether."""
+    deadline = asyncio.get_running_loop().time() + res.settings.read_file_wait.total_seconds()
+    ready = await _wait_for_text(res, snapshot_id, deadline=deadline, beyond=None)
+    if ready is None:
+        return FileParsing(url)
+    size = res.settings.read_file_chunk_chars
+    text = await snapshots.snapshot_text(res.object_store, ready)
+    while ready.text_status is TextStatus.PARTIAL and chunk > chunk_count(text, size=size):
+        parsed = ready.parsed_pages or 0
+        through = min(parsed + res.settings.parse_page_batch, ready.page_count or parsed)
+        await _parse_through(res, ready, through)
+        ready = await _wait_for_text(res, snapshot_id, deadline=deadline, beyond=parsed)
+        if ready is None:
+            return FileParsing(url, pages=(parsed + 1, through))
+        text = await snapshots.snapshot_text(res.object_store, ready)
+    if ready.text_status is TextStatus.FAILED and not text:
+        return FileRefusal(f"{url} could not be parsed: {ready.text_error}")
+    return ready, text
 
 
 async def _download_and_store(  # noqa: PLR0911 - each return is an answer for the model
@@ -297,6 +376,7 @@ async def _own_or_recent(
         text_key=recent.text_key,
         text_status=recent.text_status,
         page_count=recent.page_count,
+        parsed_pages=recent.parsed_pages,
     )
     session.add(snapshot)
     await session.flush()
@@ -309,18 +389,54 @@ async def _own_or_recent(
     return snapshot
 
 
-async def _wait_for_text(res: Resources, snapshot_id: uuid.UUID) -> Snapshot | None:
-    """The snapshot once its text is ready or failed, or None when `read_file_wait` passes
-    first."""
-    deadline = asyncio.get_running_loop().time() + res.settings.read_file_wait.total_seconds()
+async def _parse_through(res: Resources, snapshot: Snapshot, through: int) -> None:
+    """Queue the parse of the snapshot's pages up to `through`. A parse of the file already
+    waiting its turn will do."""
+    async with res.session() as session:
+        try:
+            await defer(
+                res.jobs,
+                session,
+                parse_snapshot,
+                queueing_lock=f"parse:{snapshot.id}",
+                snapshot_id=str(snapshot.id),
+                through=through,
+            )
+        except AlreadyEnqueued:
+            logger.info("Parse of %s already queued", snapshot.id)
+        await session.commit()
+
+
+async def _wait_for_text(
+    res: Resources, snapshot_id: uuid.UUID, *, deadline: float, beyond: int | None
+) -> Snapshot | None:
+    """The snapshot once it has text, or failed, or None when `deadline` (the loop's clock)
+    passes first. With `beyond`, the pages parsed so far, it waits for more of them."""
     while True:
         async with res.session() as session:
             snapshot = await session.get(Snapshot, snapshot_id)
-        if snapshot is not None and snapshot.text_status is not TextStatus.PARSING:
+        if snapshot is not None and (
+            snapshot.text_status is TextStatus.FAILED
+            or (snapshot.text_status is not TextStatus.PARSING and beyond is None)
+            or (beyond is not None and (snapshot.parsed_pages or 0) > beyond)
+        ):
             return snapshot
         if asyncio.get_running_loop().time() >= deadline:
             return None
         await asyncio.sleep(POLL_INTERVAL)
+
+
+def _flat(text: str) -> str:
+    """The text with each page labelled."""
+    pages = text.split(PAGE_SEPARATOR)
+    if len(pages) == 1:
+        return text
+    return "\n\n".join(f"[page {n}]\n{page}" for n, page in enumerate(pages, start=1))
+
+
+def chunk_count(text: str, *, size: int) -> int:
+    """How many chunks of `size` characters the labelled text makes."""
+    return max(1, -(-len(_flat(text)) // size))
 
 
 def chunk_of(  # noqa: PLR0913
@@ -331,23 +447,25 @@ def chunk_of(  # noqa: PLR0913
     chunk: int,
     size: int,
     requested_url: str | None = None,
+    progress: Progress | None = None,
 ) -> FileText | FileRefusal:
     """Chunk `chunk`, counted from 1, of `text` with each page labelled."""
-    pages = text.split(PAGE_SEPARATOR)
-    flat = (
-        "\n\n".join(f"[page {n}]\n{page}" for n, page in enumerate(pages, start=1))
-        if len(pages) > 1
-        else text
-    )
+    flat = _flat(text)
     chunks = max(1, -(-len(flat) // size))
     if chunk > chunks:
+        if progress is not None and progress.error is not None:
+            return FileRefusal(
+                f"{url} has {chunks} chunk(s), pages 1-{progress.parsed} of {progress.total}; "
+                f"the rest could not be parsed: {progress.error}"
+            )
         return FileRefusal(f"{url} has {chunks} chunk(s); there is no chunk {chunk}.")
     return FileText(
         url=url,
         requested_url=requested_url,
         media_type=media_type,
-        page_count=len(pages),
+        page_count=text.count(PAGE_SEPARATOR) + 1,
         chunk=chunk,
         chunks=chunks,
         body=flat[(chunk - 1) * size : chunk * size],
+        progress=progress,
     )

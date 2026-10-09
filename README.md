@@ -85,6 +85,7 @@ cd apps/server && uv run public-atlas run pause|resume|stop|show <run id>
 cd apps/server && uv run public-atlas worker --queues assignment           # the same as public-atlas-worker
 cd apps/server && uv run public-atlas eval validate                       # the eval dataset against the Canada seed
 cd apps/server && uv run public-atlas eval run --subject mcgarry --json out.json   # reset and seed the eval database, work one subject, score and record it
+cd apps/server && uv run public-atlas eval run                                   # the quick set: five subjects and the places file (--all: every subject)
 cd apps/server && uv run public-atlas eval score --evals                   # score the eval database a run left
 vp run dev           # API, worker and web together, on the host
 vp run dev:api       # http://127.0.0.1:8000/docs

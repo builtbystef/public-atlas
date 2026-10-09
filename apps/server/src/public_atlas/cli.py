@@ -229,9 +229,12 @@ async def eval_score(settings: Settings, args: argparse.Namespace) -> None:
 
 
 async def eval_run(settings: Settings, args: argparse.Namespace) -> None:
-    # A places file queues a `find_homepage` for every government it lists (25 for Ontario), so a
-    # run takes one only when it is named.
-    files = dataset.files_named(args.subject or [], lists_by_default=False)
+    if args.subject:
+        files = dataset.files_named(args.subject, lists_by_default=False)
+    elif args.all:
+        files = dataset.all_files()
+    else:
+        files = dataset.quick_files()
     if args.types:
         types = [AssignmentType(name) for name in args.types]
     elif all(path.parent == dataset.PLACES for path in files):
@@ -384,7 +387,8 @@ def add_eval_command(commands: argparse._SubParsersAction[argparse.ArgumentParse
             "--subject",
             action="append",
             metavar="SLUG",
-            help="a dataset file by its stem (repeatable; default: every subject file)",
+            help="a dataset file by its stem (repeatable; default: every subject file, or for "
+            "`run` the quick set and the places file)",
         )
 
     def reports(sub: argparse.ArgumentParser) -> None:
@@ -414,6 +418,12 @@ def add_eval_command(commands: argparse._SubParsersAction[argparse.ArgumentParse
         "run", help="reset and seed the eval database, work the subjects, score and record"
     )
     chooses_files(running)
+    running.add_argument(
+        "--all",
+        action="store_true",
+        help="every subject file and places file (default without --subject: the quick set, "
+        f"{', '.join(dataset.QUICK_SUBJECTS)}, and the places file)",
+    )
     running.add_argument(
         "--types",
         nargs="+",

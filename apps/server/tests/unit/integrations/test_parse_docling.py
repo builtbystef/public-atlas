@@ -49,7 +49,7 @@ def small_pdf(*texts: str) -> bytes:
 
 
 def test_the_models_the_image_downloads_are_the_ones_the_converter_loads(parser: DoclingParser):
-    assert MODELS == ("layout", "tableformer", "rapidocr")
+    assert MODELS == ("layout", "rapidocr")
     parser.warm_up()
     assert parser.converter is parser.converter
 
@@ -73,6 +73,18 @@ def test_a_smaller_range_for_one_file_gives_the_same_pages(parser: DoclingParser
     assert (
         parser.parse(data, "three.pdf", page_batch=1).pages == parser.parse(data, "three.pdf").pages
     )
+
+
+def test_a_range_is_parsed_from_its_start_and_knows_the_total(parser: DoclingParser):
+    """What the parse job asks for: the first range when the file is fetched, the next when
+    the agent reads past it."""
+    data = small_pdf("alpha", "beta", "gamma")
+    first = parser.parse(data, "three.pdf", limit=2)
+    assert [page.strip("# ") for page in first.pages] == ["alpha", "beta"]
+    assert (first.first, first.last, first.total, first.complete) == (1, 2, 3, False)
+    rest = parser.parse(data, "three.pdf", start=3, limit=2, page_batch=1)
+    assert [page.strip("# ") for page in rest.pages] == ["gamma"]
+    assert (rest.first, rest.last, rest.total, rest.complete) == (3, 3, 3, True)
 
 
 def test_a_page_with_no_text_keeps_its_number(parser: DoclingParser):
