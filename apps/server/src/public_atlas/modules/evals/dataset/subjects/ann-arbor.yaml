@@ -1,0 +1,1353 @@
+subject:
+  kind: place
+  country_code: US
+  name: City of Ann Arbor
+  level: municipality
+  place: City of Ann Arbor
+  parent: Washtenaw County
+  official_code: "2603000" # FIPS state + place code (26 + 03000), SUB-EST2025 "Ann Arbor city"
+  institution: city-of-ann-arbor
+
+status: reviewed
+reviewed_at: 2026-10-09
+labelled_at: 2026-10-09
+
+trusted_at_start: [michigan.gov, a2gov.org, washtenaw.org]
+
+institutions:
+  - key: city-of-ann-arbor
+    type: municipal_government
+    names:
+      - { text: City of Ann Arbor, lang: en }
+    homepage: https://www.a2gov.org/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/
+      quote: "© 2026 City of Ann Arbor"
+    notes: >-
+      Home-rule city in Washtenaw County, council-manager form (mayor, ten council members, a city
+      administrator). Site runs on Govstack like Kingston's; pages are server-rendered. Agendas and
+      minutes of council and of every board live on Legistar (a2gov.legistar.com); the boards and
+      commissions roster is on Granicus (a2gov.granicus.com); formal bids are on BidNet's MITN group.
+      The city's own text uses many zero-width spaces, so quotes avoid the words they sit in.
+
+  - key: ann-arbor-fire-department
+    type: fire_service
+    names:
+      - { text: Ann Arbor Fire Department, lang: en }
+      - { text: AAFD, lang: en, is_acronym: true }
+    homepage: https://www.a2gov.org/fire-department/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/fire-department/
+      quote: "Ann Arbor Fire Department delivers exceptional life and property protection services to the entire community"
+    notes: >-
+      City department ("Fire" in the Departments list) presenting under its own name; README scope
+      rule 3(b). Buys and budgets through the city (ITBs on the city's purchasing pages, a section of
+      the city budget book), so its procurement and budget are absent with covered_by.
+    parent:
+      institution: city-of-ann-arbor
+      label: city department (Departments list)
+      evidence:
+        url: https://www.a2gov.org/departments/
+        quote: "This is an alphabetical list of all city departments."
+
+  - key: ann-arbor-police-department
+    type: police_service
+    names:
+      - { text: Ann Arbor Police Department, lang: en }
+      - { text: AAPD, lang: en, is_acronym: true }
+    homepage: https://www.a2gov.org/police-department/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/police-department/
+      quote: "About the Ann Arbor Police Department"
+    expected: review
+    notes: >-
+      City police department presenting under its own name (README scope rule 3(b)). police_service
+      is a type the United States uses but lists at no level, so the row is expected: review (README
+      scope rule 1). No governing board: the Independent Community Police Oversight Commission is a
+      council commission that reviews complaints (out_of_scope), so board_meeting is absent. Its
+      crime-data dashboard sits on annarborpolice.org, a domain of its own, while the homepage stays
+      on a2gov.org.
+    parent:
+      institution: city-of-ann-arbor
+      label: city department (Departments list)
+      evidence:
+        url: https://www.a2gov.org/departments/
+        quote: "This is an alphabetical list of all city departments."
+
+  - key: ann-arbor-water
+    type: public_utility
+    names:
+      - { text: Ann Arbor Water, lang: en }
+    homepage: https://www.a2gov.org/ann-arbor-water/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/ann-arbor-water/
+      quote: "Ann Arbor Water has been named Best Tasting Water in Michigan"
+    notes: >-
+      The city's water, wastewater and stormwater units (Water Treatment Plant, Water Resource
+      Recovery Facility, Public Works water distribution) presenting since 2022 as one unit under its
+      own name, "Ann Arbor Water", with its own section of the site and a council-approved strategic
+      plan (2024): README scope rule 8 / 3(b), as Toronto Water. It is not separately constituted and
+      has no board; it buys through the city's Purchasing Services and its capital program is the
+      Water, Sanitary Sewer and Stormwater categories of the city's Capital Improvements Plan. The
+      Water Treatment Plant and Water Resource Recovery Facility pages are facilities of this unit,
+      not institutions (out_of_scope).
+    parent:
+      institution: city-of-ann-arbor
+      label: the City of Ann Arbor water team (city departments working as one unit)
+      evidence:
+        url: https://www.a2gov.org/ann-arbor-water/
+        quote: "The City of Ann Arbor water team will now represent Michigan in the national competition"
+
+  - key: ann-arbor-sustainable-energy-utility
+    type: public_utility
+    names:
+      - { text: Ann Arbor Sustainable Energy Utility, lang: en }
+      - { text: Sustainable Energy Utility, lang: en }
+      - { text: A2SEU, lang: en, is_acronym: true }
+      - { text: SEU, lang: en, is_acronym: true }
+    homepage: https://www.a2gov.org/sustainable-energy-utility/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/sustainable-energy-utility/
+      quote: "The Sustainable Energy Utility (known as the A2SEU or just SEU) is an innovative new form of municipal energy utility."
+    notes: >-
+      Opt-in municipal electric utility (rooftop solar and batteries the city finances, owns and
+      maintains) authorized by city voters in November 2024, created in 2025, piloting in the Bryant
+      neighbourhood in 2026 and expanding citywide in 2027; a member of the Michigan Municipal
+      Electric Association since October 2026. A city utility with an executive director, presenting
+      under its own name (README scope rule 3(b)); no board of its own (council oversees it), and its
+      RFPs run through the city's Purchasing Services. Judgment call: a reviewer may prefer to wait
+      until it buys on its own account.
+    parent:
+      institution: city-of-ann-arbor
+      label: the city finances, owns, installs and maintains the systems
+      evidence:
+        url: https://www.a2gov.org/sustainable-energy-utility/about-the-seu/
+        quote: "The city finances, owns, installs and maintains the systems at customers’ own homes, businesses or other properties."
+
+  - key: ann-arbor-housing-commission
+    type: municipal_corporation
+    names:
+      - { text: Ann Arbor Housing Commission, lang: en }
+      - { text: AAHC, lang: en, is_acronym: true }
+      - { text: Housing Commission, lang: en }
+    homepage: https://www.a2gov.org/housing-commission/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/housing-commission/housing-commission-board/
+      quote: "The Ann Arbor Housing Commission is governed by a board of five city residents."
+    notes: >-
+      Public housing authority (HUD code MI064) constituted under Michigan's Housing Facilities Act
+      with a five-member board the mayor appoints and council approves: a separately constituted body
+      the city controls that runs community housing and buys on its own account (its own procurement
+      policy, IFBs and RFPs on the Housing Agency Marketplace), so README scope rule 3(a) and the
+      municipal_corporation type's "community housing". Its site is a section of a2gov.org
+      (/housing-commission/); its applicant portal is housing.a2gov.org. Board packets and minutes
+      are on the city's Legistar.
+    parent:
+      institution: city-of-ann-arbor
+      label: board appointed by the mayor and approved by City Council
+      evidence:
+        url: https://www.a2gov.org/housing-commission/housing-commission-board/
+        quote: "Residents are appointed by the mayor and approved by City Council for a five-year term"
+
+  - key: ann-arbor-downtown-development-authority
+    type: municipal_corporation
+    names:
+      - { text: Ann Arbor Downtown Development Authority, lang: en }
+      - { text: Downtown Development Authority, lang: en }
+      - { text: Ann Arbor DDA, lang: en }
+      - { text: DDA, lang: en, is_acronym: true }
+    homepage: https://www.a2dda.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.a2gov.org/departments/
+      quote: "Downtown Development"
+      kind: links_to
+      link_target: http://www.a2dda.org/
+    notes: >-
+      Authority under Michigan's DDA Act (1975), created 1982, with a twelve-member board the mayor
+      and council appoint, a staff of its own, tax-increment financing, and the city's downtown
+      parking system to manage: a separately constituted body the city controls that runs parking
+      and downtown infrastructure and buys on its own account (its own RFPs and bids), so README
+      scope rule 3(a) and the type's "parking". The Departments list links it as "Downtown
+      Development" (http://www.a2dda.org/, which redirects to https://www.a2dda.org/); the Budget
+      Public Process page names it in full ("Downtown Development Authority (DDA)"). Agendas,
+      packets, minutes and board videos are posted on the city's Legistar.
+    parent:
+      institution: city-of-ann-arbor
+      label: component unit of the City of Ann Arbor government
+      evidence:
+        url: https://www.a2dda.org/who-we-are/
+        quote: "The Ann Arbor DDA is a component unit of the City of Ann Arbor government"
+
+  - key: ann-arbor-ypsilanti-smartzone-ldfa
+    type: municipal_corporation
+    names:
+      - { text: Ann Arbor/Ypsilanti SmartZone Local Development Finance Authority, lang: en }
+      - { text: Ann Arbor/Ypsilanti SmartZone, lang: en }
+      - { text: Local Development Finance Authority, lang: en }
+      - { text: SmartZone, lang: en }
+      - { text: LDFA, lang: en, is_acronym: true }
+    homepage: https://www.a2gov.org/finance-and-administrative-services/smart-zone/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/smart-zone/
+      quote: "The governing body, known as the Ann Arbor/Ypsilanti SmartZone Local Development Finance Authority (LDFA) consists of a nine-member board of directors"
+    notes: >-
+      Tax-increment authority for the MEDC SmartZone district, governed by a nine-member board (six
+      seats appointed by Ann Arbor City Council, three by Ypsilanti's) that spends its capture on
+      business-acceleration contracts, chiefly with Ann Arbor SPARK: a separately constituted body
+      the city controls (README scope rule 3(a), the type's "economic development"). Shared body
+      (README scope rule 4) with the City of Ypsilanti; it has no office of its own, is administered
+      by Ann Arbor's CFO (ex-officio member), meets at Larcom City Hall and is a component unit of
+      Ann Arbor's ACFR, so its one row lives here. The City of Ypsilanti is not a dataset subject.
+      Its site is a section of a2gov.org; agendas and minutes since 2015 are on the city's Legistar.
+    parent:
+      institution: city-of-ann-arbor
+      label: component unit of the City of Ann Arbor
+      evidence:
+        url: https://www.a2gov.org/finance-and-administrative-services/smart-zone/
+        quote: "The SmartZone is included in the City of Ann Arbor’s Annual Comprehensive Financial Report"
+
+  - key: ann-arbor-airport
+    type: municipal_corporation
+    names:
+      - { text: Ann Arbor Airport, lang: en }
+      - { text: Ann Arbor Municipal Airport, lang: en }
+    homepage: https://www.a2gov.org/fleet-and-facilities/ann-arbor-airport/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.a2gov.org/fleet-and-facilities/ann-arbor-airport/
+      quote: "The Ann Arbor Airport is a municipally owned airport operating 24 hours a day, seven days a week."
+    notes: >-
+      Judgment call, following Kingston's reviewed airport row: a municipally owned general-aviation
+      airport (ARB) run by the Fleet and Facilities unit, listed as "Airport" in the Departments list
+      and presenting under its own name on its own section of the site, so README scope rule 3(b)
+      with "an airport" from the type's description. It is not a corporation or authority and does
+      not buy on its own account (its ITBs, e.g. runway lighting ITB 4796, are on the city's
+      Invitation to Bid page), and its Airport Advisory Committee only advises; a reviewer may prefer
+      out_of_scope.
+    parent:
+      institution: city-of-ann-arbor
+      label: municipally owned (Fleet and Facilities unit)
+      evidence:
+        url: https://www.a2gov.org/fleet-and-facilities/ann-arbor-airport/
+        quote: "The Ann Arbor Airport is a municipally owned airport"
+
+  - key: ann-arbor-area-transportation-authority
+    type: transit_agency
+    names:
+      - { text: Ann Arbor Area Transportation Authority, lang: en }
+      - { text: AAATA, lang: en, is_acronym: true }
+      - { text: TheRide, lang: en }
+      - { text: The Ride, lang: en }
+      - { text: Ann Arbor Transportation Authority, lang: en }
+    homepage: https://www.theride.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.a2gov.org/sustainability-innovations-home/sustainability-me/transportation/public-transit/
+      quote: "Ann Arbor Area Transportation Authority, or AAATA, has a broad-reaching system that serves Ann Arbor, Ypsilanti, and beyond"
+      kind: links_to
+      link_target: https://www.theride.org/
+    notes: >-
+      Public transit authority under Michigan's Act 55 of 1963, incorporated by the City of Ann
+      Arbor and joined by the City of Ypsilanti and Ypsilanti Township (2013-2014, the Articles of
+      Incorporation amendments on the city's Legal Notices page). Shared body (README scope rule 4):
+      a ten-member board, eight seats from the City of Ann Arbor, headquartered in Ann Arbor (Blake
+      Transit Center), so the row lives here with member_of from the city; no parent recorded, since
+      the city is one of three members. Ypsilanti and Ypsilanti Township are not dataset subjects.
+      Its Local Advisory Council is advisory. "Ann Arbor Transportation Authority" is the pre-2013
+      name, still used by BidNet's page slug and text. The city's Boards and Commissions page links
+      its board meetings page but with zero-width spaces inside the name, so the naming quote comes
+      from the Public Transit page.
+
+  - key: ann-arbor-district-library
+    type: library
+    names:
+      - { text: Ann Arbor District Library, lang: en }
+      - { text: AADL, lang: en, is_acronym: true }
+    homepage: https://aadl.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.a2gov.org/city-clerk/boards-and-commissions/
+      quote: "Ann Arbor District Library Board Meetings"
+      kind: links_to
+      link_target: https://aadl.org/aboutus/schedule
+    notes: >-
+      Independent district library under Michigan's District Library Establishment Act, with its own
+      millage and seven trustees elected at large; it serves the city and parts of seven townships.
+      The city neither owns nor controls it, so no parent is recorded, but library is an expected
+      type at the municipality level in the United States seed (the special districts of the Census
+      of Governments), so it has a row here. The city's Boards and Commissions page links it under
+      "Other government meetings in Ann Arbor"; the City Council Meetings page links its historical
+      council minutes archive (aadl.org/councilminutes).
+
+  - key: ann-arbor-public-schools
+    type: school_board
+    names:
+      - { text: Ann Arbor Public Schools, lang: en }
+      - { text: AAPS, lang: en, is_acronym: true }
+      - { text: Ann Arbor Public Schools Board of Education, lang: en }
+      - { text: Ann Arbor School District, lang: en }
+    homepage: https://www.a2schools.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.a2gov.org/city-clerk/boards-and-commissions/
+      quote: "Ann Arbor Public Schools Board of Education Meetings"
+      kind: links_to
+      link_target: https://www.a2schools.org/board-of-education/board-of-education/board-calendar
+    notes: >-
+      Independent school district headquartered in the city with an elected seven-member Board of
+      Education; school_board is expected at the municipality level in the United States seed, so it
+      has a row here (unlike Ontario's boards). No parent: the city does not control it. Board
+      agendas and minutes are on a Diligent Community portal (a2schools.community.highbond.com),
+      formal bids on BidNet's MITN group, and capital (bond and sinking fund) IFBs and RFPs on the
+      district's own bond-program site a2schoolsbond.org; meeting recordings are on the city's CTN
+      YouTube channel. "Ann Arbor School District" is the Bids page's wording; aaps.k12.mi.us is its
+      email domain only.
+
+sources:
+  # --- City of Ann Arbor ------------------------------------------------------------
+  - institution: city-of-ann-arbor
+    source_type: procurement
+    url: https://www.a2gov.org/finance-and-administrative-services/purchasing/
+    alternates:
+      - https://www.a2gov.org/finance-and-administrative-services/purchasing/bid-process/
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/purchasing/
+      quote: "Purchasing services provides procurement support for all areas of city government."
+    notes: >-
+      Purchasing Services page (policies, surplus auctions on GovDeals, the MITN bid notification
+      system). The Bid Process page one click down (thresholds, how bids are advertised and awarded)
+      is the "City Bids & Contracts" footer link and is accepted as an alternate.
+
+  - institution: city-of-ann-arbor
+    source_type: tender
+    url: https://www.a2gov.org/finance-and-administrative-services/purchasing/invitation-to-bid/
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/purchasing/invitation-to-bid/
+      quote: "Bid Notification System Website (MITN.info)"
+    notes: >-
+      Invitation to Bid table: open and closed ITBs with documents, addenda, bid tabs and tentative
+      awards. Per-year archive pages (invitation-to-bid-2013 to -2022) sit below it.
+
+  - institution: city-of-ann-arbor
+    source_type: tender
+    url: https://www.a2gov.org/finance-and-administrative-services/purchasing/request-for-proposals/
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/purchasing/request-for-proposals/
+      quote: "Bid Notification System Website (MITN.info)"
+    notes: >-
+      Request for Proposals table, the twin of the ITB page (open and closed RFPs with documents and
+      addenda); a genuinely different page, so a separate entry.
+
+  - institution: city-of-ann-arbor
+    source_type: tender
+    url: https://www.bidnetdirect.com/mitn/city-of-ann-arbor
+    alternates:
+      - https://www.bidnetdirect.com/mitn
+    platform: bidnetdirect.com
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/purchasing/
+      quote: "City Purchasing posts all formal solicitations on the MITN (Michigan Inter-governmental Trade Network) service"
+      kind: links_to
+      link_target: https://www.bidnetdirect.com/mitn
+    notes: >-
+      The city's own page on BidNet Direct's MITN purchasing group ("City of Ann Arbor Bid
+      Opportunities", open and closed solicitations; details need a free login). bidnetdirect.com is
+      a listed platform. The city links the group's landing page, not its own page, so the group
+      page is an alternate; the Bid Process page also links MITN's old govbids.com address.
+
+  - institution: city-of-ann-arbor
+    source_type: budget
+    url: https://www.a2gov.org/finance-and-administrative-services/financial-reporting/
+    alternates:
+      - https://www.a2gov.org/finance-and-administrative-services/guide-to-finance-and-budget/
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/financial-reporting/
+      quote: "The annual budget is the City's plan for providing services to the community during the fiscal year"
+    notes: >-
+      Financial Reporting page: adopted budget books FY2023-FY2027 (FY2027 on a ClearGov document
+      viewer, city-ann-arbor-mi-cleardoc.cleargov.com, a JavaScript-only page; the rest are PDFs),
+      ACFRs, single audits and A2OpenBook. The Guide to Finance and Budget (a citizen guide with
+      budget-process, revenue and expenditure pages) is accepted as an alternate.
+
+  - institution: city-of-ann-arbor
+    source_type: budget
+    url: https://www.a2gov.org/finance-and-administrative-services/guide-to-finance-and-budget/budget-public-process/
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/guide-to-finance-and-budget/budget-public-process/
+      quote: "The city's budget planning process has been finalized for fiscal year 2027."
+    notes: >-
+      Budget Public Process page: the yearly timeline (administrator's recommended budget in April,
+      adoption in May), council work-session presentations and videos per service area (including
+      the Housing Commission, the DDA and the SmartZone/LDFA) and the council's budget-response
+      memos; a genuinely different page from the budget books.
+
+  - institution: city-of-ann-arbor
+    source_type: capital_plan
+    url: https://www.a2gov.org/systems-planning/capital-planning/
+    alternates:
+      - https://www.a2gov.org/systems-planning/capital-planning/updated-fy2026-2031-capital-improvements-plan/
+    evidence:
+      url: https://www.a2gov.org/systems-planning/capital-planning/
+      quote: "A six-year schedule of public service expenditures; updated annually"
+    notes: >-
+      Capital Improvement Planning page: the six-year Capital Improvements Plan the Planning
+      Commission adopts each year under Michigan's Act 33 of 2008, with the current FY2026-2031 CIP
+      page (461 projects, $1.17 billion, by asset group: Water, Streets and Bridges, Stormwater, City
+      Owned Buildings) one click down as an alternate, plus an interactive CIP map (a2gov.org/a2cipmap).
+
+  - institution: city-of-ann-arbor
+    source_type: council_meeting
+    url: https://a2gov.legistar.com/Calendar.aspx
+    platform: legistar.com
+    evidence:
+      url: https://www.a2gov.org/city-clerk/city-council-meetings/
+      quote: "agendas, packets and minutes of the City Council, City Planning Commission and other city boards and commissions"
+      kind: links_to
+      link_target: http://a2gov.legistar.com/Calendar.aspx
+    notes: >-
+      The city's Legistar calendar (434 meetings listed for 2026 on 2026-10-09): agendas, packets,
+      minutes, eComment and a video link per meeting for City Council and every board and commission,
+      the Housing Commission, the DDA and the LDFA among them. legistar.com is a listed platform.
+      The home page's "Meeting Agendas" link and the clerk's page link it (the clerk's page by http).
+
+  - institution: city-of-ann-arbor
+    source_type: council_meeting
+    url: https://www.a2gov.org/city-clerk/city-council-meetings/
+    alternates:
+      - https://www.a2gov.org/city-council/council-meetings-overview/
+      - https://www.a2gov.org/city-council/
+    evidence:
+      url: https://www.a2gov.org/city-clerk/city-council-meetings/
+      quote: "Agendas, Packets and Minutes (Calendars)"
+    notes: >-
+      The clerk's City Council Meetings page (links to Legistar's calendar and legislation search,
+      eComment, remote comment, archive minutes 1891-1991 on AADL and HathiTrust, video on demand).
+      The Council Meetings Overview (schedule, public commentary rules) and the City Council page
+      (members, "first and third Monday") are the pages one click up and are accepted as alternates.
+
+  - institution: city-of-ann-arbor
+    source_type: strategic_plan
+    url: https://www.a2gov.org/planning/comprehensive-plan/
+    evidence:
+      url: https://www.a2gov.org/planning/comprehensive-plan/
+      quote: "The City of Ann Arbor has adopted its Comprehensive Plan - 2050"
+    notes: >-
+      The city's master plan under Michigan's Planning Enabling Act: the Comprehensive Plan 2050
+      adopted in 2026, with its element plans (parks and recreation, transportation, Treeline trail)
+      and resource documents. Recorded as the strategic_plan since the type's description includes
+      "master plan" and the city publishes no organizational strategic plan document (see the next
+      entry). The A2ZERO Carbon Neutrality Plan (2020, carbon neutrality by 2030) is a sector plan,
+      not recorded.
+
+  - institution: city-of-ann-arbor
+    source_type: strategic_plan
+    url: https://www.a2gov.org/city-administrator/
+    evidence:
+      url: https://www.a2gov.org/city-administrator/
+      quote: "The City's goals form the basis of our Organizational Strategic Plan"
+    notes: >-
+      City Administrator's Office page: vision, mission, core values and the six organizational
+      goals "integrated into each service area", the administrator's annual reports, the 2022 and
+      2023 infrastructure agendas and the FY2025 Legislative Policy Agenda. Judgment call: the
+      priorities are stated but no plan document is published; a reviewer may prefer to drop this
+      entry and keep the Comprehensive Plan alone.
+
+  - institution: city-of-ann-arbor
+    source_type: meeting_video
+    url: https://www.youtube.com/user/ctnannarbor
+    alternates:
+      - https://www.youtube.com/@CTNAnnArbor
+      - https://www.a2gov.org/city-communications/ctn/watch-video-on-demand/
+      - https://a2gov.legistar.com/Calendar.aspx
+    platform: youtube.com
+    evidence:
+      url: https://www.a2gov.org/city-communications/ctn/watch-video-on-demand/
+      quote: "CTN Series, Sports, City of Ann Arbor Meetings, AAPS Board of Education Meetings"
+      kind: links_to
+      link_target: https://www.youtube.com/user/ctnannarbor
+    notes: >-
+      "CTN Ann Arbor" channel of the city's Community Television Network: council, board and
+      commission meeting recordings, budget work sessions and AAPS Board of Education meetings. The
+      CTN Video on Demand page links the /user/ address; the handle /@CTNAnnArbor is the channel's
+      canonical address (AAPS's board calendar links it). youtube.com is a listed platform. The
+      CTN Video on Demand page itself (the city's page for watching meeting recordings, which
+      links the channel) and the Legistar calendar, whose every meeting row carries a video link,
+      are alternates (review 2026-10-09: the first run saved both); CTN's Watch Live TV page
+      (ctnvideo.a2gov.org channels) is live only and not a source.
+
+  - institution: city-of-ann-arbor
+    source_type: news
+    url: https://www.a2gov.org/news/
+    alternates:
+      - https://www.a2gov.org/news/news/
+    evidence:
+      url: https://www.a2gov.org/news/
+      quote: "Featured News"
+    notes: >-
+      News feed with categories (News, Featured News, Project News, Sustainability, Parks and
+      Recreation and so on); the /news/news/ category listing is an alternate. The clerk's Legal
+      Notices page (ordinance and meeting notices) is not treated as news.
+
+  # --- Ann Arbor Fire Department (off-list, README floor rule) ------------------------
+  - institution: ann-arbor-fire-department
+    source_type: annual_report
+    url: https://www.a2gov.org/fire-department/
+    evidence:
+      url: https://www.a2gov.org/fire-department/
+      quote: "2025 AAFD Annual Report"
+    notes: Off-list for fire_service. The department's home page holds its annual reports 2018-2025 and the Fire Station Facilities Plan.
+
+  - institution: ann-arbor-fire-department
+    source_type: capital_plan
+    url: https://www.a2gov.org/fire-department/
+    evidence:
+      url: https://www.a2gov.org/fire-department/
+      quote: "We have developed a fire station facilities plan to outline future facility needs and to establish funding priorities."
+    notes: >-
+      Off-list for fire_service. The 2023 Fire Station Facilities Plan (and the 2019 one) on the
+      department's home page: a multi-year plan for its buildings, including the net-zero Station 4
+      rebuild; a reviewer may prefer the city's CIP alone.
+
+  # --- Ann Arbor Police Department (off-list) ----------------------------------------
+  - institution: ann-arbor-police-department
+    source_type: annual_report
+    url: https://www.a2gov.org/police-department/
+    evidence:
+      url: https://www.a2gov.org/police-department/
+      quote: "2025 AAPD Annual Report"
+    notes: Off-list for police_service. Annual reports 2022-2025 on the department's home page.
+
+  # --- Ann Arbor Housing Commission --------------------------------------------------
+  - institution: ann-arbor-housing-commission
+    source_type: procurement
+    url: https://www.a2gov.org/housing-commission/procurement-opportunities/
+    evidence:
+      url: https://www.a2gov.org/housing-commission/procurement-opportunities/
+      quote: "All open invitations for bid, requests for proposals, and other opportunities are posted on the Housing Agency Marketplace."
+    notes: >-
+      Procurement Opportunities page: how to register on the Housing Agency Marketplace, the AAHC
+      Procurement Policy, Section 3 and Davis-Bacon rules, and closed IFBs and RFPs (2021-2025) with
+      bid results. Separate from the city's Purchasing Services.
+
+  - institution: ann-arbor-housing-commission
+    source_type: tender
+    url: https://ha.internationaleprocurement.com/requests.html?company_id=49034
+    alternates:
+      - https://www.a2gov.org/housing-commission/procurement-opportunities/
+    platform: internationaleprocurement.com
+    evidence:
+      url: https://www.a2gov.org/housing-commission/procurement-opportunities/
+      quote: "View current opportunities on Housing Agency Marketplace"
+      kind: links_to
+      link_target: https://ha.internationaleprocurement.com/requests.html?company_id=49034
+    notes: >-
+      AAHC's current opportunities on the Housing Agency Marketplace (HUD housing-agency
+      e-procurement, brand housingagencymarketplace.com, served from
+      ha.internationaleprocurement.com), a shared platform not on the United States seed's list:
+      named in platform as a candidate for it. The portal answers curl with HTTP 403 (CloudFront),
+      so the evidence is the AAHC page linking it. The procurement page, which lists closed
+      opportunities and the link, is an alternate.
+
+  - institution: ann-arbor-housing-commission
+    source_type: board_meeting
+    url: https://www.a2gov.org/housing-commission/housing-commission-board/
+    alternates:
+      - https://a2gov.legistar.com/Calendar.aspx
+    evidence:
+      url: https://www.a2gov.org/housing-commission/housing-commission-board/
+      quote: "The Ann Arbor Housing Commission Board packets and minutes can be found on Legistar."
+    notes: >-
+      Housing Commission Board page (members, third-Thursday meetings) pointing to the city's
+      Legistar for packets and minutes; the bare Legistar calendar, which lists "Housing Commission"
+      among its bodies, is the shared-platform alternate (README, shared platform pages).
+
+  - institution: ann-arbor-housing-commission
+    source_type: strategic_plan
+    url: https://www.a2gov.org/housing-commission/agency-plans-policies/
+    evidence:
+      url: https://www.a2gov.org/housing-commission/agency-plans-policies/
+      quote: "Final Annual and MTW Supplement Plan 2025-2026 and Five Year Plan 2025-2029"
+    notes: >-
+      Off-list for municipal_corporation (README floor rule): the HUD-required Five Year Plan
+      2025-2029 and annual agency plans, with the audited financial statements FY2021-FY2025.
+
+  # --- Ann Arbor Downtown Development Authority ---------------------------------------
+  - institution: ann-arbor-downtown-development-authority
+    source_type: procurement
+    url: https://www.a2dda.org/who-we-are/doing-business-with-us/
+    evidence:
+      url: https://www.a2dda.org/who-we-are/doing-business-with-us/
+      quote: "Open RFQ, RFP, and Invitation to Bid"
+    notes: >-
+      Doing Business with Us: the DDA's only purchasing page, listing its open and closed RFQs, RFPs
+      and invitations to bid; the Reporting Requirements page lists its signed contracts.
+
+  - institution: ann-arbor-downtown-development-authority
+    source_type: tender
+    url: https://www.a2dda.org/who-we-are/doing-business-with-us/
+    evidence:
+      url: https://www.a2dda.org/who-we-are/doing-business-with-us/
+      quote: "Closed RFQ, RFP, and Invitation to Bid (2026 Archive)"
+    notes: Same page as procurement; open solicitations (e.g. 721 North Main design engineering, due 2026-11-04) with a yearly closed archive.
+
+  - institution: ann-arbor-downtown-development-authority
+    source_type: annual_report
+    url: https://www.a2dda.org/reporting-requirements/
+    evidence:
+      url: https://www.a2dda.org/reporting-requirements/
+      quote: "the DDA prepares and submits an annual report on the status of the tax increment financing account to the Ann Arbor City Council"
+    notes: >-
+      Reporting Requirements (Public Act 57 of 2018): annual reports FY2024-FY2025, audits, approved
+      budgets FY2025-FY2027, monthly expense listings, investment reports and signed contracts, with
+      Box archives.
+
+  - institution: ann-arbor-downtown-development-authority
+    source_type: board_meeting
+    url: https://www.a2dda.org/who-we-are/regularly-scheduled-meetings/
+    alternates:
+      - https://a2gov.legistar.com/Calendar.aspx
+    evidence:
+      url: https://www.a2dda.org/who-we-are/regularly-scheduled-meetings/
+      quote: "DDA Board meetings are held on the first Wednesday of every month at 11:00 AM."
+    notes: >-
+      Regularly Scheduled Meetings: board, work-session and executive-committee dates linking each
+      meeting's Legistar page; agendas, packets, minutes and board videos are posted on the city's
+      Legistar, whose calendar is the shared-platform alternate.
+
+  - institution: ann-arbor-downtown-development-authority
+    source_type: budget
+    url: https://www.a2dda.org/reporting-requirements/
+    evidence:
+      url: https://www.a2dda.org/reporting-requirements/
+      quote: "the DDA submits an annual budget to the Ann Arbor City Council for their approval prior to adoption by the DDA Board"
+    notes: Off-list for municipal_corporation (README floor rule); same page as the annual report, "DDA Annual Budget" section (FY2025-FY2027).
+
+  - institution: ann-arbor-downtown-development-authority
+    source_type: strategic_plan
+    url: https://www.a2dda.org/who-we-are/
+    evidence:
+      url: https://www.a2dda.org/who-we-are/
+      quote: "Download the DDA 2026 Development Plan (PDF)"
+    notes: Off-list for municipal_corporation (README floor rule); the Development and TIF Plan council approved on 2026-04-20, with the 2003 renewal plan and 1982 plan.
+
+  # --- Ann Arbor/Ypsilanti SmartZone LDFA --------------------------------------------
+  - institution: ann-arbor-ypsilanti-smartzone-ldfa
+    source_type: annual_report
+    url: https://www.a2gov.org/finance-and-administrative-services/smart-zone/annual-reports/
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/smart-zone/annual-reports/
+      quote: "Annual Reports"
+    notes: >-
+      The LDFA's Annual Reports page holds reports 2006-2013 only; its recent annual reports are
+      presented to council at the budget work sessions (e.g. the FY2021 report on the Budget Public
+      Process page) and filed in Legistar. The newest report here is old; a reviewer may prefer the
+      absence, but the landing page is the one an agent should save.
+
+  - institution: ann-arbor-ypsilanti-smartzone-ldfa
+    source_type: board_meeting
+    url: "https://a2gov.legistar.com/DepartmentDetail.aspx?ID=4171&GUID=7FD7FD47-3ABA-4FA3-8F06-64D7F5069C7B&Search"
+    alternates:
+      - https://www.a2gov.org/finance-and-administrative-services/smart-zone/board-agendas/
+      - https://www.a2gov.org/finance-and-administrative-services/smart-zone/minutes/
+      - https://a2gov.legistar.com/Calendar.aspx
+    platform: legistar.com
+    evidence:
+      url: https://www.a2gov.org/finance-and-administrative-services/smart-zone/
+      quote: "are published through the City of Ann Arbor’s normal meeting notification process and are available online"
+      kind: links_to
+      link_target: "https://a2gov.legistar.com/DepartmentDetail.aspx?ID=4171&GUID=7FD7FD47-3ABA-4FA3-8F06-64D7F5069C7B&Search"
+    notes: >-
+      The LDFA's body page on the city's Legistar (meeting list with agendas and minutes, type
+      "Component Unit"), linked from the Smart Zone page as "online". The Board Agendas and Minutes
+      pages on a2gov.org hold 2009-2015 packets and say later ones are on Legistar, so they and the
+      bare calendar are alternates.
+
+  # --- Ann Arbor Area Transportation Authority ---------------------------------------
+  - institution: ann-arbor-area-transportation-authority
+    source_type: procurement
+    url: https://www.theride.org/business/vendors
+    evidence:
+      url: https://www.theride.org/business/vendors
+      quote: "practices fair and open competitive bidding procedures to procure goods and services"
+    notes: For Vendors page (how bids are obtained through BidNet, purchase-order terms, surplus auctions on GovDeals).
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: tender
+    url: https://www.theride.org/business/vendors
+    evidence:
+      url: https://www.theride.org/business/vendors
+      quote: "Below are the bids and proposals currently being solicited."
+    notes: Same page as procurement; the table of current solicitations (e.g. RFP 2026-21 Vending Services) linking BidNet.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: tender
+    url: https://www.bidnetdirect.com/mitn/ann-arbor-transportation-authority
+    platform: bidnetdirect.com
+    evidence:
+      url: https://www.theride.org/business/vendors
+      quote: "TheRide uses BidNet to post solicitations."
+      kind: links_to
+      link_target: https://www.bidnetdirect.com/
+    notes: >-
+      AAATA's own page on BidNet Direct's MITN group ("Ann Arbor Area Transportation Authority Bid
+      Opportunities"; its slug and text still use the pre-2013 name). The vendors page links BidNet's
+      home and the MITN group page, not this page, so the evidence is that link; bidnetdirect.com is
+      a listed platform.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: budget
+    url: https://www.theride.org/about/performance/business-plan-budget
+    alternates:
+      - https://www.theride.org/about/performance/financial-performance
+    evidence:
+      url: https://www.theride.org/about/performance/business-plan-budget
+      quote: "The annual budget focuses on details for the specific year and projected costs for subsequent years."
+    notes: >-
+      Business Plan & Budget: adopted budget books FY2016-FY2027 and the FY2027 Corporate Business
+      Plan. The Financial Information page (audits, quarterly statements) links back to it and is an
+      alternate.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: capital_plan
+    url: https://www.theride.org/about/performance/business-plan-budget
+    evidence:
+      url: https://www.theride.org/about/performance/business-plan-budget
+      quote: "The business plan provides a high-level overview with a longer-term perspective."
+    notes: >-
+      Same page as the budget: the budget book carries the multi-year capital program and the
+      corporate business plan the longer-term projection (README, asset management plans and
+      multi-year budgets count); no separate capital plan page. The 2045 Long-Range Plan is
+      recorded as the strategic plan.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: board_meeting
+    url: https://www.theride.org/about/leadership/board-directors/board-meetings
+    alternates:
+      - https://www.theride.org/about/leadership
+    evidence:
+      url: https://www.theride.org/about/leadership/board-directors/board-meetings
+      quote: "Below you can view meeting packets, meeting minutes, and recorded videos with the public."
+    notes: >-
+      Board Meetings: packet, minutes and YouTube video per monthly meeting by fiscal year; the
+      city's Boards and Commissions page links it. The Leadership page one click up is an alternate.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: strategic_plan
+    url: https://www.theride.org/about/projects/theride-2045
+    alternates:
+      - https://www.theride.org/about/projects
+    evidence:
+      url: https://www.theride.org/about/projects/theride-2045
+      quote: "TheRide 2045 Long-Range Plan - Full Report"
+    notes: TheRide 2045 Long-Range Plan the board approved in August 2022 (phase one funded by the 2022 millage); the Projects page one click up is an alternate.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: strategic_plan
+    url: https://www.theride.org/about/performance/business-plan-budget
+    evidence:
+      url: https://www.theride.org/about/performance/business-plan-budget
+      quote: "FY2027 Corporate Business Plan - Final"
+    notes: The yearly corporate business plan on the Business Plan & Budget page; a genuinely different document from the long-range plan.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: meeting_video
+    url: https://www.theride.org/about/leadership/board-directors/board-meetings
+    evidence:
+      url: https://www.theride.org/about/leadership/board-directors/board-meetings
+      quote: "recorded videos"
+    notes: Off-list for transit_agency (README floor rule); the board meetings page keeps each meeting's YouTube recording.
+
+  - institution: ann-arbor-area-transportation-authority
+    source_type: news
+    url: https://www.theride.org/about/news
+    evidence:
+      url: https://www.theride.org/about/news
+      quote: "News | TheRide"
+    notes: Off-list for transit_agency (README floor rule); news releases (service changes, budget proposal hearings, labour agreements). The quote is the page title.
+
+  # --- Ann Arbor District Library ----------------------------------------------------
+  - institution: ann-arbor-district-library
+    source_type: budget
+    url: https://aadl.org/aboutus/reports
+    alternates:
+      - https://aadl.org/aboutus/boardpackets
+    evidence:
+      url: https://aadl.org/aboutus/reports
+      quote: "Budgets, Audits, & Other Reports"
+    notes: >-
+      Approved budgets 2013-2014 to 2026-2027 with audits and monthly library reports; the Board
+      Meeting Packets page, which holds each May's proposed budget packet for the public hearing, is
+      an alternate.
+
+  - institution: ann-arbor-district-library
+    source_type: board_meeting
+    url: https://aadl.org/aboutus/board
+    alternates:
+      - https://aadl.org/aboutus/boardminutes
+      - https://aadl.org/aboutus/boardpackets
+      - https://aadl.org/aboutus/schedule
+    evidence:
+      url: https://aadl.org/aboutus/board
+      quote: "Officers are elected by the Board at the Annual Board Meeting in January."
+    notes: >-
+      AADL Board Information: the hub linking the current agenda, Board Meeting Packets, Library
+      Board Minutes, the schedule, bylaws and videos; the minutes and packets pages are accepted as
+      alternates, as is the schedule page the city links (its text is the 2024 schedule).
+
+  - institution: ann-arbor-district-library
+    source_type: annual_report
+    url: https://aadl.org/aboutus/annualreport
+    evidence:
+      url: https://aadl.org/aboutus/annualreport
+      quote: "2024-2025 Annual Report"
+    notes: Off-list for library (README floor rule); annual reports 2012-2013 to 2024-2025.
+
+  - institution: ann-arbor-district-library
+    source_type: strategic_plan
+    url: https://aadl.org/planning
+    evidence:
+      url: https://aadl.org/planning
+      quote: "Strategic Plan 2020"
+    notes: Off-list for library (README's own example); the 2020 plan is the current one.
+
+  - institution: ann-arbor-district-library
+    source_type: meeting_video
+    url: https://aadl.org/aboutus/boardvideos
+    alternates:
+      - https://www.youtube.com/playlist?list=PLqXc2oqdc5jCygoZ52Eb35vf1lmLyixzX
+    evidence:
+      url: https://aadl.org/aboutus/boardvideos
+      quote: "Board Videos"
+    notes: >-
+      Off-list for library (README floor rule); each board meeting's recording with a transcript,
+      also on the AADL YouTube playlist the board page links. The quote is the page title.
+
+  - institution: ann-arbor-district-library
+    source_type: news
+    url: https://aadl.org/aboutus/librarynews
+    evidence:
+      url: https://aadl.org/aboutus/librarynews
+      quote: "Library News"
+    notes: Off-list for library (README floor rule); the Library News feed, where AADL also posts its requests for bids.
+
+  # --- Ann Arbor Public Schools ------------------------------------------------------
+  - institution: ann-arbor-public-schools
+    source_type: procurement
+    url: https://www.a2schools.org/departments/finance-operations/finance/procurement-business-services
+    evidence:
+      url: https://www.a2schools.org/departments/finance-operations/finance/procurement-business-services
+      quote: "To access current competitive solicitations, please visit the Michigan Inter-governmental Trade Network"
+    notes: Procurement & Business Services (director, purchasing policies and regulations on BoardDocs, bid threshold, asset disposal) with the Bids page below it.
+
+  - institution: ann-arbor-public-schools
+    source_type: tender
+    url: https://www.a2schools.org/departments/finance-operations/finance/procurement-business-services/bids
+    evidence:
+      url: https://www.a2schools.org/departments/finance-operations/finance/procurement-business-services/bids
+      quote: "Thank you for your interest in doing business with Ann Arbor Public Schools."
+    notes: "Bids page: where solicitations are posted (BidNet's MITN for district solicitations, a2schoolsbond.org for capital projects, the State's Buy4Michigan)."
+
+  - institution: ann-arbor-public-schools
+    source_type: tender
+    url: https://www.bidnetdirect.com/mitn/ann-arbor-public-schools
+    platform: bidnetdirect.com
+    evidence:
+      url: https://www.a2schools.org/departments/finance-operations/finance/procurement-business-services/bids
+      quote: "Bidnetdirect.com for services, products and non-capital construction & maintenance"
+      kind: links_to
+      link_target: https://www.bidnetdirect.com/
+    notes: >-
+      AAPS's own page on BidNet Direct's MITN group ("Ann Arbor Public Schools Bid Opportunities");
+      the Bids page links BidNet's home, not this page. bidnetdirect.com is a listed platform.
+
+  - institution: ann-arbor-public-schools
+    source_type: tender
+    url: https://a2schoolsbond.org/contractors/
+    evidence:
+      url: https://www.a2schools.org/departments/finance-operations/finance/procurement-business-services/bids
+      quote: "For capital construction projects, click here for active and upcoming IFBs and RFPS posted at"
+      kind: links_to
+      link_target: https://a2schoolsbond.org/contractors/
+    notes: >-
+      Contractors page of the district's bond-program site: active and upcoming IFBs and RFPs for
+      sinking-fund and bond projects, with contractor background-check rules. a2schoolsbond.org is
+      the district's own second domain (candidate, confirm).
+
+  - institution: ann-arbor-public-schools
+    source_type: budget
+    url: https://www.a2schools.org/mandated-transparency-postings
+    alternates:
+      - https://www.a2schools.org/departments/finance-operations/finance/budget
+    evidence:
+      url: https://www.a2schools.org/mandated-transparency-postings
+      quote: "Budget and Salary/Compensation Transparency Reporting"
+    notes: >-
+      The state-mandated budget and transparency page (approved budgets and amendments 2023-24 to
+      2026-27, audits, check registers); the Finance department's "Budget" menu item
+      (/departments/finance-operations/finance/budget) redirects here.
+
+  - institution: ann-arbor-public-schools
+    source_type: budget
+    url: https://www.a2schools.org/departments/finance-operations/finance/proposed-2026-27-budget
+    evidence:
+      url: https://www.a2schools.org/departments/finance-operations/finance/proposed-2026-27-budget
+      quote: "The Ann Arbor Public Schools Board of Education will hold Public Hearings on the proposed 2026-27 Budget"
+    notes: >-
+      The current year's budget page (budget book, briefings, study sessions); a genuinely different
+      page from the transparency postings. The AAPS 2024-25 Operating Budget section under Board of
+      Education (the 2024 fiscal-stress year) is an older twin.
+
+  - institution: ann-arbor-public-schools
+    source_type: capital_plan
+    url: https://www.a2schools.org/about-aaps/capital-projects-including-2019-bond
+    alternates:
+      - https://a2schoolsbond.org/program-schedule/
+      - https://a2schoolsbond.org/about-the-bond/
+    evidence:
+      url: https://www.a2schools.org/about-aaps/capital-projects-including-2019-bond
+      quote: "Capital Projects Including 2019 Bond"
+    notes: >-
+      The 2019 $1 billion Capital Program bond and sinking fund: the district page and, on
+      a2schoolsbond.org, the Program Schedule (phase one 2020-2030 and phase two plans approved by
+      the board) and About the Bond pages, accepted as alternates.
+
+  - institution: ann-arbor-public-schools
+    source_type: board_meeting
+    url: https://www.a2schools.org/board-of-education/board-of-education/board-calendar
+    alternates:
+      - https://www.a2schools.org/board-of-education/board-of-education
+    evidence:
+      url: https://www.a2schools.org/board-of-education/board-of-education/board-calendar
+      quote: "Posted meetings of the AAPS Board of Education are listed below along with links to the meeting agendas and minutes."
+    notes: >-
+      Board Calendar (the page the city's Boards and Commissions page links): meeting list with
+      Open Meetings Act notices, Zoom and CTN links, pointing to the Diligent portal for agendas and
+      minutes. The Board of Education page one click up is an alternate.
+
+  - institution: ann-arbor-public-schools
+    source_type: board_meeting
+    url: https://a2schools.community.highbond.com/Portal/
+    platform: highbond.com
+    evidence:
+      url: https://www.a2schools.org/board-of-education/board-of-education/board-calendar
+      quote: "Meeting agendas / public commentary sign up"
+      kind: links_to
+      link_target: https://a2schools.community.highbond.com/Portal/
+    notes: >-
+      The board's Diligent Community portal (agendas, minutes, meeting types, request to speak).
+      Diligent's own domain diligent.com is on the seed's platform list but this product serves
+      from highbond.com, which is not: named in platform as a candidate for the list. Board
+      policies are on BoardDocs (boarddocs.com, listed).
+
+  - institution: ann-arbor-public-schools
+    source_type: meeting_video
+    url: https://www.youtube.com/@CTNAnnArbor
+    alternates:
+      - https://www.youtube.com/user/ctnannarbor
+    platform: youtube.com
+    evidence:
+      url: https://www.a2schools.org/board-of-education/board-of-education/board-calendar
+      quote: "Video recordings of Regular Meetings are available on CTN’s YouTube channel"
+      kind: links_to
+      link_target: http://www.youtube.com/@CTNAnnArbor
+    notes: >-
+      Board of Education meetings are recorded by the city's CTN and kept on its YouTube channel
+      (the same channel as the city's meeting_video); the district's own channel
+      (youtube.com/@AnnArborPublicSchools) holds district programming, not meetings. youtube.com is
+      a listed platform.
+
+  - institution: ann-arbor-public-schools
+    source_type: news
+    url: https://www.a2schools.org/news
+    evidence:
+      url: https://www.a2schools.org/news
+      quote: "Subscribe to Post Alerts"
+    notes: District news and announcements feed (Finalsite posts).
+
+  - institution: ann-arbor-public-schools
+    source_type: strategic_plan
+    url: https://www.a2schools.org/superintendent/strategic-plan-20262031
+    evidence:
+      url: https://www.a2schools.org/superintendent/strategic-plan-20262031
+      quote: "Ann Arbor Public Schools is building a strategic plan to guide decisions about programs, resources and student support"
+    notes: >-
+      Off-list for school_board (README floor rule). The 2026-2031 strategic plan page: the plan is
+      in preparation (board approval planned for March 2027), so a reviewer may prefer the absence
+      until it is published.
+
+absent_sources:
+  # --- Ann Arbor Fire Department -------------------------------------------------------
+  - institution: ann-arbor-fire-department
+    source_type: procurement
+    covered_by: city-of-ann-arbor
+    note: >-
+      No purchasing page in the Fire Department section (all 36 fire-department pages in the city
+      sitemap checked 2026-10-09); fire apparatus and station work are bought through the city's
+      Purchasing Services and MITN, recorded under city-of-ann-arbor.
+  - institution: ann-arbor-fire-department
+    source_type: budget
+    covered_by: city-of-ann-arbor
+    note: >-
+      No fire budget page; Fire Services is a section of the city budget book and of the council's
+      general-fund budget work session ("City Administrator Area, Finance, Police, Fire, Courts"),
+      recorded under city-of-ann-arbor.
+
+  # --- Ann Arbor Police Department -----------------------------------------------------
+  - institution: ann-arbor-police-department
+    source_type: procurement
+    covered_by: city-of-ann-arbor
+    note: >-
+      No purchasing page in the Police Department section (sitemap checked 2026-10-09: divisions,
+      services, community engagement, careers); the department buys through the city's Purchasing
+      Services, recorded under city-of-ann-arbor. Its policies are on PowerDMS.
+  - institution: ann-arbor-police-department
+    source_type: tender
+    covered_by: city-of-ann-arbor
+    note: No police bid listing; police solicitations are on the city's ITB and RFP pages and MITN (recorded under city-of-ann-arbor).
+  - institution: ann-arbor-police-department
+    source_type: budget
+    covered_by: city-of-ann-arbor
+    note: >-
+      No police budget page; Police Services is a section of the city budget book and of the
+      council's general-fund budget work session, recorded under city-of-ann-arbor.
+  - institution: ann-arbor-police-department
+    source_type: board_meeting
+    note: >-
+      No police board: the chief reports to the city administrator. The Independent Community
+      Police Oversight Commission (a council commission, meetings on Legistar, annual reports on its
+      page) reviews complaints and does not govern the department, so it is out_of_scope rather than
+      a board_meeting source.
+
+  # --- Ann Arbor Water -----------------------------------------------------------------
+  - institution: ann-arbor-water
+    source_type: procurement
+    covered_by: city-of-ann-arbor
+    note: >-
+      No purchasing page in the Ann Arbor Water, Water Treatment Plant, Water Resource Recovery
+      Facility or Public Works sections (sitemap checked 2026-10-09); water contracts (e.g. the WRRF
+      screw pump replacement) go through the city's Purchasing Services, recorded under
+      city-of-ann-arbor.
+  - institution: ann-arbor-water
+    source_type: tender
+    covered_by: city-of-ann-arbor
+    note: No water bid listing of its own; water ITBs and RFPs are on the city's purchasing pages and MITN (recorded under city-of-ann-arbor).
+  - institution: ann-arbor-water
+    source_type: capital_plan
+    covered_by: city-of-ann-arbor
+    note: >-
+      No water capital plan page; the Water, Sanitary Sewer and Stormwater asset groups of the
+      city's Capital Improvements Plan (Water alone is 101 projects, $294.6 million in FY2026-2031)
+      are its capital program, recorded under city-of-ann-arbor. The Water Treatment Plant Facility
+      Plan and the Water Distribution Plan update are project pages, and the February 2024 "Ann
+      Arbor Water Strategic Plan Approved" release is a single news post.
+  - institution: ann-arbor-water
+    source_type: board_meeting
+    note: >-
+      No board: a city unit overseen by council. The Water System Advisory Council (lead-service-line
+      outreach) and the Environmental Commission (inactive) are advisory; none is a governing board.
+
+  # --- Ann Arbor Sustainable Energy Utility --------------------------------------------
+  - institution: ann-arbor-sustainable-energy-utility
+    source_type: procurement
+    covered_by: city-of-ann-arbor
+    note: >-
+      No purchasing page in the SEU section (About, Joining, For Current Customers, History and
+      Resources, Our Team; checked 2026-10-09); the city's Purchasing Services runs its RFPs,
+      recorded under city-of-ann-arbor.
+  - institution: ann-arbor-sustainable-energy-utility
+    source_type: tender
+    covered_by: city-of-ann-arbor
+    note: No SEU bid listing; its solicitations are on the city's RFP page and MITN (recorded under city-of-ann-arbor).
+  - institution: ann-arbor-sustainable-energy-utility
+    source_type: capital_plan
+    note: >-
+      No capital plan page: the SEU's rollout (2026 Bryant pilot, citywide from 2027, later
+      geothermal, microgrids and on-bill financing) is described as phases on the About page and a
+      timeline graphic, and its systems are not in the city's CIP. Checked the SEU section and the
+      Sustainability and Innovations pages 2026-10-09.
+  - institution: ann-arbor-sustainable-energy-utility
+    source_type: board_meeting
+    note: >-
+      No board: a city utility with an executive director, overseen by City Council; the
+      Sustainability Commission and the (inactive) Energy Commission are advisory.
+
+  # --- Ann Arbor Housing Commission ----------------------------------------------------
+  - institution: ann-arbor-housing-commission
+    source_type: annual_report
+    note: >-
+      No annual report page. The Agency Plans & Policies page holds the HUD annual agency plans,
+      the five-year plan and audited financial statements FY2021-FY2025, and the home page the
+      5-Year Affordable Housing Millage Report (July 2026), none an annual report; the MTW annual
+      report is not published on the site (all 70 housing-commission pages in the city sitemap
+      checked 2026-10-09).
+
+  # --- Ann Arbor/Ypsilanti SmartZone LDFA ---------------------------------------------
+  - institution: ann-arbor-ypsilanti-smartzone-ldfa
+    source_type: procurement
+    note: >-
+      No purchasing page (Smart Zone section: home, Board Agendas, Minutes, Annual Reports; checked
+      2026-10-09). The LDFA "has historically contracted with outside entities to perform
+      services", chiefly Ann Arbor SPARK, through contracts its board approves in Legistar; it does
+      not use the city's purchasing pages, so no covered_by.
+  - institution: ann-arbor-ypsilanti-smartzone-ldfa
+    source_type: tender
+    note: No LDFA bid listing on a2gov.org, Legistar or MITN (searched 2026-10-09); its service contracts are approved as board resolutions.
+
+  # --- Ann Arbor Airport ----------------------------------------------------------------
+  - institution: ann-arbor-airport
+    source_type: procurement
+    covered_by: city-of-ann-arbor
+    note: >-
+      No purchasing page in the airport section (home, hangar information, advisory committee,
+      news and projects); the airport buys through the city's Purchasing Services, recorded under
+      city-of-ann-arbor.
+  - institution: ann-arbor-airport
+    source_type: tender
+    covered_by: city-of-ann-arbor
+    note: >-
+      No airport bid listing; airport solicitations (ITB 4796 runway lighting and signage, RFP 26-50
+      north terminal concrete) are on the city's ITB and RFP pages, recorded under city-of-ann-arbor.
+  - institution: ann-arbor-airport
+    source_type: annual_report
+    note: No airport annual report on a2gov.org (airport section and sitemap checked 2026-10-09); the 2008 Airport Layout Plan and the runway environmental assessment are its only published plans.
+  - institution: ann-arbor-airport
+    source_type: board_meeting
+    note: >-
+      No governing board: a city unit overseen by council. The Airport Advisory Committee (meetings
+      on Legistar) makes recommendations to council and does not govern the airport.
+
+  # --- Ann Arbor Area Transportation Authority -----------------------------------------
+  # (every expected source type found)
+
+  # --- Ann Arbor District Library ------------------------------------------------------
+  - institution: ann-arbor-district-library
+    source_type: procurement
+    note: >-
+      No purchasing or vendor page on aadl.org (About Us menu: news, locations, employment, annual
+      reports, board, strategic planning, policies; /rfp and /aboutus/bids are 404; checked
+      2026-10-09). The library runs its own construction bids through its construction manager and
+      announces them as Library News posts (e.g. "AADL issues Request for Subcontractor Bids",
+      2026-08-31), which are single posts, not a purchasing page.
+  - institution: ann-arbor-district-library
+    source_type: tender
+    note: No bid listing page; see the procurement note (bids appear as individual Library News posts, and none on MITN).
+
+  # --- Ann Arbor Public Schools --------------------------------------------------------
+  # (every expected source type found)
+
+candidate_domains:
+  - domain: theride.org
+    institution: ann-arbor-area-transportation-authority
+    expected: confirm
+    reason: TheRide's own site, linked from the city's Public Transit page, its Residents & Visitors page ("Bus Routes") and its Boards and Commissions page.
+  - domain: aadl.org
+    institution: ann-arbor-district-library
+    expected: confirm
+    reason: The library's own site, linked from the city's Boards and Commissions page (board meetings) and City Council Meetings page (archive minutes).
+  - domain: a2dda.org
+    institution: ann-arbor-downtown-development-authority
+    expected: confirm
+    reason: The DDA's own site, linked from the city's Departments list ("Downtown Development") and Residents & Visitors page (parking, walking, biking).
+  - domain: a2schools.org
+    institution: ann-arbor-public-schools
+    expected: confirm
+    reason: The school district's own site, linked from the city's Boards and Commissions page (Board of Education meetings).
+  - domain: a2schoolsbond.org
+    institution: ann-arbor-public-schools
+    expected: confirm
+    reason: >-
+      The district's own bond-program site (capital IFBs and RFPs, program schedule), linked from
+      its Bids page and linking back to a2schools.org; a second domain of the district, not a
+      campaign microsite, though its homepage stays a2schools.org.
+  - domain: annarborpolice.org
+    institution: ann-arbor-police-department
+    expected: confirm
+    reason: >-
+      "The Official AAPD Dashboard" (crime and traffic-stop dashboards), linked from the police
+      page ("View crime data") and linking back to the department's a2gov.org page; the
+      department's own second domain, though its homepage stays on a2gov.org.
+  - domain: internationaleprocurement.com
+    institution: ann-arbor-housing-commission
+    expected: review
+    reason: >-
+      Housing Agency Marketplace, the HUD housing-agency e-procurement platform that hosts AAHC's
+      current opportunities (ha.internationaleprocurement.com); a shared platform not on the United
+      States seed's list.
+  - domain: housingagencymarketplace.com
+    institution: ann-arbor-housing-commission
+    expected: review
+    reason: The Housing Agency Marketplace's brand domain (registration and vendor pages), the same platform as internationaleprocurement.com; not on the seed's list.
+  - domain: cleargov.com
+    institution: city-of-ann-arbor
+    expected: review
+    reason: ClearGov, the budget document viewer the Financial Reporting page links for the FY2027 adopted budget (city-ann-arbor-mi-cleardoc.cleargov.com); a shared platform not on the seed's list.
+  - domain: highbond.com
+    institution: ann-arbor-public-schools
+    expected: review
+    reason: >-
+      Diligent Community, the board agenda and minutes portal of AAPS (a2schools.community.highbond.com);
+      diligent.com is on the seed's list but this product serves from highbond.com, which is not.
+  - domain: annarbor.org
+    institution: city-of-ann-arbor
+    expected: reject
+    reason: Trap. Destination Ann Arbor, the convention and visitors bureau (a non-profit funded by the county accommodation tax), linked from the city's footer; not the city's domain.
+  - domain: annarborusa.org
+    institution: city-of-ann-arbor
+    expected: reject
+    reason: Trap. Ann Arbor SPARK, a regional economic development non-profit the city and the LDFA fund by contract; linked from the Economic Development and Smart Zone pages.
+  - domain: getdowntown.org
+    institution: ann-arbor-downtown-development-authority
+    expected: reject
+    reason: Trap. The getDowntown commuter program, funded by the DDA and run by AAATA, linked from the city's Residents & Visitors page; a program site, not either body's domain.
+  - domain: umich.edu
+    institution: city-of-ann-arbor
+    expected: reject
+    reason: Trap. The University of Michigan (its Board of Regents meetings are linked from the city's Boards and Commissions page); a state-level university, not a city body.
+  - domain: mipublicpower.org
+    institution: ann-arbor-sustainable-energy-utility
+    expected: reject
+    reason: Trap. The Michigan Municipal Electric Association, the trade group the SEU joined in October 2026, linked from the city's news post.
+  - domain: whalliance.org
+    institution: ann-arbor-housing-commission
+    expected: reject
+    reason: Trap. The Washtenaw Housing Alliance, a non-profit coalition linked from the Housing Commission page; not the commission's domain.
+  - domain: mainstreetannarbor.org
+    institution: city-of-ann-arbor
+    expected: reject
+    reason: Trap. The Main Street Area Association, the merchants' association of the Main Street Business Improvement Zone (a BIA-like body on the city's Legistar list).
+  - domain: a2ychamber.org
+    institution: city-of-ann-arbor
+    expected: reject
+    reason: Trap. The Ann Arbor/Ypsilanti Regional Chamber of commerce; a private association.
+  - domain: aaps.k12.mi.us
+    institution: ann-arbor-public-schools
+    expected: reject
+    reason: >-
+      The district's legacy and email domain (staff addresses on its Finance pages); neither
+      aaps.k12.mi.us nor www.aaps.k12.mi.us resolves (checked 2026-10-09), so there is nothing on it
+      to quote; a2schools.org is the domain to confirm.
+
+out_of_scope:
+  - name: Economic Development Corporation of the City of Ann Arbor (EDC/A2)
+    url: https://www.a2gov.org/finance-and-administrative-services/economic-development-corporation/
+    reason: >-
+      Judgment call. A corporation under Michigan's EDC Act (1978) with a council-appointed board,
+      but a conduit issuer of tax-exempt revenue bonds with no staff, operations or procurement of
+      its own (its counsel is an outside law firm); a board that lends the municipality's credit
+      rather than a business that buys on its own account, so not a municipal_corporation despite
+      "economic development". A reviewer may prefer a row.
+  - name: Building Authority
+    reason: >-
+      A building authority incorporated to own and finance city buildings and parking structures
+      (Granicus boards list); a financing vehicle with no operations or procurement of its own.
+  - name: City of Ann Arbor Employees' Retirement System
+    url: https://www.a2gov.org/retirement-system/
+    reason: Pension board of trustees; a board that invests the municipality's money (type description), not a business.
+  - name: Retiree Health Care Benefit Plan & Trust Board of Trustees (VEBA)
+    reason: Trust board investing the city's retiree-health money; same as the retirement system.
+  - name: 15th District Court
+    url: https://www.a2gov.org/15th-judicial-district-court/
+    reason: A trial court of the State of Michigan's judiciary that the city funds and hosts on its site (a "department" in the Departments list); not a city body and matches no type.
+  - name: Community Television Network (CTN)
+    url: https://www.a2gov.org/city-communications/ctn/
+    reason: The city's public-access cable and streaming unit (a division of Communications); matches no type. Its YouTube channel is the city's meeting_video source.
+  - name: Independent Community Police Oversight Commission
+    url: https://www.a2gov.org/city-clerk/boards-and-commissions/independent-community-police-oversight-commission/
+    reason: Council commission reviewing complaints about the police; it does not govern the department (README scope rule 2, council committees), so its meetings are not a police board_meeting source.
+  - name: City Planning Commission, Park Advisory Commission, Transportation Commission, Sustainability Commission, Airport Advisory Committee, Cable Communications Commission, Housing Board of Appeals and the other council boards and commissions
+    url: https://a2gov.granicus.com/boards/w/fe6c5e22e6f4a331/boards
+    reason: Advisory and quasi-judicial boards and commissions of the council (README scope rule 2); they spend nothing of their own and meet on the city's Legistar.
+  - name: Water Treatment Plant and Water Resource Recovery Facility
+    url: https://www.a2gov.org/water-treatment-plant/
+    reason: Facilities of Ann Arbor Water (its drinking-water and wastewater units), listed separately in the Departments list; folded into the ann-arbor-water row, not institutions of their own.
+  - name: Office of Sustainability and Innovations (A2ZERO)
+    url: https://www.a2gov.org/sustainability-innovations-home/
+    reason: City office that runs the A2ZERO climate plan and administers the SEU; a division matching no type (the SEU has its own row).
+  - name: Washtenaw County Office of Community & Economic Development
+    url: https://www.washtenaw.org/569/Community-Economic-Development
+    reason: County body met on the city's Departments list ("Community Development"); a body of the county, not the city (README scope rule 2).
+  - name: Washtenaw County Health & Human Services
+    url: https://www.washtenaw.org/1542/Health-Human-Services
+    reason: County body met on the city's Departments list ("Human/Social Services"); the county's, not the city's.
+  - name: Washtenaw County Board of Commissioners
+    url: https://www.washtenaw.org/
+    reason: The county government (its meetings are linked from the city's Boards and Commissions page); the subject's parent, not an institution of the city.
+  - name: Washtenaw Metro Dispatch
+    reason: The county sheriff's dispatch centre that answers Ann Arbor's non-emergency line; a county service.
+  - name: Washtenaw Urban County
+    reason: HUD entitlement consortium of county municipalities administered by the county's Office of Community & Economic Development (an "Urban County Executive Committee" on the city's Legistar list); a county body.
+  - name: Washtenaw Intermediate School District
+    url: https://www.washtenawisd.org/
+    reason: County-level intermediate school district (school_board at the county level, not the city's); not met on the city's pages.
+  - name: Washtenaw Community College
+    url: https://www.wccnet.edu/
+    reason: College (a state-level type); a WCC appointee sits on the LDFA board.
+  - name: University of Michigan
+    url: https://umich.edu/
+    reason: State constitutional university (a state-level type) whose Board of Regents meetings the city's Boards and Commissions page links; not a city body.
+  - name: University of Michigan Health (Michigan Medicine)
+    reason: Hospital of the University of Michigan, a state-level body; not the city's.
+  - name: Trinity Health Ann Arbor Hospital
+    reason: Private Catholic hospital system (formerly St. Joseph Mercy); not public.
+  - name: Ann Arbor SPARK
+    url: https://annarborusa.org/
+    reason: Regional economic development non-profit that the city's Office of Economic Development partners with and the LDFA funds by contract; a non-profit the city only funds (README scope rule 2).
+  - name: Destination Ann Arbor
+    url: https://www.annarbor.org/
+    reason: Convention and visitors bureau (non-profit funded by the county accommodation ordinance), linked from the city's footer; not owned or controlled by the city.
+  - name: getDowntown program
+    url: https://www.getdowntown.org/
+    reason: Commuter program the DDA funds and AAATA runs; a program, not a body.
+  - name: Main Street Business Improvement Zone
+    reason: BIA-like business improvement zone under Michigan's Act 120 (on the city's Legistar body list); README scope rule 2.
+  - name: Avalon Housing
+    reason: Non-profit supportive-housing developer that partners with the Housing Commission (Hickory Way, The Grove at Veridian, 206 N. Washington); a non-profit the city funds.
+  - name: Washtenaw Housing Alliance
+    url: https://www.whalliance.org/
+    reason: Non-profit coalition on homelessness linked from the Housing Commission page; not a public body.
+  - name: Huron River Watershed Council
+    reason: Non-profit watershed group with council liaisons (Legistar body list); the United States seed has no conservation_authority type and it is not a public body.
+  - name: Michigan Theater Foundation and Ann Arbor Summer Festival
+    reason: Non-profits with council liaison or board seats (Legistar body list); non-profits the city at most funds.
+  - name: Washtenaw Area Transportation Study (WATS) and SEMCOG
+    reason: The metropolitan planning organization and the regional council of governments the city sends liaisons to; joint regional bodies matching no type.
+  - name: DTE Energy
+    reason: Investor-owned electric and gas utility serving the city (the grid the SEU supplements); private.
+  - name: Michigan Municipal Electric Association
+    url: https://mipublicpower.org/
+    reason: Trade association of municipal electric utilities that the SEU joined in October 2026; not a public body.
+
+notes: >-
+  Researched 2026-10-09 from a2gov.org (sitemap of 1,527 URLs; Departments, Government, Boards and
+  Commissions, Purchasing, Financial Reporting, Guide to Finance and Budget, Capital Improvement
+  Planning, City Council, City Clerk, Fire, Police, Housing Commission, Smart Zone, Airport,
+  Ann Arbor Water, Sustainable Energy Utility, CTN and News sections), the city's Legistar and
+  Granicus pages, BidNet's MITN pages, and each body's own site (theride.org, aadl.org, a2dda.org,
+  a2schools.org, a2schoolsbond.org). First United States subject: the levels are country, state,
+  county and municipality, so the subject's parent is Washtenaw County and trusted_at_start holds
+  the state's, the city's and the county's domains. City procurement is centralised: Purchasing
+  Services posts ITBs and RFPs on its own pages and on BidNet's MITN group, and the fire, police,
+  water, SEU and airport rows buy through it (absent with covered_by). The Housing Commission (its
+  own policy and the Housing Agency Marketplace), the DDA (its own RFPs) and AAATA, AADL and AAPS
+  (their own portals) buy on their own account. Council and every board meet on Legistar, so the
+  bare calendar is an alternate under the Housing Commission, the DDA and the LDFA. Judgment calls,
+  each flagged in its row: the airport as a municipal_corporation division (following Kingston),
+  the SEU as a public_utility before it buys on its own account, the EDC/A2 as out_of_scope (a
+  conduit bond issuer), the Comprehensive Plan as the city's strategic_plan, and the AAATA budget
+  book as its capital plan. Charter schools (Central Academy, Honey Creek Community School, each a
+  public school academy and a school district of its own under Michigan law) were met on none of
+  the city's pages and are not labelled. Pages the fetch could not read: the Housing Agency
+  Marketplace (HTTP 403 from CloudFront) and the ClearGov budget viewer (JavaScript only); both are
+  recorded through the city's pages that link them. The United States seed lacks: a platform entry
+  for the Housing Agency Marketplace (internationaleprocurement.com / housingagencymarketplace.com),
+  for ClearGov (cleargov.com) and for Diligent Community (highbond.com; diligent.com is listed but
+  the product serves from highbond.com), and a type for a court the city funds (15th District
+  Court) and for a cable-access network (CTN); both stay out_of_scope.

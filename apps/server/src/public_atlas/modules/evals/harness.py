@@ -41,7 +41,13 @@ from public_atlas.modules.assignments.models import (
 from public_atlas.modules.assignments.service import Spawn
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.rules import CountryRules
-from public_atlas.modules.evals.dataset import Municipality, Name, PlaceList, SubjectFile
+from public_atlas.modules.evals.dataset import (
+    OFFICIAL_CODE_SCHEMES,
+    Municipality,
+    Name,
+    PlaceList,
+    SubjectFile,
+)
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
@@ -304,7 +310,7 @@ async def _listed_place(
     if municipality.official_code is not None:
         held = await session.scalar(
             select(Identifier).where(
-                Identifier.scheme == IdentifierScheme.STATCAN_SGC,
+                Identifier.scheme == official_code_scheme(rules),
                 Identifier.value == municipality.official_code,
                 Identifier.place_id.is_not(None),
             )
@@ -380,9 +386,17 @@ async def _find_or_create_place(  # noqa: PLR0913
     )
     await status_changes.verify_place(session, place, entered_by=BY)
     if code is not None:
-        session.add(Identifier(place_id=place.id, scheme=IdentifierScheme.STATCAN_SGC, value=code))
+        session.add(Identifier(place_id=place.id, scheme=official_code_scheme(rules), value=code))
         await session.flush()
     return place
+
+
+def official_code_scheme(rules: CountryRules) -> IdentifierScheme:
+    """The scheme a dataset file's `official_code` is in for the rules' country."""
+    try:
+        return OFFICIAL_CODE_SCHEMES[rules.country_code]
+    except KeyError:
+        raise ValueError(f"no official code scheme for country {rules.country_code}") from None
 
 
 async def _pick_place(
@@ -447,7 +461,11 @@ async def _find_or_create_institution(
     names: Sequence[Name],
 ) -> Institution:
     for name in names:
-        found = await graph.find_institutions(session, place, name.text, rules=rules)
+        # Of the type alone: a school district's names include the directory's "Washoe County",
+        # which is the county government's name too.
+        found = await graph.find_institutions(
+            session, place, name.text, rules=rules, institution_type=institution_type
+        )
         if found:
             institution = found[0]
             if institution.status is not EntityStatus.VERIFIED:

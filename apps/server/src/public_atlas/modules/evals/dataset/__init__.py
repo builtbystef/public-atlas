@@ -1,13 +1,15 @@
-"""The eval dataset (spec section 10): ten hand-labelled Ontario subjects and a list of 25
-governments, as YAML files beside this module, with their schema, validator and evidence check.
-`README.md` holds the labelling rules. An eval run works the quick set by default, five
-subjects chosen for coverage over size, and every file with `--all`."""
+"""The eval dataset (spec section 10): ten hand-labelled Ontario subjects, a list of 25 Ontario
+governments and three United States subjects, as YAML files beside this module, with their
+schema, validator and evidence check. `README.md` holds the labelling rules. Each file names its
+country; an eval run works one country's files. The quick set, five Ontario subjects chosen for
+coverage over size, is the default; `--all` works every file."""
 
 import hashlib
 from pathlib import Path
 
 from public_atlas.modules.evals.dataset.evidence import check_evidence, evidence_items
 from public_atlas.modules.evals.dataset.schema import (
+    OFFICIAL_CODE_SCHEMES,
     PLACES,
     ROOT,
     SUBJECTS,
@@ -81,6 +83,7 @@ def files_named(slugs: list[str], *, lists_by_default: bool) -> list[Path]:
 
 
 __all__ = [
+    "OFFICIAL_CODE_SCHEMES",
     "PLACES",
     "QUICK_SUBJECTS",
     "ROOT",

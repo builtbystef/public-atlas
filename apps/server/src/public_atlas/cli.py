@@ -19,7 +19,7 @@ from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.assignments.models import AssignmentType, Run, RunMode
 from public_atlas.modules.assignments.schemas import Progress, RunFilter
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import SEEDS, canada
+from public_atlas.modules.countries.seeds import SEEDS
 from public_atlas.modules.evals import dataset
 from public_atlas.modules.evals import service as evals
 from public_atlas.modules.imports import service as imports
@@ -209,8 +209,7 @@ def eval_validate(args: argparse.Namespace) -> int:
     """Schema and cross-reference checks against the seed's rules; the number of errors as the
     exit status."""
     files = dataset.files_named(args.subject or [], lists_by_default=True)
-    rules = countries.rules_from_seed(canada.SEED)
-    errors = dataset.validate_files(files, rules)
+    errors = dataset.validate_files(files, evals.rules_by_country())
     for error in errors:
         print(error)  # noqa: T201
     print(f"{len(files)} file(s), {len(errors)} error(s)")  # noqa: T201

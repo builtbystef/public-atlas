@@ -136,6 +136,7 @@ def subject_file() -> SubjectFile:
         {
             "subject": {
                 "kind": "place",
+                "country_code": "CA",
                 "name": "Town of Fixture",
                 "level": "municipality",
                 "place": "Town of Fixture",
@@ -462,6 +463,7 @@ def test_a_subject_missing_from_the_database_is_all_misses(rules: countries.Coun
 def municipal_list() -> PlaceList:
     return PlaceList.model_validate(
         {
+            "country_code": "CA",
             "place": "Ontario",
             "source": {"url": "https://example.test/list"},
             "expected_counts": {"total": 4},

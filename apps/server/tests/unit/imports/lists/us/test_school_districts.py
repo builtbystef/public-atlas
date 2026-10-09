@@ -11,7 +11,7 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import school_districts
 
-ENTRIES = 18228
+ENTRIES = 18229
 SERVICE_AGENCIES = "other: Service agency"
 CHARTERS = "school_board: Independent charter district"
 COMPONENTS = (
@@ -20,7 +20,7 @@ COMPONENTS = (
 REGULAR = (
     "school_board: Regular public school district that is not a component of a supervisory union"
 )
-TYPED = {SERVICE_AGENCIES: 681, CHARTERS: 4212, COMPONENTS: 173, REGULAR: 13162}
+TYPED = {SERVICE_AGENCIES: 681, CHARTERS: 4212, COMPONENTS: 173, REGULAR: 13163}
 
 LEFT_OUT = {
     "Federal operated agency": 4,
@@ -30,12 +30,15 @@ LEFT_OUT = {
     "Supervisory union": 114,
 }
 NOT_OPERATING = {"Closed": 137, "Future": 49, "Inactive": 48}
-PLACED = {"county": 17510, "municipality": 547, "state": 171}
+PLACED = {"county": 17510, "municipality": 547, "state": 172}
 OUT_OF_STATE = 189
-# The Bureau of Indian Education's schools and the territories' agencies.
-NO_STATE = 184
-SERVED = 12863
-WEBSITES = 16106
+# The Bureau of Indian Education's schools and the territories' agencies; Puerto Rico's
+# Department of Education sits under Puerto Rico.
+NO_STATE = 183
+# One more than the first load: a served place is judged by the loaded name, as the loader
+# reads it, since the transit list needed that reading.
+SERVED = 12864
+WEBSITES = 16107
 
 
 @pytest.fixture(scope="module")

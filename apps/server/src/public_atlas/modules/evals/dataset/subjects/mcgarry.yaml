@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: Township of McGarry
   level: municipality
   place: Township of McGarry

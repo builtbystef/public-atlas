@@ -76,7 +76,8 @@ def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
     assert page in manual
     assert f"canada/ontario/health_units/{page.name}: {page.title}" in text
     assert f"  put it at /cache/{page.name}.html" in text
-    assert text.rstrip().endswith(page.instructions.strip().splitlines()[-1].strip())
+    # The manifest ends with the last manual file's last step.
+    assert text.rstrip().endswith(manual[-1].instructions.strip().splitlines()[-1].strip())
 
     export = ListFile(
         name="alberta_contacts",

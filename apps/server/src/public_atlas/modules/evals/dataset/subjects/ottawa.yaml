@@ -4,6 +4,7 @@
 # a real browser on 2026-09-29 (same text-node joining as dataset.py), is copied verbatim and carries manual_check.
 subject:
   kind: place
+  country_code: CA
   name: City of Ottawa
   level: municipality
   place: City of Ottawa

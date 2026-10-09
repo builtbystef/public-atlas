@@ -1,35 +1,40 @@
 # The eval dataset
 
 The hand-labelled dataset of spec section 10: what a perfect run should yield
-for ten Ontario municipalities, and the homepages and domains of 25 Ontario
-municipal governments. Every prompt, tool or model change re-runs the agent
-against it and scores recall and precision per assignment type. `eval run`
-works the quick set by default, five subjects chosen for coverage over size
-(`QUICK_SUBJECTS` in `__init__.py`) plus the places file; `--all` works every
-file. These YAML files are the only YAML in the project: hand-labelled data
-edited over time is the one place a data file beats a table.
+for ten Ontario municipalities, the homepages and domains of 25 Ontario
+municipal governments, and three United States subjects. Every prompt, tool or
+model change re-runs the agent against it and scores recall and precision per
+assignment type. `eval run` works the quick set by default, five Ontario
+subjects chosen for coverage over size (`QUICK_SUBJECTS` in `__init__.py`)
+plus the places file; `--all` works every file of one country, and a run or a
+scoring never mixes countries. Each file names its country (`country_code`),
+and the validator reads it against that country's seed. These YAML files are
+the only YAML in the project: hand-labelled data edited over time is the one
+place a data file beats a table.
 
 Started in the `public-atlas-gold` repository, moved into v1 with its work item
 types, and ported here in the words of `docs/glossary.md`. Run from
 `apps/server`:
 
 ```sh
-uv run public-atlas eval validate                 # schema and cross-reference checks against the Canada seed
+uv run public-atlas eval validate                 # schema and cross-reference checks against each file's country seed
 uv run public-atlas eval evidence                 # fetch each evidence URL and check the quote is on the page
 uv run public-atlas eval score                    # score the main database against the dataset
 uv run public-atlas eval score --evals            # score the eval database a run left, and record it on that run
 uv run public-atlas eval run --subject mcgarry    # reset and seed the eval database, work it, score it (model key, Chromium)
 uv run public-atlas eval run --json scores.json   # the quick set and the places file, with the numbers written as JSON
 uv run public-atlas eval run --all                # every subject and the places file
+uv run public-atlas eval run --subject ann-arbor --subject washtenaw-county --subject washoe-county-school-district --types find_homepage find_sources
+                                                  # the United States subjects, on the two types they are scored on
 ```
 
 ## Layout
 
-| Path                                 | Holds                                                                                                                                                                                                                                                                   | Scores                                                                                                                                                                        |
-| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `../../countries/seeds/`             | The country's rules (spec section 4.4): levels with their expected types, the types with their expected sources, the platforms, the naming rules, the anchor. The validator reads them through `rules_from_seed`, so the dataset and the agent never disagree on a type | Nothing                                                                                                                                                                       |
-| `places/ontario-municipalities.yaml` | 25 of the 444 municipalities on the official provincial list: the ten subject municipalities and fifteen whose listed website is dead, parked, hijacked, moved, wrong or missing, with tier, parent, homepage and the candidate domains of each government              | `find_homepage` for each government: its homepage and its domain decisions. The places themselves come from `imports/lists/canada/ontario/places.py`, checked by its own test |
-| `subjects/<slug>.yaml`               | One subject: its government, every in-scope institution with its parent, homepage and candidate domains, and its sources                                                                                                                                                | `find_institutions`, `find_homepage`, `find_sources`                                                                                                                          |
+| Path                                 | Holds                                                                                                                                                                                                                                                                                        | Scores                                                                                                                                                                        |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `../../countries/seeds/`             | Each country's rules (spec section 4.4): levels with their expected types, the types with their expected sources, the platforms, the naming rules, the anchors. The validator reads a file's country's seed through `rules_from_seed`, so the dataset and the agent never disagree on a type | Nothing                                                                                                                                                                       |
+| `places/ontario-municipalities.yaml` | 25 of the 444 municipalities on the official provincial list: the ten subject municipalities and fifteen whose listed website is dead, parked, hijacked, moved, wrong or missing, with tier, parent, homepage and the candidate domains of each government                                   | `find_homepage` for each government: its homepage and its domain decisions. The places themselves come from `imports/lists/canada/ontario/places.py`, checked by its own test |
+| `subjects/<slug>.yaml`               | One subject: its government, every in-scope institution with its parent, homepage and candidate domains, and its sources                                                                                                                                                                     | `find_institutions`, `find_homepage`, `find_sources`                                                                                                                          |
 
 ### Subjects
 
@@ -47,6 +52,18 @@ The quick set is marked; the rest run with `--all`.
 | `oakville`           | Town of Oakville                  | municipality (lower-tier)             |       | Lower-tier inside Halton; own transit and hydro                            |
 | `hawkesbury`         | Town of Hawkesbury                | municipality (lower-tier)             | yes   | French-majority; pages mostly in French                                    |
 | `mcgarry`            | Township of McGarry               | municipality (single-tier)            | yes   | 579 people; site built by a municipal web vendor, tenders only on Biddingo |
+
+The United States subjects (`country_code: US`), labelled and reviewed
+2026-10-09, are scored on `find_homepage` and `find_sources` (`--types`); their
+`find_institutions` is labelled but the seed's county and municipality levels
+expect no `police_service`, so a city police department sits in the file with
+`expected: review` until the seed says otherwise:
+
+| Slug                            | Subject                       | Level                         | Why it is here                                                                                                    |
+| ------------------------------- | ----------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `ann-arbor`                     | City of Ann Arbor, Michigan   | municipality (under a county) | Mid-size city in a state with townships; a transit authority, a library district and a school district of its own |
+| `washtenaw-county`              | Washtenaw County, Michigan    | county                        | A county as the `county` level, with the bodies the county's pages lead to                                        |
+| `washoe-county-school-district` | Washoe County School District | institution, at its county    | A county-wide school district as an institution subject: `find_sources` alone                                     |
 
 The two ministry subjects of the first full run (Transportation, and Public and
 Business Service Delivery and Procurement) were dropped on 2026-10-09: a
@@ -255,14 +272,18 @@ an institution does:
 
 ### Subjects
 
+- Every file names its country in `country_code` (a subject's, a places file's), and its
+  `official_code` is in that country's scheme (`OFFICIAL_CODE_SCHEMES` in `schema.py`:
+  Statistics Canada's SGC code, a FIPS code). `tier` is Ontario's two-tier system and is
+  left out elsewhere.
 - A place subject names itself in `place`; its `institution` is its government.
-- An institution subject (a ministry; none shipped at present) names its place
-  (`Ontario`) and its `government_homepage`, the homepage of the place's
-  government: the harness seeds it verified so the ministry's page sits under a
-  verified government. Only the ministry's `find_sources` is queued. Its
-  agencies are an official list's to load (the provincial agency directory,
-  `ontario_agencies` in the Phase 7 plan), not the agent's to find, so until
-  that list is loaded such a file's agencies score as misses with that reason.
+- An institution subject (a ministry, a school district) names its place
+  (`Ontario`, `Washoe County`) and its `government_homepage`, the homepage of
+  the place's government: the harness seeds it verified so the institution's
+  page sits under a verified government. Only the institution's `find_sources`
+  is queued. A ministry's agencies are an official list's to load (the
+  provincial agency directory), not the agent's to find, so such a file's
+  agencies would score as misses with that reason.
 
 ### Evidence quotes
 
@@ -286,11 +307,13 @@ an institution does:
 
 ## Scoring (the harness)
 
-An eval run resets the eval database, seeds the country through the real seed
-and loader with every assignment held, seeds each subject's place, government,
-trusted domains and homepage, queues the subject's `find_sources` and, for a
-place subject, its `find_institutions`, serves the queues in its own process,
-then scores and prices. For a places file the seed is the loader's alone, so the run is
+An eval run resets the eval database, seeds the files' country through the real
+seed and loader (`DEFAULT_LISTS` in `../service.py`: Ontario's places for
+Canada, the states and counties for the United States, so a city subject finds
+its county and the harness makes the city) with every assignment held, seeds
+each subject's place, government, trusted domains and homepage, queues the
+subject's `find_sources` and, for a place subject, its `find_institutions`,
+serves the queues in its own process, then scores and prices. For a places file the seed is the loader's alone, so the run is
 scored on each government's `find_homepage`. A homepage matches when it is on
 the same registrable domain and its path starts with the dataset's path. The
 rules below are code in `../scorer/`; `public-atlas eval score` applies them to

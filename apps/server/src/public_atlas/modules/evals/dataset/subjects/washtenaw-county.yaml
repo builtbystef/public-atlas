@@ -1,0 +1,1540 @@
+subject:
+  kind: place
+  country_code: US
+  name: Washtenaw County
+  level: county
+  place: Washtenaw County
+  parent: Michigan
+  official_code: "26161" # FIPS state + county code
+  institution: washtenaw-county
+
+status: reviewed
+reviewed_at: 2026-10-09
+labelled_at: 2026-10-09
+
+trusted_at_start: [michigan.gov, washtenaw.org]
+
+institutions:
+  - key: washtenaw-county
+    type: regional_government
+    names:
+      - { text: Washtenaw County, lang: en }
+      - { text: County of Washtenaw, lang: en }
+      - { text: Washtenaw County Government, lang: en }
+      - { text: Washtenaw County Board of Commissioners, lang: en }
+      - { text: BOC, lang: en, is_acronym: true }
+    homepage: https://www.washtenaw.org/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.washtenaw.org/commissioners
+      quote: Andy LaBarre was first elected to the Washtenaw County Board of Commissioners in 2012
+    notes: >-
+      Michigan county of about 372,000 people (27 cities, villages and townships; seat Ann Arbor),
+      governed by a nine-member elected Board of Commissioners with an appointed County
+      Administrator. http://washtenaw.org and http://www.washtenaw.org redirect to
+      https://www.washtenaw.org/. The site is CivicPlus: most department pages render their body
+      by JavaScript (only the navigation is in the served HTML), so evidence is taken from the
+      "catalog" pages that are server-rendered (County Departments, Your Government, Commissioners,
+      Purchasing, Finance, Open Book, Parks & Recreation Connect and Administration) and from
+      link text. Meetings and webcasts are on a CivicClerk portal (meetings.washtenaw.org
+      redirects to washtenawcomi.portal.civicclerk.com). The Census of Governments lists
+      http://www.ewashtenaw.org/, whose apex and www hosts no longer answer (see candidate_domains);
+      the county's applications still live on ewashtenaw.org subdomains (secure.ewashtenaw.org
+      boards directory and jobs, gisappsecure, prodpermits).
+
+  - key: washtenaw-county-sheriffs-office
+    type: police_service
+    names:
+      - { text: Washtenaw County Sheriff's Office, lang: en }
+      - { text: Washtenaw County Sheriff, lang: en }
+      - { text: WCSO, lang: en, is_acronym: true }
+    homepage: https://www.washtenaw.org/sheriff
+    homepage_alternates:
+      - https://www.washtenaw.org/your-sheriffs-office
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.washtenaw.org/your-sheriffs-office
+      quote: "The Washtenaw County Sheriff's Office is organized into six divisions: Administrative Operations, Community Engagement, Corrections, Emergency Services, Innovative Reentry, and Police Services."
+    expected: review
+    notes: >-
+      The county's police service, led by an elected Sheriff and listed under County Departments;
+      it polices eight townships under contract and runs the jail, 911 Metro Dispatch and
+      Emergency Management. police_service is a type the United States uses but does not list at
+      the county level, so expected: review (README scope rule 1). It presents under its own name
+      with a section of the county site (rule 3(b)). No board governs it (the Sheriff is elected);
+      the Public Safety Millage Advisory Committee and the Police Services Steering Committee are
+      advisory. It buys and budgets through the county, so its procurement, tender and budget are
+      covered_by the county. Its Emergency Services / 911 division and 911 Metro Dispatch are
+      divisions of the office, not bodies of their own.
+
+  - key: washtenaw-county-parks-and-recreation-commission
+    type: park_district
+    names:
+      - { text: Washtenaw County Parks and Recreation Commission, lang: en }
+      - { text: Washtenaw County Parks & Recreation Commission, lang: en }
+      - { text: Washtenaw County Parks and Recreation, lang: en }
+      - { text: Washtenaw County Parks, lang: en }
+      - { text: WCPARC, lang: en, is_acronym: true }
+    homepage: https://www.washtenaw.org/parks-recreation
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.washtenaw.org/parks-preserves-trails
+      quote: Washtenaw County Parks and Recreation Commission (WCPARC) has led the multi-agency effort to develop the Border to Border Trail (B2B Trail) since its inception in the late 1990s.
+    parent:
+      institution: washtenaw-county
+      label: commission appointed by
+      evidence:
+        url: https://www.washtenaw.org/administration
+        quote: The Commission consists of 10 members including a member of the County Road Commission, the County Water Resources Commissioner, and seven members appointed by the Board of Commissioners
+    notes: >-
+      Judgement call. A county parks and recreation commission under Michigan's Act 261 of 1965:
+      a separately constituted ten-member commission the Board of Commissioners appoints, with its
+      own voter-approved millages (parks operating, natural areas preservation, roads and
+      non-motorized trails), its own meetings on the county's CivicClerk portal and its own master
+      plans, running county parks, preserves, the Meri Lou Murray Recreation Center, Rolling Hills
+      and Independence Lake water parks and Pierce Lake Golf Course. It is not an independent
+      special district (the Census of Governments counts it as part of the county), but it is a
+      body the county controls (rule 3(a)) whose work matches park_district, the only type that
+      fits; a reviewer may prefer out_of_scope as a county department. It buys through County
+      Purchasing and its funds are part of the county budget, so procurement, tender and budget are
+      covered_by the county. Its section of the county site has its own navigation (Parks,
+      Preserves, Trails; Recreation; Activities; Connect; Register) and YouTube channel
+      (https://www.youtube.com/@WashtenawParks, linked from the JavaScript-rendered landing page).
+
+  - key: washtenaw-county-road-commission
+    type: other
+    names:
+      - { text: Washtenaw County Road Commission, lang: en }
+      - { text: WCRC, lang: en, is_acronym: true }
+      - { text: Washtenaw County Board of County Road Commissioners, lang: en }
+    homepage: https://www.wcroads.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/your-government
+      quote: The Washtenaw County Road Commission (WCRC) is the county-level road agency in Washtenaw County, Michigan responsible for maintaining a road system that is reasonably safe and convenient to the traveling public.
+      kind: links_to
+      link_target: https://www.wcroads.org/
+    parent:
+      institution: washtenaw-county
+      label: board appointed by
+      evidence:
+        url: https://www.wcroads.org/about/the-board/
+        quote: The Washtenaw County Road Commission is governed by a five-member Washtenaw County Board of County Road Commissioners, appointed by the Washtenaw County Board of Commissioners.
+    expected: review
+    notes: >-
+      Judgement call. A Michigan county road commission (Act 283 of 1909): a body of its own with a
+      five-member board the county appoints, its own site, its own procurement (BidNet/MITN for
+      goods and services, BidExpress for construction) and its own budget ("WCRC is an independent
+      financial entity", Transparency & Budget page), funded by the Michigan Transportation Fund
+      and a county-wide roads millage, with 136 employees maintaining 1,650 miles of road. It buys
+      on its own account and matches no seed type (not a public_utility, not a municipal_corporation
+      running a business), so it is `other` with expected: review (README scope rule 1). The
+      country file may want a road_commission or highway_district type: see the report. Its budget,
+      asset management plan, board meetings, news and YouTube recordings are recorded as off-list
+      sources. The county's Your Government page and sitemap link it as "Road Commission".
+
+  - key: washtenaw-community-college
+    type: college
+    names:
+      - { text: Washtenaw Community College, lang: en }
+      - { text: WCC, lang: en, is_acronym: true }
+    homepage: https://www.wccnet.edu/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Washtenaw Community College
+      kind: links_to
+      link_target: https://www.wccnet.edu/
+      manual_check: "CivicPlus content API (content.civicplus.com, app mi-washtenawcounty, article 'Schools') 2026-10-09; the page renders its body by JavaScript"
+    expected: review
+    notes: >-
+      Public community college district of Washtenaw County (Ann Arbor Township), governed by a
+      seven-member elected Board of Trustees, with its own purchasing department. college is a
+      type the United States uses but lists at the state level, not the county, so expected:
+      review (README scope rule 1). The county's Schools page (Live, Visit, Play > Schools) links
+      it under "Colleges & Universities in Washtenaw County" next to the University of Michigan,
+      Eastern Michigan University and Concordia University; the page body is JavaScript-rendered,
+      so the evidence is checked by hand. Not a county body: no parent recorded.
+
+  - key: chelsea-school-district
+    type: school_board
+    names:
+      - { text: Chelsea School District, lang: en }
+      - { text: Chelsea Schools, lang: en }
+    homepage: https://www.chelseaschools.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Chelsea School District
+      kind: links_to
+      link_target: https://www.chelsea.k12.mi.us/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Chelsea (500 Washington Street). The county's
+      Schools page links http://www.chelsea.k12.mi.us/, which redirects to
+      https://www.chelseaschools.org/ (Finalsite). The 2019 bond ($81M, three series) is named on
+      the homepage but has no page of its own.
+
+  - key: dexter-community-schools
+    type: school_board
+    names:
+      - { text: Dexter Community Schools, lang: en }
+      - { text: Dexter Community School District, lang: en }
+      - { text: DCS, lang: en, is_acronym: true }
+    homepage: https://www.dexterschools.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Dexter Community Schools
+      kind: links_to
+      link_target: http://dexterschools.org/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Dexter (2704 Baker Road). http://dexterschools.org/
+      redirects to https://www.dexterschools.org/ (Finalsite). The fullest district site in the
+      county: purchasing, bids, budget, a 2025 bond programme and meeting videos.
+
+  - key: lincoln-consolidated-schools
+    type: school_board
+    names:
+      - { text: Lincoln Consolidated Schools, lang: en }
+      - { text: Lincoln Consolidated School District, lang: en }
+      - { text: LCS, lang: en, is_acronym: true }
+    homepage: https://www.lincolnk12.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Lincoln Consolidated Schools
+      kind: links_to
+      link_target: https://www.lincolnk12.org/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Ypsilanti Township. Its site (Apptegy) answers a
+      Chrome user agent with a "Client Challenge" bot wall and serves its content as JavaScript
+      data to a plain curl user agent, so none of its pages can be checked by the evidence script;
+      its source quotes were read from the served page data and carry manual_check. Its
+      transparency reporting is on Munetrix.
+
+  - key: manchester-community-schools
+    type: school_board
+    names:
+      - { text: Manchester Community Schools, lang: en }
+      - { text: MCS, lang: en, is_acronym: true }
+    homepage: https://www.manchesterschools.us/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Manchester Community Schools
+      kind: links_to
+      link_target: https://www.manchesterschools.us/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Manchester (710 E. Main Street), on a Foxbright
+      site. Meeting notices, agendas and minutes are posted as PDFs under Board of Education and
+      District News; its transparency reporting is on Munetrix.
+
+  - key: milan-area-schools
+    type: school_board
+    names:
+      - { text: Milan Area Schools, lang: en }
+      - { text: Milan Area School District, lang: en }
+      - { text: MAS, lang: en, is_acronym: true }
+    homepage: https://www.milanareaschools.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Milan Area Schools
+      kind: links_to
+      link_target: http://milanareaschools.org/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Milan (100 Big Red Drive, Washtenaw County; the
+      district also covers part of Monroe County). http://milanareaschools.org/ redirects to
+      https://www.milanareaschools.org/ (Finalsite).
+
+  - key: saline-area-schools
+    type: school_board
+    names:
+      - { text: Saline Area Schools, lang: en }
+      - { text: Saline Area School District, lang: en }
+      - { text: SAS, lang: en, is_acronym: true }
+    homepage: https://www.salineschools.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Saline Area School District
+      kind: links_to
+      link_target: http://www.salineschools.com/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Saline (7265 N. Ann Arbor Street), on a Foxbright
+      site. The county's Schools page links http://www.salineschools.com/, which serves an empty
+      404 (checked 2026-10-09); the district's site is salineschools.org.
+
+  - key: whitmore-lake-public-schools
+    type: school_board
+    names:
+      - { text: Whitmore Lake Public Schools, lang: en }
+      - { text: WLPS, lang: en, is_acronym: true }
+    homepage: https://www.wlps.net/
+    homepage_alternates:
+      - http://www.wlps.net/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Whitmore Lake Public Schools
+      kind: links_to
+      link_target: http://www.wlps.net/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Whitmore Lake, Northfield Township (8845 Main
+      Street). The county links http://www.wlps.net/, which serves without redirecting to https.
+
+  - key: ypsilanti-community-schools
+    type: school_board
+    names:
+      - { text: Ypsilanti Community Schools, lang: en }
+      - { text: YCS, lang: en, is_acronym: true }
+    homepage: https://www.ycschools.us/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Ypsilanti Community Schools
+      kind: links_to
+      link_target: http://www.ycschools.us/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      Public school district headquartered in Ypsilanti (1885 Packard Road), on a Foxbright site;
+      formed in 2013 from the Ypsilanti and Willow Run districts. http://www.ycschools.us/
+      redirects to https://www.ycschools.us/.
+
+  - key: washtenaw-intermediate-school-district
+    type: school_board
+    names:
+      - { text: Washtenaw Intermediate School District, lang: en }
+      - { text: Washtenaw ISD, lang: en }
+      - { text: WISD, lang: en, is_acronym: true }
+    homepage: https://www.washtenawisd.org/
+    homepage_host: own_domain
+    evidence:
+      url: https://www.washtenaw.org/schools
+      quote: Washtenaw Intermediate School District
+      kind: links_to
+      link_target: http://washtenawisd.org/
+      manual_check: "CivicPlus content API (article 'Schools') 2026-10-09; JavaScript-rendered page"
+    notes: >-
+      The county's intermediate school district (1819 S. Wagner Road, Ann Arbor), a school
+      district of its own under Michigan law with an elected board, serving the nine local
+      districts; school_board is the only fitting type. Its board packets are on a BoardOnTrack
+      public portal. http://washtenawisd.org/ redirects to https://www.washtenawisd.org/.
+
+sources:
+  # --- Washtenaw County --------------------------------------------------------------
+  - institution: washtenaw-county
+    source_type: procurement
+    url: https://www.washtenaw.org/purchasing
+    alternates:
+      - https://www.washtenaw.org/information-for-vendors
+      - https://www.washtenaw.org/general-procurement-information
+      - https://www.washtenaw.org/bid-quote-information
+    evidence:
+      url: https://www.washtenaw.org/purchasing
+      quote: Bids/Proposals will be publicly opened by the Washtenaw County Purchasing Division on the date and time specified in the column titled
+    notes: >-
+      Purchasing Division page (Finance > Purchasing): how bids are opened, the Doing Business with
+      Washtenaw County brochure, General Procurement Information and Information for Vendors
+      (BidNet Direct, Vendor Self-Service). Those sub-pages and the Bid & Quote Information hub
+      are alternates.
+
+  - institution: washtenaw-county
+    source_type: tender
+    url: https://www.washtenaw.org/open-bids-quotes
+    alternates:
+      - https://www.washtenaw.org/bid-quote-information
+      - https://www.washtenaw.org/closed-bids-quotes
+    evidence:
+      url: https://www.washtenaw.org/purchasing
+      quote: Open Bids & Quotes
+      kind: links_to
+      link_target: https://www.washtenaw.org/open-bids-quotes
+    notes: >-
+      "Open Bids & Quotes": the list of RFPs currently open, with bid documents and the opening
+      date ("This is the list of bid (RFP) solicitations currently open and available for
+      response"), rendered by JavaScript. Closed Bids & Quotes and the hub page are alternates.
+
+  - institution: washtenaw-county
+    source_type: tender
+    url: https://www.bidnetdirect.com/mitn/washtenaw-county
+    platform: bidnetdirect.com
+    evidence:
+      url: https://www.washtenaw.org/information-for-vendors
+      quote: Washtenaw County is utilizing a regional bid notification system created exclusively for the Tri-County Purchasing Cooperative known as BidNet Direct.
+    notes: >-
+      The county's agency page on BidNet Direct (MITN Purchasing Group), where its solicitations
+      are also posted and vendors register for notifications. A genuinely different page from
+      the county's own Open Bids list, so a second tender entry. The BidNet Direct Notification
+      Information page links it, but that page's body is JavaScript-rendered.
+
+  - institution: washtenaw-county
+    source_type: budget
+    url: https://www.washtenaw.org/open-book-financial-transparency
+    alternates:
+      - https://www.washtenaw.org/county-budget
+      - https://www.washtenaw.org/finance
+      - https://www.washtenaw.org/budget-planning
+    evidence:
+      url: https://www.washtenaw.org/open-book-financial-transparency
+      quote: 2026 to 2029 Adopted & Projected Budgets
+    notes: >-
+      Open Book - Financial Transparency: tabs for the 2026 to 2029 Adopted & Projected Budgets, the
+      2026 to 2029 Line Item Budget, the 2024 to 2027 Budget Summary, reaffirmed budgets and
+      quarterly budget updates (the documents load by JavaScript). The county budgets on a
+      four-year (quadrennial) cycle. The County Budget page (the 2019-2022 and 2024-2027 budget
+      books), the Finance hub and the Administrator's Budget Planning page are alternates.
+
+  - institution: washtenaw-county
+    source_type: capital_plan
+    url: https://www.washtenaw.org/county-budget
+    alternates:
+      - https://www.washtenaw.org/open-book-financial-transparency
+      - https://www.washtenaw.org/finance
+    evidence:
+      url: https://www.washtenaw.org/county-budget
+      quote: 2024 to 2027 Budget Book (PDF)
+    notes: >-
+      No stand-alone capital plan page. The capital plan is inside the budget book: the 2024 to
+      2027 Budget Book PDF (https://mi-washtenawcounty2.civicplus.pro/asset/9ef529ac-01a7-4b0b-a126-5aabc89186a9,
+      336 pages) has a "Capital Plan" section (pdf page 88, printed 90) and a "Capital Improvement /
+      Debt Service" section (printed 275), and its Readers Guide (pdf page 12) says "The County
+      prepares a long-term Capital Improvement Plan as part of the annual budget process"; the
+      budget policies require a 20-year capital improvement plan. Judgement call, as in the County
+      of Simcoe file: the budget page is the capital_plan source. Facilities Management's
+      "Washtenaw County Facilities Portfolio" and the Space Plan Steering Committee materials
+      (CivicClerk category 80) were checked and are not a capital plan.
+
+  - institution: washtenaw-county
+    source_type: council_meeting
+    url: https://washtenawcomi.portal.civicclerk.com/
+    alternates:
+      - https://washtenawcomi.portal.civicclerk.com/?category_id=26,27
+      - https://meetings.washtenaw.org/
+      - https://www.washtenaw.org/meetings
+      - https://www.washtenaw.org/agendas-minutes
+      - https://www.washtenaw.org/board-meeting-agendas-minutes
+    platform: civicclerk.com
+    evidence:
+      url: https://www.washtenaw.org/county-events
+      quote: Meeting Webcasts
+      kind: links_to
+      link_target: https://washtenawcomi.portal.civicclerk.com/
+    notes: >-
+      The county's CivicClerk public portal (a JavaScript app; "CivicClerk events and agendas for
+      citizens"): agendas, packets and minutes of the Board of Commissioners (Ways & Means and
+      Board meetings, categories 26 and 27) and of its boards and commissions. Linked as "County
+      Meetings Calendar & Materials" on the homepage (meetings.washtenaw.org redirects here), as
+      "Meeting Webcasts" in the Board of Commissioners "How Do I" menu, and from the Meetings,
+      Agendas & Minutes and Board Meeting Agendas & Minutes pages, whose bodies are
+      JavaScript-rendered and only point here, so they are alternates.
+
+  - institution: washtenaw-county
+    source_type: strategic_plan
+    url: https://www.washtenaw.org/vision-guiding-principles
+    evidence:
+      url: https://www.washtenaw.org/administrator
+      quote: Vision & Guiding Principles
+      kind: links_to
+      link_target: https://www.washtenaw.org/vision-guiding-principles
+    notes: >-
+      Judgement call. The county publishes no document called a strategic plan. The
+      Administrator's "Vision & Guiding Principles" page ("Washtenaw County will be a world-class
+      service provider", then the County Guiding Principles: long-term fiscal stability, cost of
+      business, customer service, mandated services) is the statement of priorities the budget
+      book is built on, so it is recorded as the strategic_plan; its body is JavaScript-rendered.
+      The Board's Washtenaw Rescue Plan pages (Connecting Washtenaw County, Community Engagement,
+      Creating a Sustainable Community, Encouraging Generational Success, Investing in our
+      Community's Health & Wellbeing) are the ARPA spending plan, not a strategic plan. A reviewer
+      may prefer the absence.
+
+  - institution: washtenaw-county
+    source_type: meeting_video
+    url: https://washtenawcomi.portal.civicclerk.com/
+    alternates:
+      - https://washtenawcomi.portal.civicclerk.com/?category_id=26,27
+      - https://www.washtenaw.org/board-meeting-agendas-minutes
+    platform: civicclerk.com
+    evidence:
+      url: https://www.washtenaw.org/county-events
+      quote: Meeting Webcasts
+      kind: links_to
+      link_target: https://washtenawcomi.portal.civicclerk.com/
+    notes: >-
+      The same CivicClerk portal keeps each Board meeting's webcast ("Watch Board Meeting
+      Webcasts" and "Video Portal" on the Board of Commissioners landing page both point to
+      categories 26,27). The Webcast page (Board Meeting Agendas & Minutes) only embeds the live
+      player and links the portal, so it is an alternate. The county's YouTube handle in the page
+      data (@washtenawcountygovernment4312) returns 404 and is not recorded.
+
+  - institution: washtenaw-county
+    source_type: news
+    url: https://www.washtenaw.org/county-news
+    alternates:
+      - https://www.washtenaw.org/press-releases-0
+      - https://www.washtenaw.org/board-of-commissioner-news
+    evidence:
+      url: https://www.washtenaw.org/your-government
+      quote: County News View all County News.
+      kind: links_to
+      link_target: https://www.washtenaw.org/county-news
+    notes: >-
+      County News (Your Government > County News), the list of news flashes across departments,
+      rendered by JavaScript. Press Releases (current-year releases, with archives) and BOC News
+      are alternates.
+
+  - institution: washtenaw-county
+    source_type: annual_report
+    url: https://www.washtenaw.org/annual-financial-report-comprehensive
+    alternates:
+      - https://www.washtenaw.org/annual-financial-report-popular
+      - https://www.washtenaw.org/open-book-financial-transparency
+    evidence:
+      url: https://www.washtenaw.org/annual-financial-report-comprehensive
+      quote: Annual Financial Report - Comprehensive
+    notes: Off-list for regional_government. The Annual Comprehensive Financial Reports by year; the Popular Annual Financial Report page and Open Book are alternates.
+
+  - institution: washtenaw-county
+    source_type: leadership
+    url: https://www.washtenaw.org/commissioners
+    alternates:
+      - https://www.washtenaw.org/elected-officials
+    evidence:
+      url: https://www.washtenaw.org/commissioners
+      quote: View an interactive map for the Board of Commissioner districts.
+    notes: Off-list for regional_government. The nine commissioners by district; the Elected Officials page (Clerk, Prosecutor, Sheriff, Treasurer, Water Resources Commissioner) is an alternate.
+
+  # --- Washtenaw County Parks and Recreation Commission ------------------------------
+  - institution: washtenaw-county-parks-and-recreation-commission
+    source_type: board_meeting
+    url: https://washtenawcomi.portal.civicclerk.com/?category_id=29
+    alternates:
+      - https://www.washtenaw.org/parks-recreation-commission
+      - https://washtenawcomi.portal.civicclerk.com/
+    platform: civicclerk.com
+    evidence:
+      url: https://www.washtenaw.org/connect
+      quote: Parks and Recreation Commission
+      kind: links_to
+      link_target: https://washtenawcomi.portal.civicclerk.com/?category_id=29
+    notes: >-
+      "Parks and Recreation Commission" category (id 29) on the county's CivicClerk portal, linked
+      from the Parks & Recreation Connect and Administration pages. The Parks & Recreation
+      Commission page on washtenaw.org only links the portal, so it is an alternate, as is the
+      bare portal.
+
+  # --- Washtenaw County Road Commission ----------------------------------------------
+  - institution: washtenaw-county-road-commission
+    source_type: procurement
+    url: https://www.wcroads.org/doing-business/procurement/
+    evidence:
+      url: https://www.wcroads.org/doing-business/procurement/
+      quote: The Washtenaw County Road Commission (WCRC) seeks competitive bids and quotations for the cost-effective and efficient purchase of goods and service
+    notes: >-
+      Doing Business > Procurement: how WCRC buys (goods and services on BidNet/MITN, construction
+      on BidExpress or the MDOT bid site, professional services), with the Procurement Policy PDF.
+
+  - institution: washtenaw-county-road-commission
+    source_type: tender
+    url: https://www.bidnetdirect.com/mitn/washtenawcountyroadcommission
+    alternates:
+      - https://www.bidnetdirect.com/washtenawcountyroadcommission
+      - https://www.wcroads.org/doing-business/procurement/
+    platform: bidnetdirect.com
+    evidence:
+      url: https://www.wcroads.org/doing-business/procurement/
+      quote: WCRC has partnered with BidNet as part of the MITN Purchasing Group to post bid opportunities for goods and services.
+      kind: links_to
+      link_target: https://www.bidnetdirect.com/washtenawcountyroadcommission
+    notes: >-
+      WCRC's agency page on BidNet Direct ("Washtenaw County Road Commission's Open and Closed
+      Solicitations are posted below"), linked as "Goods/Services Postings"; the short URL
+      redirects to /mitn/. Construction bids go to BidExpress (bidexpress.com, a listed platform),
+      but the link is its login page, not a WCRC listing, so it is not recorded.
+
+  - institution: washtenaw-county-road-commission
+    source_type: budget
+    url: https://www.wcroads.org/about/transparency-budget/
+    evidence:
+      url: https://www.wcroads.org/about/transparency-budget/
+      quote: The Board of County Road Commissioners is responsible for adoption of an annual budget and approval of all expenditures
+    notes: >-
+      Off-list for other. Transparency & Budget: the 2026 preliminary and quarterly budgets, prior years' budgets, audits and Act 51 reports.
+
+  - institution: washtenaw-county-road-commission
+    source_type: capital_plan
+    url: https://www.wcroads.org/about/transparency-budget/
+    evidence:
+      url: https://www.wcroads.org/about/transparency-budget/
+      quote: WCRC Transportation Asset Management Plan 2024-2026
+    notes: >-
+      Off-list for other. Asset management plans count as capital_plan (README): the Project Planning section links the Transportation Asset Management Plan 2024-2026, the 2025-2028 Road and Non-Motorized Millage Plan and the Stormwater Asset Management Plan. Same URL as the budget source.
+
+  - institution: washtenaw-county-road-commission
+    source_type: board_meeting
+    url: https://www.wcroads.org/about/the-board/board-meetings/
+    evidence:
+      url: https://www.wcroads.org/about/the-board/board-meetings/
+      quote: The meeting agenda and packets will be posted on this page by 5 p.m. on the Friday before the next scheduled board meeting.
+    notes: >-
+      Off-list for other. Board Meetings: schedules, agendas, packets, minutes and recordings by year.
+
+  - institution: washtenaw-county-road-commission
+    source_type: meeting_video
+    url: https://youtube.com/user/WashtenawCountyRoads
+    alternates:
+      - https://www.youtube.com/user/WashtenawCountyRoads
+      - https://www.wcroads.org/about/the-board/board-meetings/
+    platform: youtube.com
+    evidence:
+      url: https://www.wcroads.org/about/the-board/board-meetings/
+      quote: A recording of the meeting will be posted below and on WCRC's YouTube channel a few days after the meeting.
+    notes: Off-list for other. WCRC's YouTube channel ("Washtenaw County Road Commission - YouTube"), linked in the site footer; the Board Meetings page also embeds each meeting's recording, so it is an alternate.
+
+  - institution: washtenaw-county-road-commission
+    source_type: news
+    url: https://www.wcroads.org/news-resources/articles/
+    alternates:
+      - https://www.wcroads.org/news-resources
+    evidence:
+      url: https://www.wcroads.org/news-resources/articles/
+      quote: "Hybrid Informational Session: Renew & Restore County-wide Roads & Non-motorized Millage"
+    notes: Off-list for other. News & Resources > Articles (press releases and announcements); the News & Resources hub is an alternate.
+
+  # --- Washtenaw Community College ---------------------------------------------------
+  - institution: washtenaw-community-college
+    source_type: procurement
+    url: https://www.wccnet.edu/about/purchasing/
+    alternates:
+      - https://www.wccnet.edu/about/purchasing/index.php
+    evidence:
+      url: https://www.wccnet.edu/about/purchasing/
+      quote: The Purchasing Department's primary function is to serve the College students, faculty, staff and community through the use of a fair and prudent procurement process
+    notes: Purchasing Department page (mission, terms and conditions, Board of Trustees policy links).
+
+  - institution: washtenaw-community-college
+    source_type: tender
+    url: https://www.wccnet.edu/about/purchasing/bids-rfp.php
+    evidence:
+      url: https://www.wccnet.edu/about/purchasing/bids-rfp.php
+      quote: we are requesting that all bids, quotes and RFP responses be submitted via email by the specified due date and time of each solicitation
+    notes: >-
+      Bids and Requests for Proposals. The Purchasing page also links "MITN Public Solicitations"
+      (https://www.bidnetdirect.com//washtenawcommunitycollege, as served, with a double slash),
+      WCC's BidNet Direct agency page, not fetched and not recorded.
+
+  - institution: washtenaw-community-college
+    source_type: board_meeting
+    url: https://www.wccnet.edu/about/trustees/meetings/agendas-documents.php
+    alternates:
+      - https://www.wccnet.edu/about/trustees/meetings/
+      - https://www.wccnet.edu/about/trustees/meetings/index.php
+    evidence:
+      url: https://www.wccnet.edu/about/trustees/meetings/
+      quote: The Washtenaw Community College Board of Trustees will hold the monthly meeting at 6:00 p.m. in The Seminar Rooms
+    notes: Board of Trustees agendas and documents by meeting (2026 back); the Meetings page one click up is an alternate.
+
+  - institution: washtenaw-community-college
+    source_type: news
+    url: https://www.wccnet.edu/news/
+    alternates:
+      - https://www.wccnet.edu/news/index.php
+    evidence:
+      url: https://www.wccnet.edu/news/
+      quote: News Story Archive
+    notes: WCC News (press releases), with On The Record, Launch Magazine and the news story archive.
+
+  # --- Chelsea School District --------------------------------------------------------
+  - institution: chelsea-school-district
+    source_type: tender
+    url: https://www.chelseaschools.org/information/rfp-information
+    evidence:
+      url: https://www.chelseaschools.org/information/rfp-information
+      quote: If no RFP documents are listed below, there are no open bid opportunities at this time.
+    notes: RFP Information, the district's only purchasing page (Electronic Sign RFP 2026 listed on 2026-10-09).
+
+  - institution: chelsea-school-district
+    source_type: budget
+    url: https://www.chelseaschools.org/information/transparency-reporting
+    alternates:
+      - https://www.chelseaschools.org/departments/business-and-finance
+    evidence:
+      url: https://www.chelseaschools.org/information/transparency-reporting
+      quote: The Annual Budget & Transparency Reporting is an opportunity to communicate our community on how we utilize the resources that are provided to us.
+    notes: Budget and Salary/Compensation Transparency Reporting (the page Michigan's School Aid Act section 18(2) requires), with the adopted budgets; the Business and Finance page points to it, so it is an alternate.
+
+  - institution: chelsea-school-district
+    source_type: board_meeting
+    url: https://www.chelseaschools.org/about-us/board-of-education/board-meetings
+    evidence:
+      url: https://www.chelseaschools.org/about-us/board-of-education/board-meetings
+      quote: All meetings are on Monday evenings at 6:30 PM at the WSEC Board Room (except as noted).
+    notes: Board Meetings schedule with agendas and minutes per meeting (Finalsite).
+
+  - institution: chelsea-school-district
+    source_type: meeting_video
+    url: https://www.youtube.com/@ChelseaBulldogs
+    alternates:
+      - https://www.youtube.com/@chelseabulldogs
+    platform: youtube.com
+    evidence:
+      url: https://www.chelseaschools.org/about-us/board-of-education/board-meetings
+      quote: Stream Previously Recorded Meetings
+      kind: links_to
+      link_target: https://www.youtube.com/@ChelseaBulldogs
+    notes: The district's YouTube channel, linked as "Stream Previously Recorded Meetings" from the Board Meetings page.
+
+  # --- Dexter Community Schools --------------------------------------------------------
+  - institution: dexter-community-schools
+    source_type: procurement
+    url: https://www.dexterschools.org/departments/business-office/purchasing
+    alternates:
+      - https://www.dexterschools.org/departments/business-office
+    evidence:
+      url: https://www.dexterschools.org/departments/business-office/purchasing
+      quote: Three bids must be received prior to purchasing supplies, materials and equipment that exceed $3,500 in a single transaction.
+    notes: Business Office > Purchasing (bidding requirements, cooperative purchasing consortiums, supply vendors).
+
+  - institution: dexter-community-schools
+    source_type: tender
+    url: https://www.dexterschools.org/departments/business-office/bids-rfps
+    evidence:
+      url: https://www.dexterschools.org/departments/business-office/bids-rfps
+      quote: For general RFP/Bid questions, please contact
+    notes: Bids/RFPs, open and closed, including the 2025 bond construction bid packages managed by Granger Construction.
+
+  - institution: dexter-community-schools
+    source_type: budget
+    url: https://www.dexterschools.org/departments/business-office/budget
+    evidence:
+      url: https://www.dexterschools.org/departments/business-office/budget
+      quote: Current Board-Adopted Budgets
+    notes: Budget page with the 2026-27 adopted budgets and the required Budget and Compensation Transparency Reporting link.
+
+  - institution: dexter-community-schools
+    source_type: capital_plan
+    url: https://www.dexterschools.org/district/2025-bond
+    evidence:
+      url: https://www.dexterschools.org/district/2025-bond
+      quote: Bond Project Updates and Insights
+    notes: The 2025 Bond programme (projects, construction, Series 1 timing), the district's multi-year capital plan; a reviewer may prefer the absence.
+
+  - institution: dexter-community-schools
+    source_type: board_meeting
+    url: https://www.dexterschools.org/district/board-of-education/meetings
+    alternates:
+      - https://www.dexterschools.org/district/board-of-education/meetings/archived-packets
+    evidence:
+      url: https://www.dexterschools.org/district/board-of-education/meetings
+      quote: The meeting agenda and other meeting materials are posted on this page, typically by the end of the day Thursday before regular Monday meetings.
+    notes: Board Meetings with agendas, packets and minutes; Archived Meeting Materials is an alternate.
+
+  - institution: dexter-community-schools
+    source_type: meeting_video
+    url: https://www.youtube.com/playlist?list=PLcvaeqTQP62JhSwY56699V46bsy-4cQSQ
+    platform: youtube.com
+    evidence:
+      url: https://www.dexterschools.org/district/board-of-education/meetings
+      quote: MEETING VIDEOS
+      kind: links_to
+      link_target: https://www.youtube.com/playlist?list=PLcvaeqTQP62JhSwY56699V46bsy-4cQSQ
+    notes: The "MEETING VIDEOS" YouTube playlist linked from the Board Meetings page.
+
+  - institution: dexter-community-schools
+    source_type: news
+    url: https://www.dexterschools.org/district/news-notes
+    evidence:
+      url: https://www.dexterschools.org/district/news-notes
+      quote: Superintendent and District News
+    notes: News & Notes, the district news hub.
+
+  # --- Lincoln Consolidated Schools ----------------------------------------------------
+  - institution: lincoln-consolidated-schools
+    source_type: board_meeting
+    url: https://www.lincolnk12.org/page/meeting-agenda-minutes
+    evidence:
+      url: https://www.lincolnk12.org/page/meeting-agenda-minutes
+      quote: Meeting, Agenda, & Minutes
+      manual_check: "page data read with a plain curl user agent 2026-10-09; browser user agents meet a Client Challenge bot wall and the body renders by JavaScript"
+    notes: >-
+      "Meeting, Agenda, & Minutes" under Board of Education (Apptegy site); it also links a Thrillshare copy of the 2025 meeting page.
+
+  - institution: lincoln-consolidated-schools
+    source_type: budget
+    url: https://secure.munetrix.com/n/Michigan/Schools/SER/Washtenaw-ISD/District/Lincoln-Consolidated-School-District
+    platform: munetrix.com
+    evidence:
+      url: https://www.lincolnk12.org/page/business-office
+      quote: Business Office
+      kind: links_to
+      link_target: https://secure.munetrix.com/n/Michigan/Schools/SER/Washtenaw-ISD/District/Lincoln-Consolidated-School-District?banner=headingMultiYear
+      manual_check: "page data read with a plain curl user agent 2026-10-09; bot wall and JavaScript rendering"
+    notes: >-
+      Budget and Salary/Compensation Transparency Reporting hosted on Munetrix, linked from the
+      Business Office page. munetrix.com is a shared transparency platform not on the seed's
+      list (candidate for it; see candidate_domains). The page renders by JavaScript: in a browser
+      (checked 2026-10-09) it lists the Board Approved Budgets by fiscal year from 2013-2014, the
+      audited financial statements, the procurement policy and the check register; a script sees
+      the dashboard shell and a login prompt.
+
+  - institution: lincoln-consolidated-schools
+    source_type: news
+    url: https://www.lincolnk12.org/news
+    evidence:
+      url: https://www.lincolnk12.org/news
+      quote: District News
+      manual_check: "page data read with a plain curl user agent 2026-10-09; bot wall and JavaScript rendering"
+    notes: District News feed.
+
+  # --- Manchester Community Schools ----------------------------------------------------
+  - institution: manchester-community-schools
+    source_type: budget
+    url: https://secure.munetrix.com/n/Michigan/Schools/SER/Washtenaw-ISD/District/Manchester-Community-Schools
+    platform: munetrix.com
+    evidence:
+      url: https://www.manchesterschools.us/
+      quote: Budget and Salary/Compensation Transparency Reporting
+      kind: links_to
+      link_target: https://secure.munetrix.com/n/Michigan/Schools/SER/Washtenaw-ISD/District/Manchester-Community-Schools
+    notes: >-
+      Budget and Salary/Compensation Transparency Reporting hosted on Munetrix (linked from the
+      homepage). The page renders by JavaScript: in a browser (checked 2026-10-09) it lists the
+      Board Approved Budgets by fiscal year from 2018-2019, the audited financial statements and
+      the procurement policy; a script sees only the dashboard shell and a login prompt.
+      munetrix.com is not on the seed's platform list.
+
+  - institution: manchester-community-schools
+    source_type: capital_plan
+    url: https://www.manchesterschools.us/district/bond/
+    evidence:
+      url: https://www.manchesterschools.us/district/bond/
+      quote: Bond Progress Photos
+    notes: 2023 Bond Information (progress and project documents), the district's capital programme; a reviewer may prefer the absence.
+
+  - institution: manchester-community-schools
+    source_type: board_meeting
+    url: https://www.manchesterschools.us/district/board-of-education/
+    alternates:
+      - https://www.manchesterschools.us/district/district-news/
+    evidence:
+      url: https://www.manchesterschools.us/district/board-of-education/
+      quote: Below are the dates of our regular board meetings
+    notes: Board of Education page with meeting dates; notices, agendas and minutes are posted as PDFs there and in District News, so that page is an alternate.
+
+  - institution: manchester-community-schools
+    source_type: meeting_video
+    url: https://www.youtube.com/@manchestercommunityschools7909/streams
+    alternates:
+      - https://www.youtube.com/@manchestercommunityschools7909
+    platform: youtube.com
+    evidence:
+      url: https://www.manchesterschools.us/
+      quote: Watch us on YouTube
+      kind: links_to
+      link_target: https://www.youtube.com/@manchestercommunityschools7909/streams
+    notes: The district's YouTube live streams (board meetings), linked as "Watch us on YouTube" from every page.
+
+  - institution: manchester-community-schools
+    source_type: news
+    url: https://www.manchesterschools.us/district/district-news/
+    evidence:
+      url: https://www.manchesterschools.us/district/district-news/
+      quote: District News View Archives
+    notes: District News (Foxbright), with archives.
+
+  # --- Milan Area Schools --------------------------------------------------------------
+  - institution: milan-area-schools
+    source_type: procurement
+    url: https://www.milanareaschools.org/district/district-resources/bid4michigan-bid-system
+    alternates:
+      - https://www.milanareaschools.org/departments/business-finance
+    evidence:
+      url: https://www.milanareaschools.org/district/district-resources/bid4michigan-bid-system
+      quote: The Sigma System provides a way for colleges, school districts and other government agencies throughout the state of Michigan to more effectively notify vendors of RFP and bid opportunities
+    notes: >-
+      "Sigma Bid Process": how the district posts bids on the State of Michigan's SIGMA system; the Business & Finance page is an alternate.
+
+  - institution: milan-area-schools
+    source_type: tender
+    url: https://www.milanareaschools.org/district/district-resources/bid4michigan-bid-system
+    evidence:
+      url: https://www.milanareaschools.org/district/district-resources/bid4michigan-bid-system
+      quote: The Sigma System delivers convenient, centralized online access to open bid opportunities
+    notes: Same page as the procurement source; bids themselves are on SIGMA Vendor Self Service (sigma.michigan.gov, a State of Michigan system).
+
+  - institution: milan-area-schools
+    source_type: budget
+    url: https://www.milanareaschools.org/district/about-us/strategic-planning/budget-and-salary-compensation-transparency-reporting
+    evidence:
+      url: https://www.milanareaschools.org/district/about-us/strategic-planning/budget-and-salary-compensation-transparency-reporting
+      quote: Fiscal Year Board Approved Budgets
+    notes: Budget and Salary Compensation Transparency Reporting, with the 2024-25 to 2026-27 budgets and amendments.
+
+  - institution: milan-area-schools
+    source_type: board_meeting
+    url: https://www.milanareaschools.org/district/board/board-agendas-and-minutes
+    alternates:
+      - https://www.milanareaschools.org/district/board/board-meetings-clone
+    evidence:
+      url: https://www.milanareaschools.org/district/board/board-agendas-and-minutes
+      quote: Board Agendas and Minutes 2026-2027
+    notes: Board Agendas and Minutes by meeting (2026-2027 back); older rows link Zoom recordings. Board Meetings is an alternate.
+
+  - institution: milan-area-schools
+    source_type: news
+    url: https://www.milanareaschools.org/district/district-news
+    evidence:
+      url: https://www.milanareaschools.org/district/district-news
+      quote: District News Milan Area Schools
+    notes: District News (Finalsite; the list loads by JavaScript).
+
+  - institution: milan-area-schools
+    source_type: strategic_plan
+    url: https://www.milanareaschools.org/district/about-us/strategic-planning/strategic-plan-goals
+    alternates:
+      - https://www.milanareaschools.org/district/about-us/strategic-planning
+    evidence:
+      url: https://www.milanareaschools.org/district/about-us/strategic-planning/strategic-plan-goals
+      quote: Expand relevant and individualized learning opportunities for all students.
+    notes: Off-list for school_board. Strategic Plan Goals; the Strategic Planning hub is an alternate.
+
+  # --- Saline Area Schools -------------------------------------------------------------
+  - institution: saline-area-schools
+    source_type: procurement
+    url: https://www.salineschools.org/departments/central-office/finance-department/
+    evidence:
+      url: https://www.salineschools.org/departments/central-office/finance-department/
+      quote: Purchasing Overview
+    notes: Department of Finance page, whose Purchasing Overview section (and a Google Doc) says how purchases are approved; the only purchasing page.
+
+  - institution: saline-area-schools
+    source_type: tender
+    url: https://www.salineschools.org/departments/central-office/finance-department/bids-and-proposals/
+    evidence:
+      url: https://www.salineschools.org/departments/central-office/finance-department/bids-and-proposals/
+      quote: Request For Proposal (RFP)
+    notes: Bids and Proposals (open RFPs and surplus for sale).
+
+  - institution: saline-area-schools
+    source_type: budget
+    url: https://www.salineschools.org/departments/central-office/finance-department/budget-and-salary/
+    evidence:
+      url: https://www.salineschools.org/departments/central-office/finance-department/budget-and-salary/
+      quote: The Annual Budget & Transparency Reporting is an opportunity to communicate to our community on how we utilize the resources
+    notes: Budget and Salary/Compensation Transparency Reporting.
+
+  - institution: saline-area-schools
+    source_type: capital_plan
+    url: https://www.salineschools.org/departments/central-office/community-relations/bond-updates/
+    alternates:
+      - https://www.salineschools.org/departments/operations-center/bond-progress/
+    evidence:
+      url: https://www.salineschools.org/departments/central-office/community-relations/bond-updates/
+      quote: Our community voted YES to support the 2022 Saline Area Schools bond proposal, which will provide $180,000,000 for building & site improvements
+    notes: Bond Updates for the 2022 bond ($180M of building and site improvements by school), the district's capital programme; Bond Progress is an alternate. A reviewer may prefer the absence.
+
+  - institution: saline-area-schools
+    source_type: board_meeting
+    url: https://www.salineschools.org/board-of-ed/agendas-and-packets/
+    alternates:
+      - https://www.salineschools.org/board-of-ed/minutes-resolutions/
+      - https://www.salineschools.org/board-of-ed/
+    evidence:
+      url: https://www.salineschools.org/board-of-ed/agendas-and-packets/
+      quote: Subscribe to RSS Feed for Board of Education Agendas
+    notes: Agendas and Packets (board and committee meetings, paginated); Minutes, Resolutions & Reports and the Board of Ed hub are alternates.
+
+  - institution: saline-area-schools
+    source_type: meeting_video
+    url: https://www.salineschools.org/board-of-ed/videos-livestream-links/
+    evidence:
+      url: https://www.salineschools.org/board-of-ed/videos-livestream-links/
+      quote: THE BOARD OF EDUCATION MEETINGS WILL BE BROADCAST LIVE VIA YOUTUBE.
+    notes: Videos & LIVESTREAM Links, which keeps each meeting's YouTube video by date.
+
+  - institution: saline-area-schools
+    source_type: strategic_plan
+    url: https://www.salineschools.org/about-us/district-strategic-plan/
+    evidence:
+      url: https://www.salineschools.org/about-us/district-strategic-plan/
+      quote: Strategic Planning process 2025-2026
+    notes: Off-list for school_board. SAS Strategic Plan (the 2025-2026 planning process).
+
+  # --- Whitmore Lake Public Schools ----------------------------------------------------
+  - institution: whitmore-lake-public-schools
+    source_type: budget
+    url: https://www.wlps.net/transparency-reporting
+    evidence:
+      url: https://www.wlps.net/transparency-reporting
+      quote: Board Approved Budget 2025-26 Final Budget and 2026-27 Original Budget
+    notes: Transparency Reporting with the board-approved budgets, expenditures and audits.
+
+  - institution: whitmore-lake-public-schools
+    source_type: capital_plan
+    url: https://www.wlps.net/bond-updates
+    evidence:
+      url: https://www.wlps.net/bond-updates
+      quote: The district will continue to leverage Sinking Fund dollars to maintain district facilities as effectively as possible.
+    notes: >-
+      "WLPS Millage Updates": sinking fund projects done and the upcoming priorities (LED lighting, HVAC controls, security, pavement); a reviewer may prefer the absence.
+
+  - institution: whitmore-lake-public-schools
+    source_type: board_meeting
+    url: https://www.wlps.net/board-books
+    alternates:
+      - https://www.wlps.net/board-minutes
+    evidence:
+      url: https://www.wlps.net/board-books
+      quote: WLPS Board Books
+    notes: Board Books (agendas and packets by year); Board Minutes is an alternate.
+
+  # --- Ypsilanti Community Schools -----------------------------------------------------
+  - institution: ypsilanti-community-schools
+    source_type: budget
+    url: https://www.ycschools.us/about-us/administration-departments/business-and-finance-department/transparency-reporting/
+    alternates:
+      - https://www.ycschools.us/about-us/administration-departments/business-and-finance-department/
+    evidence:
+      url: https://www.ycschools.us/about-us/administration-departments/business-and-finance-department/transparency-reporting/
+      quote: BUDGET AND SALARY/COMPENSATION TRANSPARENCY REPORTING Board Approved Budgets
+    notes: Transparency Reporting with the board-approved budgets by fiscal year; the Business & Finance page is an alternate.
+
+  - institution: ypsilanti-community-schools
+    source_type: board_meeting
+    url: https://www.ycschools.us/board-of-education/board-meetings/
+    alternates:
+      - https://www.ycschools.us/board-of-education/board-meetings/2026-meeting-packets-agendas-minutes/
+      - https://www.ycschools.us/board-of-education/
+    evidence:
+      url: https://www.ycschools.us/board-of-education/board-meetings/
+      quote: Board minutes will be posted after they have been approved by the Board.
+    notes: Board Meetings, with packets, agendas and minutes by year.
+
+  - institution: ypsilanti-community-schools
+    source_type: strategic_plan
+    url: https://www.ycschools.us/about-us/ycs-strategic-5-year-plan/
+    evidence:
+      url: https://www.ycschools.us/about-us/ycs-strategic-5-year-plan/
+      quote: This plan is not just a document; it is our shared roadmap toward a brighter future
+    notes: Off-list for school_board. YCS Strategic 5 Year Plan (2025-2030).
+
+  # --- Washtenaw Intermediate School District ------------------------------------------
+  - institution: washtenaw-intermediate-school-district
+    source_type: procurement
+    url: https://www.washtenawisd.org/our-services/administrative-departments/business-services/purchasing/
+    alternates:
+      - https://www.washtenawisd.org/our-services/administrative-departments/business-services/
+    evidence:
+      url: https://www.washtenawisd.org/our-services/administrative-departments/business-services/purchasing/
+      quote: Washtenaw Intermediate School District has partnered with the CoPro+ Program
+    notes: Business Services > Purchasing (CoPro+ cooperative purchasing); the Business Services hub is an alternate.
+
+  - institution: washtenaw-intermediate-school-district
+    source_type: tender
+    url: https://www.washtenawisd.org/our-services/administrative-departments/business-services/bids/
+    evidence:
+      url: https://www.washtenawisd.org/our-services/administrative-departments/business-services/bids/
+      quote: Washtenaw Intermediate School District partners with SIGMA VSS under the Michigan State Budget Office.
+    notes: Bids page; solicitations are posted on the State of Michigan's SIGMA Vendor Self Service.
+
+  - institution: washtenaw-intermediate-school-district
+    source_type: budget
+    url: https://www.washtenawisd.org/about-us/our-district/reports/transparency-reports/
+    alternates:
+      - https://www.washtenawisd.org/our-services/administrative-departments/business-services/budget-reports/
+    evidence:
+      url: https://www.washtenawisd.org/about-us/our-district/reports/transparency-reports/
+      quote: Section 18 (2) of the Public Act 94 of 1979, The State School Aid Act, has been amended
+    notes: Transparency Reports (budget and salary/compensation reporting); the Budget Reports link under Business Services redirects here.
+
+  - institution: washtenaw-intermediate-school-district
+    source_type: board_meeting
+    url: https://app2.boardontrack.com/public/Pey5om/home
+    alternates:
+      - https://www.washtenawisd.org/about-us/board-of-education/board-meeting-agendas-and-packets/
+      - https://www.washtenawisd.org/about-us/board-of-education/board-meeting-information/
+    platform: boardontrack.com
+    evidence:
+      url: https://www.washtenawisd.org/about-us/board-of-education/board-meeting-information/
+      quote: Board Meeting Agendas and Packets
+      kind: links_to
+      link_target: https://www.washtenawisd.org/about-us/board-of-education/board-meeting-agendas-and-packets/
+    notes: >-
+      BoardOnTrack public portal ("Welcome to the BoardOnTrack Public Portal for Washtenaw
+      Intermediate School District"), which the Board Meeting Agendas and Packets link redirects
+      to. boardontrack.com is a board-portal platform not on the seed's list (see
+      candidate_domains). Board Meeting Information (schedule) is an alternate.
+
+  - institution: washtenaw-intermediate-school-district
+    source_type: news
+    url: https://www.washtenawisd.org/about-us/our-district/news-and-events/
+    evidence:
+      url: https://www.washtenawisd.org/about-us/our-district/news-and-events/
+      quote: Subscribe to RSS Feed for WISD News
+    notes: News and Events (WISD News, with archives).
+
+absent_sources:
+  # --- Sheriff's Office ---------------------------------------------------------------
+  - institution: washtenaw-county-sheriffs-office
+    source_type: procurement
+    covered_by: washtenaw-county
+    note: >-
+      No purchasing page in the Sheriff's section (checked Your Sheriff's Office, Divisions,
+      Programs, Millage, News Room and How Do I). The office buys through the county's Purchasing
+      Division, whose Open Bids list carries its solicitations.
+  - institution: washtenaw-county-sheriffs-office
+    source_type: tender
+    covered_by: washtenaw-county
+    note: Sheriff's Office bids are posted as Washtenaw County bids on the county's Open Bids & Quotes page and BidNet Direct; there is no Sheriff bid page.
+  - institution: washtenaw-county-sheriffs-office
+    source_type: budget
+    covered_by: washtenaw-county
+    note: >-
+      No Sheriff budget page. The office is a section of the county budget (2024 to 2027 Budget
+      Book) on Open Book; the Millage pages describe the Public Safety and Mental Health
+      Preservation Millage, not a budget.
+  - institution: washtenaw-county-sheriffs-office
+    source_type: board_meeting
+    note: >-
+      No governing board: the Sheriff is elected. The Public Safety Millage Advisory Committee and
+      the Police Services Steering Committee (county boards directory) are advisory and meet on
+      the county's CivicClerk portal, which is the county's council_meeting source. Checked the
+      Sheriff's section and the Public Boards, Committees & Commissions index.
+
+  # --- Parks and Recreation Commission ------------------------------------------------
+  - institution: washtenaw-county-parks-and-recreation-commission
+    source_type: procurement
+    covered_by: washtenaw-county
+    note: >-
+      No purchasing page in the Parks & Recreation section (checked Connect, Administration,
+      Planning and Register). WCPARC buys through the county's Purchasing Division; its RFPs are
+      posted on the county's Open Bids & Quotes page.
+  - institution: washtenaw-county-parks-and-recreation-commission
+    source_type: tender
+    covered_by: washtenaw-county
+    note: WCPARC bids are posted as Washtenaw County bids on the county's Open Bids & Quotes page and BidNet Direct; there is no parks bid page.
+  - institution: washtenaw-county-parks-and-recreation-commission
+    source_type: budget
+    covered_by: washtenaw-county
+    note: >-
+      No WCPARC budget page: its Publications page lists annual reports, master plans and
+      newsletters, and its millage pages describe the millages. The Parks and Recreation funds
+      are part of the county budget on Open Book and in the budget book.
+
+  # --- Washtenaw Community College ----------------------------------------------------
+  - institution: washtenaw-community-college
+    source_type: capital_plan
+    note: >-
+      No capital or facilities master plan page: checked About WCC, the A-Z index (Facilities
+      Management is a staff dashboard page), Purchasing and the Board of Trustees pages.
+  - institution: washtenaw-community-college
+    source_type: strategic_plan
+    note: >-
+      No strategic plan page: About WCC links only "Mission, Values, and Vision"
+      (/about/mission.php); the A-Z index has no strategic plan entry and /about/strategic-plan/
+      is 404 (checked 2026-10-09).
+
+  # --- Chelsea School District --------------------------------------------------------
+  - institution: chelsea-school-district
+    source_type: procurement
+    note: >-
+      No purchasing page: Business and Finance only points to Transparency Reporting, and RFP
+      Information lists bids without saying how the district buys. Checked the Departments and
+      Information menus.
+  - institution: chelsea-school-district
+    source_type: capital_plan
+    note: The 2019 bond ($81M, three series) is named on the homepage but has no page of its own; no capital plan or bond page in the menus.
+  - institution: chelsea-school-district
+    source_type: news
+    note: No district news page (/news is 404); only Community Education News under Departments. Checked the menus and footer.
+
+  # --- Lincoln Consolidated Schools ----------------------------------------------------
+  - institution: lincoln-consolidated-schools
+    source_type: procurement
+    note: No purchasing page in the page data read (Business Office links Munetrix and a budget-amendment form only). The site is behind a bot wall for browser user agents.
+  - institution: lincoln-consolidated-schools
+    source_type: tender
+    note: No bids or RFP page found in the page data read (Business Office, Board of Education, menus).
+  - institution: lincoln-consolidated-schools
+    source_type: capital_plan
+    note: No bond or capital page found in the page data read.
+  - institution: lincoln-consolidated-schools
+    source_type: meeting_video
+    note: >-
+      The site links the district's YouTube channel (https://www.youtube.com/channel/UCIdLZ6MWSnOOfqD7oPj7NCA
+      and @lincolnrailsplitters9284) but no meeting recordings page; whether the channel keeps
+      board meetings could not be checked.
+
+  # --- Manchester Community Schools ----------------------------------------------------
+  - institution: manchester-community-schools
+    source_type: procurement
+    note: No purchasing page (checked District, Departments > Central Office and the footer).
+  - institution: manchester-community-schools
+    source_type: tender
+    note: No bids or RFP page (checked District, Departments > Central Office, District News and Public Notice).
+
+  # --- Milan Area Schools --------------------------------------------------------------
+  - institution: milan-area-schools
+    source_type: capital_plan
+    note: No bond or capital page (checked District, About Us, Business & Finance and District Resources menus).
+  - institution: milan-area-schools
+    source_type: meeting_video
+    note: >-
+      Board Agendas and Minutes links Zoom recordings ("Video") only for 2021 meetings; current
+      meetings have agendas and minutes alone, and no YouTube or video page is linked. Checked
+      Board Meetings and the footer.
+
+  # --- Saline Area Schools -------------------------------------------------------------
+  - institution: saline-area-schools
+    source_type: news
+    note: >-
+      News posts (/pub/news/posts/N) appear on the homepage only; /pub/news/ and /news/ are 404
+      and no news list page is in the menus. A reviewer may prefer the homepage.
+
+  # --- Whitmore Lake Public Schools ----------------------------------------------------
+  - institution: whitmore-lake-public-schools
+    source_type: procurement
+    note: No purchasing page (checked Departments, Board of Education, News & Info and the footer).
+  - institution: whitmore-lake-public-schools
+    source_type: tender
+    note: No bids or RFP page (same pages checked).
+  - institution: whitmore-lake-public-schools
+    source_type: meeting_video
+    note: No meeting recordings page or YouTube link on the Board pages (Board Books, Minutes, Calendars).
+  - institution: whitmore-lake-public-schools
+    source_type: news
+    note: >-
+      No district news page: News & Info holds Drills, "UPdates" (a Smore newsletter at
+      https://app.smore.com/n/ycg93), eFunds and PeachJar, and news pages exist per school only.
+
+  # --- Ypsilanti Community Schools -----------------------------------------------------
+  - institution: ypsilanti-community-schools
+    source_type: procurement
+    note: No purchasing page (Business & Finance lists staff contacts only; checked Departments and Facilities Management & Use).
+  - institution: ypsilanti-community-schools
+    source_type: tender
+    note: No bids or RFP page (same pages checked).
+  - institution: ypsilanti-community-schools
+    source_type: capital_plan
+    note: No bond or capital page (checked About Us, Departments and Board of Education menus).
+  - institution: ypsilanti-community-schools
+    source_type: meeting_video
+    note: No recordings page or video link on Board Meetings or the packets pages.
+  - institution: ypsilanti-community-schools
+    source_type: news
+    note: >-
+      News posts (/pub/news/posts/N) appear on the homepage only; /pub/news/, /news/ and
+      /about-us/ycs-communications/ are 404. A reviewer may prefer the homepage.
+
+  # --- Washtenaw Intermediate School District ------------------------------------------
+  - institution: washtenaw-intermediate-school-district
+    source_type: capital_plan
+    note: No bond, facilities or capital plan page (checked Administrative Departments > Facilities, Business Services and Reports).
+  - institution: washtenaw-intermediate-school-district
+    source_type: meeting_video
+    note: No recordings page; Board Meeting Information gives the schedule and location only, and the BoardOnTrack portal holds packets, not video.
+
+candidate_domains:
+  # The county's own
+  - domain: ewashtenaw.org
+    institution: washtenaw-county
+    expected: reject
+    reason: >-
+      The Census of Governments' listed website (http://www.ewashtenaw.org/). On 2026-10-09 the apex
+      and www hosts resolve (192.169.233.110) but every HTTP and HTTPS connection times out, so the
+      domain serves no page of its own and nothing on it can be quoted; the county's homepage is
+      washtenaw.org. Its subdomains still host county applications linked from washtenaw.org
+      (secure.ewashtenaw.org: boards directory and job postings; gisappsecure, prodpermits, ssclerk),
+      so a reviewer may prefer confirm as a second domain of the county.
+  - domain: civicplus.pro
+    institution: washtenaw-county
+    expected: review
+    reason: >-
+      mi-washtenawcounty2.civicplus.pro is the CivicPlus content host for the county's site (every
+      PDF and image asset, and legacy page URLs that redirect to washtenaw.org); a platform not on
+      the seed's list (civicplus.com is). Candidate for the platform list.
+  # Bodies with their own domains
+  - domain: wcroads.org
+    institution: washtenaw-county-road-commission
+    expected: confirm
+    reason: The Road Commission's own site, linked as "Road Commission" from the county's Your Government page and sitemap.
+  - domain: wccnet.edu
+    institution: washtenaw-community-college
+    expected: confirm
+    reason: Washtenaw Community College's own site, linked from the county's Schools page.
+  - domain: chelseaschools.org
+    institution: chelsea-school-district
+    expected: confirm
+    reason: Chelsea School District's own site, where the county's link (chelsea.k12.mi.us) redirects.
+  - domain: chelsea.k12.mi.us
+    institution: chelsea-school-district
+    expected: reject
+    reason: The URL the county's Schools page links; a bare redirect to https://www.chelseaschools.org/ (checked 2026-10-09), so nothing on it to quote.
+  - domain: dexterschools.org
+    institution: dexter-community-schools
+    expected: confirm
+    reason: Dexter Community Schools' own site, linked from the county's Schools page.
+  - domain: lincolnk12.org
+    institution: lincoln-consolidated-schools
+    expected: confirm
+    reason: Lincoln Consolidated Schools' own site, linked from the county's Schools page (bot wall for browser user agents).
+  - domain: manchesterschools.us
+    institution: manchester-community-schools
+    expected: confirm
+    reason: Manchester Community Schools' own site, linked from the county's Schools page.
+  - domain: milanareaschools.org
+    institution: milan-area-schools
+    expected: confirm
+    reason: Milan Area Schools' own site, linked from the county's Schools page.
+  - domain: salineschools.org
+    institution: saline-area-schools
+    expected: confirm
+    reason: Saline Area Schools' own site.
+  - domain: salineschools.com
+    institution: saline-area-schools
+    expected: reject
+    reason: The URL the county's Schools page links; it serves an empty 404 (checked 2026-10-09). The district's site is salineschools.org.
+  - domain: wlps.net
+    institution: whitmore-lake-public-schools
+    expected: confirm
+    reason: Whitmore Lake Public Schools' own site, linked from the county's Schools page.
+  - domain: ycschools.us
+    institution: ypsilanti-community-schools
+    expected: confirm
+    reason: Ypsilanti Community Schools' own site, linked from the county's Schools page.
+  - domain: washtenawisd.org
+    institution: washtenaw-intermediate-school-district
+    expected: confirm
+    reason: Washtenaw ISD's own site, linked from the county's Schools page.
+  # Platforms not on the list
+  - domain: munetrix.com
+    institution: lincoln-consolidated-schools
+    expected: review
+    reason: Munetrix hosts the statutory budget transparency dashboards of Lincoln Consolidated Schools and Manchester Community Schools; a shared platform not on the seed's list.
+  - domain: boardontrack.com
+    institution: washtenaw-intermediate-school-district
+    expected: review
+    reason: BoardOnTrack hosts WISD's board packets (public portal); a board-portal platform not on the seed's list.
+  # Traps
+  - domain: washtenawcd.org
+    institution: washtenaw-county
+    expected: reject
+    reason: Washtenaw County Conservation District, linked from the county's Your Government page; a state-created soil conservation district with its own elected board, not a county body (and the country file has no conservation type).
+  - domain: a2gov.org
+    institution: washtenaw-county
+    expected: reject
+    reason: City of Ann Arbor (linked for the 15th District Court); a municipality with a subject of its own, not a county body.
+  - domain: ytown.org
+    institution: washtenaw-county
+    expected: reject
+    reason: Charter Township of Ypsilanti (linked for the 14B District Court); a municipality, not a county body.
+  - domain: umich.edu
+    institution: washtenaw-county
+    expected: reject
+    reason: University of Michigan, linked from the county's Schools page; a state university, scored under Michigan, not the county.
+  - domain: emich.edu
+    institution: washtenaw-county
+    expected: reject
+    reason: Eastern Michigan University, linked from the county's Schools page; a state university, scored under Michigan.
+  - domain: cuaa.edu
+    institution: washtenaw-county
+    expected: reject
+    reason: Concordia University Ann Arbor, linked from the county's Schools page; a private university.
+  - domain: weoc.info
+    institution: washtenaw-intermediate-school-district
+    expected: reject
+    reason: Washtenaw Educational Options Consortium (early college and virtual programs run by WISD and the districts), linked from the county's Schools page; a programme, not a body that buys.
+  - domain: msu.edu
+    institution: washtenaw-county
+    expected: reject
+    reason: MSU Extension's Washtenaw County office (canr.msu.edu/washtenaw), listed under County Departments; a Michigan State University programme, not a county body.
+  - domain: miearlychildhood.org
+    institution: washtenaw-county
+    expected: reject
+    reason: Great Start Readiness Program site, listed under County Departments; a state preschool programme page, not a county body.
+  - domain: metroparks.com
+    institution: washtenaw-county
+    expected: reject
+    reason: Huron-Clinton Metroparks, a five-county authority headquartered in Brighton (Livingston County) that the county appoints one member to; not a Washtenaw County body (see out_of_scope).
+  - domain: washtenawavenue.org
+    institution: washtenaw-county
+    expected: reject
+    reason: ReImagine Washtenaw, a corridor-planning initiative microsite linked from the county's Economic Development page; not an institution's homepage.
+  - domain: housingaccess.net
+    institution: washtenaw-county
+    expected: reject
+    reason: Housing Access for Washtenaw County (HAWC), a coordinated-entry programme run by a non-profit and linked from the county's housing pages; not a county body.
+  - domain: thedisputeresolutioncenter.org
+    institution: washtenaw-county
+    expected: reject
+    reason: The Dispute Resolution Center, a non-profit linked from the county's Courts and Legal menu; not a county body.
+  - domain: washtenawfarmcouncil.org
+    institution: washtenaw-county
+    expected: reject
+    reason: Washtenaw Farm Council Grounds, a non-profit fairground linked from the county's Parks menu; not a county body.
+  - domain: piercelakegolf.com
+    institution: washtenaw-county-parks-and-recreation-commission
+    expected: reject
+    reason: Pierce Lake Golf Course's own site, linked from the Parks & Recreation landing page; a WCPARC facility's microsite, not an institution's homepage.
+  - domain: myvscloud.com
+    institution: washtenaw-county-parks-and-recreation-commission
+    expected: reject
+    reason: Vermont Systems WebTrac registration app for parks classes (miwashtenawweb.myvscloud.com), linked as "Register"; a vendor-hosted application, not a homepage.
+  - domain: bsaonline.com
+    institution: washtenaw-county
+    expected: reject
+    reason: BS&A Online delinquent tax search, linked from the county's How Do I menu; a vendor-hosted application, not a homepage.
+
+out_of_scope:
+  # County departments and offices with no type of their own (README rules 2 and 3(b))
+  - name: Washtenaw County Community Mental Health (WCCMH)
+    url: https://www.washtenaw.org/community-mental-health
+    reason: >-
+      Judgement call. The county's community mental health services programme under Michigan's
+      Mental Health Code, listed under County Departments with its site on washtenaw.org. It has
+      a WCCMH Board the Board of Commissioners appoints (county boards directory id 93), executive
+      and quality-finance committees meeting on the county's CivicClerk portal (categories 32, 34,
+      35), a dedicated millage and a strategic plan PDF, but it buys through County Purchasing and
+      its budget is a section of the county budget, so it does not buy on its own account and is
+      not `other`; a county department whose work matches no type. A reviewer may prefer `other`
+      with expected: review.
+  - name: Washtenaw County Health Department
+    url: https://www.washtenaw.org/health-department
+    reason: County department (with a Board of Health the commissioners appoint, directory id 103); the country file has no public_health_unit type and it buys and budgets through the county.
+  - name: Washtenaw County Water Resources Commissioner / Public Works
+    url: https://www.washtenaw.org/water-resources
+    reason: >-
+      The elected Water Resources Commissioner's office (drains, stormwater, soil erosion) and the
+      Public Works division under the Board of Public Works, which assists municipalities with
+      water, sewer and lake projects: county offices that run no utility under a name of their own
+      (README rule 8), not a public_utility.
+  - name: Emergency Services / 911 Metro Dispatch
+    url: https://www.washtenaw.org/emergency-services-911
+    reason: A division of the Sheriff's Office (Emergency Management and 911 Metro Dispatch), not a body of its own; the Emergency Telephone District Board governs the 911 surcharge.
+  - name: Washtenaw County Trial Court and 14A District Court
+    url: https://www.washtenaw.org/trial-court
+    reason: Courts of the State of Michigan's judiciary funded by the county; not institutions the seed types cover, and they buy through the county.
+  - name: Office of Community & Economic Development (OCED)
+    url: https://www.washtenaw.org/community-economic-development
+    reason: County department (housing, human services, community development, economic opportunity); a department doing economic development gets no row (rule 3), unlike a corporation the county owns.
+  - name: Washtenaw County Brownfield Redevelopment Authority (WCBRA)
+    url: https://www.washtenaw.org/brownfield-program
+    reason: >-
+      A county authority (Act 381) with its own board (directory id 8) meeting on CivicClerk
+      (category 41), but it approves brownfield plans, captures tax increment and gives
+      environmental assessment grants: a board that grants the county's money, which
+      municipal_corporation's definition excludes; it runs no business and buys nothing on its own.
+  - name: Washtenaw County Building Authority
+    url: https://secure.ewashtenaw.org/bocdob/bocdobSubmit.do?boardid=9
+    reason: Financing vehicle (Act 31 of 1948) that issues bonds for county buildings; meets once a year and has no site, staff or procurement of its own (the county builds and buys).
+  - name: Economic Development Corporation of Washtenaw County
+    url: https://secure.ewashtenaw.org/bocdob/bocdobSubmit.do?boardid=19
+    reason: Act 338 EDC that can issue industrial revenue bonds; mostly vacant seats, an annual meeting and no site or spending of its own, so not a municipal_corporation that buys.
+  - name: Washtenaw Urban County
+    url: https://www.washtenaw.org/urban-county
+    reason: A consortium of the county and its cities, townships and villages for federal CDBG and HOME funds, administered by OCED with an executive committee on CivicClerk; a partnership that grants funds, not a body that buys.
+  - name: County boards, committees and commissions (Commission on Aging, Environmental Council, Food Policy Council, Advisory Council on Reparations, Apportionment Commission, Social Services Board, Opioid Settlement and Space Plan steering committees, Historic District Commission, Continuum of Care Board, Retirement Commission, VEBA Board, Drainage Board, Board of Canvassers, Jury Board, Emergency Telephone District Board, EMS Commission, Police Services Steering Committee, Veterans Affairs Committee, Youth Commission)
+    url: https://www.washtenaw.org/public-boards-committees-commissions-index
+    reason: Advisory and statutory committees of the county (fifty-odd in the county boards directory), which spend little and buy through the county (README rule 2); their meetings are on the county's CivicClerk portal.
+  # Non-profits and partnerships the county funds or hosts
+  - name: Washtenaw Health Project
+    url: https://www.washtenaw.org/washtenaw-health-project-whp
+    reason: '"Washtenaw Health Project is a non-profit organization in partnership with the Washtenaw County Health Department" (County Departments page): a non-profit the county partners with and funds.'
+  - name: Washtenaw / Livingston Medical Control Authority
+    url: https://www.washtenaw.org/washtenaw-livingston-medical-control-authority
+    reason: Non-profit medical control authority designated under Michigan's Public Health Code for two counties' EMS, listed under County Departments; not a county body and no type fits.
+  - name: Housing Access for Washtenaw County (HAWC)
+    url: https://www.housingaccess.net/
+    reason: Coordinated-entry housing programme run by a non-profit under contract; not a county body.
+  - name: The Dispute Resolution Center
+    url: http://www.thedisputeresolutioncenter.org/
+    reason: Non-profit community mediation centre linked from the county's Courts and Legal menu.
+  - name: Destination Ann Arbor (Ann Arbor Area Convention & Visitors Bureau)
+    reason: The tourism bureau that the county's Accommodation Excise Tax funds under a management agreement (Finance > Accommodation Excise Tax); a non-profit the county funds, not a county body. Its site is not linked from a served page.
+  # Bodies of other places or levels
+  - name: Huron-Clinton Metropolitan Authority (Huron-Clinton Metroparks)
+    url: https://www.metroparks.com/
+    reason: >-
+      "a regional special park district encompassing Livingston, Macomb, Oakland, Washtenaw and
+      Wayne counties" (county boards page, directory id 29), headquartered in Brighton, Livingston
+      County; the county appoints one of its commissioners. A park_district of another place
+      (README rule 4: labelled where it is headquartered), not Washtenaw County's.
+  - name: Ann Arbor Area Transportation Authority (TheRide)
+    url: https://www.theride.org/
+    reason: Transit authority headquartered in Ann Arbor, labelled in the ann-arbor file; the county's JavaScript-rendered pages link it only as a transportation resource. Not a county body.
+  - name: Ann Arbor Public Schools
+    url: https://www.a2schools.org/
+    reason: School district headquartered in Ann Arbor, linked from the county's Schools page but labelled in the ann-arbor file (ann-arbor:ann-arbor-public-schools); not labelled here to avoid a duplicate row.
+  - name: Washtenaw County Conservation District
+    url: https://washtenawcd.org/
+    reason: A soil conservation district under Part 93 of Michigan's Natural Resources and Environmental Protection Act with its own elected directors, linked from the county's Your Government page; a state-created district, not a county body, and the country file has no conservation type.
+  - name: Washtenaw Area Transportation Study (WATS)
+    url: http://www.miwats.org/
+    reason: The metropolitan planning organization for the county (federal transportation planning), named in the county boards directory; a planning body of its member governments, not a county body.
+  - name: Regional Transit Authority of Southeast Michigan (RTA)
+    url: https://www.rtamichigan.org/
+    reason: State-created four-county transit authority (county boards directory id 87; its master plan is linked from the county's Comprehensive Plan page); a regional body, not Washtenaw County's.
+  - name: Southeast Michigan Council of Governments (SEMCOG), Area Agency on Aging 1-B, Detroit Region Aerotropolis, Huron River Watershed Council, River Raisin Watershed Council
+    url: https://secure.ewashtenaw.org/bocdob/
+    reason: External agencies the Board of Commissioners appoints representatives to (county boards directory); regional councils and non-profits, not county bodies.
+  - name: Local Development Finance Authorities of Saline, Superior Township and Ypsilanti Township
+    url: https://secure.ewashtenaw.org/bocdob/
+    reason: Tax-increment authorities of the city and townships, to which the county appoints a member; bodies of those municipalities.
+  - name: 14B District Court (Ypsilanti Township) and 15th District Court (Ann Arbor)
+    url: https://www.a2gov.org/departments/15D/Pages/default.aspx
+    reason: District courts funded by the township and the city, linked from the county's County Courts page; state courts of other places.
+  - name: University of Michigan
+    url: http://www.umich.edu/
+    reason: State university, linked from the county's Schools page; a university under Michigan, not the county.
+  - name: Eastern Michigan University
+    url: http://www.emich.edu/
+    reason: State university in Ypsilanti, linked from the county's Schools page; scored under Michigan.
+  - name: Concordia University Ann Arbor
+    url: http://www.cuaa.edu/
+    reason: Private university linked from the county's Schools page.
+  - name: Washtenaw Educational Options Consortium (WEOC)
+    url: https://www.weoc.info/
+    reason: Early college, International Baccalaureate and virtual programmes run jointly by WISD and the districts, linked from the county's Schools page; a programme, not a school district.
+  - name: MSU Extension Washtenaw County and the Great Start Readiness Program
+    url: https://www.canr.msu.edu/washtenaw/
+    reason: Listed under County Departments but a Michigan State University programme and a state preschool programme run by WISD; not county bodies.
+  - name: State of Michigan departments (MDHHS, MDOT, Treasury)
+    url: https://www.michigan.gov/
+    reason: State agencies linked from the county's State Government and court pages; scored under Michigan, not the county.
+
+notes: >-
+  Washtenaw County, Michigan (FIPS 26161): a county-level regional_government whose elected Board
+  of Commissioners is its council, with an elected Sheriff, Clerk/Register of Deeds, Prosecutor,
+  Treasurer and Water Resources Commissioner and an appointed Administrator. Its site is CivicPlus
+  with JavaScript-rendered bodies on most pages; the pages with server-rendered text (County
+  Departments, Your Government, Commissioners, Purchasing, Finance, Open Book, Parks Connect and
+  Administration, the sitemap) carry the evidence, and the JavaScript-only pages' content was read
+  through the site's CivicPlus content API (content.civicplus.com, app mi-washtenawcounty, with the
+  read-only token the page itself ships) to decide what they say; quotes from those pages carry
+  manual_check. Besides the county, the file labels the Sheriff's Office (police_service, review),
+  the Parks and Recreation Commission (park_district, a judgement call), the Road Commission (other,
+  review: the seed has no road commission type) and, from the county's Schools page, Washtenaw
+  Community College (college, review), eight school districts headquartered in the county and the
+  intermediate school district (school_board, expected at the county level). Ann Arbor Public
+  Schools and the Ann Arbor Area Transportation Authority are left to the ann-arbor file. The
+  county's pages do not lead to the district libraries (Ypsilanti, Chelsea, Dexter, Saline,
+  Manchester: none is linked or named on a served or JavaScript page), to the Ypsilanti Community
+  Utilities Authority (a shared body of the City and Charter Township of Ypsilanti), to any
+  fire department, hospital, housing commission, land bank or county-owned corporation that buys
+  (the Building Authority and the EDC are financing shells), so none of those gets a row; the
+  county has no land bank authority. Other school districts partly in the county (Ann Arbor, and
+  districts based in neighbouring counties such as Pinckney, South Lyon, Northville, Van Buren,
+  Grass Lake, Stockbridge, Napoleon, Clinton and Jackson's) are not linked by the county and are
+  not labelled. The county's meetings, webcasts and its boards' meetings are all on one CivicClerk
+  portal (meetings.washtenaw.org); its bids are on its own Open Bids page and on BidNet Direct;
+  its budget is quadrennial and its capital plan is inside the budget book. Platforms met that are
+  not on the United States list: civicplus.pro (CivicPlus content host), munetrix.com (school
+  budget transparency), boardontrack.com (board packets) and SIGMA VSS (sigma.michigan.gov, the
+  State of Michigan's bid system used by Milan and WISD, on a trusted domain).

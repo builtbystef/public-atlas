@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: City of Kitchener
   level: municipality
   place: City of Kitchener

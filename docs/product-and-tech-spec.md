@@ -286,7 +286,11 @@ website as a candidate homepage: a `PlaceEntry` for a place already loaded is fo
 and adds only what is new. `lists/us/school_districts.py` (the NCES directory of local education
 agencies, each with its NCES id) and `lists/us/special_districts.py` (the Census of Governments'
 special districts, typed by function) return `InstitutionEntry` records under the county of
-each body's office.
+each body's office. `lists/us/federal.py` (the Federal Register's agencies, kept to those that
+published in 2023 to 2025 or hold a `.gov` domain in their own name, each under its parent at
+the country), `lists/us/universities.py` (IPEDS' public campuses, each with its IPEDS id at
+its county) and `lists/us/transit.py` (the National Transit Database's public reporters, one
+body per agency, at the government it serves or the city of its address) do the same.
 
 
 This is also where the bodies under a body come from. `find_institutions`
@@ -553,9 +557,12 @@ The console renders these as a tree and the eval scores parent links.
 
 The dataset is ten hand-labelled Ontario municipalities with every
 institution, parent link, homepage and source each should yield, plus a list
-of 25 governments scored on `find_homepage` alone. An eval run works a quick
-set of five subjects and the list by default, chosen for coverage over size so
-a run finishes in an hour or two, and every subject with `--all`.
+of 25 governments scored on `find_homepage` alone, and three United States
+subjects (a city, a county, a school district). Each file names its country,
+and a run works one country's files against that country's seed. An eval run
+works a quick set of five Ontario subjects and the list by default, chosen for
+coverage over size so a run finishes in an hour or two, and every subject with
+`--all`.
 It is ported from v1 with its labelling rules, as YAML files: hand-labelled data edited over time is the one place a data file beats a table, and these are the only YAML files in the project.
 
 An eval run is a run with `is_eval` set. It uses a separate database for the

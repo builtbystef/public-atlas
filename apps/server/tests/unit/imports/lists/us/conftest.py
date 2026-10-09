@@ -11,11 +11,14 @@ from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.seeds import united_states
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.lists.us import (
+    federal,
     government_units,
     municipalities,
     school_districts,
     special_districts,
     states_counties,
+    transit,
+    universities,
 )
 
 # By source name, once opened.
@@ -61,3 +64,18 @@ def school_districts_files() -> dict[str, files.OpenedFile]:
 @pytest.fixture(scope="package")
 def special_districts_files() -> dict[str, files.OpenedFile]:
     return open_sources(special_districts)
+
+
+@pytest.fixture(scope="package")
+def federal_files() -> dict[str, files.OpenedFile]:
+    return open_sources(federal)
+
+
+@pytest.fixture(scope="package")
+def universities_files() -> dict[str, files.OpenedFile]:
+    return open_sources(universities)
+
+
+@pytest.fixture(scope="package")
+def transit_files() -> dict[str, files.OpenedFile]:
+    return open_sources(transit)

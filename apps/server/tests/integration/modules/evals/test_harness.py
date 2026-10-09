@@ -60,6 +60,7 @@ def town_data() -> dict[str, Any]:
     return {
         "subject": {
             "kind": "place",
+            "country_code": "CA",
             "name": "Town of Fixture",
             "level": "municipality",
             "place": "Town of Fixture",
@@ -127,6 +128,7 @@ def ministry_file() -> SubjectFile:
         {
             "subject": {
                 "kind": "institution",
+                "country_code": "CA",
                 "name": "Ministry of Fixtures",
                 "level": "province_territory",
                 "place": "Ontario",
@@ -168,6 +170,7 @@ def municipal_list() -> PlaceList:
     """The world's town, as an official list names it."""
     return PlaceList.model_validate(
         {
+            "country_code": "CA",
             "place": "Ontario",
             "source": {"url": "https://example.test/list"},
             "expected_counts": {"total": 1},

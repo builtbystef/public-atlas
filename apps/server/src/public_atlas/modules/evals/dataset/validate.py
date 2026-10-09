@@ -1,7 +1,8 @@
-"""Validation: schema and cross-reference checks on every dataset file, against the country's
+"""Validation: schema and cross-reference checks on every dataset file, against its country's
 rules (its levels, the types expected at each, the sources expected per type, its platforms), so
 the dataset and the agent can never disagree on a type."""
 
+from collections.abc import Mapping
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -219,14 +220,21 @@ def validate_municipal_homepage(  # noqa: C901 - one check after another
     return errors
 
 
-def validate_files(files: list[Path], rules: CountryRules) -> list[str]:
-    """Every error in `files`. Cross-file references need every subject's keys, even when
-    validating one file."""
+def validate_files(files: list[Path], rules: Mapping[str, CountryRules]) -> list[str]:
+    """Every error in `files`, each read against the rules of its country (`rules` by country
+    code). Cross-file references need every subject's keys, even when validating one file."""
     everything, _, _ = load_all(sorted(SUBJECTS.glob("*.yaml")))
     all_keys = {p.stem: {i.key for i in g.institutions} for p, g in everything.items()}
     subjects, lists, errors = load_all(files)
     for path, expected in subjects.items():
-        errors += validate_subject(path.stem, expected, rules, all_keys)
+        country = expected.subject.country_code
+        if country not in rules:
+            errors.append(f"{path.stem}: no rules for country {country}")
+            continue
+        errors += validate_subject(path.stem, expected, rules[country], all_keys)
     for path, data in lists.items():
-        errors += validate_places(path.stem, data, rules)
+        if data.country_code not in rules:
+            errors.append(f"{path.stem}: no rules for country {data.country_code}")
+            continue
+        errors += validate_places(path.stem, data, rules[data.country_code])
     return errors

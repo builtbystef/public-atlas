@@ -403,18 +403,121 @@ homepage is reported per level, and school and special districts are counted per
 
 ## Session 6: US federal, campuses, transit and an eval
 
-- [ ] **`us/federal`**: the Federal Register agencies API JSON (473) as `department` for
+- [x] **`us/federal`**: the Federal Register agencies API JSON (473) as `department` for
       the cabinet departments and `agency` for the rest, parent from `parent_id`, website
       from `agency_url`, filtered to agencies with recent documents; the registry's
-      `current-federal.csv` pre-trusts the federal domains that match.
-- [ ] **`us/universities`**: IPEDS HD2024 (`CONTROL` 1; `ICLEVEL` 1 → `university`, 2 →
+      `current-federal.csv` is the linking evidence for their homepage assignments.
+- [x] **`us/universities`**: IPEDS HD2024 (`CONTROL` 1; `ICLEVEL` 1 → `university`, 2 →
       `college`; website from `WEBADDR`; place by `FIPS` county).
-- [ ] **`us/transit`**: the FTA NTD 2024 agency file, public organization types only,
+- [x] **`us/transit`**: the FTA NTD 2024 agency file, public organization types only,
       website from `URL`, place by city and state.
-- [ ] **US eval subjects**: three hand-labelled subjects (a mid-size city in an MCD state, a
+- [x] **US eval subjects**: three hand-labelled subjects (a mid-size city in an MCD state, a
       county, a school district) and whatever the harness and validator need to run against
       a second country (they read the Canada seed by name today). Score `find_homepage` and
       `find_sources` on them once.
+
+The session changed the loader not at all and found these things about the sources and the
+plan:
+
+- **"Recent documents" is one more file.** The agencies list does not say which bodies are
+  alive; the Federal Register's documents API answers it as a count of documents per agency
+  over a date range (`documents/facets/agency`), and a closed window (2023-01-01 to
+  2025-12-31) hashes the same on every fetch. 269 of the 473 bodies published in it. Seven
+  more that publish nothing (the Architect of the Capitol, the Congressional Budget Office,
+  the Delta Regional Authority, MedPAC, the Truman Foundation, the Appalachian Regional
+  Commission, the Armed Forces Retirement Home) are kept because the .gov registry lists their
+  website's domain in their own name, which is the registry's second use here; the rest, 197,
+  are the defunct commissions, the renamed bureaus and a few live bodies on `.mil` domains (the
+  Defense Logistics Agency, the NSA) that the registry cannot vouch for, left for the agent.
+- **The federal domains are not pre-trusted, by decision.** 190 of the 196 kept websites sit
+  on a domain the registry lists as federal, and the plan had the list trust them. The loader
+  has no door for a list to verify a domain, and it should not get one: a domain is trusted
+  when a person lists it as an anchor, a reviewer approves it or a `find_homepage` assignment
+  passes the four checks of spec section 6.3, and a script matching a registry's organization
+  name to an agency's name is none of those. The registry's part is evidence: the loader stores
+  the file as a snapshot on a trusted host, so the line that names a body and its domain is the
+  trusted link that assignment's first check needs. The homepages are loaded as candidates like
+  any other list's, the module counts the registered ones in its notes, and the next run's
+  `find_homepage` works them with a quote from each site.
+- **Names.** The list inverts names ("Agriculture Department", "Procurement and Property
+  Management, Office of"); the fifteen cabinet departments, the three military departments and
+  the three comma-inverted offices take their official names from hand tables, with the list's
+  form as an alias, and every other name is the list's ("Prisons Bureau" stays, since no rule
+  un-inverts "Patent and Trademark Office" rightly). The first apply merged three bodies into
+  three others through a shared short name: the loader finds an institution by any alias, so
+  "FS" read the Forest Service as the Fiscal Service, "LOC" the Copyright Royalty Board as the
+  Library of Congress, "OFR" the Office of Financial Research as the Office of the Federal
+  Register. A short name two kept bodies share is now given to neither, and the three were
+  unmerged by hand (the alias, the evidence and the candidate homepage removed from each host)
+  before the second apply added them. The rule test now pins that no two entries share a name
+  or an alias.
+- **The NTD export is a manual file.** The open data platform's CSV export is the same 2,914
+  rows in a different order from one request to the next (two orders seen on 2026-10-09), so no
+  hash holds; the file is obtained by hand and kept in the cache as
+  `ntd_agency_information_2024.csv`, with the module's instructions saying how. Everything
+  else is fetched with its hash pinned.
+- **The NTD lists services, not bodies.** One agency reports several rows (Los Angeles
+  County's eleven Public Works transit operations, Regional Transit Service's eight county
+  divisions), so the rows of one agency name in one state are one body. A government's service
+  goes by its trade name ("Sun Tran" for the City of Tucson's) or its division's name when
+  that says it is a transit service, and a government whose rows name no service ("City of
+  Seneca", division "Public Works") has a department, not a body: 65 left out and counted.
+  The NTD id has no identifier scheme, so the bodies carry no code; the 365 transit districts
+  the Census of Governments listed join these by name where the two agree at one place.
+- **A city and the township of its name.** `Places.city` and `Places.government` in
+  `us/loaded.py` answer with the one municipality a city name or a government name means
+  ("City of Owensboro", "Forsyth County Board of Commissioners", read as the registry's
+  organization names are), but the loader finds a place by name, level and parent name alone,
+  and reads a parent's name by its forms, so it cannot tell the City of Grand Rapids from the
+  Charter Township of Grand Rapids under Kent County, nor the City of Jackson under Madison
+  County, Tennessee, from the Township of Jackson under Madison County, Indiana. The first dry
+  run skipped 172 bodies for it. Where the loader would find two, the county stands in for the
+  municipality (`Attachment.instead_of` names it): 96 governments' services and 76 bodies
+  placed by their city.
+- **Puerto Rico.** The shared place index knew only the states the estimates carry, so a body
+  in Puerto Rico had no state; it now has one (the municipios are not indexed, so the body sits
+  under Puerto Rico). The NCES directory's Puerto Rico Department of Education joined the
+  school districts for it (18,229 agencies, 183 with no state), and a rerun of that list adds
+  it, with one served place more: a served place is now judged by the loaded municipality's
+  own name, as the loader reads it, which the transit list needed.
+- **Campuses.** 1,980 public institutions in IPEDS: 889 four-year ones as `university`
+  (system offices among them, the body that buys for a system), 849 two-year ones as
+  `college`, 229 less-than-two-year ones (technical centers and adult programs, most run by a
+  school district or a hospital) left out, 5 closed in the year, 8 in territories the seed does
+  not have. 1,647 sit at their county, 65 at a municipality where the county is no place, 26 at
+  a state. Every one has a website. The place is the campus's county, as the plan says, so the
+  loader's default parent is the county's government, not the state's: the same reading as
+  Ontario's hospitals and colleges under their municipality.
+- **The eval dataset is per country.** Each subject file and places file names its
+  `country_code`; the validator reads a file against its country's seed, an eval run or a
+  scoring works one country's files (`evals.country_of`), seeds that country's seed and its
+  `DEFAULT_LISTS` (Ontario's places for Canada; the states and counties for the United States,
+  so a city subject finds its county and the harness makes the city), and a subject's
+  `official_code` is in the country's scheme (`OFFICIAL_CODE_SCHEMES`: `statcan_sgc`, `fips`).
+  The three subjects are the City of Ann Arbor (a mid-size city in Michigan, an MCD state),
+  Washtenaw County, and the Washoe County School District of Nevada (an institution subject at
+  its county), reviewed the same day. Their labellers met platforms the seed lacks
+  (`diligentoneplatform.com` and `highbond.com`, Diligent Community's hosts; `cleargov.com`;
+  `internationaleprocurement.com`, the housing-authority marketplace; `munetrix.com`, Michigan
+  school budgets; `boardontrack.com`; `civicplus.pro`, CivicPlus's asset host), two gaps in
+  the types (`police_service` is not expected at a county or a municipality in the United
+  States, so a city police department and a sheriff's office are labelled `expected: review`;
+  a county road commission fits no type and is `other`), and the county's pages rendered by
+  JavaScript, so thirteen of Washtenaw's quotes are `manual_check`.
+- **Applied**, each with its dry run read first and a rerun that changed nothing.
+  `us/federal`: 276 bodies (15 departments, 261 agencies; 141 under a parent), 196 candidate
+  homepages, 285 aliases. `us/universities`: 1,738 campuses with their IPEDS id and a
+  homepage each, 854 aliases, no skips. `us/transit`: 1,518 bodies, 1,471 new and 47 joining
+  a transit district the Census of Governments had listed at the same place, 1,455 candidate
+  homepages, 255 aliases, no skips.
+- **The first eval run** over the three subjects on `find_homepage` and `find_sources`
+  (`eval run --subject ann-arbor --subject washtenaw-county --subject
+  washoe-county-school-district --types find_homepage find_sources`, 2026-10-09) is recorded:
+  three `find_sources` assignments, 21 minutes by its own timestamps, $0.22. Source recall 80% for the school
+  district (8 of 10, precision 100%), 14% for the city and 6% for the county, where most of the
+  labelled sources belong to bodies the run never saved, since `find_institutions` was left
+  out; precision 85% and 86%. `find_homepage` found nothing because no body was saved to claim
+  one. The next run works every type.
 
 **Done when** the three loads are applied and one eval run over the three US subjects has
 scores in the database.
@@ -515,6 +618,12 @@ so that someone rebuilding from a fresh clone gets the same file.
   file of `canada/ontario/health_units`: fetched once with a browser user agent and put in
   the loader's cache as `public_health_unit_locations_2026_08.html`, since every response
   carries a new bot-detection token.
+
+- United States, done 2026-10-09: the National Transit Database's 2024 agency information
+  file, the CSV export of dataset `ccvf-fykn` on data.transportation.gov (2,914 rows). The
+  platform serves the rows in a different order on each request, so the export is a manual
+  file of `us/transit`, kept in the loader's cache as `ntd_agency_information_2024.csv`; the
+  module's instructions say how to export it.
 
 Two of these (PEI, Saskatchewan) are derived CSVs built from saved pages rather than files
 the site served. Their `instructions` say so and point at the raw captures; the loader's

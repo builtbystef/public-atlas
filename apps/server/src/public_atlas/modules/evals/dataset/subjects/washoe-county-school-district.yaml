@@ -1,0 +1,435 @@
+subject:
+  kind: institution
+  country_code: US
+  name: Washoe County School District
+  level: county
+  place: Washoe County
+  parent: Nevada
+  institution: washoe-county-school-district
+  government_homepage: https://www.washoecounty.gov/
+
+status: reviewed
+reviewed_at: 2026-10-09
+labelled_at: 2026-10-09
+
+trusted_at_start: [nv.gov, washoeschools.net]
+
+institutions:
+  - key: washoe-county-school-district
+    type: school_board
+    names:
+      - { text: Washoe County School District, lang: en }
+      - { text: WCSD, lang: en, is_acronym: true }
+      - { text: Washoe County, lang: en }
+      - { text: Washoe County School District Board of Trustees, lang: en }
+      - { text: Distrito Escolar del Condado de Washoe, lang: es }
+    homepage: https://www.washoeschools.net/
+    homepage_host: trusted_domain
+    evidence:
+      url: https://www.washoeschools.net/
+      quote: "Welcome to the Washoe County School District"
+    notes: >-
+      County-wide school district of Washoe County, Nevada (Reno, Sparks, Incline Village, Gerlach),
+      "the second-largest public school district in Nevada", 59,565 students and 100+ schools (Who We
+      Are page, 2026-10-09). The NCES directory loaded it under the place Washoe County with the
+      directory's name "Washoe County" (NCES id 3200480), hence that entry in names; the scorer matches
+      the loaded row on it. "Washoe County School District Board of Trustees" is the governing body's
+      name as the Board Meeting Archive page writes it; the board folds into the district (README rule
+      5). The Spanish name is the one its own strategic plan page uses for the Spanish edition of the
+      plan ("Distrito Escolar Del Condado de Washoe Plan Estratégico para 2023-2026"). The site is
+      built by the school website vendor Finalsite ("Powered by Finalsite" in every footer); each
+      school has a subdomain (reno.washoeschools.net, aact.washoeschools.net, ...), and so do the
+      district's own bid portal (solicitations.washoeschools.net), its Data Gallery
+      (datagallery.washoeschools.net) and its staff intranet (insight.washoeschools.net), all covered
+      by the trusted domain. Its board policies live on a separate domain, wcsdpolicy.net
+      (candidate_domains). washoeschools.net without www serves the same site (200, no redirect).
+
+sources:
+  - institution: washoe-county-school-district
+    source_type: procurement
+    url: https://www.washoeschools.net/directory/business-financial-services/purchasing
+    alternates:
+      - https://www.washoeschools.net/directory/business-financial-services/purchasing/how-to-do-business-with-washoe-county-school-district
+    evidence:
+      url: https://www.washoeschools.net/directory/business-financial-services/purchasing
+      quote: "For solicitation opportunities (bids, quotes, proposals, etc.), register as a User to receive auto-email notifications of active District solicitation opportunities"
+    notes: >-
+      "Purchasing", the Purchasing Department's landing page: mission, environmentally preferable
+      purchasing, the link to the solicitation platform, office address (The Brown Center, 14101 Old
+      Virginia Road, Reno) and phone. Its child "How to do Business with Washoe County School
+      District" holds how the district buys (centralized purchasing, NRS chapters 332 and 338, the
+      RFQ / RFB / RFP / RFQS thresholds, ethics); it is kept as an alternate rather than a second
+      entry because the two pages are one department's purchasing information split in two, and
+      either is a fair answer to "the main purchasing page". The "Purchasing Department's Processes
+      Overview and Administrative Manual" page is a manual, not counted.
+
+  - institution: washoe-county-school-district
+    source_type: tender
+    url: https://solicitations.washoeschools.net/Purchasing/
+    alternates:
+      - https://solicitations.washoeschools.net/
+      - https://solicitations.washoeschools.net/Purchasing/Default
+      - https://solicitations.washoeschools.net/purchasing/default
+      - https://www.washoeschools.net/directory/business-financial-services/purchasing/solicitation-opportunities
+    evidence:
+      url: https://solicitations.washoeschools.net/Purchasing/
+      quote: "Purchasing (Non-Capital) Solicitations Dashboard"
+    notes: >-
+      The district's own bid portal, "WCSD Solicitations", on a subdomain of the trusted domain (so no
+      platform entry). Its root is a splash page with two buttons, "Public Works Solicitations
+      (Capital - NRS 338)" and "Purchasing Solicitations (Non-Capital - NRS 332)"; this entry is the
+      second, a server-rendered ASP.NET table of active and pending goods-and-services solicitations
+      (on 2026-10-09: 15 rows, RFBs, RFQs and RFPs with pre-bid, posting and closing dates and a
+      status of Active, Under Evaluation, Letter of Intent Issued or Awarded). The root and the
+      district's "Solicitation Opportunities" page (one click up, which says the Purchasing
+      Department "exclusively uses this platform for the distribution and facilitation of all District
+      solicitation opportunities") are alternates. The home page's "Call for Proposals and Expressions
+      of Interest" link goes to one project on this portal (Purchasing/Default?ProjectID=5048), hence
+      the Default alternates. The Solicitation Opportunities page adds that solicitations "may also be
+      available through Demandstar" (demandstar.com, a listed platform), but it links only
+      DemandStar's home page, and DemandStar's agency pages are JavaScript-only, so no DemandStar
+      page is recorded.
+
+  - institution: washoe-county-school-district
+    source_type: tender
+    url: https://solicitations.washoeschools.net/PublicWorks/
+    alternates:
+      - https://solicitations.washoeschools.net/PublicWorks/Default
+    evidence:
+      url: https://solicitations.washoeschools.net/PublicWorks/
+      quote: "All Projects that are Active or have been Recommended for Award."
+    notes: >-
+      The other half of the portal: "Public Works Solicitations", the capital construction bids (NRS
+      338), a separate list of the same type (on 2026-10-09: six projects, Active, Recommendation of
+      Award or Awarded, with pre-bid meeting, question deadline and bid opening dates). Linked from
+      the portal's splash page and, as "WCSD Public Works Project Solicitations", from the WCSD
+      Building page. Quotes for small jobs go to solicitations@washoeschools.net.
+
+  - institution: washoe-county-school-district
+    source_type: contract_award
+    url: https://solicitations.washoeschools.net/PublicWorks/Awarded
+    evidence:
+      url: https://solicitations.washoeschools.net/PublicWorks/Awarded
+      quote: "Awarded Projects"
+    notes: >-
+      Floor rule (school_board does not list contract_award). "Awarded Projects" of the Public Works
+      portal: 2,662 awarded construction projects with the awarded contractor, award date and amount
+      (e.g. "Heating and Controls Retrofit at George L. Dilworth Middle School S & S Mechanical, LLC
+      09/22/2026 $899,750.00"), reached by the "Check it out!" link under "Awarded Projects" on the
+      Public Works list. Paging is by ASP.NET postback.
+
+  - institution: washoe-county-school-district
+    source_type: contract_award
+    url: https://solicitations.washoeschools.net/Purchasing/Awarded
+    evidence:
+      url: https://solicitations.washoeschools.net/Purchasing/Awarded
+      quote: "Awarded Solicitations"
+    notes: >-
+      Floor rule. "Awarded Solicitations" of the Purchasing portal: 132 goods-and-services awards
+      with vendor(s), award date, number of awardees and amount (often $0.00 for term contracts). A
+      separate list of the same type as the Public Works awards.
+
+  - institution: washoe-county-school-district
+    source_type: budget
+    url: https://www.washoeschools.net/directory/business-financial-services/budget/budget-documents-and-reports
+    alternates:
+      - https://www.washoeschools.net/directory/business-financial-services/budget
+    evidence:
+      url: https://www.washoeschools.net/directory/business-financial-services/budget/budget-documents-and-reports
+      quote: "The District is required by Nevada Revised Statutes to prepare an annual budget."
+    notes: >-
+      "Budget Documents and Reports": the Nevada budget calendar (tentative budget by April 15,
+      hearing in May, final budget by June 8) and, per fiscal year 2023-24 to 2026-27, the Tentative
+      Budget, Final Budget for the Department of Taxation, Amended Final Budget, Augmented Budgets and
+      a Budget-in-Brief, all PDFs on /fs/resource-manager/. The "Budget" page one click up (the
+      Budgeting Division: duties, contact, the NRS 387.12468 staffing and budget comparison report
+      and a link to the Data Gallery's interactive budget) is an alternate. The Reports and
+      Publications page under WCSD Progress describes the annual budget reports but links nothing.
+
+  - institution: washoe-county-school-district
+    source_type: capital_plan
+    url: https://www.washoeschools.net/wcsd-progress/building/wcsd-building
+    alternates:
+      - https://www.washoeschools.net/wcsd-progress/building
+      - https://www.washoeschools.net/fs/pages/22565
+    evidence:
+      url: https://www.washoeschools.net/wcsd-progress/building/wcsd-building
+      quote: "Capital Projects 20 Year Draft Plan"
+    notes: >-
+      "WCSD Building": the capital program funded by the 2016 WC-1 sales tax ($1 billion so far,
+      eight new schools, rebuilds and modernizations under way), with the "Capital Projects
+      Construction Timeline" and the "Capital Projects 20 Year Draft Plan" (PDFs) under "Capital
+      Funding and Capital Projects Information and Resources", plus links to the Public Works
+      solicitations and the quarterly capital reports. /wcsd-progress/building and /fs/pages/22565 (the
+      Capital Projects department page's "here" link) both redirect to it. The Board approved a
+      "revised 10-Year Capital Improvement Plan" on 2026-06-09 (2026 Board Archive), but no page of
+      the site publishes that plan on its own, so this page is the capital plan landing page. The
+      Capital Projects department page (/directory/facilities-management/capital-projects) describes
+      the department and is not counted; the Quarterly Reports page holds progress reports, not a plan.
+
+  - institution: washoe-county-school-district
+    source_type: capital_plan
+    url: https://www.washoeschools.net/wcsd-progress/building/2023-facility-modernization-plan
+    evidence:
+      url: https://www.washoeschools.net/wcsd-progress/building/2023-facility-modernization-plan
+      quote: "This FMP will serve as the foundation for capital projects planning into the future"
+    notes: >-
+      "2023 Facility Modernization Plan (FMP)": the CannonDesign study, "a 15-year program of projects
+      which will modernize every existing school within the district", with the full plan and the
+      December 2023 board presentation as PDFs. A multi-year facility plan of the kind the README
+      counts as capital_plan (asset management plans), and a genuinely different page from WCSD
+      Building, so a second entry. A reviewer may prefer to fold it into the first as an alternate.
+
+  - institution: washoe-county-school-district
+    source_type: board_meeting
+    url: https://washoeschools.community.diligentoneplatform.com/Portal/
+    alternates:
+      - https://washoeschools.community.diligentoneplatform.com/Portal/Default.aspx
+      - https://washoeschools.community.diligentoneplatform.com/Portal/MeetingTypeList.aspx
+      - https://washoeschools.community.diligentoneplatform.com/Portal/MeetingSchedule.aspx
+      - https://washoeschools.diligent.community/Portal/
+    platform: diligentoneplatform.com
+    evidence:
+      url: https://www.washoeschools.net/trustees/board-of-trustees
+      quote: "Online Governance"
+      kind: links_to
+      link_target: https://washoeschools.community.diligentoneplatform.com/Portal/Default.aspx
+    notes: >-
+      The district's Diligent Community meeting portal ("© Diligent Community 2026"; the archive page
+      calls it the Board of Trustees' "E-Governance site"), linked as "Online Governance" from the
+      Trustees menu of every page and from the Board Meeting Archive. Its Meetings page lists each
+      body's meetings (Board of Trustees Regular Meeting, Work Session, and the committees); a meeting
+      page carries the agenda, "Signed Minutes" and an accessible web version, so this is the
+      agendas-and-minutes source. The host diligentoneplatform.com is not on the United States
+      platform list, which has diligent.com (a different registrable domain, so the allowlist does not
+      cover it): a candidate for the platform list (candidate_domains, review). The older host
+      washoeschools.diligent.community, still linked from the Capital Funding Protection Committee and
+      Education Alliance pages, 301-redirects to this one (checked 2026-10-09), hence the last
+      alternate. The portal is server-rendered except for the "Today's / Upcoming / Recent Meetings"
+      sidebar.
+
+  - institution: washoe-county-school-district
+    source_type: board_meeting
+    url: https://www.washoeschools.net/trustees/board-of-trustees/board-meeting-archive
+    alternates:
+      - https://www.washoeschools.net/trustees/board-of-trustees/board-meeting-archive/2026-board-archive
+      - https://www.washoeschools.net/fs/pages/36968
+      - https://www.washoeschools.net/trustees/board-of-trustees/board-meetings-calendar
+    evidence:
+      url: https://www.washoeschools.net/trustees/board-of-trustees/board-meeting-archive
+      quote: "This page is provided to the community as an archive of previous meetings of the Washoe County School District Board of Trustees."
+    notes: >-
+      "Board Meeting Archive", the district's own index of Board of Trustees meetings by year
+      (2013-2021, 2022 to 2026). Each year page lists every regular meeting, work session and special
+      meeting with a one-line summary and a link to its Diligent meeting page (agenda and minutes), so
+      the archive is a genuinely different page of the same type as the portal, not an alternate of
+      it. The 2026 year page (and its /fs/pages/36968 short URL) is an alternate, as is "Board and
+      Committee Meetings Calendar", the upcoming-meetings page whose agendas are the Diligent ones;
+      a reviewer may prefer to drop the calendar.
+
+  - institution: washoe-county-school-district
+    source_type: meeting_video
+    url: https://www.youtube.com/@wcsdboardmeetings7963
+    alternates:
+      - https://www.youtube.com/@wcsdboardmeetings7963/streams
+      - https://www.youtube.com/@wcsdboardmeetings7963/videos
+      - https://www.youtube.com/channel/UChHIK-aa3yh6Z4EHo1Zntwg
+    platform: youtube.com
+    evidence:
+      url: https://www.washoeschools.net/
+      quote: "Watch Livestream of Board Meetings"
+      kind: links_to
+      link_target: https://www.youtube.com/@wcsdboardmeetings7963/streams
+    notes: >-
+      The YouTube channel "WCSD Board Meetings" (channel description "Washoe County School District's
+      Board Meetings", channel id UChHIK-aa3yh6Z4EHo1Zntwg), linked as "Watch Livestream of Board
+      Meetings" from the Trustees menu of every page; the link goes to its Live tab (/streams), where
+      the past livestreams stay as recordings. Its videos tab lists "Regular Meeting of the Board of
+      Trustees" recordings of one to three hours each (read from the page's embedded JSON on
+      2026-10-09). The Diligent meeting pages offer a "Live Meeting" button but keep no recordings.
+      The district's other channel, @WCSDtv ("Washoe County School District", linked as YouTube in
+      the footer and from the Video Library page), holds promotional and instructional videos, not
+      meetings, and is not counted.
+
+  - institution: washoe-county-school-district
+    source_type: news
+    url: https://www.washoeschools.net/directory/communications-and-public-relations/wcsd-news-hub
+    alternates:
+      - https://www.washoeschools.net/fs/pages/24893
+      - https://www.washoeschools.net/about-us-47/news-hub
+    evidence:
+      url: https://www.washoeschools.net/directory/communications-and-public-relations/wcsd-news-hub
+      quote: "Latest WCSD News"
+    notes: >-
+      "WCSD News Hub" of the Office of Communications and Public Relations: the dated list of news
+      releases with author and summary (board meeting updates, emergency closures, awards). The home
+      page's "ALL Stories" link (/fs/pages/24893) and the About Us menu's News Hub
+      (/about-us-47/news-hub) both redirect to it. /all-news, which the site map lists, shows "No
+      post to display" and is not counted.
+
+  - institution: washoe-county-school-district
+    source_type: strategic_plan
+    url: https://www.washoeschools.net/about-us-47/strategic-plan
+    alternates:
+      - https://www.washoeschools.net/about-us-47/strategic-plan/2023-2026-wcsd-strategic-plan
+    evidence:
+      url: https://www.washoeschools.net/about-us-47/strategic-plan
+      quote: "2026 Strategic Plan Refresh"
+    notes: >-
+      Floor rule (school_board does not list strategic_plan). "Strategic Plan": the promise, the five
+      goals and the pillars of the current plan, and the 2026 refresh toward a 2027-2030 plan
+      (listening sessions, survey). The child page "2023-2026 WCSD Strategic Plan" links the plan as a
+      PDF (and a Spanish edition, and a flipbookpdf.net copy), so it is an alternate. The page's older
+      2023 forum text, including "The strategic plan acts as a roadmap for our school system", sits
+      inside an HTML comment, so it is not quoted.
+
+  - institution: washoe-county-school-district
+    source_type: annual_report
+    url: https://www.washoeschools.net/directory/accountability/district-wide-annual-accountability-reports
+    evidence:
+      url: https://www.washoeschools.net/directory/accountability/district-wide-annual-accountability-reports
+      quote: "2025-2026 WCSD Annual Accountability Report"
+    notes: >-
+      Floor rule. "District Wide Annual Accountability Reports", the statutory yearly report (NRS
+      385A) on the district's performance, one link per year 2018-19 to 2025-26; the reports
+      themselves are served by the state's Nevada Report Card (nevadareportcard.nv.gov, under the
+      trusted nv.gov). The "Reports and Publications" page under WCSD Progress describes the Annual
+      Financial Report (ACFR), the budget reports and the accountability report but links none of
+      them (checked 2026-10-09), so it is not a source; no page listing the audited financial
+      statements was found (site map, Business & Financial Services, Internal Audit's "Audit Reports"
+      page, which holds internal audits).
+
+  - institution: washoe-county-school-district
+    source_type: leadership
+    url: https://www.washoeschools.net/trustees/board-of-trustees/meet-the-trustees
+    alternates:
+      - https://washoeschools.community.diligentoneplatform.com/portal/members.aspx?id=17
+    evidence:
+      url: https://www.washoeschools.net/trustees/board-of-trustees/meet-the-trustees
+      quote: "Email Trustee Hull"
+    notes: >-
+      Floor rule. "Meet the Trustees": the seven trustees by district with office (President, Vice
+      President, Clerk), term end, email and district map. The Diligent portal's "Meet the Board of
+      Trustees" members page is an alternate. The executives have no single page: the Office of the
+      Superintendent page names the superintendent, the Chief Academic Officers page the two CAOs,
+      and the HR "Leadership Team" page is an onboarding checklist; none is counted.
+
+candidate_domains:
+  - domain: wcsdpolicy.net
+    institution: washoe-county-school-district
+    expected: confirm
+    reason: >-
+      The district's own policy site, "WCSD Board Policy and Administrative Regulations Home Page"
+      ("The Washoe County School District (District) Board Policy Online system", run by the Office
+      of the General Counsel at 425 East 9th Street, Reno). Linked from the home page menu ("Policy
+      and Regulation Information"), the Purchasing page and the Diligent portal.
+  - domain: diligentoneplatform.com
+    institution: washoe-county-school-district
+    expected: review
+    reason: >-
+      Diligent Community, the meeting portal (washoeschools.community.diligentoneplatform.com),
+      linked as "Online Governance" from every page. A shared platform not on the United States
+      platform list, whose diligent.com entry does not cover this domain: a candidate for the list.
+  - domain: diligent.community
+    institution: washoe-county-school-district
+    expected: reject
+    reason: >-
+      The same platform's older host (washoeschools.diligent.community), still linked from the
+      Capital Funding Protection Committee and Education Alliance pages. It only 301-redirects to
+      diligentoneplatform.com and serves nothing of its own (checked 2026-10-09), so there is nothing
+      on it to quote; the target domain is the one to review.
+  - domain: finalsite.com
+    institution: washoe-county-school-district
+    expected: reject
+    reason: The website vendor's corporate site, linked from the footer of every page ("Powered by Finalsite").
+  - domain: publicsurplus.com
+    institution: washoe-county-school-district
+    expected: reject
+    reason: >-
+      "Public Surplus: Government Surplus Auctions", a surplus auction marketplace linked from the
+      Purchasing page's Quick Links. Sales of surplus property, not the district's domain and not a
+      tender source.
+  - domain: leg.state.nv.us
+    institution: washoe-county-school-district
+    expected: reject
+    reason: >-
+      The Nevada Legislature's statutes site (NRS chapters 332, 338, 388, 393), linked from the How
+      to do Business page and the committee pages. It belongs to the Legislature, not the district,
+      and is not under the trusted nv.gov.
+  - domain: flipbookpdf.net
+    institution: washoe-county-school-district
+    expected: reject
+    reason: >-
+      A third-party flipbook host serving a copy of the 2023-2026 Strategic Plan, linked from the
+      plan's page. A file host, not the district.
+
+out_of_scope:
+  - name: Washoe County School District Police Department (School Police)
+    url: https://www.washoeschools.net/directory/school-police/department-homepage
+    reason: >-
+      The district's own police department ("Washoe County School Police"), a department of the
+      district that buys and budgets through it. Not a municipal or regional police_service;
+      precision trap.
+  - name: Education Alliance of Washoe County Board of Directors
+    url: https://www.washoeschools.net/trustees/committees/education-alliance-board-of-directors
+    reason: >-
+      The district's business-and-community partnership body (NRS 388.750), run as a committee of
+      the Board of Trustees: listed under Committees, public comment to a washoeschools.net address,
+      meetings on the district's Diligent portal. A committee under README rule 2, not a foundation
+      with buying power of its own; precision trap for municipal_corporation.
+  - name: Capital Funding Protection Committee
+    url: https://www.washoeschools.net/trustees/committees/capital-funding-protection-committee
+    reason: >-
+      "functions as a committee of the Board of Trustees related to oversight of the capital
+      expenditures" (NRS 393.092), with city, county and public members. A committee of the board
+      (README rule 2); its meetings are on the Diligent portal.
+  - name: Oversight Panel for School Facilities
+    url: https://www.washoeschools.net/trustees/committees/oversight-panel-for-school-facilities
+    reason: >-
+      "functions as a committee of the Board of Trustees related to renovation and construction of
+      school facilities" (NRS 393.092). A committee of the board (README rule 2).
+  - name: Committees of the Board of Trustees (Audit, Group Insurance, OPEB Trustees, Zoning Advisory, Safe and Healthy Schools Commission, School Naming, Student Attendance Advisory, Council on Family Resource Centers)
+    url: https://www.washoeschools.net/trustees/committees/committees-home
+    reason: >-
+      Advisory committees and public bodies of the Board and the Superintendent, each with its
+      agendas on the Diligent portal. Committees are out of scope (README rule 2).
+  - name: Individual schools (e.g. Reno High School, Academy of Arts, Careers and Technology)
+    url: https://reno.washoeschools.net/
+    reason: >-
+      Each of the 100+ schools has a subdomain of washoeschools.net linked from the Our Schools menu.
+      Schools of the district, not institutions; they buy through the district's Purchasing
+      Department ("the only department authorized to issue valid District Purchase Orders").
+  - name: Nevada Department of Education
+    url: https://doe.nv.gov/
+    reason: >-
+      State department linked from the home page footer and the accountability pages (and the host
+      of the Nevada Report Card). A body of the State of Nevada, scored under Nevada, not the district.
+
+notes: >-
+  Subject choice: the Washoe County School District, the first United States institution subject,
+  a large county-wide district (about 60,000 students) whose site, built by the school website vendor
+  Finalsite, is server-rendered and rich: a purchasing department with its own bid portal on a
+  subdomain (two lists, goods and services under NRS 332 and public works under NRS 338, each with
+  an awards list), a budget documents page, a capital program page with a 20-year draft plan and a
+  separate facility modernization plan, a Diligent Community meeting portal on a domain the seed
+  does not list, a district-side meeting archive, a dedicated YouTube channel for board meeting
+  recordings, and a news hub. Every type the seed expects of a school_board was found, so there are
+  no absent_sources. The county government: the loader has http://www.washoecounty.us/, which on
+  2026-10-09 refused connections on port 80 and, over HTTPS, 301-redirected to
+  https://www.washoecounty.gov/ (title "Washoe County, NV"), the government_homepage above. It is
+  not an out_of_scope entry: the harness seeds the place's government itself, as verified, so the
+  scorer would count the seed as a false positive (the first run did). The district's pages name
+  it ("The district works closely with the Cities of Reno and Sparks, Washoe County", WCSD
+  Building page) but it is not a body of the district. Trust:
+  washoeschools.net and its subdomains (the bid portal, the Data Gallery, the schools) are trusted;
+  nv.gov covers the Nevada Report Card and the Governor's Office of Economic Development pages the
+  district links. Platforms met: youtube.com (listed) and diligentoneplatform.com (not listed; the
+  seed's diligent.com does not cover it, so it is a candidate for the list, see candidate_domains);
+  demandstar.com (listed) is named on the Solicitation Opportunities page but only its home page is
+  linked, and its agency pages are JavaScript-only, so no DemandStar page is recorded. Pages the
+  script cannot read: the YouTube channel pages render with JavaScript, but the channel name,
+  description and video titles are in the served HTML's JSON, and the evidence is the district page
+  that links the channel. Bodies the district sponsors or sits on but that have no row: the charter
+  schools it sponsors (Encompass Academy, SNACS, named in the 2026 Board Archive without links) and
+  the Education Alliance (out_of_scope). No page of the district links the teachers' union or a
+  foundation of its own, so none is listed.

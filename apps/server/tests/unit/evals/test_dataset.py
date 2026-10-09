@@ -1,14 +1,16 @@
 """The eval dataset as shipped: every file reads under its schema, passes the cross-reference
-checks against the Canada seed's rules, and holds the ten subjects and 25 governments of spec
-section 10."""
+checks against its country's seed, and holds the ten Ontario subjects and 25 governments of
+spec section 10 and the three United States subjects."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.seeds import canada
 from public_atlas.modules.evals import dataset
+from public_atlas.modules.evals import service as evals
 
-SUBJECTS = 10
+SUBJECTS = 13
+CANADIAN_SUBJECTS = 10
 GOVERNMENTS = 25
 
 
@@ -17,16 +19,29 @@ def rules() -> countries.CountryRules:
     return countries.rules_from_seed(canada.SEED)
 
 
-def test_every_file_reads_and_validates(rules: countries.CountryRules):
+def test_every_file_reads_and_validates():
     files = dataset.all_files()
-    assert dataset.validate_files(files, rules) == []
+    assert dataset.validate_files(files, evals.rules_by_country()) == []
     subjects, lists, errors = dataset.load_all(files)
     assert errors == []
     assert len(subjects) == SUBJECTS
     assert len(lists) == 1
-    assert all(s.subject.kind == "place" for s in subjects.values())
+    by_country = {}
+    for expected in subjects.values():
+        by_country.setdefault(expected.subject.country_code, []).append(expected)
+    assert len(by_country["CA"]) == CANADIAN_SUBJECTS
+    assert all(s.subject.kind == "place" for s in by_country["CA"])
+    assert {s.subject.kind for s in by_country["US"]} == {"place", "institution"}
     (places,) = lists.values()
+    assert places.country_code == "CA"
     assert len(places.municipalities) == GOVERNMENTS
+
+
+def test_a_file_of_an_unseeded_country_is_refused():
+    files = dataset.files_named(["mcgarry"], lists_by_default=False)
+    assert dataset.validate_files(files, {"US": evals.rules_by_country()["US"]}) == [
+        "mcgarry: no rules for country CA"
+    ]
 
 
 def test_parent_labels_replace_relationships(rules: countries.CountryRules):

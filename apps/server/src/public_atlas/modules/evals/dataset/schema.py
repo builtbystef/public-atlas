@@ -11,17 +11,28 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from public_atlas.modules.graph.models import IdentifierScheme
+
 ROOT = Path(__file__).resolve().parent
 SUBJECTS = ROOT / "subjects"
 PLACES = ROOT / "places"
 
 Key = Annotated[str, Field(pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$")]
+# ISO 3166-1 alpha-2, as `country_settings.country_code`.
+CountryCode = Annotated[str, Field(pattern=r"^[A-Z]{2}$")]
 # `key` for this file, `slug:key` for another subject file.
 Ref = Annotated[str, Field(pattern=r"^([a-z0-9-]+:)?[a-z0-9]+(-[a-z0-9]+)*$")]
 Url = Annotated[str, Field(pattern=r"^https?://")]
 
 type HomepageHost = Literal["trusted_domain", "own_domain", "platform", "none"]
 type Outcome = Literal["confirm", "reject", "review"]
+
+# The scheme a file's `official_code` is in, by country: the register the country's places list
+# loads its codes from.
+OFFICIAL_CODE_SCHEMES: dict[str, IdentifierScheme] = {
+    "CA": IdentifierScheme.STATCAN_SGC,
+    "US": IdentifierScheme.FIPS,
+}
 
 
 def host_of(url: str) -> str:
@@ -134,6 +145,8 @@ class OutOfScope(Strict):
 
 class Subject(Strict):
     kind: Literal["place", "institution"]
+    # The country whose seed gives the levels, types and platforms the file is read against.
+    country_code: CountryCode
     name: str
     # The place's level, or that of the institution's place.
     level: str
@@ -141,7 +154,8 @@ class Subject(Strict):
     place: str
     parent: str | None = None
     tier: Literal["single", "upper", "lower"] | None = None
-    # Statistics Canada CSD or CD code.
+    # The place's code in the country's scheme (`OFFICIAL_CODE_SCHEMES`): Statistics Canada's CSD
+    # or CD code, a FIPS code.
     official_code: str | None = None
     # The place's government, or the ministry itself.
     institution: Key
@@ -208,6 +222,7 @@ class Municipality(Strict):
 
 
 class PlaceList(Strict):
+    country_code: CountryCode
     place: str
     # url, publisher, retrieved_at.
     source: dict[str, str]

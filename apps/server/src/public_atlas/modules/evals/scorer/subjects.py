@@ -131,9 +131,20 @@ def _prefer(rows: list[InstitutionRow], type_: str, place_id: uuid.UUID | None) 
 
 def match_subject(graph: Graph, rules: CountryRules, expected: SubjectFile) -> SubjectMatch:
     subject = expected.subject
-    if subject.kind == "place":
+    place = None
+    if subject.kind == "place" and subject.official_code is not None:
+        # By the register's code first: a city and the township of its name share a name.
+        place = next(
+            (
+                row
+                for row in graph.places.values()
+                if row.code == subject.official_code and row.status != REJECTED
+            ),
+            None,
+        )
+    if place is None and subject.kind == "place":
         place = find_place(graph, rules, subject.name, level=subject.level)
-    else:
+    elif place is None:
         place = find_place(graph, rules, subject.place, level=subject.level)
     match = SubjectMatch(place=place)
     place_id = place.id if place else None

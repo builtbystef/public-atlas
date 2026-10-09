@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: City of Greater Sudbury
   level: municipality
   place: City of Greater Sudbury

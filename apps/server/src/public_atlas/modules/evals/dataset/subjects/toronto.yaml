@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: City of Toronto
   level: municipality
   place: City of Toronto

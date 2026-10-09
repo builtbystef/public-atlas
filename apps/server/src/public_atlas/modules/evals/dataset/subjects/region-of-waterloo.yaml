@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: Regional Municipality of Waterloo
   level: region
   place: Regional Municipality of Waterloo

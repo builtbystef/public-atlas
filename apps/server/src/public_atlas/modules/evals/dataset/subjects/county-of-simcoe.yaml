@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: County of Simcoe
   level: region
   place: County of Simcoe

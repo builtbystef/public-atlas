@@ -1,5 +1,6 @@
 subject:
   kind: place
+  country_code: CA
   name: Town of Oakville
   level: municipality
   place: Town of Oakville

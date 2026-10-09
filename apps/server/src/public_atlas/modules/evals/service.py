@@ -6,12 +6,13 @@ id, in the eval database where its assignments live. The runner prepares the eva
 seeds the country through the real seed and loader with every assignment held, seeds each
 chosen subject and queues its discovery, serves the queues in this process, then scores and
 prices the graph and writes `eval_runs` and `eval_scores` to the main database, so history
-survives a reset of the eval database.
+survives a reset of the eval database. A run works one country's files: each file names its
+country, and the country's seed and official lists are what the eval database is built from.
 """
 
 import logging
 import uuid
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, field
 from decimal import Decimal
@@ -30,7 +31,7 @@ from public_atlas.modules.assignments.descriptors import DESCRIPTORS
 from public_atlas.modules.assignments.models import AssignmentType, Run, RunMode, RunStatus
 from public_atlas.modules.assignments.schemas import RunFilter
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import canada
+from public_atlas.modules.countries.seeds import SEEDS
 from public_atlas.modules.evals import dataset, harness, scorer
 from public_atlas.modules.evals.dataset import PlaceList, SubjectFile
 from public_atlas.modules.evals.harness import CostLine, Report, Seeded
@@ -41,7 +42,9 @@ from public_atlas.modules.evals.schemas import (
     EvalScoreOutput,
     TypeSummary,
 )
+from public_atlas.modules.imports import service as imports
 from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
+from public_atlas.modules.imports.lists.us import states_counties
 from public_atlas.resources import Resources, build_resources
 from public_atlas.shared.exceptions import NotFoundError
 
@@ -49,33 +52,70 @@ __all__ = [
     "DEFAULT_LISTS",
     "EvalReport",
     "ScoreReport",
+    "country_of",
     "default_queues",
     "list_eval_runs",
     "load_dataset",
     "read_eval_run",
     "record_results",
+    "rules_by_country",
     "run_eval",
     "score_database",
+    "seed_of",
 ]
 
 logger = logging.getLogger(__name__)
 
-# The official lists the eval database is loaded with: what the live database holds before any
-# agent runs. Product data, so the dataset's places exist as the loader made them.
-DEFAULT_LISTS: tuple[ModuleType, ...] = (ontario_places,)
-COUNTRY_SEED: dict[str, Any] = canada.SEED
+# The official lists the eval database is loaded with, by country: what the live database holds
+# before any agent runs, as far as a subject's seed needs it. Product data, so the dataset's
+# places exist as the loader made them. Ontario's places carry the 25 governments of the places
+# file; the United States' states and counties give a city subject its county and a county or
+# district subject its place, and the municipalities (fifteen minutes to load) are left to the
+# harness, which makes a subject's own place when no list did.
+DEFAULT_LISTS: dict[str, tuple[ModuleType, ...]] = {
+    "CA": (ontario_places,),
+    "US": (states_counties,),
+}
 default_queues = harness.default_queues
 
 
 # --- The dataset ---
 
 
+def seed_of(country_code: str) -> dict[str, Any]:
+    """The seed module's dictionary for a country, by its code."""
+    for seed in SEEDS.values():
+        if seed["settings"]["country_code"] == country_code:
+            return seed
+    raise ValueError(f"no seed for country {country_code}")
+
+
+def rules_by_country() -> dict[str, countries.CountryRules]:
+    """Every seeded country's rules, with no database: what the dataset is validated against."""
+    return {
+        str(seed["settings"]["country_code"]): countries.rules_from_seed(seed)
+        for seed in SEEDS.values()
+    }
+
+
+def country_of(subjects: dict[str, SubjectFile], lists: dict[str, PlaceList]) -> str:
+    """The one country the chosen files are about; a run or a scoring works one country."""
+    found = {expected.subject.country_code for expected in subjects.values()}
+    found |= {data.country_code for data in lists.values()}
+    if len(found) != 1:
+        raise ValueError(
+            f"the chosen files are about {len(found)} countries ({', '.join(sorted(found))}); "
+            "choose one country's files"
+        )
+    return found.pop()
+
+
 def load_dataset(
-    files: Sequence[Path], *, rules: countries.CountryRules | None = None
+    files: Sequence[Path], *, rules: Mapping[str, countries.CountryRules] | None = None
 ) -> tuple[dict[str, SubjectFile], dict[str, PlaceList]]:
     """The chosen files, by slug, after the whole dataset validated: a subject may refer to
-    another file. Against the seed's rules unless `rules` is given."""
-    rules = rules if rules is not None else countries.rules_from_seed(COUNTRY_SEED)
+    another file. Against the seeds' rules by country unless `rules` is given."""
+    rules = rules if rules is not None else rules_by_country()
     errors = dataset.validate_files(dataset.all_files(), rules)
     if errors:
         raise ValueError("the eval dataset does not validate:\n" + "\n".join(errors))
@@ -117,9 +157,10 @@ async def score_database(
     the eval database, an eval run recorded for it and not yet finished gets the scores and
     the cost: how a run served by workers of its own (`--no-worker`) is completed."""
     subjects, lists = load_dataset(files)
+    country_code = country_of(subjects, lists)
     if not eval_database:
         async with resources.session() as session:
-            graph, rules = await _graph_and_rules(session)
+            graph, rules = await _graph_and_rules(session, country_code)
         return ScoreReport(
             database=str(resources.engine.url.database),
             institutions=len(graph.institutions),
@@ -129,7 +170,7 @@ async def score_database(
     await harness.require_main_migrated(resources)
     async with _eval_resources(resources, settings) as eval_res:
         async with eval_res.session() as session:
-            graph, rules = await _graph_and_rules(session)
+            graph, rules = await _graph_and_rules(session, country_code)
             run = await session.scalar(
                 select(Run).where(Run.is_eval.is_(True)).order_by(Run.created_at.desc()).limit(1)
             )
@@ -155,9 +196,11 @@ async def score_database(
     return report
 
 
-async def _graph_and_rules(session: AsyncSession) -> tuple[scorer.Graph, countries.CountryRules]:
+async def _graph_and_rules(
+    session: AsyncSession, country_code: str
+) -> tuple[scorer.Graph, countries.CountryRules]:
     graph = await scorer.load_graph(session)
-    rules = await countries.load_rules(session, str(COUNTRY_SEED["settings"]["country_code"]))
+    rules = await countries.load_rules(session, country_code)
     return graph, rules
 
 
@@ -221,7 +264,7 @@ class EvalReport:
         }
 
 
-async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
+async def run_eval(  # noqa: PLR0913, PLR0915 - the steps of a run, in order
     resources: Resources,
     files: Sequence[Path],
     *,
@@ -229,7 +272,7 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
     keep: bool = False,
     serve: bool = True,
     queues: Sequence[Queue] | None = None,
-    lists: Iterable[ModuleType] = DEFAULT_LISTS,
+    lists: Iterable[ModuleType] | None = None,
     name: str | None = None,
     report: Report = logger.info,
     poll_seconds: float = harness.POLL_SECONDS,
@@ -238,8 +281,10 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
     database's: the eval run and its scores are recorded there. `types` bounds the run: the
     assignment types it works, as its filter. `keep` leaves the eval database as it is instead
     of resetting it. With `serve` off the work is queued and left to workers of the eval
-    database. `lists` are the official lists the country is loaded with."""
+    database. `lists` are the official lists the country is loaded with, `DEFAULT_LISTS` for the
+    files' country unless given."""
     subjects, place_lists = load_dataset(files)
+    country_code, seed, lists = _country_setup(subjects, place_lists, lists)
     queues = tuple(queues) if queues is not None else harness.default_queues()
     settings = harness.eval_settings(resources.settings)
     harness.refuse_shared_database(resources.settings, settings.eval_database_name)
@@ -258,7 +303,7 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
             session,
             resources.jobs,
             name=run_name,
-            country_code=str(COUNTRY_SEED["settings"]["country_code"]),
+            country_code=country_code,
             mode=RunMode.AUTO,
             filter=run_filter,
             is_eval=True,
@@ -282,7 +327,7 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
                     }
                     for t, d in DESCRIPTORS.items()
                 },
-                "official_lists": [module.__name__.rsplit(".", 1)[-1] for module in lists],
+                "official_lists": [imports.module_name(module) for module in lists],
             },
             cost=Decimal(0),
             started_at=utcnow(),
@@ -299,7 +344,7 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
                 session,
                 eval_res.object_store,
                 eval_res.settings,
-                seed=COUNTRY_SEED,
+                seed=seed,
                 lists=lists,
                 parser=eval_res.parser,
                 report=report,
@@ -346,7 +391,7 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
         )
         result.served = True
         async with eval_res.session() as session:
-            graph, rules = await _graph_and_rules(session)
+            graph, rules = await _graph_and_rules(session, country_code)
             result.costs = await harness.cost_lines(session, run.id)
             result.cost_by_subject = await harness.cost_by_subject(
                 session,
@@ -366,6 +411,17 @@ async def run_eval(  # noqa: PLR0913 - the steps of a run, in order
             await assignments.stop_run(session, run)
         await session.commit()
     return result
+
+
+def _country_setup(
+    subjects: dict[str, SubjectFile],
+    place_lists: dict[str, PlaceList],
+    lists: Iterable[ModuleType] | None,
+) -> tuple[str, dict[str, Any], tuple[ModuleType, ...]]:
+    """The files' country, its seed and the official lists its eval database is loaded with."""
+    country_code = country_of(subjects, place_lists)
+    chosen = tuple(lists) if lists is not None else DEFAULT_LISTS.get(country_code, ())
+    return country_code, seed_of(country_code), chosen
 
 
 async def record_results(

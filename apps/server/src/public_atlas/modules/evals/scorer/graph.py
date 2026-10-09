@@ -9,6 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.modules.assignments.models import Assignment, AssignmentType
+from public_atlas.modules.evals.dataset.schema import OFFICIAL_CODE_SCHEMES
 from public_atlas.modules.graph.models import (
     Alias,
     Domain,
@@ -16,7 +17,6 @@ from public_atlas.modules.graph.models import (
     EntityStatus,
     Homepage,
     Identifier,
-    IdentifierScheme,
     Institution,
     Place,
     Source,
@@ -30,7 +30,8 @@ class PlaceRow:
     level: str
     parent_id: uuid.UUID | None
     government_id: uuid.UUID | None
-    # The place's code in the statistics office's scheme, when a list gave it one.
+    # The place's code in its country's official scheme (`OFFICIAL_CODE_SCHEMES`), when a list
+    # gave it one.
     code: str | None
     status: str
     names: tuple[str, ...]
@@ -135,7 +136,7 @@ async def load_graph(session: AsyncSession) -> Graph:
         (
             await session.execute(
                 select(Identifier.place_id, Identifier.value).where(
-                    Identifier.scheme == IdentifierScheme.STATCAN_SGC,
+                    Identifier.scheme.in_(list(OFFICIAL_CODE_SCHEMES.values())),
                     Identifier.place_id.is_not(None),
                 )
             )
