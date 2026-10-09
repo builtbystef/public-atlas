@@ -3,6 +3,7 @@
 import type { QueryKey } from "@tanstack/react-query";
 import type { ComponentProps } from "react";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { ChipInput } from "@/components/shared/chip-input";
 import {
   EntityCombobox,
@@ -12,7 +13,6 @@ import {
 import { MultiCombobox, type MultiComboboxOption } from "@/components/shared/multi-combobox";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 
 import { useFieldContext } from "./contexts";
@@ -193,26 +193,21 @@ export function SelectField({
         {label}
         {required && <RequiredMark />}
       </FieldLabel>
-      <NativeSelect
+      <OptionSelect
         id={field.name}
         name={field.name}
         value={field.state.value}
         onBlur={field.handleBlur}
-        onChange={(event) => field.handleChange(event.target.value)}
+        onValueChange={field.handleChange}
         aria-invalid={invalid}
         aria-required={required}
         disabled={disabled}
         className="w-full"
-      >
-        {placeholder !== undefined && (
-          <NativeSelectOption value="">{placeholder}</NativeSelectOption>
-        )}
-        {options.map((option) => (
-          <NativeSelectOption key={option.value} value={option.value}>
-            {option.label}
-          </NativeSelectOption>
-        ))}
-      </NativeSelect>
+        options={[
+          ...(placeholder !== undefined ? [{ value: "", label: placeholder }] : []),
+          ...options,
+        ]}
+      />
       {description && <FieldDescription>{description}</FieldDescription>}
       {invalid && <FieldError errors={field.state.meta.errors} />}
     </Field>

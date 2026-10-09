@@ -2,11 +2,11 @@
 
 import type { AssignmentType } from "@public-atlas/api-client";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { TableToolbar } from "@/components/shared/table-toolbar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import {
   Table,
   TableBody,
@@ -81,21 +81,16 @@ export function EvalScoresTable({
       <TableToolbar
         filters={
           <>
-            <NativeSelect
+            <OptionSelect
               value={sort}
-              onChange={(event) => onSortChange(event.target.value as SubjectSort)}
+              onValueChange={onSortChange}
               aria-label="Sort subjects"
-            >
-              {(Object.keys(sortLabels) as SubjectSort[]).map((value) => (
-                <NativeSelectOption
-                  key={value}
-                  value={value}
-                  disabled={value === "change" && !comparing}
-                >
-                  {sortLabels[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              options={(Object.keys(sortLabels) as SubjectSort[]).map((value) => ({
+                value,
+                label: sortLabels[value],
+                disabled: value === "change" && !comparing,
+              }))}
+            />
             <Label className="ml-2 flex items-center gap-2 font-normal">
               <Checkbox checked={belowOnly} onCheckedChange={onBelowOnlyChange} />
               Only subjects below target

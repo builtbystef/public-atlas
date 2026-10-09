@@ -5,12 +5,12 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { SearchIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { DataTable } from "@/components/shared/data-table";
 import { TableToolbar } from "@/components/shared/table-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlFilters } from "@/hooks/use-url-filters";
@@ -60,7 +60,9 @@ export function ReviewTable({
 }) {
   const [input, setInput] = useState(initialFilters.q ?? "");
   const q = useDebouncedValue(input.trim(), SEARCH_DEBOUNCE_MS);
-  const [status, setStatus] = useState<ReviewSearch["status"]>(initialFilters.status ?? "open");
+  const [status, setStatus] = useState<NonNullable<ReviewSearch["status"]>>(
+    initialFilters.status ?? "open",
+  );
   const [rule, setRule] = useState<ReviewRule | "">(initialFilters.rule ?? "");
   // Set by a link from an item's page; cleared, not chosen, here.
   const [kind, setKind] = useState(initialFilters.kind ?? "");
@@ -142,65 +144,54 @@ export function ReviewTable({
                 </Button>
               </Badge>
             )}
-            <NativeSelect
+            <OptionSelect<NonNullable<ReviewSearch["status"]>>
               value={status}
-              onChange={(event) => setStatus(event.target.value as ReviewSearch["status"])}
+              onValueChange={setStatus}
               aria-label="Filter by status"
-            >
-              {reviewStatuses.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {reviewStatusLabels[value]}
-                </NativeSelectOption>
-              ))}
-              <NativeSelectOption value="all">Any status</NativeSelectOption>
-            </NativeSelect>
-            <NativeSelect
+              options={[
+                ...reviewStatuses.map((value) => ({ value, label: reviewStatusLabels[value] })),
+                { value: "all", label: "Any status" },
+              ]}
+            />
+            <OptionSelect<ReviewRule | "">
               value={rule}
-              onChange={(event) => setRule(event.target.value as ReviewRule | "")}
+              onValueChange={setRule}
               aria-label="Filter by reason"
-            >
-              <NativeSelectOption value="">Any reason</NativeSelectOption>
-              {reviewRules.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {reviewRuleLabels[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <NativeSelect
+              options={[
+                { value: "", label: "Any reason" },
+                ...reviewRules.map((value) => ({ value, label: reviewRuleLabels[value] })),
+              ]}
+            />
+            <OptionSelect<EntityKind | "">
               value={entityKind}
-              onChange={(event) => setEntityKind(event.target.value as EntityKind | "")}
+              onValueChange={setEntityKind}
               aria-label="Filter by entity"
-            >
-              <NativeSelectOption value="">Any entity</NativeSelectOption>
-              {entityKinds.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {entityKindLabels[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              options={[
+                { value: "", label: "Any entity" },
+                ...entityKinds.map((value) => ({ value, label: entityKindLabels[value] })),
+              ]}
+            />
             {countries.length > 1 && (
-              <NativeSelect
+              <OptionSelect
                 value={countryCode}
-                onChange={(event) => setCountryCode(event.target.value)}
+                onValueChange={setCountryCode}
                 aria-label="Filter by country"
-              >
-                <NativeSelectOption value="">Any country</NativeSelectOption>
-                {countries.map((country) => (
-                  <NativeSelectOption key={country.code} value={country.code}>
-                    {country.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+                options={[
+                  { value: "", label: "Any country" },
+                  ...countries.map((country) => ({ value: country.code, label: country.name })),
+                ]}
+              />
             )}
-            <NativeSelect
+            <OptionSelect<ReviewAffects | "">
               value={affects}
-              onChange={(event) => setAffects(event.target.value as ReviewAffects | "")}
+              onValueChange={setAffects}
               aria-label="Filter by how many entities a row affects"
-            >
-              <NativeSelectOption value="">Any size</NativeSelectOption>
-              <NativeSelectOption value="several">Affects several</NativeSelectOption>
-              <NativeSelectOption value="one">Affects one</NativeSelectOption>
-            </NativeSelect>
+              options={[
+                { value: "", label: "Any size" },
+                { value: "several", label: "Affects several" },
+                { value: "one", label: "Affects one" },
+              ]}
+            />
           </>
         }
         count={`${rows.total} ${rows.total === 1 ? "row" : "rows"}`}

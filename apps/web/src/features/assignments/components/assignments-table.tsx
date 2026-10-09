@@ -9,9 +9,9 @@ import type {
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { DataTable } from "@/components/shared/data-table";
 import { TableToolbar } from "@/components/shared/table-toolbar";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { browserApi } from "@/lib/api/client";
@@ -74,42 +74,39 @@ export function AssignmentsTable({
       <TableToolbar
         filters={
           <>
-            <NativeSelect
+            <OptionSelect<AssignmentType | "">
               value={type}
-              onChange={(event) => setType(event.target.value as AssignmentType | "")}
+              onValueChange={setType}
               aria-label="Filter by type"
-            >
-              <NativeSelectOption value="">Any type</NativeSelectOption>
-              {assignmentTypes.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {assignmentTypeLabels[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <NativeSelect
+              options={[
+                { value: "", label: "Any type" },
+                ...assignmentTypes.map((value) => ({ value, label: assignmentTypeLabels[value] })),
+              ]}
+            />
+            <OptionSelect<AssignmentStatus | "">
               value={status}
-              onChange={(event) => setStatus(event.target.value as AssignmentStatus | "")}
+              onValueChange={setStatus}
               aria-label="Filter by status"
-            >
-              <NativeSelectOption value="">Any status</NativeSelectOption>
-              {assignmentStatuses.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {assignmentStatusLabels[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            <NativeSelect
+              options={[
+                { value: "", label: "Any status" },
+                ...assignmentStatuses.map((value) => ({
+                  value,
+                  label: assignmentStatusLabels[value],
+                })),
+              ]}
+            />
+            <OptionSelect<AssignmentResult | "">
               value={result}
-              onChange={(event) => setResult(event.target.value as AssignmentResult | "")}
+              onValueChange={setResult}
               aria-label="Filter by result"
-            >
-              <NativeSelectOption value="">Any result</NativeSelectOption>
-              {assignmentResults.map((value) => (
-                <NativeSelectOption key={value} value={value}>
-                  {assignmentResultLabels[value]}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              options={[
+                { value: "", label: "Any result" },
+                ...assignmentResults.map((value) => ({
+                  value,
+                  label: assignmentResultLabels[value],
+                })),
+              ]}
+            />
           </>
         }
         count={`${assignments.total} ${assignments.total === 1 ? "assignment" : "assignments"}`}

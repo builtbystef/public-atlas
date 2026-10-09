@@ -6,12 +6,12 @@ import { ChevronDownIcon, InfoIcon, LoaderIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { JsonView } from "@/components/shared/json-view";
 import { PageHeader } from "@/components/shared/layout/page-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { browserApi } from "@/lib/api/client";
 import { formatDateTime, formatDuration } from "@/lib/formatting/dates";
@@ -129,20 +129,22 @@ export function EvalRunDetail({
       >
         <label className="flex items-center gap-2 text-sm text-muted-foreground">
           Compare with
-          <NativeSelect
+          <OptionSelect
             value={baselineId ?? NO_COMPARISON}
-            onChange={(event) => setCompare(event.target.value)}
-          >
-            <NativeSelectOption value={NO_COMPARISON}>Nothing</NativeSelectOption>
-            {compareOptions(run, candidates?.items ?? [], baseline).map((option) => (
-              <NativeSelectOption key={option.id} value={option.id}>
-                {formatDateTime(option.started_at, timeZone)}
-                {option.id === run.previous_id && " (previous)"}
-                {option.dataset_version !== run.dataset_version && " · other dataset"}
-                {!option.finished_at && " · running"}
-              </NativeSelectOption>
-            ))}
-          </NativeSelect>
+            onValueChange={setCompare}
+            options={[
+              { value: NO_COMPARISON, label: "Nothing" },
+              ...compareOptions(run, candidates?.items ?? [], baseline).map((option) => ({
+                value: option.id,
+                label: [
+                  formatDateTime(option.started_at, timeZone),
+                  option.id === run.previous_id ? " (previous)" : "",
+                  option.dataset_version !== run.dataset_version ? " · other dataset" : "",
+                  option.finished_at ? "" : " · running",
+                ].join(""),
+              })),
+            ]}
+          />
         </label>
       </PageHeader>
 

@@ -5,11 +5,11 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useState } from "react";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { DataTable } from "@/components/shared/data-table";
 import { EntityCombobox } from "@/components/shared/entity-combobox";
 import { TableToolbar } from "@/components/shared/table-toolbar";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { useListState } from "@/hooks/use-list-state";
 import { useUrlFilters } from "@/hooks/use-url-filters";
@@ -122,31 +122,28 @@ export function PlacesTable({
               </div>
             )}
             {!nested && countries.length > 1 && (
-              <NativeSelect
+              <OptionSelect
                 value={countryCode}
-                onChange={(event) => setCountryCode(event.target.value)}
+                onValueChange={setCountryCode}
                 aria-label="Filter by country"
-              >
-                <NativeSelectOption value="">Any country</NativeSelectOption>
-                {countries.map((c) => (
-                  <NativeSelectOption key={c.settings.country_code} value={c.settings.country_code}>
-                    {c.settings.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
+                options={[
+                  { value: "", label: "Any country" },
+                  ...countries.map((c) => ({
+                    value: c.settings.country_code,
+                    label: c.settings.name,
+                  })),
+                ]}
+              />
             )}
-            <NativeSelect
+            <OptionSelect
               value={level}
-              onChange={(event) => setLevel(event.target.value)}
+              onValueChange={setLevel}
               aria-label="Filter by administrative level"
-            >
-              <NativeSelectOption value="">Any level</NativeSelectOption>
-              {levelOptions.map((name) => (
-                <NativeSelectOption key={name} value={name}>
-                  {humanize(name)}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
+              options={[
+                { value: "", label: "Any level" },
+                ...levelOptions.map((name) => ({ value: name, label: humanize(name) })),
+              ]}
+            />
             <PopulationRange
               idPrefix={nested ? "child-population" : "population"}
               min={minInput}

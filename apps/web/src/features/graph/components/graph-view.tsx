@@ -16,21 +16,14 @@ import {
 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
+import { OptionSelect } from "@/components/shared/option-select";
 import { EntityCombobox } from "@/components/shared/entity-combobox";
 import { TableToolbar } from "@/components/shared/table-toolbar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUrlFilters } from "@/hooks/use-url-filters";
@@ -326,40 +319,20 @@ export function GraphView({
                 resolve={(id) => placeOptionQuery(browserApi, id)}
               />
             </div>
-            <Select
+            <OptionSelect
               value={detail}
-              onValueChange={(value) => setDetail(value as GraphDetail)}
-              items={graphDetailLabels}
-            >
-              <SelectTrigger aria-label="How much to draw">
-                <span className="text-muted-foreground">Show</span>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {graphDetails.map((value) => (
-                  <SelectItem key={value} value={value}>
-                    {graphDetailLabels[value]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
+              onValueChange={setDetail}
+              prefix="Show"
+              aria-label="How much to draw"
+              options={graphDetails.map((value) => ({ value, label: graphDetailLabels[value] }))}
+            />
+            <OptionSelect
               value={overlay}
-              onValueChange={(value) => chooseOverlay(value as GraphOverlay)}
-              items={graphOverlayLabels}
-            >
-              <SelectTrigger aria-label="What the colour shows">
-                <span className="text-muted-foreground">Colour</span>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {graphOverlays.map((value) => (
-                  <SelectItem key={value} value={value}>
-                    {graphOverlayLabels[value]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onValueChange={chooseOverlay}
+              prefix="Colour"
+              aria-label="What the colour shows"
+              options={graphOverlays.map((value) => ({ value, label: graphOverlayLabels[value] }))}
+            />
             <Popover>
               <PopoverTrigger render={<Button variant="outline" />}>
                 <SlidersHorizontalIcon /> Filters
@@ -373,49 +346,43 @@ export function GraphView({
                 <PopoverTitle>Filters</PopoverTitle>
                 <Label className="flex flex-col items-start gap-1">
                   Status
-                  <NativeSelect
+                  <OptionSelect<EntityStatus | "">
                     value={status}
-                    onChange={(event) => setStatus(event.target.value as EntityStatus | "")}
+                    onValueChange={setStatus}
                     className="w-full"
-                  >
-                    <NativeSelectOption value="">Any status but rejected</NativeSelectOption>
-                    {entityStatuses.map((value) => (
-                      <NativeSelectOption key={value} value={value}>
-                        {entityStatusLabels[value]}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                    options={[
+                      { value: "", label: "Any status but rejected" },
+                      ...entityStatuses.map((value) => ({
+                        value,
+                        label: entityStatusLabels[value],
+                      })),
+                    ]}
+                  />
                 </Label>
                 <Label className="flex flex-col items-start gap-1">
                   Administrative level
-                  <NativeSelect
+                  <OptionSelect
                     value={level}
-                    onChange={(event) => setLevel(event.target.value)}
+                    onValueChange={setLevel}
                     className="w-full"
-                  >
-                    <NativeSelectOption value="">Any level</NativeSelectOption>
-                    {levelOptions.map((name) => (
-                      <NativeSelectOption key={name} value={name}>
-                        {humanize(name)}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                    options={[
+                      { value: "", label: "Any level" },
+                      ...levelOptions.map((name) => ({ value: name, label: humanize(name) })),
+                    ]}
+                  />
                 </Label>
                 <Label className="flex flex-col items-start gap-1">
                   Institution type
-                  <NativeSelect
+                  <OptionSelect
                     value={type}
-                    onChange={(event) => setType(event.target.value)}
+                    onValueChange={setType}
                     className="w-full"
                     disabled={detail === "hierarchy"}
-                  >
-                    <NativeSelectOption value="">Any type</NativeSelectOption>
-                    {institutionTypes.map((t) => (
-                      <NativeSelectOption key={t.name} value={t.name}>
-                        {humanize(t.name)}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
+                    options={[
+                      { value: "", label: "Any type" },
+                      ...institutionTypes.map((t) => ({ value: t.name, label: humanize(t.name) })),
+                    ]}
+                  />
                   {detail === "hierarchy" && (
                     <span className="text-xs font-normal text-muted-foreground">
                       The hierarchy shows governments alone.
