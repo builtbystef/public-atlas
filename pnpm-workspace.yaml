@@ -30,7 +30,7 @@ catalog:
   # Bump these two together; a mismatched pair fails at startup. Dependabot
   # cannot see the coupling through the npm: alias, so update both by hand.
   vite: npm:@voidzero-dev/vite-plus-core@0.3.3
-  vite-plus: 0.3.3
+  vite-plus: 1.0.0
   zod: ^4.6.5
 overrides:
   vite: "catalog:"
