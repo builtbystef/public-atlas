@@ -44,6 +44,7 @@ from public_atlas.modules.imports.entries import (
     Figure,
     InstitutionEntry,
     PlaceEntry,
+    ServedPlace,
 )
 from public_atlas.modules.imports.files import Format, ListFile, OpenedFile, Retrieval
 from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
@@ -192,7 +193,7 @@ def tiny_libraries(cache_dir: Path) -> ModuleType:
                 name=row["name"],
                 institution_type="library",
                 place=row["place"],
-                served_places=(row["served"],),
+                served_places=(ServedPlace(name=row["served"]),),
                 homepage="https://oakville.example/library",
                 citations={
                     "institution": Citation(source=source.name, line=row.line),

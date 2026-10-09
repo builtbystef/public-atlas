@@ -9,7 +9,7 @@ from public_atlas.modules.imports.entries import Citation, Code, PlaceEntry
 from public_atlas.modules.imports.files import Format, ListFile, Retrieval
 from public_atlas.modules.imports.lists import LISTS, list_name
 from public_atlas.modules.imports.lists.canada import statcan
-from public_atlas.modules.imports.lists.canada.ontario import places
+from public_atlas.modules.imports.lists.canada.ontario import health_units, places
 
 
 def test_lists_are_found_by_walking_the_package_and_named_by_their_path():
@@ -43,13 +43,21 @@ def _module(name: str, *sources: ListFile) -> ModuleType:
 
 def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
     text = service.manifest(Path("/cache"))
-    fetched = sum(len(module.SOURCES) for module in LISTS.values())
+    sources = [file for module in LISTS.values() for file in module.SOURCES]
+    fetched = sum(1 for file in sources if file.retrieval is Retrieval.FETCHED)
+    manual = [file for file in sources if file.retrieval is Retrieval.MANUAL]
     assert text.startswith(f"Fetched files ({fetched})")
     for file in places.SOURCES:
         assert f"canada/ontario/places/{file.name}: {file.title}" in text
         assert f"  {file.url}" in text
         assert f"  sha256 {file.sha256}" in text
-    assert text.endswith("Manual files (0)\n  none")
+    # The health units page, saved by hand since ontario.ca pins no hash.
+    assert f"\nManual files ({len(manual)})\n" in text
+    page = health_units.PAGE
+    assert page in manual
+    assert f"canada/ontario/health_units/{page.name}: {page.title}" in text
+    assert f"  put it at /cache/{page.name}.html" in text
+    assert text.rstrip().endswith(page.instructions.strip().splitlines()[-1].strip())
 
     export = ListFile(
         name="alberta_contacts",

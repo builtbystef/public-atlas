@@ -52,6 +52,7 @@ from public_atlas.modules.imports.entries import (
     Figure,
     InstitutionEntry,
     PlaceEntry,
+    ServedPlace,
 )
 from public_atlas.modules.imports.models import OfficialList, Retrieval
 
@@ -738,10 +739,17 @@ class Loader:
             )
         return found[0].id
 
-    async def _served_place(self, institution: Institution, name: str, label: str) -> None:
-        served = await self._find_place(name, list(self.rules.levels))
+    async def _served_place(self, institution: Institution, place: ServedPlace, label: str) -> None:
+        """The place found as the entry's own place is: at its level when it gives one, under
+        its parent when it gives one."""
+        levels = list(self.rules.levels)
+        if place.level is not None:
+            if place.level not in self.rules.levels:
+                raise Skip(f"{self.rules.name} has no administrative level {place.level!r}")
+            levels = [place.level]
+        served = await self._find_place(place.name, levels, parent=place.parent)
         if served is None:
-            raise Skip(f"served place {name!r} is not loaded")
+            raise Skip(f"served place {place.name!r} is not loaded")
         exists = await self.session.get(InstitutionServedPlace, (institution.id, served.id))
         if exists is None:
             self.session.add(

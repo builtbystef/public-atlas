@@ -94,6 +94,18 @@ class PlaceEntry(BaseModel):
         return self.citations.get("government", self.citations["place"])
 
 
+class ServedPlace(BaseModel):
+    """A place a multi-place body serves, said as the entry's own place is: by name, and by
+    level and parent when the name alone does not say which (the Town of Cochrane, not the
+    district; the City of Hamilton, not the township)."""
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(min_length=1, max_length=300)
+    level: str | None = None
+    parent: str | None = None
+
+
 class InstitutionEntry(BaseModel):
     """A public body under a place. Becomes a verified `institutions` row,
     `institution_served_places` rows and a candidate `homepages` row."""
@@ -113,7 +125,7 @@ class InstitutionEntry(BaseModel):
     place_parent: str | None = None
     # The name of an institution at the place; None defaults to the place's government.
     parent_institution: str | None = None
-    served_places: tuple[str, ...] = ()
+    served_places: tuple[ServedPlace, ...] = ()
     homepage: str | None = None
     citations: dict[Fact, Citation]
 

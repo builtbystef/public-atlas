@@ -273,7 +273,9 @@ it. The second, `lists/canada/ontario/agencies.py`, reads the Treasury Board's
 list of the province's agencies and returns `InstitutionEntry` records, each
 agency under its ministry; the same command loads it. `fippa_bodies.py`
 (hospitals, colleges and universities) and `school_boards.py` are the same
-again, attaching each body to the municipality of its address.
+again, attaching each body to the municipality of its address; `libraries.py`,
+`conservation_authorities.py`, `service_managers.py` (the district social services
+boards) and `health_units.py` follow, the last two with the places each body serves.
 
 This is also where the bodies under a body come from. `find_institutions`
 takes a place and finds the types its level expects; it is never pointed at a

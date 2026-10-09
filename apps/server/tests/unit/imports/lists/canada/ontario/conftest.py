@@ -11,7 +11,7 @@ from public_atlas.config import Settings
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.seeds import canada
 from public_atlas.modules.imports import files
-from public_atlas.modules.imports.entries import PlaceEntry
+from public_atlas.modules.imports.entries import Citation, Code, PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
 
 
@@ -60,3 +60,38 @@ def municipality_names(places: list[PlaceEntry]) -> frozenset[str]:
 @pytest.fixture(scope="package")
 def region_names(places: list[PlaceEntry]) -> frozenset[str]:
     return frozenset(entry.name for entry in places if entry.level == ontario_places.REGION)
+
+
+@pytest.fixture(scope="package")
+def find_places(
+    places: list[PlaceEntry], rules: countries.CountryRules
+) -> Callable[[str, str | None, str | None], list[PlaceEntry]]:
+    """The loaded places that go by a name, as the loader finds them for an institution: at the
+    level when one is given, under the parent when one is given, the province included."""
+    province = PlaceEntry(
+        name=ontario_places.PROVINCE,
+        level="province_territory",
+        parent="Canada",
+        code=Code(scheme="statcan_sgc", value=ontario_places.PROVINCE_CODE),
+        citations={"place": Citation(source="seed", line=1)},
+    )
+    loaded = [province, *places]
+    forms_of = {entry.name: rules.naming.forms(entry.name) for entry in loaded}
+
+    def find(name: str, level: str | None, parent: str | None) -> list[PlaceEntry]:
+        forms = rules.naming.forms(name)
+        found = [
+            entry
+            for entry in loaded
+            if forms & forms_of[entry.name] and (level is None or entry.level == level)
+        ]
+        if parent is not None and len(found) > 1:
+            wanted = rules.naming.forms(parent)
+            found = [
+                entry
+                for entry in found
+                if entry.parent is not None and rules.naming.forms(entry.parent) & wanted
+            ]
+        return found
+
+    return find

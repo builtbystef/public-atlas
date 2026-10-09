@@ -1,10 +1,10 @@
 """Where a body is when a list gives its city as the post office writes it: a hospital in
 "Almonte" is in Mississippi Mills, a school board in "Nepean" is in Ottawa, a college in
 "Sudbury" is in Greater Sudbury, and "Thunder Bay" means the city, not the district. A shared
-reader for the Ontario lists that attach bodies by city (`fippa_bodies`, `school_boards`); it
-defines no `entries` and so is no list. The names are those of the places
-`canada/ontario/places` loads; a city that is a municipality and shares its name with nothing
-needs no row.
+reader for the Ontario lists that attach bodies by city (`fippa_bodies`, `school_boards`,
+`libraries`, `health_units`, `conservation_authorities`); it defines no `entries` and so is no
+list. The names are those of the places `canada/ontario/places` loads; a city that is a
+municipality and shares its name with nothing needs no row.
 
 Moose Factory is on an island that is a reserve and unorganized land, so its bodies belong to
 the territorial district of Cochrane, the region of that name with no government."""
@@ -80,6 +80,15 @@ COMMUNITIES: dict[str, str] = {
     "Walkerton": "Brockton",
     "Winchester": "North Dundas",
     "Wingham": "North Huron",
+    "Downsview": "Toronto",
+    "Manotick": "Ottawa",
+    "Glenburnie": "Kingston",
+    "Utopia": "Essa",
+    "Finch": "North Stormont",
+    "Wroxeter": "Howick",
+    "Lanark": "Lanark Highlands",
+    "Trenton": "Quinte West",
+    "Marmora": "Marmora and Lake",
 }
 
 # Communities on unorganized land: the territorial district they are in.

@@ -127,23 +127,23 @@ sit under their ministries.
 
 ## Session 3: Ontario's local bodies
 
-- [ ] **`canada/ontario/libraries`** from the 2025 library statistics XLSX (sheet `OpenData`, 355
+- [x] **`canada/ontario/libraries`** from the 2025 library statistics XLSX (sheet `OpenData`, 355
       rows): the board types (Public or Union, County/co-op/Regional, First Nations, LSB;
       about 290) as `library`, name composed as "X Public Library" with the file's
       abbreviated name as an alias, website from `A1.13`, attached by `A1.10 City/Town` or
       by matching the name to a municipality. Contracting municipalities and LSBs are not
       institutions.
-- [ ] **`canada/ontario/service_managers`** from the *List of service managers* CSV (425 rows,
+- [x] **`canada/ontario/service_managers`** from the *List of service managers* CSV (425 rows,
       anchor cells like the municipal directory's): the 10 DSSABs as `municipal_corporation`
       under their territorial district, with `served_places` = their municipality rows and
       the housing-page URL as the candidate homepage. The 37 municipal service managers are
       existing governments; load nothing new for them.
-- [ ] **`canada/ontario/health_units`** from the ontario.ca "Public health unit locations" page
+- [x] **`canada/ontario/health_units`** from the ontario.ca "Public health unit locations" page
       (HTML, 29): brand name as the name, the Reg. 553 legal name and served municipalities
       from a hand-written table in `OVERRIDES`, parent = the council where the unit is a
       municipal department (Toronto, Ottawa, Hamilton, Durham, Halton, Peel, York, Waterloo,
       Niagara, Lambton, Chatham-Kent), websites from the page with schemes added.
-- [ ] **`canada/ontario/conservation_authorities`** from the GeoHub REST layer
+- [x] **`canada/ontario/conservation_authorities`** from the GeoHub REST layer
       (`LIO_Open03/MapServer/11`, 36 rows, `returnGeometry=false`, JSON): `LEGAL_NAME` as
       the name, `COMMON_NAME` as an alias, HQ municipality from the FIPPA directory's 36
       rows as a second source. No websites.
@@ -153,6 +153,38 @@ sit under their ministries.
       Remote Communities, Algoma Power, Canadian Niagara Power, Cornwall Street Railway
       Light and Power, EPCOR, the First Nation power corporations, Cooperative Hydro Embrun)
       and a hand-written HQ municipality each.
+
+The session changed the loader once, for served places, and found two things about the
+sources:
+
+- The health unit page is a `manual` file: like the university pages of Session 2, every
+  response from ontario.ca carries a new bot-detection token, so no hash can be pinned. The
+  module's instructions say how to save the page; the saved copy sits in the loader's cache
+  as `public_health_unit_locations_2026_08.html`.
+- The conservation authority layer is read in the service's HTML rendering (`f=html`), not
+  its JSON: the loader renders a JSON object as one line, and an ArcGIS response is one
+  object holding the records, so every authority would have cited the whole file. The HTML
+  rendering is the same query's records as a page, one line per field, so each authority
+  cites the line that names it. A `records` key on `ListFile` (the path to the array inside
+  a JSON object, as `member` names a file inside a ZIP) would let the JSON form be used.
+- **A served place says which place it means.** `InstitutionEntry.served_places` was a tuple
+  of names, and the loader found each by name at any level, so a name two places go by was
+  refused: Cochrane, Kenora, Parry Sound, Rainy River and Thunder Bay are a town or city and
+  its district, Peterborough, Perth, Renfrew, Essex and Waterloo a county or region and a
+  separated or lower-tier municipality, and Hamilton two municipalities. The first dry runs
+  skipped 5 of the 10 DSSABs and 10 of the 29 health units for it. Now `served_places` is a
+  tuple of `ServedPlace` (name, level, parent, the last two optional), and
+  `Loader._served_place` passes the level and parent to `_find_place` as the entry's own
+  place goes through it. The DSSABs' members are all municipalities; the health units' table
+  gives each served place its level and parent, and both tests pin the namesake sets.
+- The lists that attach by city share `communities.py` as before; nine post-office
+  communities joined it (Downsview, Manotick, Glenburnie, Utopia, Finch, Wroxeter, Lanark,
+  Trenton, Marmora). A First Nation's library sits at the county or district its reserve lies
+  in, since a reserve is not under a municipality; the rows are a hand table in the module.
+- The agent had already saved Conservation Halton at Halton and the Halton Region Public
+  Health Department at Halton in the live database; the lists place the authority at
+  Burlington (its head office) and name the health unit otherwise, so the loader did not
+  match them. The reviewer merges those two pairs.
 
 **Done when** libraries, DSSABs, health units and conservation authorities are loaded with
 their served places where the list gives them, and every rule test pins its counts.
@@ -326,7 +358,11 @@ so that someone rebuilding from a fresh clone gets the same file.
   page.
 - Ontario, done 2026-10-09: Reg. 553 and O. Reg. 135/24 saved from e-Laws as text PDFs in
   `temp-manual-files/Ontario/`; they feed the hand-written tables for health units and
-  police boards, not a source.
+  police boards, not a source. The "Public Health Unit locations" page
+  (ontario.ca/page/public-health-unit-locations, updated 2026-08-28, 29 units) is a manual
+  file of `canada/ontario/health_units`: fetched once with a browser user agent and put in
+  the loader's cache as `public_health_unit_locations_2026_08.html`, since every response
+  carries a new bot-detection token.
 
 Two of these (PEI, Saskatchewan) are derived CSVs built from saved pages rather than files
 the site served. Their `instructions` say so and point at the raw captures; the loader's
