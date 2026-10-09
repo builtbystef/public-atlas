@@ -123,6 +123,9 @@ class ListFile:
     member: str | None = None
     # Text formats only.
     encoding: str = "utf-8-sig"
+    # Table formats: the row the header is on, counted from 1. The rows before it (a title, a
+    # note) are kept in the text and are no rows, so a line number stays the file's row number.
+    header_row: int = 1
     # Table formats: keep only these columns, in this order. For a wide file read for a few of
     # its columns; the stored text is the kept columns.
     columns: tuple[str, ...] | None = None
@@ -133,6 +136,8 @@ class ListFile:
     filename_override: str | None = None
 
     def __post_init__(self) -> None:
+        if self.header_row < 1:
+            raise ValueError(f"{self.name}: the header row is counted from 1")
         if self.retrieval is Retrieval.FETCHED:
             if self.sha256 is None or not SHA256.match(self.sha256):
                 raise ValueError(f"{self.name}: a fetched file needs its sha256 pinned")
@@ -311,13 +316,19 @@ def _sheet_rows(stream: IO[bytes]) -> Iterator[list[str]]:
 
 
 def _table(file: ListFile, raw: Iterable[list[str]]) -> tuple[list[str], list[Row]]:
-    """Lines and rows from a table: the header first, each row's cells joined, the columns kept
-    as the file says and repeats dropped when it asks. Fewer rows than the file's `min_rows`
-    is a wrong or truncated export."""
+    """Lines and rows from a table: the rows before the header as they are, the header, then
+    each row's cells joined, the columns kept as the file says and repeats dropped when it
+    asks. Fewer rows than the file's `min_rows` is a wrong or truncated export."""
     rows_iter = iter(raw)
+    lines: list[str] = []
+    for _ in range(file.header_row - 1):
+        before = next(rows_iter, None)
+        if before is None:
+            break
+        lines.append(CELL_SEPARATOR.join(cell.strip() for cell in before))
     header = next(rows_iter, None)
     if header is None:
-        raise ListFileError(f"{file.name}: the table is empty")
+        raise ListFileError(f"{file.name}: the table has no row {file.header_row} to head it")
     header = [cell.strip() for cell in header]
     if file.columns is not None:
         try:
@@ -327,7 +338,7 @@ def _table(file: ListFile, raw: Iterable[list[str]]) -> tuple[list[str], list[Ro
         header = list(file.columns)
     else:
         keep = None
-    lines = [CELL_SEPARATOR.join(header)]
+    lines.append(CELL_SEPARATOR.join(header))
     rows: list[Row] = []
     seen: set[tuple[str, ...]] = set()
     for raw_cells in rows_iter:

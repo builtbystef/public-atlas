@@ -120,6 +120,39 @@ def test_a_spreadsheet_is_read_like_a_csv():
     assert opened.rows[0]["code"] == "3501"
 
 
+def test_a_table_may_start_below_a_title_and_a_note():
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet.append(["The tiny list", None])
+    sheet.append(["Last update: June", None])
+    sheet.append(["name", "code"])
+    sheet.append(["Elmwood", 3501])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    data = buffer.getvalue()
+    below = source(data, format=Format.SPREADSHEET, url="https://x.test/list.xlsx", header_row=3)
+    opened = files.render(below, data)
+    # The line number is still the sheet's row number.
+    assert opened.lines == [
+        "The tiny list | ",
+        "Last update: June | ",
+        "name | code",
+        "Elmwood | 3501",
+    ]
+    assert opened.rows == [files.Row(line=4, cells={"name": "Elmwood", "code": "3501"})]
+    assert opened.line(opened.rows[0].line) == "Elmwood | 3501"
+    with pytest.raises(ListFileError, match="no row 9"):
+        files.render(source(data, format=Format.SPREADSHEET, header_row=9), data)
+    with pytest.raises(ValueError, match="counted from 1"):
+        source(data, header_row=0)
+    # A CSV the same, with the columns kept from the header.
+    csv_below = b"A note\r\nname,code,note\r\nElmwood,3501,x\r\n"
+    opened = files.render(source(csv_below, header_row=2, columns=("code", "name")), csv_below)
+    assert opened.lines == ["A note", "code | name", "3501 | Elmwood"]
+    assert opened.rows[0].line == 3
+
+
 def test_a_pdf_goes_through_the_parser_one_line_per_line_of_its_pages():
     data = b"Hospitals\nToronto General\fOttawa Civic\n"
     pdf = source(data, format=Format.PDF, url="https://x.test/list.pdf")
