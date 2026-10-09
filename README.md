@@ -77,8 +77,10 @@ vp run ci            # everything CI runs
 vp run infra:up      # PostgreSQL and RustFS in Docker (infra:down stops them)
 vp run db:migrate    # alembic upgrade head
 cd apps/server && uv run public-atlas seed canada   # the country tables and the anchors (Canada and its thirteen provinces and territories); safe to rerun
+cd apps/server && uv run public-atlas seed united_states   # the United States, its fifty states, DC and Puerto Rico
 cd apps/server && uv run public-atlas load-list canada/ontario/places           # what loading Ontario's places would change
 cd apps/server && uv run public-atlas load-list canada/ontario/places --apply   # load them; a rerun changes nothing
+cd apps/server && uv run public-atlas load-list us/states_counties --apply      # the states and county equivalents, then us/municipalities
 cd apps/server && uv run public-atlas lists manifest                            # every list's files: the URLs to fetch with their hashes, and the steps for the hand-collected ones
 cd apps/server && uv run public-atlas run create pilot --mode step --level municipality   # a run, seeded with the work due (--video records the browser)
 cd apps/server && uv run public-atlas run release <run id> --limit 2      # queue held assignments of a step-mode run

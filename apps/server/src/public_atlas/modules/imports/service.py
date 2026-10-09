@@ -225,10 +225,11 @@ def manifest(cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS) -
 
 @dataclass
 class Known:
-    """A place with the forms of its names, for matching by name."""
+    """A place with the forms of its names and its government's name, for matching by name."""
 
     row: Place
     forms: set[str]
+    government: str | None = None
 
 
 @dataclass
@@ -313,8 +314,10 @@ class Loader:
     # --- Entries ---
 
     def ordered(self, entries: Sequence[Entry]) -> list[Entry]:
-        """Places top-down, so a parent is loaded before its children; institutions after the
-        places they sit under."""
+        """Places top-down, so a parent is loaded before its children, and by name within a
+        level, so a bare name is loaded before the same name with a word after it ("Galesburg"
+        before "Galesburg City") and the by-name match reads the second against the first;
+        institutions after the places they sit under."""
         places = [entry for entry in entries if isinstance(entry, PlaceEntry)]
         institutions = [entry for entry in entries if isinstance(entry, InstitutionEntry)]
         places.sort(
@@ -343,7 +346,12 @@ class Loader:
             raise Skip(f"{self.rules.name} has no administrative level {entry.level!r}")
         parent = None
         if entry.parent is not None:
-            parent = await self._find_place(entry.parent, self.rules.levels_above(entry.level))
+            levels = self.rules.levels_above(entry.level)
+            if entry.parent_level is not None:
+                if entry.parent_level not in levels:
+                    raise Skip(f"no level {entry.parent_level!r} above level {entry.level!r}")
+                levels = [entry.parent_level]
+            parent = await self._find_place(entry.parent, levels, parent=entry.parent_parent)
             if parent is None:
                 raise Skip(f"parent {entry.parent!r} is not loaded above level {entry.level!r}")
         elif self.rules.rank_of(entry.level) != self.rules.levels_by_rank[0].rank:
@@ -361,7 +369,10 @@ class Loader:
 
     async def _match_place(self, entry: PlaceEntry, parent: Place | None) -> Place:
         """The entry's place: the one holding its code, else the one at its level under the
-        same parent that goes by its name, else a new one. A matched place moves under the
+        same parent that goes by its name and whose government is a body of the same kind (a
+        town and a village of one name in one county are two places), else a new one. The
+        list's name is compared as written: "Galesburg City" is not a form of "Galesburg",
+        though "Galesburg" is one of "Galesburg Township". A matched place moves under the
         parent the list names."""
         label = f"{entry.name} ({entry.level})"
         place = await self._by_code(entry.code)
@@ -371,12 +382,13 @@ class Loader:
                 f"{place.administrative_level!r}"
             )
         if place is None:
-            forms = self._entry_forms(entry.name, entry.aliases)
+            forms = self._plain_forms([entry.name, *(alias.text for alias in entry.aliases)])
             found = [
                 known.row
                 for known in await self._known(entry.level)
                 if known.forms & forms
                 and (parent is None or known.row.parent_place_id == parent.id)
+                and not self._other_kind(entry, known)
             ]
             if len(found) > 1:
                 raise Skip(f"{len(found)} places go by that name at level {entry.level!r}")
@@ -392,7 +404,7 @@ class Loader:
                 language=entry.language,
             )
             await status_changes.verify_place(self.session, place, entered_by=EnteredBy.SCRIPT)
-            (await self._known(entry.level)).append(Known(place, set()))
+            (await self._known(entry.level)).append(Known(place, set(), entry.government))
             self.changed(
                 "add", "place", label, f"under {parent.name}" if parent is not None else ""
             )
@@ -400,6 +412,22 @@ class Loader:
             place.parent_place_id = parent.id
             self.changed("change", "place", label, f"moved under {parent.name}")
         return place
+
+    def _other_kind(self, entry: PlaceEntry, known: Known) -> bool:
+        """Whether the entry's government and the known place's are bodies of different kinds by
+        the designators around the place's name: "Village of Hamburg" is not "Town of Hamburg",
+        and "Township of Bird City" is not "City of Bird City" although both say "City".
+        Unknown when either has no government or no designator of its own."""
+        if entry.government is None or known.government is None:
+            return False
+        mine = self._kind(entry.government, entry.name)
+        theirs = self._kind(known.government, known.row.name)
+        return bool(mine) and bool(theirs) and not mine & theirs
+
+    def _kind(self, government: str, name: str) -> set[int]:
+        """The designator groups a government's name uses outside the place's own name."""
+        naming = self.rules.naming
+        return naming.designators_in(naming.key(government).replace(naming.key(name), " "))
 
     async def _by_code(self, code: Code) -> Place | None:
         held = await self.session.scalar(
@@ -457,10 +485,30 @@ class Loader:
                 )
             )
             aliases = await graph.aliases_of(self.session, places)
+            governments = await self._government_names(places)
             self.known[level] = [
-                Known(place, self._forms([place.name, *aliases[place.id]])) for place in places
+                Known(
+                    place,
+                    self._forms([place.name, *aliases[place.id]]),
+                    governments.get(place.id),
+                )
+                for place in places
             ]
         return self.known[level]
+
+    async def _government_names(self, places: Sequence[Place]) -> dict[uuid.UUID, str]:
+        """The name of each place's government, by place id, for the places that have one."""
+        ids = {
+            place.government_institution_id: place.id
+            for place in places
+            if place.government_institution_id is not None
+        }
+        if not ids:
+            return {}
+        rows = await self.session.execute(
+            select(Institution.id, Institution.name).where(Institution.id.in_(ids))
+        )
+        return {ids[institution_id]: name for institution_id, name in rows}
 
     def _forms(self, names: Iterable[str]) -> set[str]:
         forms: set[str] = set()
@@ -468,8 +516,11 @@ class Loader:
             forms |= self.rules.naming.forms(name)
         return forms
 
-    def _entry_forms(self, name: str, aliases: Iterable[AliasEntry]) -> set[str]:
-        return self._forms([name, *(alias.text for alias in aliases)])
+    def _plain_forms(self, names: Iterable[str]) -> set[str]:
+        forms: set[str] = set()
+        for name in names:
+            forms |= self.rules.naming.plain_forms(name)
+        return forms
 
     async def _aliases(
         self,
@@ -604,6 +655,9 @@ class Loader:
             place.government_institution_id = government.id
             await self.session.flush()
             self.changed("add", "institution", entry.government, f"government of {label}")
+            for known in self.known.get(place.administrative_level, []):
+                if known.row is place:
+                    known.government = entry.government
         else:
             government = await self.session.get_one(Institution, place.government_institution_id)
         await self._aliases(government, entry.government, entry.language, ())

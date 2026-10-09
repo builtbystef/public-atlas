@@ -5,9 +5,9 @@ truth."""
 
 from typing import Any
 
-from public_atlas.modules.countries.seeds import canada
+from public_atlas.modules.countries.seeds import canada, united_states
 
 # By the name the command takes.
-SEEDS: dict[str, dict[str, Any]] = {"canada": canada.SEED}
+SEEDS: dict[str, dict[str, Any]] = {"canada": canada.SEED, "united_states": united_states.SEED}
 
 __all__ = ["SEEDS"]

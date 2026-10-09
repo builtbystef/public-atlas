@@ -17,7 +17,7 @@ from sqlalchemy import ColumnElement, func, select
 
 from public_atlas.config import Settings
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import canada
+from public_atlas.modules.countries.seeds import canada, united_states
 from public_atlas.modules.evidence import service as evidence
 from public_atlas.modules.evidence.models import Evidence, EvidenceKind, Snapshot
 from public_atlas.modules.graph.models import (
@@ -246,6 +246,118 @@ async def seed(db: Database) -> None:
     async with db.session() as session:
         await countries.seed(session, canada.SEED)
         await session.commit()
+
+
+async def seed_united_states(db: Database) -> None:
+    async with db.session() as session:
+        await countries.seed(session, united_states.SEED)
+        await session.commit()
+
+
+US_COLUMNS = ["name", "level", "parent", "parent_level", "parent_parent", "government", "code"]
+# Two counties of one name, a town and the village inside it, and a city under its state.
+US_ROWS = [
+    ["Erie County", "county", "New York", "state", "", "Erie County", "36029"],
+    ["Erie County", "county", "Pennsylvania", "state", "", "Erie County", "42049"],
+    [
+        "Hamburg",
+        "municipality",
+        "Erie County",
+        "county",
+        "New York",
+        "Town of Hamburg",
+        "3602932402",
+    ],
+    [
+        "Hamburg",
+        "municipality",
+        "Erie County",
+        "county",
+        "New York",
+        "Village of Hamburg",
+        "3632396",
+    ],
+    ["Seattle", "municipality", "Washington", "state", "", "City of Seattle", "5363000"],
+    # A city and a township of one name that carries a designator word of its own.
+    ["Cheyenne County", "county", "Kansas", "state", "", "Cheyenne County", "20023"],
+    [
+        "Bird City",
+        "municipality",
+        "Cheyenne County",
+        "county",
+        "Kansas",
+        "City of Bird City",
+        "2006825",
+    ],
+    [
+        "Bird City",
+        "municipality",
+        "Cheyenne County",
+        "county",
+        "Kansas",
+        "Township of Bird City",
+        "2002306850",
+    ],
+    # Two townships: the second's name is no form of the first's.
+    ["Knox County", "county", "Illinois", "state", "", "Knox County", "17095"],
+    [
+        "Galesburg",
+        "municipality",
+        "Knox County",
+        "county",
+        "Illinois",
+        "Township of Galesburg",
+        "1709528339",
+    ],
+    [
+        "Galesburg City",
+        "municipality",
+        "Knox County",
+        "county",
+        "Illinois",
+        "Township of Galesburg City",
+        "1709528352",
+    ],
+]
+
+
+def tiny_us_places(rows: list[list[str]], cache_dir: Path) -> ModuleType:
+    """A list module of United States places, each parent named with its level and its own
+    parent."""
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(US_COLUMNS)
+    writer.writerows(rows)
+    data = buffer.getvalue().encode()
+    source = ListFile(
+        name="tiny_estimates",
+        title="The tiny estimates",
+        url="https://census.example/estimates.csv",
+        sha256=evidence.content_hash(data),
+        format=Format.CSV,
+    )
+    source.cache_path(cache_dir).parent.mkdir(parents=True, exist_ok=True)
+    source.cache_path(cache_dir).write_bytes(data)
+
+    def entries(files: Mapping[str, OpenedFile], rules: countries.CountryRules) -> list[PlaceEntry]:
+        assert rules.country_code == "US"
+        return [
+            PlaceEntry(
+                name=row["name"],
+                level=row["level"],
+                parent=row["parent"],
+                parent_level=row["parent_level"] or None,
+                parent_parent=row["parent_parent"] or None,
+                government=row["government"],
+                code=Code(scheme=IdentifierScheme.FIPS, value=row["code"]),
+                citations={"place": Citation(source=source.name, line=row.line)},
+            )
+            for row in files[source.name].rows
+        ]
+
+    module = list_module("tiny_us_places", source, entries)
+    module.__dict__["COUNTRY"] = "US"
+    return module
 
 
 async def load(
@@ -721,6 +833,85 @@ def test_an_override_that_matches_nothing_is_reported(
 
     assert report.idle_overrides == ["3598999"]
     assert "overrides that matched nothing: 1" in report.render()
+
+
+async def read_us_places(db: Database) -> dict[str, list[tuple[str, str | None]]]:
+    """Each loaded place's name with its parent's name and its government's name."""
+    async with db.session() as session:
+        places = list(
+            (
+                await session.execute(
+                    select(Place).where(
+                        Place.country_code == "US",
+                        Place.administrative_level.in_(["county", "municipality"]),
+                    )
+                )
+            ).scalars()
+        )
+        found: dict[str, list[tuple[str, str | None]]] = {}
+        for place in places:
+            parent = await session.get_one(Place, place.parent_place_id)
+            government = (
+                await session.get_one(Institution, place.government_institution_id)
+                if place.government_institution_id is not None
+                else None
+            )
+            found.setdefault(place.name, []).append(
+                (parent.name, government.name if government is not None else None)
+            )
+        return {name: sorted(rows) for name, rows in found.items()}
+
+
+def test_a_parent_is_named_with_its_level_and_its_own_parent_and_a_designator_tells_places_apart(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    db.run(seed_united_states, db)
+    module = tiny_us_places(US_ROWS, tmp_path)
+
+    report = db.run(apply, db, object_store, module, tmp_path)
+
+    assert report.skipped == []
+    assert report.count("add", "place") == 11
+    assert report.count("change") == 0
+    assert db.run(read_us_places, db) == {
+        "Bird City": [
+            ("Cheyenne County", "City of Bird City"),
+            ("Cheyenne County", "Township of Bird City"),
+        ],
+        "Cheyenne County": [("Kansas", "Cheyenne County")],
+        "Erie County": [("New York", "Erie County"), ("Pennsylvania", "Erie County")],
+        "Galesburg": [("Knox County", "Township of Galesburg")],
+        "Galesburg City": [("Knox County", "Township of Galesburg City")],
+        "Knox County": [("Illinois", "Knox County")],
+        # Two places under one county: a town and the village inside it.
+        "Hamburg": [("Erie County", "Town of Hamburg"), ("Erie County", "Village of Hamburg")],
+        # Under the state of Washington, not a Washington County.
+        "Seattle": [("Washington", "City of Seattle")],
+    }
+
+    again = db.run(apply, db, object_store, module, tmp_path)
+    assert again.changes == []
+    assert again.skipped == []
+
+
+def test_a_parent_two_places_go_by_is_refused_without_its_own_parent(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    db.run(seed_united_states, db)
+    rows = [
+        *US_ROWS[:2],
+        ["Buffalo", "municipality", "Erie County", "county", "", "City of Buffalo", "3611000"],
+        ["Erie", "municipality", "Erie County", "", "", "City of Erie", "4224000"],
+    ]
+    module = tiny_us_places(rows, tmp_path)
+
+    report = db.run(dry_run, db, object_store, module, tmp_path)
+
+    assert report.count("add", "place") == 2
+    assert report.skipped == [
+        "Buffalo: 2 places go by 'Erie County' at levels ['county']",
+        "Erie: 2 places go by 'Erie County' at levels ['country', 'state', 'county']",
+    ]
 
 
 ONTARIO_CACHED = all(

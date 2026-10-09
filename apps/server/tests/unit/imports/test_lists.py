@@ -10,13 +10,17 @@ from public_atlas.modules.imports.files import Format, ListFile, Retrieval
 from public_atlas.modules.imports.lists import LISTS, list_name
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.ontario import health_units, places
+from public_atlas.modules.imports.lists.us import census, municipalities, states_counties
 
 
 def test_lists_are_found_by_walking_the_package_and_named_by_their_path():
     assert LISTS["canada/ontario/places"] is places
+    assert LISTS["us/states_counties"] is states_counties
+    assert LISTS["us/municipalities"] is municipalities
     assert list(LISTS) == sorted(LISTS)
     # A shared reader defines no `entries`, so it is not a list.
     assert statcan not in LISTS.values()
+    assert census not in LISTS.values()
     for name, module in LISTS.items():
         assert "/" in name
         assert module.COUNTRY

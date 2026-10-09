@@ -275,7 +275,11 @@ agency under its ministry; the same command loads it. `fippa_bodies.py`
 (hospitals, colleges and universities) and `school_boards.py` are the same
 again, attaching each body to the municipality of its address; `libraries.py`,
 `conservation_authorities.py`, `service_managers.py` (the district social services
-boards) and `health_units.py` follow, the last two with the places each body serves.
+boards) and `health_units.py` follow, the last two with the places each body serves. The
+United States starts the same way: `lists/us/states_counties.py` and `lists/us/municipalities.py`
+read the Census Bureau's population estimates and code files through `lists/us/census.py`
+and return the 3,197 states and county equivalents and the 35,643 municipalities as
+`PlaceEntry` records, each with its FIPS code and 2025 population.
 
 This is also where the bodies under a body come from. `find_institutions`
 takes a place and finds the types its level expects; it is never pointed at a

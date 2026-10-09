@@ -123,6 +123,8 @@ class ListFile:
     member: str | None = None
     # Text formats only.
     encoding: str = "utf-8-sig"
+    # CSV: what separates the cells ("|" for the Census Bureau's code files).
+    delimiter: str = ","
     # Table formats: the row the header is on, counted from 1. The rows before it (a title, a
     # note) are kept in the text and are no rows, so a line number stays the file's row number.
     header_row: int = 1
@@ -265,7 +267,7 @@ def render(file: ListFile, data: bytes, *, parser: Parser | None = None) -> Open
     with _member(file, data) as stream:
         if file.format in TABLE_FORMATS:
             raw = (
-                _csv_rows(stream, file.encoding)
+                _csv_rows(stream, file.encoding, file.delimiter)
                 if file.format is Format.CSV
                 else _sheet_rows(stream)
             )
@@ -299,8 +301,10 @@ def _member(file: ListFile, data: bytes) -> IO[bytes]:
         raise ListFileError(f"{file.name}: no member {file.member!r}: {exc}") from None
 
 
-def _csv_rows(stream: IO[bytes], encoding: str) -> Iterator[list[str]]:
-    reader = csv.reader(io.TextIOWrapper(stream, encoding=encoding, newline=""))
+def _csv_rows(stream: IO[bytes], encoding: str, delimiter: str) -> Iterator[list[str]]:
+    reader = csv.reader(
+        io.TextIOWrapper(stream, encoding=encoding, newline=""), delimiter=delimiter
+    )
     yield from reader
 
 

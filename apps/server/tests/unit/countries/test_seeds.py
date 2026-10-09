@@ -7,7 +7,7 @@ from pydantic import ValidationError
 
 from public_atlas.modules.countries import service
 from public_atlas.modules.countries.schemas import CountrySeed, SharedSeed
-from public_atlas.modules.countries.seeds import SEEDS, canada, shared
+from public_atlas.modules.countries.seeds import SEEDS, canada, shared, united_states
 
 
 def test_the_shared_seed_validates():
@@ -51,8 +51,70 @@ def test_the_canada_seed_anchors_the_federal_and_every_provincial_government():
 
 
 def test_every_registered_seed_validates():
+    assert set(SEEDS) == {"canada", "united_states"}
     for name, seed in SEEDS.items():
         assert service.validate(seed)[1].settings.name, name
+
+
+def test_the_united_states_seed_has_four_levels_and_uses_the_park_district():
+    shared_seed, seed = service.validate(united_states.SEED)
+    assert seed.settings.country_code == "US"
+    assert [(level.name, level.rank) for level in seed.administrative_levels] == [
+        ("country", 1),
+        ("state", 2),
+        ("county", 3),
+        ("municipality", 4),
+    ]
+    by_name = {level.name: level for level in seed.administrative_levels}
+    assert by_name["county"].government_institution_type == "regional_government"
+    assert by_name["municipality"].government_institution_type == "municipal_government"
+    assert set(by_name["county"].expected_institution_types) == set(united_states.LOCAL_TYPES)
+    assert by_name["municipality"].expected_institution_types == united_states.LOCAL_TYPES
+    assert "park_district" in seed.institution_type_names
+    assert "ministry" not in seed.institution_type_names
+    assert seed.institution_type_names < shared_seed.institution_type_names
+    assert "legistar.com" in seed.platforms
+    assert "youtube.com" in seed.platforms
+
+
+def test_the_united_states_seed_anchors_the_federal_government_and_every_state():
+    _, seed = service.validate(united_states.SEED)
+    country = seed.places[0]
+    assert (country.name, country.level, country.government, country.domains) == (
+        "United States",
+        "country",
+        "Government of the United States",
+        ["usa.gov"],
+    )
+    states = [place for place in seed.places if place.level == "state"]
+    assert len(states) == 52
+    assert all(place.parent == "United States" for place in states)
+    assert all(place.government and place.domains for place in states)
+    by_name = {place.name: place for place in states}
+    assert by_name["Kentucky"].government == "Commonwealth of Kentucky"
+    assert by_name["Ohio"].government == "State of Ohio"
+    assert by_name["District of Columbia"].government == ("Government of the District of Columbia")
+    assert by_name["Puerto Rico"].domains == ["pr.gov"]
+    assert sum(1 for place in states if (place.government or "").startswith("Commonwealth")) == 5
+    domains = [domain for place in seed.places for domain in place.domains]
+    assert len(set(domains)) == len(domains)
+    # Checked against the .gov registry's "State or territory" rows: every anchor is a .gov.
+    assert all(domain.endswith(".gov") for domain in domains)
+
+
+def test_the_united_states_naming_rules_tell_a_town_from_the_village_inside_it():
+    rules = service.rules_from_seed(united_states.SEED)
+    naming = rules.naming
+    assert naming.designators_differ(["Town of Hamburg"], ["Village of Hamburg"])
+    assert not naming.designators_differ(["Town of Hamburg"], ["Hamburg town"])
+    assert naming.core("City of Springfield") == naming.core("Springfield city") == "springfield"
+    assert naming.core("City and County of Denver") == "denver"
+    assert naming.core("Lexington-Fayette Urban County Government") == "lexington fayette"
+    assert naming.core("Cook County") == "cook"
+    assert naming.key("District of Columbia") in naming.key(
+        "Government of the District of Columbia"
+    )
+    assert naming.forms("Washington County") & naming.forms("Washington")
 
 
 def test_a_ministry_name_pattern_is_a_regular_expression():

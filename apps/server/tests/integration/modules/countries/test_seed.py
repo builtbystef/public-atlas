@@ -13,7 +13,7 @@ from public_atlas.modules.countries.models import (
     InstitutionType,
     SourceType,
 )
-from public_atlas.modules.countries.seeds import canada, shared
+from public_atlas.modules.countries.seeds import canada, shared, united_states
 from public_atlas.modules.graph.models import (
     Alias,
     Domain,
@@ -161,3 +161,60 @@ def test_a_second_run_adds_nothing_and_keeps_edits(db: Database):
     assert report.added == 0
     assert db.run(count, db, Entity) == entities_before
     assert db.run(read_the_edits, db) == ("Edited in the console", "Canada (edited)")
+
+
+async def seed_united_states(db: Database) -> service.SeedReport:
+    async with db.session() as session:
+        report = await service.seed(session, united_states.SEED)
+        await session.commit()
+    return report
+
+
+async def read_ohio(db: Database) -> tuple[Place, Institution, list[Domain]]:
+    async with db.session() as session:
+        ohio = (
+            await session.execute(
+                select(Place).where(Place.name == "Ohio", Place.country_code == "US")
+            )
+        ).scalar_one()
+        assert ohio.government_institution_id is not None
+        government = await session.get_one(Institution, ohio.government_institution_id)
+        domains = list(
+            (
+                await session.execute(select(Domain).where(Domain.name.in_(["ohio.gov", "oh.gov"])))
+            ).scalars()
+        )
+        return ohio, government, domains
+
+
+def test_seeding_the_united_states_beside_canada_adds_its_tables_and_anchors(db: Database):
+    db.run(seed_canada, db)
+    report = db.run(seed_united_states, db)
+
+    # The global types are there already; the country's tables and anchors are new.
+    assert report.institution_types == 0
+    assert report.source_types == 0
+    assert report.country_settings == 1
+    assert report.administrative_levels == len(united_states.ADMINISTRATIVE_LEVELS)
+    assert report.country_institution_types == len(united_states.INSTITUTION_TYPES)
+    assert report.places == len(united_states.PLACES) == 53
+    assert report.institutions == 53
+    # Platforms Canada seeded too (youtube.com, jaggaer.com...) are not added twice.
+    shared_platforms = set(united_states.PLATFORMS) & set(canada.PLATFORMS)
+    assert report.domains == (
+        len(united_states.PLATFORMS)
+        - len(shared_platforms)
+        + sum(len(place["domains"]) for place in united_states.PLACES)
+    )
+    ohio, government, domains = db.run(read_ohio, db)
+    assert ohio.administrative_level == "state"
+    assert (ohio.status, ohio.entered_by) == (EntityStatus.VERIFIED, EnteredBy.MANUAL)
+    assert (government.name, government.institution_type) == (
+        "State of Ohio",
+        "provincial_government",
+    )
+    assert {domain.name for domain in domains} == {"ohio.gov", "oh.gov"}
+    assert all(domain.status == EntityStatus.VERIFIED for domain in domains)
+
+    again = db.run(seed_united_states, db)
+    assert again.added == 0

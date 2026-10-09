@@ -191,7 +191,7 @@ their served places where the list gives them, and every rule test pins its coun
 
 ## Session 4: the United States seed and its places
 
-- [ ] **The seed, `countries/seeds/united_states.py`**: naming rules (designator groups,
+- [x] **The seed, `countries/seeds/united_states.py`**: naming rules (designator groups,
       connectors "of", "and", "/", leading "The"); four levels (country, state, county,
       municipality) with government types and expected types (`school_board`,
       `fire_service`, `public_utility`, `transit_agency`, `library`, `hospital`,
@@ -199,13 +199,13 @@ their served places where the list gives them, and every rule test pins its coun
       the US uses; the platforms (research section 1.7); anchors for the country, the fifty
       states, DC and Puerto Rico with each government's name and main domains, checked
       against the `.gov` registry's "State or territory" rows. `seed united_states` works.
-- [ ] **`us/states_counties`**: states (SUMLEV 040) and county equivalents (SUMLEV 050,
+- [x] **`us/states_counties`**: states (SUMLEV 040) and county equivalents (SUMLEV 050,
       FUNCSTAT A, B, C) from SUB-EST2025, CLASSFP and GNIS ids from `national_county2020.txt`
       (map Connecticut's old county codes; planning regions are dropped as FUNCSTAT N).
       Codes in `fips`, population 2025. Honolulu promoted to a municipal government, Kalawao
       dropped, DC's county row suppressed. Puerto Rico's 78 municipios from the Gazetteer
       county file plus the PRM-EST2025 xlsx, as both county and municipal government.
-- [ ] **`us/municipalities`**: incorporated places (SUMLEV 162, FUNCSTAT A) and towns and
+- [x] **`us/municipalities`**: incorporated places (SUMLEV 162, FUNCSTAT A) and towns and
       townships (SUMLEV 061, FUNCSTAT A, B, C) from SUB-EST2025, CLASSFP from the 2020 place
       and cousub files, parent county from the SUMLEV 157 row with `PRIMGEO_FLAG` = 1, legal
       name composed from the census suffix ("X city" → "City of X"). The exception classes
@@ -213,6 +213,69 @@ their served places where the list gives them, and every rule test pins its coun
       county code as a second identifier), both consolidated-city patterns, coextensive
       place/MCD rows (drop C5/C2, merge T5), "(balance)" rows, DC. The rule test pins the
       count per class.
+
+The session changed the loader three times (a fourth time after the first dry run) and
+found these things about the sources and the plan:
+
+- **A CSV names its delimiter.** The 2020 ANSI code files and the Gazetteer are
+  pipe-delimited, so `ListFile` gained `delimiter` (default `,`).
+- **A place's parent says which place it means.** `_find_place` looked a parent up by name at
+  every level above, so "Washington County" met the state of Washington and twenty-eight other
+  counties and the entry was skipped. `PlaceEntry` gained `parent_level` and `parent_parent`,
+  as `InstitutionEntry.place_level` and `place_parent` did in session 2; the municipalities
+  list names a county parent with its state, and a state parent by its level.
+- **A town and the village inside it are two places.** The loader matched a new place by name
+  at its level under its parent, so the second of "Hamburg town" and "Hamburg village" in Erie
+  County would have been merged into the first and given its code; 2,269 such pairs sit under
+  one county. `Known` now carries the government's name, and a place whose government is a
+  body of another kind by the designators around the place's name is not the same place. The
+  first dry run showed why the name must be taken out before the designators are compared:
+  "City of Bird City" and "Township of Bird City" both say "City", and 19 such pairs (Garden
+  City, Peoria City, Parish...) had merged. Then the list's own name is compared as written
+  (`Naming.plain_forms`): "Galesburg City" is no form of "Galesburg", though "Galesburg" is one
+  of "Galesburg Township", so the seven pairs of one kind whose longer name ends in a
+  designator word (the Galesburg and Galesburg City townships of Knox County, Chevy Chase and
+  Chevy Chase Village) stay two places. That reads the second against the first, which holds
+  because the loader orders a level's places by name; the rule test replays the loader's
+  order over every pair of siblings and pins that none would merge.
+- **`PRIMGEO_FLAG` is not a primary-county flag.** The layout calls it the primitive geography
+  flag: a place in two counties is flagged in both or in neither, and 7,836 places in one county
+  are flagged in neither. The parent is the county part holding most of the place's population
+  (`Estimates.main_county`); no place ties.
+- **The consolidated cities are their own rows.** SUMLEV 170 rows (8) carry the government;
+  their "(balance)" rows are F and dropped by status. A county consolidated with its city
+  (FUNCSTAT C, 33) is loaded as a place with no government, as Ontario's territorial districts
+  are, and the municipality inside it carries the government; the places still incorporated
+  beside it (Jacksonville Beach, the eighty small cities of Jefferson County, Kentucky: 151 in
+  all) sit under the county. Terrebonne Parish (H6, A) keeps its government: Houma's city row
+  is N. CLASSFP C6 does not mark a consolidated city-county: it is a place partly independent
+  of county subdivisions (Columbus, Ohio); the pattern 2b cities are found by their county's
+  status.
+- **Merging a T5 row is a drop.** Each of the 29 FUNCSTAT C subdivisions is covered to the
+  person by the places inside it (the 071 rows), so the subdivision row is not loaded and the
+  place is the government; the module refuses a C row no place covers. The five Ohio ones are
+  townships absorbed by a city of another name (Washington township by Dublin).
+- **Honolulu and the municipios are municipality-level places.** A government's type comes
+  from its place's level, so "promoted to a municipal government" means loaded at the
+  municipality level under the state with the county code as its `fips`. The same for the 78
+  municipios under Puerto Rico ("Municipality of Adjuntas", "Municipio de Adjuntas" as a
+  Spanish alias). Puerto Rico's own code and population come from the PRM-EST2025 sheet's
+  "Puerto Rico" row, since SUB-EST2025 leaves the island out.
+- **One code per scheme.** An identifier is one per owner and scheme, so an independent city
+  keeps its place code (5101000 for Alexandria) and its county code (51510) is dropped, and the
+  GNIS ids the 2020 files carry are read for nothing and not stored. A `codes` tuple on
+  `PlaceEntry` would carry both; left for the session that needs it.
+- **"and" is not a connector** in the US naming rules: the connector pattern would read
+  "Juneau city and borough" as a kind before "borough". The designator groups carry "City and
+  County" and "City and Borough" in both spellings ("City & County"), since a name's key reads
+  "and" as "&" and a designator is looked for in both forms.
+- Against the live database: `seed united_states` added the country's tables, 32 platforms and
+  the 53 anchors with their 91 domains (the five platforms Canada shares were there); the
+  states and counties load added 3,145 places, 3,112 governments and 3,197 codes and figures in
+  82 seconds, and the municipalities load its 35,643 places and governments in 15 minutes (the
+  rerun, matching every entry by code, takes 5); each rerun changed nothing. The United States
+  now holds 38,841 verified places, every one with a `fips` code and a 2025 population, and
+  38,808 verified governments: the 33 counties consolidated with their city have none.
 
 **Done when** `seed united_states` and the two loads give every state, every active county
 equivalent and every active municipality a verified place with a `fips` code and population,

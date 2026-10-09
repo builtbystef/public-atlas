@@ -73,3 +73,13 @@ def test_every_spelling_of_a_name_meets_on_a_form(naming: Naming):
     forms = [naming.forms(spelling) for spelling in spellings]
     assert all("elmwood" in found for found in forms)
     assert not naming.forms("Oakville") & naming.forms("Elmwood")
+
+
+def test_plain_forms_keep_the_designator_a_name_ends_in(naming: Naming):
+    assert naming.plain_forms("Galesburg City") == {"galesburg city"}
+    assert "galesburg" in naming.forms("Galesburg City")
+    assert naming.plain_forms("Elmwood, Township of") == {"township of elmwood", "elmwood"}
+    assert naming.plain_forms("The Corporation of the City of Elmwood") == {
+        "the corporation of the city of elmwood",
+        "city of elmwood",
+    }

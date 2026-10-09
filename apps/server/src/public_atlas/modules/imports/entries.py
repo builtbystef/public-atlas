@@ -67,6 +67,11 @@ class PlaceEntry(BaseModel):
     level: str
     # The name of a place at a higher level, loaded or seeded; None only for a country itself.
     parent: str | None
+    # Which place of that name, when the name alone does not say: its administrative level (the
+    # state of Washington, not a county of that name) and the name of its own parent (Washington
+    # County under Pennsylvania, not the thirty others).
+    parent_level: str | None = None
+    parent_parent: str | None = None
     # The government's name; None for a unit nothing governs (a territorial district).
     government: str | None = Field(default=None, min_length=1, max_length=300)
     code: Code

@@ -91,6 +91,16 @@ class Naming:
         base, kind = match.group("base").strip(), match.group("kind").strip()
         return [f"{kind} {base}", base]
 
+    def plain_forms(self, name: str) -> frozenset[str]:
+        """A name as written and without its leading words, uninverted from a list's form, but
+        with its designator kept: "Galesburg City" is "galesburg city", never "galesburg". What
+        a list's own name of a place is compared in against another place's `forms`."""
+        forms: set[str] = set()
+        for form in self.written_forms(name):
+            plain = _plain(form)
+            forms.update((plain, self.without_leading(plain)))
+        return frozenset(form for form in forms if form)
+
     def forms(self, name: str) -> frozenset[str]:
         """The forms a place's name is compared in: as written, uninverted from a list's form,
         and without the leading words and the designator, so "City of Elmwood", "Elmwood, City

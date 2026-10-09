@@ -57,6 +57,21 @@ def test_a_csv_is_one_line_per_row_with_the_header_first():
     assert opened.sha256 == content_hash(CSV)
 
 
+def test_a_csv_may_use_another_delimiter():
+    data = b"STATE|COUNTYFP|COUNTYNAME\nAL|001|Autauga County\n"
+    file = ListFile(
+        name="codes",
+        title="Codes",
+        url="https://example.gov/codes.txt",
+        sha256=content_hash(data),
+        format=Format.CSV,
+        delimiter="|",
+    )
+    opened = files.render(file, data)
+    assert opened.lines == ["STATE | COUNTYFP | COUNTYNAME", "AL | 001 | Autauga County"]
+    assert opened.rows[0]["COUNTYNAME"] == "Autauga County"
+
+
 def test_columns_are_kept_in_order_and_repeats_dropped():
     data = b"a,b,c\n1,x,9\n2,x,8\n3,y,7\n"
     opened = files.render(source(data, columns=("c", "b"), distinct=False), data)
