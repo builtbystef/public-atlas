@@ -10,27 +10,26 @@ import pytest
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
-from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
+from public_atlas.modules.imports.entries import Code, InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.quebec import places as quebec_places
 
 from .conftest import open_sources
 
-# The MRCs the census counts as divisions.
-REGIONS = 81
+# Every MRC: the 81 the census counts as divisions and the six loaded from the directory alone.
+REGIONS = 87
+MRCS_WITHOUT_DIVISION = 6
 # The census's 1,131 municipalities less the 17 merged or recoded since, plus the 9 the
 # directory has since created.
 CENSUS_MUNICIPALITIES = 1131
 MERGED = 17
 CREATED = 9
 MUNICIPALITIES = CENSUS_MUNICIPALITIES - MERGED + CREATED
-# The two communautés métropolitaines, the Kativik administration and the six MRCs with no
-# census division.
-INSTITUTIONS = 9
-MRCS_WITHOUT_DIVISION = 6
-# The cities of the TÉ divisions and the municipalities of the CDR divisions and of the six
-# MRCs that are no places.
-UNDER_THE_PROVINCE = 108
+# The two communautés métropolitaines and the Kativik administration.
+INSTITUTIONS = 3
+# The cities of the TÉ divisions and the municipalities of Nord-du-Québec and of the Kativik
+# administration, which have no MRC.
+UNDER_THE_PROVINCE = 68
 HOMEPAGES = 1189
 # Places the directory names otherwise than the census (an MRC and six municipalities).
 RENAMED = 7
@@ -40,12 +39,6 @@ SERVED_PLACES = {
     "Communauté métropolitaine de Montréal": 82,
     "Communauté métropolitaine de Québec": 28,
     "Administration régionale Kativik": 15,
-    "Municipalité régionale de comté des Chenaux": 10,
-    "Municipalité régionale de comté du Fjord-du-Saguenay": 13,
-    "Municipalité régionale de comté de Sept-Rivières": 2,
-    "Municipalité régionale de comté de Caniapiscau": 2,
-    "Municipalité régionale de comté de Minganie": 8,
-    "Municipalité régionale de comté du Golfe-du-Saint-Laurent": 5,
 }
 # Municipal names two places go by, each told apart by its code: the research's 32, less the
 # two Plessisvilles that merged and the Sainte-Jeanne-d'Arc the directory has renamed.
@@ -129,6 +122,10 @@ def test_the_counts(
     )
     codes = [entry.code.value for entry in regions + municipalities]
     assert len(set(codes)) == len(codes)
+    assert sum(1 for entry in regions if entry.code.scheme is IdentifierScheme.MAMH) == (
+        MRCS_WITHOUT_DIVISION
+    )
+    assert sum(1 for entry in regions if entry.codes) == REGIONS - MRCS_WITHOUT_DIVISION
     assert dict(notes.dropped) == DROPPED_SUBDIVISIONS
     assert sum(notes.directory_dropped.values()) == DROPPED_DIRECTORY_ROWS
     assert len(notes.merged) == MERGED
@@ -150,21 +147,32 @@ def test_every_place_has_its_code_populations_and_a_government_named_after_it(
     naming = rules.naming
     census = opened[statcan.POPULATION.name]
     created = {line.split(" ", 1)[0] for line in notes.created}
+    without_division = {line.split(" ", 1)[0] for line in notes.mrcs_without_division}
     for entry in regions + municipalities:
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
         assert entry.code.value.isdigit()
-        assert entry.code.value.startswith(quebec_places.PROVINCE_CODE)
         assert entry.language == "fr"
         years = {(figure.name, figure.year) for figure in entry.figures}
         assert (MetricName.POPULATION, quebec_places.DECREE_YEAR) in years
         assert all(figure.value >= 0 for figure in entry.figures)
         line = opened[entry.citations["place"].source].line(entry.citations["place"].line)
-        if entry.code.value[2:] in created:
+        if entry.code.scheme is IdentifierScheme.MAMH:
+            # An MRC the census has no division for, loaded from the directory alone: its
+            # directory code is its code, the directory's line is cited, no census figure.
+            assert entry.code.value in without_division
+            assert entry.codes == ()
+            assert entry.citations["place"].source == quebec_places.MRCS.name
+            assert (MetricName.POPULATION, statcan.CENSUS_YEAR) not in years
+            assert f"AR{entry.code.value}" in line
+        elif entry.code.value[2:] in created:
             # Loaded from the directory alone: no census figure, the directory's line cited.
+            assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
+            assert entry.code.value.startswith(quebec_places.PROVINCE_CODE)
             assert entry.citations["place"].source == quebec_places.MUNICIPALITIES.name
             assert (MetricName.POPULATION, statcan.CENSUS_YEAR) not in years
             assert entry.code.value[2:] in line
         else:
+            assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
+            assert entry.code.value.startswith(quebec_places.PROVINCE_CODE)
             assert entry.citations["place"].source == statcan.POPULATION.name
             assert (MetricName.POPULATION, statcan.CENSUS_YEAR) in years
             assert entry.code.value in line
@@ -220,12 +228,30 @@ def test_regions_sit_under_quebec_and_municipalities_under_the_mrc_the_directory
     assert by_code["2437067"].name == "Trois-Rivières"
     assert by_code["2437067"].parent == quebec_places.PROVINCE
     assert by_code["2437210"].name == "Batiscan"
-    assert by_code["2437210"].parent == quebec_places.PROVINCE
+    assert by_code["2437210"].parent == "Des Chenaux"
     assert by_code["2423027"].parent == quebec_places.PROVINCE
     assert by_code["2446050"].parent == "Brome-Missisquoi"
-    # An MRC's code is its division's.
+    # An MRC's code is its division's, with the directory's beside it.
     assert by_code["2446"].name == "Brome-Missisquoi"
     assert by_code["2446"].government == "Municipalité régionale de comté de Brome-Missisquoi"
+    assert by_code["2446"].codes == (Code(scheme=IdentifierScheme.MAMH, value="460"),)
+    # An MRC the census has no division for is a region by the directory's code alone.
+    chenaux = by_code["372"]
+    assert (chenaux.name, chenaux.government) == (
+        "Des Chenaux",
+        "Municipalité régionale de comté des Chenaux",
+    )
+    assert chenaux.aliases[0].text == "MRC des Chenaux"
+    assert chenaux.homepage == "http://www.mrcdeschenaux.ca/"
+    assert chenaux.citations["place"] == chenaux.citations["government"]
+    assert {entry.name for entry in regions if entry.code.scheme is IdentifierScheme.MAMH} == {
+        "Des Chenaux",
+        "Le Fjord-du-Saguenay",
+        "Sept-Rivières",
+        "Caniapiscau",
+        "Minganie",
+        "Le Golfe-du-Saint-Laurent",
+    }
 
 
 def test_the_places_that_show_the_rules(by_code: dict[str, PlaceEntry]):
@@ -347,6 +373,3 @@ def test_the_spanning_bodies_serve_loaded_municipalities(
     kativik = by_name["Administration régionale Kativik"]
     assert {alias.text for alias in kativik.aliases} == {"Kativik Regional Government", "KRG"}
     assert all(served.parent == quebec_places.PROVINCE for served in kativik.served_places)
-    chenaux = by_name["Municipalité régionale de comté des Chenaux"]
-    assert chenaux.homepage == "http://www.mrcdeschenaux.ca/"
-    assert "Batiscan" in {served.name for served in chenaux.served_places}

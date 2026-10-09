@@ -1,6 +1,8 @@
 """Seeding Canada fills the country tables and creates the anchors (the federal government and
-each province's and territory's); a second run adds nothing and leaves an edit alone."""
+each province's and territory's); a second run adds nothing and leaves an edit alone, except
+that the seed's naming rules replace the row's when they differ."""
 
+import copy
 from typing import TYPE_CHECKING
 
 from sqlalchemy import func, select
@@ -159,8 +161,38 @@ def test_a_second_run_adds_nothing_and_keeps_edits(db: Database):
     report = db.run(seed_canada, db)
 
     assert report.added == 0
+    assert report.naming_rules_changed is False
     assert db.run(count, db, Entity) == entities_before
     assert db.run(read_the_edits, db) == ("Edited in the console", "Canada (edited)")
+
+
+async def seed_with_a_designator(db: Database) -> service.SeedReport:
+    seed = copy.deepcopy(canada.SEED)
+    seed["settings"]["naming_rules"]["designators"].append(["Hamlet"])
+    async with db.session() as session:
+        report = await service.seed(session, seed)
+        await session.commit()
+    return report
+
+
+async def read_the_rules(db: Database) -> tuple[str, dict]:
+    async with db.session() as session:
+        settings = await session.get_one(CountrySettings, "CA")
+        return settings.name, settings.naming_rules
+
+
+def test_a_changed_seed_rewrites_the_naming_rules_and_nothing_else(db: Database):
+    db.run(seed_canada, db)
+    db.run(edit_a_description_and_a_setting, db)
+
+    report = db.run(seed_with_a_designator, db)
+
+    assert report.added == 0
+    assert report.naming_rules_changed is True
+    name, rules = db.run(read_the_rules, db)
+    assert name == "Canada (edited)"
+    assert ["Hamlet"] in rules["designators"]
+    assert db.run(seed_with_a_designator, db).naming_rules_changed is False
 
 
 async def seed_united_states(db: Database) -> service.SeedReport:

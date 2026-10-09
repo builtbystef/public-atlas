@@ -19,7 +19,9 @@ SETTINGS: dict[str, Any] = {
     # "Township of Elmwood") may still name the body when its domain is verified.
     "naming_rules": {
         # One group per kind of body; "Ville" is a city or a town. A Quebec paroisse is a
-        # kind of its own: the ville and the paroisse of Disraeli are two municipalities.
+        # kind of its own: the ville and the paroisse of Disraeli are two municipalities. A
+        # longer designator wins over one it contains, so an MRC is not a municipalité
+        # régionale, nor a comté.
         "designators": [
             ["City", "Ville", "Cité"],
             ["Town", "Ville", "Separated Town"],
@@ -30,6 +32,8 @@ SETTINGS: dict[str, Any] = {
             ["Municipality", "Municipalité"],
             ["Regional Municipality", "Municipalité régionale"],
             ["District Municipality", "Municipalité de district"],
+            ["Municipalité régionale de comté", "MRC", "Regional County Municipality"],
+            ["Communauté métropolitaine", "Metropolitan Community"],
             ["County", "Comté"],
             ["United Counties", "Comtés unis"],
             ["Region", "Région"],

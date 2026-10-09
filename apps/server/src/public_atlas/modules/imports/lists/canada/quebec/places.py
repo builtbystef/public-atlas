@@ -1,11 +1,10 @@
 """Quebec's places from Statistics Canada's 2021 Census and the Ministère des Affaires
-municipales et de l'Habitation's *Répertoire des municipalités*: 81 regions (the municipalités
-régionales de comté the census counts as divisions) and about 1,120 municipalities, each with
-its code, its 2021 population, the population the 2026 décret de population gives it, its
-government's legal name and, where the directory links one, the government's homepage as a
-candidate; and, as `regional_government` institutions under Quebec with the places they serve,
-the two communautés métropolitaines, the Administration régionale Kativik and the six MRCs the
-census carries no division for.
+municipales et de l'Habitation's *Répertoire des municipalités*: the 87 municipalités régionales
+de comté as regions and about 1,120 municipalities, each with its code, its 2021 population,
+the population the 2026 décret de population gives it, its government's legal name and, where
+the directory links one, the government's homepage as a candidate; and, as
+`regional_government` institutions under Quebec with the places they serve, the two
+communautés métropolitaines and the Administration régionale Kativik.
 
 The census population table gives every unit's code, names and population; the census
 geographic attribute file says what each unit is; the two census files and their readers are
@@ -22,13 +21,13 @@ population. The rules:
   the rest), and five `CDR` divisions are census units holding the municipalities of MRCs the
   census does not count as divisions (Francheville holds Trois-Rivières and the MRC Des
   Chenaux; Nord-du-Québec the north). A municipality with no MRC sits under Quebec.
-- An MRC's code is its census division's: the directory's three-digit code is the division's
-  last two digits and a trailing digit (`460` is division 2446). The six MRCs whose code is no
-  division (Des Chenaux, Le Fjord-du-Saguenay, Sept-Rivières, Caniapiscau, Minganie, Le
-  Golfe-du-Saint-Laurent) have no code in any scheme the graph has, and a place needs one; they
-  are loaded as `regional_government` institutions under Quebec with their municipalities as
-  served places, as the communautés métropolitaines are, and their municipalities sit under
-  Quebec. A `mamh` identifier scheme would make them regions.
+- Every MRC carries the directory's three-digit code géographique in the `mamh` scheme. For
+  the 81 the census counts as divisions, the division's code is the place's code and the
+  directory's a second one: the three digits are the division's last two and a trailing digit
+  (`460` is division 2446). The six MRCs whose code is no division (Des Chenaux, Le
+  Fjord-du-Saguenay, Sept-Rivières, Caniapiscau, Minganie, Le Golfe-du-Saint-Laurent) are
+  loaded from the directory alone, with the `mamh` code as their code, the directory's line as
+  the place's citation and no census figure.
 - The municipal subdivision types are municipalities, the Eeyou Istchee Baie-James regional
   government among them (a subdivision with a code of its own). Indian reserves, Cree, Inuit
   and Naskapi lands, Indian settlements and unorganized territories are not governments and are
@@ -363,7 +362,7 @@ class Notes:
     created: list[str] = field(default_factory=list)
     # Census municipalities merged or recoded since, by name, with what they became.
     merged: list[str] = field(default_factory=list)
-    # MRCs the census has no division for, loaded as institutions.
+    # MRCs the census has no division for, loaded from the directory alone.
     mrcs_without_division: list[str] = field(default_factory=list)
     # Directory rows that are no municipality, by designation.
     directory_dropped: Counter[str] = field(default_factory=Counter)
@@ -380,7 +379,7 @@ class Notes:
         for line in self.merged:
             logger.info("override: %s", line)
         for line in self.mrcs_without_division:
-            logger.info("no census division for MRC %s: loaded as an institution", line)
+            logger.info("no census division for MRC %s: loaded from the directory alone", line)
         for designation, count in sorted(self.directory_dropped.items()):
             logger.info("left out %d directory rows designated %r", count, designation)
 
@@ -403,11 +402,10 @@ class Builder:
             key=lambda unit: unit.code,
         )
         self.rows_by_code = {row.code: row for row in self.municipalities}
-        # The MRCs that are regions, by their three-digit code, with the region's name.
-        self.region_names: dict[str, str] = {}
-        for row in self.mrcs:
-            if row.is_mrc and self._division_of(row) is not None:
-                self.region_names[row.short_code] = row.name
+        # The MRCs, by their three-digit code, with the region's name.
+        self.region_names: dict[str, str] = {
+            row.short_code: row.name for row in self.mrcs if row.is_mrc
+        }
 
     def _division_of(self, row: MrcRow) -> Counted | None:
         """The MRC's census division: the one of its code, when it is an MRC division."""
@@ -417,7 +415,7 @@ class Builder:
         return division if division is not None and division.type_ == MRC_TYPE else None
 
     def parent_of(self, row: MunicipalityRow) -> str:
-        """The MRC the directory names, when it is a region; else the province."""
+        """The MRC the directory names; else the province."""
         return self.region_names.get(row.mrc or "", PROVINCE)
 
     def regions(self) -> list[PlaceEntry]:
@@ -425,26 +423,33 @@ class Builder:
         for row in self.mrcs:
             if not row.is_mrc:
                 continue
+            directory = Citation(source=MRCS.name, line=row.line)
+            mamh = Code(scheme=IdentifierScheme.MAMH, value=row.short_code)
+            aliases = [AliasEntry(text=with_connector(MRC_SHORT, row.name), language="fr")]
+            figures: list[Figure] = []
             division = self._division_of(row)
             if division is None:
                 self.notes.mrcs_without_division.append(f"{row.short_code} {row.name}")
-                continue
-            place = Citation(source=POPULATION.name, line=division.line)
-            directory = Citation(source=MRCS.name, line=row.line)
-            aliases = [AliasEntry(text=with_connector(MRC_SHORT, row.name), language="fr")]
-            if division.names[0] != row.name:
-                self.notes.renamed.append(f"{division.code} {division.names[0]} -> {row.name}")
-                aliases.append(AliasEntry(text=division.names[0], language="fr"))
-            figures: list[Figure] = []
-            if division.population is not None:
-                figures.append(
-                    Figure(
-                        name=MetricName.POPULATION,
-                        year=CENSUS_YEAR,
-                        value=Decimal(division.population),
-                        citation=place,
-                    )
+                place = directory
+                code, codes = mamh, ()
+            else:
+                place = Citation(source=POPULATION.name, line=division.line)
+                code, codes = (
+                    Code(scheme=IdentifierScheme.STATCAN_SGC, value=division.code),
+                    (mamh,),
                 )
+                if division.names[0] != row.name:
+                    self.notes.renamed.append(f"{division.code} {division.names[0]} -> {row.name}")
+                    aliases.append(AliasEntry(text=division.names[0], language="fr"))
+                if division.population is not None:
+                    figures.append(
+                        Figure(
+                            name=MetricName.POPULATION,
+                            year=CENSUS_YEAR,
+                            value=Decimal(division.population),
+                            citation=place,
+                        )
+                    )
             if row.population is not None:
                 figures.append(
                     Figure(
@@ -466,7 +471,8 @@ class Builder:
                     parent=PROVINCE,
                     parent_level=PROVINCE_LEVEL,
                     government=with_connector(MRC_DESIGNATOR, row.name),
-                    code=Code(scheme=IdentifierScheme.STATCAN_SGC, value=division.code),
+                    code=code,
+                    codes=codes,
                     figures=tuple(figures),
                     homepage=row.homepage,
                     citations=citations,
@@ -571,21 +577,13 @@ class Builder:
         return ServedPlace(name=row.name, level=MUNICIPALITY, parent=parent)
 
     def institutions(self) -> list[InstitutionEntry]:
-        """The communautés métropolitaines, the Kativik administration and the MRCs with no
-        census division, each with the municipalities it serves."""
+        """The communautés métropolitaines and the Kativik administration, each with the
+        municipalities it serves."""
         found = []
         for row in self.mrcs:
             if row.is_mrc:
-                if self._division_of(row) is not None:
-                    continue
-                name = with_connector(MRC_DESIGNATOR, row.name)
-                aliases: tuple[AliasEntry, ...] = (
-                    AliasEntry(text=with_connector(MRC_SHORT, row.name), language="fr"),
-                )
-                members = [
-                    m for m in self.municipalities if m.is_municipality and m.mrc == row.short_code
-                ]
-            elif row.code in SPANNING_BODIES:
+                continue
+            if row.code in SPANNING_BODIES:
                 name, aliases = SPANNING_BODIES[row.code]
                 if row.code.startswith("CM"):
                     members = [

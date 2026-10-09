@@ -137,7 +137,7 @@ These belong only to places and institutions. Each has two nullable columns,
 | Table | Fields |
 | --- | --- |
 | `aliases` | text, language (BCP 47), is_acronym, entered_by; unique per owner and text. Every name a body goes by, in any language. The trigram index for duplicate matching lives here |
-| `identifiers` | scheme (`statcan_sgc`, `fips`, `gnis`, `census_gid`, `nces`, `ipeds`), value, official_list_id; one per owner and scheme, one owner per value |
+| `identifiers` | scheme (`statcan_sgc`, `mamh`, `fips`, `gnis`, `census_gid`, `nces`, `ipeds`), value, official_list_id; one per owner and scheme, one owner per value |
 | `metrics` | name (`population`), year, value, official_list_id |
 
 `institution_served_places` (institution_id, place_id) records the places a
@@ -294,9 +294,10 @@ body per agency, at the government it serves or the city of its address) do the 
 Canada continues with `lists/canada/federal.py` (the Treasury Board's inventory of federal
 organizations, each under the department heading its portfolio at Canada) and
 `lists/canada/quebec/places.py` (the census joined to the province's municipal directory by
-code: the 81 MRCs the census counts as divisions as regions, the municipalities under the MRC
-the directory names, and the communautés métropolitaines, the Kativik administration and the
-six MRCs with no census code as `regional_government` institutions with served places).
+code: the 87 MRCs as regions, each with the directory's `mamh` code and, for the 81 the census
+counts as divisions, the division's code; the municipalities under the MRC the directory names;
+and the communautés métropolitaines and the Kativik administration as `regional_government`
+institutions with served places).
 
 
 This is also where the bodies under a body come from. `find_institutions`

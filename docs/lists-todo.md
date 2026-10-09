@@ -545,27 +545,43 @@ scores in the database.
       for the renames and mergers since 2021. The file updates daily, so the operator
       re-pins the hash at load time; say so in the docstring.
 
-The session changed the loader not at all and the Canada seed once, and found these things
+The session changed the loader not at all, the Canada seed once, and, in a follow-up, the
+schema once (the `mamh` identifier scheme) and the seed command once, and found these things
 about the sources and the plan:
 
 - **A paroisse is a kind of its own.** The first Quebec dry run merged three pairs of one name
   under one MRC (the ville and the paroisse of Disraeli and of Senneterre, the paroisse and the
   village of Notre-Dame-du-Bon-Conseil) into three places: the loader tells two places of one
   name apart by the designators around their governments' names, and "Paroisse" was none of
-  Canada's. The seed's naming rules gain the group `["Paroisse", "Parish"]`, and the live
-  `country_settings` row was given the seed's rules through `put_country_settings` (re-seeding
-  never changes a row that exists). The Quebec rule test replays the loader's order over every
-  pair of siblings, as the US municipalities test does, and pins the nine pairs that stay two.
+  Canada's. The seed's naming rules gain the group `["Paroisse", "Parish"]`. The Quebec rule
+  test replays the loader's order over every pair of siblings, as the US municipalities test
+  does, and pins the nine pairs that stay two.
+- **The seed's naming rules are code.** Re-seeding never changed a row that existed, so the
+  first rules change reached the live `country_settings` row by hand. Now `seed <country>`
+  rewrites the row's naming rules when the seed's differ (the report says "naming rules:
+  changed to the seed's") and leaves every other edit to the row alone, so a rules change lands
+  with the deploy. The follow-up also gave the rules the groups `["Municipalité régionale de
+  comté", "MRC", "Regional County Municipality"]` and `["Communauté métropolitaine",
+  "Metropolitan Community"]`: without them an MRC's name claimed the Regional Municipality and
+  County groups and `Naming.core` of "Municipalité régionale de comté de Témiscamingue" was
+  "comté de témiscamingue". Village nordique, Village cri and Village naskapi stay under
+  "Village": the rules find the designator in them, and no namesake pair needs them apart.
 - **Six MRCs have no census code.** The directory's MRC code is the census division's last two
   digits and a trailing digit (460 is 2446), and 81 of the 87 MRCs are divisions. Des Chenaux
   (372, inside the CDR Francheville with Trois-Rivières), Le Fjord-du-Saguenay (942, with
   Saguenay), Sept-Rivières and Caniapiscau (971, 972, one CDR), Minganie and Le
   Golfe-du-Saint-Laurent (981, 982, one CDR) are not, and a place needs a code in a scheme the
-  graph has. They are loaded as `regional_government` institutions under Quebec with their
-  municipalities as served places, as the communautés métropolitaines are, and their 40
-  municipalities sit under Quebec with the TÉ cities and Nord-du-Québec. A `mamh` identifier
-  scheme (a `graph.models.IdentifierScheme` value and a migration) would make them regions;
-  that is a schema change this session did not make.
+  graph has. The session first loaded them as `regional_government` institutions under Quebec
+  with their municipalities as served places; the follow-up added the `mamh` scheme (the
+  directory's code géographique: a `graph.models.IdentifierScheme` value and the migration
+  `a9f2c17d64e8`) and made them regions by that code, loaded from the directory alone with no
+  census figure. Every MRC carries its `mamh` code, the 81 division MRCs beside their census
+  code. The rerun added the 6 regions and 87 identifiers and moved the 40 municipalities under
+  their MRCs; the six old institutions at Quebec, their 12 aliases, 6 homepage claims, 12
+  evidence rows and 40 served places were deleted by a one-off script, since the loader never
+  deletes an institution a list no longer holds (it only reports a place that left). Quebec
+  now has 87 regions and 68 municipalities under the province (the TÉ cities, Nord-du-Québec
+  and the Kativik villages).
 - **The directory wins over the census.** Where the two name a municipality differently (seven
   renames: Mont-Blanc for Saint-Faustin--Lac-Carré, Clarenceville, Ristigouche-Sud-Est,
   Saint-Germain-de-Kamouraska, Sainte-Jeanne-d'Arc-de-la-Mitis, Dollard-des-Ormeaux, and the
@@ -590,10 +606,9 @@ about the sources and the plan:
   Hudson; "Ville de Hampstead" otherwise), "du" and "des" for a leading "Le", "Les" or "Des"
   ("MRC du Granit", "Municipalité des Îles-de-la-Madeleine", "MRC des Chenaux"), and "de" kept
   before "La", "L'" and "D'" ("Ville de La Tuque", "MRC de D'Autray"). An MRC's government is
-  "Municipalité régionale de comté de ..." with "MRC de ..." as an alias. The Canada naming
-  rules still lack the Quebec designators other than Paroisse (Village nordique, Municipalité
-  régionale de comté, Communauté métropolitaine), so `Naming.core` does not strip them; the
-  rule test asserts the place name sits whole inside its government's name instead.
+  "Municipalité régionale de comté de ..." with "MRC de ..." as an alias; the rule test asserts
+  the place name sits whole inside its government's name, less the article the connector
+  contracts.
 - **The Kativik administration** serves the fourteen northern villages and the Naskapi village
   of Kawawachikamach, as the directory's `admregionale` column says; the communautés
   métropolitaines serve 82 and 28 municipalities by `mcm`. A served place names its parent, so
@@ -616,7 +631,10 @@ about the sources and the plan:
   domains, 134 aliases, no skips. `canada/quebec/places` (46 s): 81 regions and 1,123
   municipalities with their codes (108 municipalities under Quebec, 1,015 under an MRC), 1,204
   governments, 2,399 population figures, 1,189 candidate homepages on 1,175 domains, 9
-  spanning bodies with 165 served places, 87 census names as aliases, no skips.
+  spanning bodies with 165 served places, 87 census names as aliases, no skips. The follow-up's
+  rerun: 6 regions, 87 `mamh` identifiers, 40 municipalities moved, so 87 regions, 68
+  municipalities under Quebec and 1,055 under an MRC, 3 spanning bodies with 125 served places;
+  a rerun of each Canadian list then changes nothing.
 
 **Done when** both loads are applied, Quebec has its 87 MRCs and about 1,120 municipalities
 with codes, and the federal bodies sit under their portfolio departments.

@@ -83,7 +83,7 @@ __all__ = [
 
 @dataclass
 class SeedReport:
-    """Rows added per table."""
+    """Rows added per table, and whether the country's naming rules were rewritten."""
 
     institution_types: int = 0
     source_types: int = 0
@@ -94,10 +94,15 @@ class SeedReport:
     places: int = 0
     institutions: int = 0
     aliases: int = 0
+    # Not a row added: the one country settings row, when the seed's naming rules replaced
+    # the rules it held.
+    naming_rules_changed: bool = False
 
     @property
     def added(self) -> int:
-        return sum(getattr(self, item.name) for item in fields(self))
+        return sum(
+            getattr(self, item.name) for item in fields(self) if item.name != "naming_rules_changed"
+        )
 
 
 def validate(country: dict[str, Any]) -> tuple[SharedSeed, CountrySeed]:
@@ -143,15 +148,18 @@ async def _seed_country_tables(
     session: AsyncSession, seed: CountrySeed, report: SeedReport
 ) -> None:
     code = seed.settings.country_code
-    if await session.get(CountrySettings, code) is None:
+    naming_rules = seed.settings.naming_rules.model_dump()
+    settings = await session.get(CountrySettings, code)
+    if settings is None:
         session.add(
-            CountrySettings(
-                country_code=code,
-                name=seed.settings.name,
-                naming_rules=seed.settings.naming_rules.model_dump(),
-            )
+            CountrySettings(country_code=code, name=seed.settings.name, naming_rules=naming_rules)
         )
         report.country_settings += 1
+    elif settings.naming_rules != naming_rules:
+        # The naming rules are code: a change to the seed's reaches the row on the next run,
+        # as the loader and the agent read the row. Every other edit to the row is kept.
+        settings.naming_rules = naming_rules
+        report.naming_rules_changed = True
     await session.flush()
     for level in seed.administrative_levels:
         if await session.get(AdministrativeLevel, (code, level.name)) is None:

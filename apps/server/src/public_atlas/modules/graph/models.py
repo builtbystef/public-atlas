@@ -71,11 +71,14 @@ class DomainKind(StrEnum):
 
 class IdentifierScheme(StrEnum):
     """Outside schemes a place or institution has a code in: Canada's Standard Geographical
-    Classification; the United States' FIPS codes (state, county, place, county subdivision), the
+    Classification and the code géographique of Quebec's Ministère des Affaires municipales et
+    de l'Habitation (three digits for an MRC, which the census does not always count as a
+    division); the United States' FIPS codes (state, county, place, county subdivision), the
     GNIS ids that survive a rename, the Census of Governments' unit ids, and the NCES and IPEDS
     ids of school districts and campuses."""
 
     STATCAN_SGC = "statcan_sgc"
+    MAMH = "mamh"
     FIPS = "fips"
     GNIS = "gnis"
     CENSUS_GID = "census_gid"

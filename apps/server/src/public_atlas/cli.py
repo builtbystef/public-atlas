@@ -42,8 +42,11 @@ async def seed(settings: Settings, name: str) -> countries.SeedReport:
 def run_seed(args: argparse.Namespace) -> None:
     report = asyncio.run(seed(Settings(), args.country))
     for item in fields(report):
-        print(f"{item.name}: {getattr(report, item.name)} added")  # noqa: T201 - a command line
+        if item.name != "naming_rules_changed":
+            print(f"{item.name}: {getattr(report, item.name)} added")  # noqa: T201 - a command line
     print(f"{report.added} rows added")  # noqa: T201
+    if report.naming_rules_changed:
+        print("naming rules: changed to the seed's")  # noqa: T201
 
 
 # --- load-list ---
