@@ -1705,7 +1705,7 @@
           "graph"
         ],
         "summary": "Read Graph",
-        "description": "The graph under a root as nodes and edges, for the graph view. The root is `place_id`\nwith every place under it (`depth` levels down; all of them by default), or the country's\ntop place; or `institution_id` with its homepages, sources and domains alone. `kinds` says\nwhich kinds come back, every kind by default; the other filters keep the matching places\nand institutions, and the root is always kept. Rejected entities come back only when asked\nfor by `status`, and platform domains only with `platforms`. Over a few thousand nodes the\npayload is cut down to the places and their governments, and says so.",
+        "description": "The graph under a root as nodes and edges, for the graph view. The root is `place_id`\nwith every place under it, or the country's top place. `kinds` says which kinds come back,\nevery kind by default; the other filters keep the matching places and institutions, and the\nroot is always kept. With `governments`, the only institutions are the places' governments.\nRejected entities come back only when asked for by `status`, and platform domains only with\n`platforms`. Over a few thousand nodes the payload is cut down to the places and their\ngovernments, and says so. Each node carries what lies beneath it and its coverage, and the\npayload the root's ancestors, for the breadcrumb.",
         "operationId": "graph-read_graph",
         "parameters": [
           {
@@ -1726,23 +1726,6 @@
             }
           },
           {
-            "name": "institution_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "uuid"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Institution Id"
-            }
-          },
-          {
             "name": "country_code",
             "in": "query",
             "required": false,
@@ -1757,23 +1740,6 @@
                 }
               ],
               "title": "Country Code"
-            }
-          },
-          {
-            "name": "depth",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer",
-                  "minimum": 0
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Depth"
             }
           },
           {
@@ -1846,23 +1812,6 @@
             }
           },
           {
-            "name": "q",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "maxLength": 200
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Q"
-            }
-          },
-          {
             "name": "platforms",
             "in": "query",
             "required": false,
@@ -1870,6 +1819,16 @@
               "type": "boolean",
               "default": false,
               "title": "Platforms"
+            }
+          },
+          {
+            "name": "governments",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Governments"
             }
           },
           {
@@ -5445,6 +5404,26 @@
         "title": "GateOutput",
         "description": "A pilot target the run is judged on: a recall floor on one assignment type. Hits and\nmisses are null when the run was not judged on it: still running, or recorded before\ngates were kept, in which case the floor is today's. The verdict is null when there was\nnothing to judge."
       },
+      "GraphAncestor": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "title": "GraphAncestor",
+        "description": "A place above the root, for the breadcrumb."
+      },
       "GraphEdge": {
         "properties": {
           "source": {
@@ -5561,6 +5540,72 @@
                 "type": "null"
               }
             ]
+          },
+          "child_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Child Count"
+          },
+          "institution_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Count"
+          },
+          "governed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Governed"
+          },
+          "online": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Online"
+          },
+          "has_homepage": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Homepage"
+          },
+          "homepage_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Count"
           }
         },
         "type": "object",
@@ -5579,6 +5624,13 @@
             "type": "string",
             "format": "uuid",
             "title": "Root Id"
+          },
+          "ancestors": {
+            "items": {
+              "$ref": "#/components/schemas/GraphAncestor"
+            },
+            "type": "array",
+            "title": "Ancestors"
           },
           "nodes": {
             "items": {
@@ -5603,6 +5655,7 @@
         "type": "object",
         "required": [
           "root_id",
+          "ancestors",
           "nodes",
           "edges",
           "truncated"

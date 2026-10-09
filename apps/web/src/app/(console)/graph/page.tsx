@@ -10,7 +10,6 @@ import { getFilterOptions } from "@/features/graph/server";
 import { getApi } from "@/lib/api/server";
 import { toSearchString, type SearchParams } from "@/lib/lists";
 import { getQueryClient } from "@/lib/query-client";
-import { getTimeZone } from "@/lib/time-zone/server";
 
 export const metadata: Metadata = { title: "Graph" };
 
@@ -24,7 +23,7 @@ export default function GraphPage({ searchParams }: { searchParams: Promise<Sear
 
 async function GraphContent({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const search = parseGraphSearch(await searchParams);
-  const [api, timeZone] = await Promise.all([getApi(), getTimeZone()]);
+  const api = await getApi();
   const queryClient = getQueryClient();
   const [{ countries, institutionTypes }] = await Promise.all([
     getFilterOptions(api),
@@ -37,7 +36,6 @@ async function GraphContent({ searchParams }: { searchParams: Promise<SearchPara
         initialSearch={search}
         countries={countries}
         institutionTypes={institutionTypes}
-        timeZone={timeZone}
       />
     </HydrationBoundary>
   );
@@ -48,7 +46,8 @@ function GraphSkeleton() {
     <div className="flex flex-col gap-4">
       <Skeleton className="h-8 w-64" />
       <Skeleton className="h-8 w-full" />
-      <Skeleton className="h-[max(28rem,calc(100svh-16rem))] w-full" />
+      <Skeleton className="h-5 w-80" />
+      <Skeleton className="h-[max(28rem,calc(100svh-18rem))] w-full" />
     </div>
   );
 }

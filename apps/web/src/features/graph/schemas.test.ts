@@ -47,21 +47,23 @@ test("the places list reads its filters from the URL", () => {
   expect(parsePlaceSearch(new URLSearchParams("sort=status"))).toEqual({});
 });
 
-test("the graph view reads its root, kinds and filters from the URL", () => {
+test("the graph view reads its root, detail, overlay and filters from the URL", () => {
   expect(
     parseGraphSearch({
       place_id: "0199e8b0-0000-7000-8000-000000000001",
-      kinds: "domain,place,bogus",
+      detail: "web",
+      overlay: "coverage",
       status: "verified",
       platforms: "1",
       node: "not-a-uuid",
     }),
   ).toEqual({
     place_id: "0199e8b0-0000-7000-8000-000000000001",
-    kinds: "place,domain",
+    detail: "web",
+    overlay: "coverage",
     status: "verified",
     platforms: "1",
   });
   // Every kind is the URL without one; a flag other than "1" is no flag.
-  expect(parseGraphSearch(new URLSearchParams("kinds=bogus&platforms=yes"))).toEqual({});
+  expect(parseGraphSearch(new URLSearchParams("detail=bogus&overlay=x&platforms=yes"))).toEqual({});
 });

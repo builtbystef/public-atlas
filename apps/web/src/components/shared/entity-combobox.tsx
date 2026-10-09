@@ -6,7 +6,7 @@ import {
   type QueryKey,
   type UseQueryOptions,
 } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   Combobox,
@@ -16,6 +16,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
+import { InputGroupAddon } from "@/components/ui/input-group";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
 /** What a picker needs of a contact or company. */
@@ -51,6 +52,11 @@ export interface EntityComboboxProps<
   disabled?: boolean;
   placeholder: string;
   /**
+   * An icon at the start of the input, in place of the dropdown chevron at
+   * its end: a search icon makes the picker read as a search bar.
+   */
+  icon?: ReactNode;
+  /**
    * The option behind `value`, when the caller already has it (an edit form
    * holds the whole record). Otherwise `resolve` fetches it, so the input
    * can show a name rather than an id.
@@ -82,6 +88,7 @@ export function EntityCombobox<
   invalid,
   disabled,
   placeholder,
+  icon,
   selected,
   search,
   resolve,
@@ -120,9 +127,12 @@ export function EntityCombobox<
         onBlur={onBlur}
         aria-invalid={invalid}
         disabled={disabled}
+        showTrigger={icon === undefined}
         showClear
         className="w-full"
-      />
+      >
+        {icon && <InputGroupAddon>{icon}</InputGroupAddon>}
+      </ComboboxInput>
       <ComboboxContent>
         <ComboboxEmpty>{matches.isPending ? "Loading…" : "No matches."}</ComboboxEmpty>
         <ComboboxList>

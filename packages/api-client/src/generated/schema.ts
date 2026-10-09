@@ -393,12 +393,13 @@ export interface paths {
         /**
          * Read Graph
          * @description The graph under a root as nodes and edges, for the graph view. The root is `place_id`
-         *     with every place under it (`depth` levels down; all of them by default), or the country's
-         *     top place; or `institution_id` with its homepages, sources and domains alone. `kinds` says
-         *     which kinds come back, every kind by default; the other filters keep the matching places
-         *     and institutions, and the root is always kept. Rejected entities come back only when asked
-         *     for by `status`, and platform domains only with `platforms`. Over a few thousand nodes the
-         *     payload is cut down to the places and their governments, and says so.
+         *     with every place under it, or the country's top place. `kinds` says which kinds come back,
+         *     every kind by default; the other filters keep the matching places and institutions, and the
+         *     root is always kept. With `governments`, the only institutions are the places' governments.
+         *     Rejected entities come back only when asked for by `status`, and platform domains only with
+         *     `platforms`. Over a few thousand nodes the payload is cut down to the places and their
+         *     governments, and says so. Each node carries what lies beneath it and its coverage, and the
+         *     payload the root's ancestors, for the breadcrumb.
          */
         get: operations["graph-read_graph"];
         put?: never;
@@ -1497,6 +1498,19 @@ export interface components {
             verdict: ("pass" | "fail") | null;
         };
         /**
+         * GraphAncestor
+         * @description A place above the root, for the breadcrumb.
+         */
+        GraphAncestor: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+        };
+        /**
          * GraphEdge
          * @description A link between two nodes, from the row that holds the key to the row it points at.
          */
@@ -1543,6 +1557,18 @@ export interface components {
             /** Source Type */
             source_type?: string | null;
             domain_kind?: components["schemas"]["DomainKind"] | null;
+            /** Child Count */
+            child_count?: number | null;
+            /** Institution Count */
+            institution_count?: number | null;
+            /** Governed */
+            governed?: boolean | null;
+            /** Online */
+            online?: boolean | null;
+            /** Has Homepage */
+            has_homepage?: boolean | null;
+            /** Homepage Count */
+            homepage_count?: number | null;
         };
         /** GraphOutput */
         GraphOutput: {
@@ -1551,6 +1577,8 @@ export interface components {
              * Format: uuid
              */
             root_id: string;
+            /** Ancestors */
+            ancestors: components["schemas"]["GraphAncestor"][];
             /** Nodes */
             nodes: components["schemas"]["GraphNode"][];
             /** Edges */
@@ -2476,6 +2504,7 @@ export type EventOutput = components['schemas']['EventOutput'];
 export type EvidenceOutput = components['schemas']['EvidenceOutput'];
 export type FindingOutput = components['schemas']['FindingOutput'];
 export type GateOutput = components['schemas']['GateOutput'];
+export type GraphAncestor = components['schemas']['GraphAncestor'];
 export type GraphEdge = components['schemas']['GraphEdge'];
 export type GraphNode = components['schemas']['GraphNode'];
 export type GraphOutput = components['schemas']['GraphOutput'];
@@ -3325,15 +3354,13 @@ export interface operations {
         parameters: {
             query?: {
                 place_id?: string | null;
-                institution_id?: string | null;
                 country_code?: string | null;
-                depth?: number | null;
                 kinds?: components["schemas"]["EntityKind"][] | null;
                 administrative_level?: string | null;
                 institution_type?: string | null;
                 status?: components["schemas"]["EntityStatus"] | null;
-                q?: string | null;
                 platforms?: boolean;
+                governments?: boolean;
             };
             header?: {
                 /** @description `main` (the default) or `eval`: which database the request reads. */

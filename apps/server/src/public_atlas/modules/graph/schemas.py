@@ -177,6 +177,25 @@ class GraphNode(BaseModel):
     institution_type: str | None = None
     source_type: str | None = None
     domain_kind: DomainKind | None = None
+    # What an expansion of a place would bring: the places directly under it and the
+    # institutions in it, rejected ones aside.
+    child_count: int | None = None
+    institution_count: int | None = None
+    # A place's coverage: whether it has a government, and whether that government has a
+    # verified homepage.
+    governed: bool | None = None
+    online: bool | None = None
+    # An institution's coverage: whether its homepage is verified, and how many homepage claims
+    # it has, rejected ones aside, the verified one among them.
+    has_homepage: bool | None = None
+    homepage_count: int | None = None
+
+
+class GraphAncestor(BaseModel):
+    """A place above the root, for the breadcrumb."""
+
+    id: uuid.UUID
+    label: str
 
 
 class GraphEdge(BaseModel):
@@ -189,6 +208,9 @@ class GraphEdge(BaseModel):
 
 class GraphOutput(BaseModel):
     root_id: uuid.UUID
+    # The places above the root, from the country down; for an institution, its place's chain
+    # and the place itself.
+    ancestors: list[GraphAncestor]
     nodes: list[GraphNode]
     edges: list[GraphEdge]
     truncated: bool = Field(

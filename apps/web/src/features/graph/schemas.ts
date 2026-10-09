@@ -3,7 +3,7 @@ import { z } from "zod";
 import { entityStatuses } from "@/lib/labels";
 import { listSearch, optionalParam, parseSearch, type SearchParams } from "@/lib/lists";
 
-import { kindsParam, parseKinds } from "./graph-data";
+import { graphDetails, graphOverlays } from "./graph-data";
 
 export const institutionSorts = [
   "name",
@@ -69,15 +69,16 @@ export function parsePlaceSearch(params: SearchParams | URLSearchParams): PlaceS
 }
 
 /**
- * Where the graph view is: its root place, the kinds drawn (every kind when
- * absent), the filters, and the node whose panel is open. No page or sort:
- * the picture is one payload.
+ * Where the graph view is: its root place, how much of the graph is drawn
+ * (the hierarchy when absent), what the colour says (the kind when absent),
+ * the filters, and the node whose panel is open. No page or sort: the
+ * picture is one payload.
  */
 const graphSearchSchema = z.object({
   place_id: optionalParam(z.uuid()),
   country_code: optionalParam(z.string().trim().min(1)),
-  // The chosen kinds, comma-separated and in the legend's order; unknown names are dropped.
-  kinds: optionalParam(z.string().transform((text) => kindsParam(parseKinds(text)))),
+  detail: optionalParam(z.enum(graphDetails)),
+  overlay: optionalParam(z.enum(graphOverlays)),
   administrative_level: optionalParam(z.string().trim().min(1)),
   institution_type: optionalParam(z.string().trim().min(1)),
   status: optionalParam(z.enum(entityStatuses)),

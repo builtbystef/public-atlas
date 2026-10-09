@@ -23,6 +23,7 @@ def test_the_app_has_the_health_countries_graph_review_runs_and_evals_routes(cli
         "/eval-runs",
         "/eval-runs/{eval_run_id}",
         "/evidence/{evidence_id}/context",
+        "/graph",
         "/health",
         "/health/db",
         "/health/storage",

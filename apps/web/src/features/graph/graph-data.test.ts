@@ -3,11 +3,18 @@ import { expect, test } from "vite-plus/test";
 
 import {
   combine,
+  connections,
+  coverage,
   emptyGraph,
-  kindsParam,
   neighbours,
   nodeRadius,
-  parseKinds,
+  RING_GAP,
+  RING_OUTSET,
+  ringRadii,
+  ringRadius,
+  rings,
+  sharedDomainEmphasis,
+  sharedDomains,
   shortLabel,
   withPositions,
 } from "./graph-data";
@@ -30,6 +37,7 @@ const institution = (id: string, source_count = 0): GraphNode => ({
 test("payloads fold into one picture, the first version of a node kept", () => {
   const root: GraphOutput = {
     root_id: "elm",
+    ancestors: [],
     truncated: true,
     nodes: [place("elm"), place("oakville"), institution("county")],
     edges: [
@@ -39,6 +47,7 @@ test("payloads fold into one picture, the first version of a node kept", () => {
   };
   const expansion: GraphOutput = {
     root_id: "oakville",
+    ancestors: [{ id: "elm", label: "elm" }],
     truncated: false,
     nodes: [{ ...place("oakville"), status: "candidate" }, institution("library", 2)],
     edges: [
@@ -133,10 +142,131 @@ test("a URL is labelled without its scheme, and a long label is cut short", () =
   expect(shortLabel(place("Elm"))).toBe("Elm");
 });
 
-test("the kinds in the URL are the chosen ones, or every kind", () => {
-  expect(parseKinds(undefined)).toEqual(["place", "institution", "homepage", "source", "domain"]);
-  expect(parseKinds("domain,place,bogus")).toEqual(["place", "domain"]);
-  expect(parseKinds("bogus")).toHaveLength(5);
-  expect(kindsParam(["domain", "place"])).toBe("place,domain");
-  expect(kindsParam(["source", "homepage", "place", "domain", "institution"])).toBeUndefined();
+const web = (id: string, kind: "homepage" | "source" | "domain"): GraphNode => ({
+  id,
+  kind,
+  label: id,
+  status: "verified",
+});
+
+// A region with two municipalities; the county's homepage and a source on its domain; a library
+// in one town whose claim sits on the same domain.
+const picture = {
+  nodes: [
+    place("elm"),
+    place("oakville"),
+    place("milton"),
+    institution("county", 1),
+    institution("town"),
+    institution("library"),
+    web("county-home", "homepage"),
+    web("tenders", "source"),
+    web("library-home", "homepage"),
+    web("elmcounty.ca", "domain"),
+  ],
+  edges: [
+    { source: "oakville", target: "elm", relation: "parent" },
+    { source: "milton", target: "elm", relation: "parent" },
+    { source: "elm", target: "county", relation: "government" },
+    { source: "oakville", target: "town", relation: "government" },
+    { source: "library", target: "oakville", relation: "place" },
+    { source: "library", target: "town", relation: "parent" },
+    { source: "library", target: "milton", relation: "serves" },
+    { source: "county-home", target: "county", relation: "homepage" },
+    { source: "tenders", target: "county", relation: "source" },
+    { source: "library-home", target: "library", relation: "homepage" },
+    { source: "county-home", target: "elmcounty.ca", relation: "domain" },
+    { source: "tenders", target: "elmcounty.ca", relation: "domain" },
+    { source: "library-home", target: "elmcounty.ca", relation: "domain" },
+  ],
+} satisfies { nodes: GraphNode[]; edges: GraphOutput["edges"] };
+
+test("each node sits on a ring by its depth, institutions and pages a step out from their place", () => {
+  const ring = rings("elm", picture.nodes, picture.edges);
+  expect(ring.get("elm")).toBe(0);
+  expect(ring.get("oakville")).toBe(1);
+  expect(ring.get("county")).toBe(0.5);
+  expect(ring.get("library")).toBe(1.5);
+  expect(ring.get("county-home")).toBeCloseTo(0.8);
+  expect(ring.get("library-home")).toBeCloseTo(1.8);
+  expect(ring.get("elmcounty.ca")).toBeCloseTo(1.95);
+  // Nothing without a root, or on a node with no path to it.
+  expect(rings(undefined, picture.nodes, picture.edges).size).toBe(0);
+  expect(rings("elm", [...picture.nodes, place("far")], picture.edges).has("far")).toBe(false);
+});
+
+test("the rings are far enough apart, and long enough around for what is on them", () => {
+  const few = ringRadii(
+    new Map([
+      ["a", 0],
+      ["b", 1],
+      ["c", 1.5],
+    ]),
+  );
+  expect(few).toEqual([0, RING_GAP]);
+  const many = new Map<string, number>([["root", 0]]);
+  for (let i = 0; i < 400; i++) many.set(`n${i}`, 1);
+  const [, crowded] = ringRadii(many);
+  expect(crowded).toBeGreaterThan(RING_GAP * 5);
+  expect(ringRadius([0, 100], 0.5)).toBe(RING_OUTSET / 2);
+  expect(ringRadius([0, 100], 1.5)).toBe(100 + RING_OUTSET / 2);
+  expect(ringRadius([0, 100], 3)).toBe(100 + 2 * RING_GAP);
+});
+
+test("coverage reads a government online, or a homepage, as covered", () => {
+  expect(coverage({ ...place("p"), governed: true, online: true })).toBe("covered");
+  expect(coverage({ ...place("p"), governed: true, online: false })).toBe("partial");
+  expect(coverage({ ...place("p"), governed: false, online: false })).toBe("missing");
+  expect(coverage({ ...institution("i"), has_homepage: true })).toBe("covered");
+  expect(coverage({ ...institution("i"), has_homepage: false, homepage_count: 1 })).toBe("partial");
+  expect(coverage({ ...institution("i"), has_homepage: false, homepage_count: 0 })).toBe("missing");
+  expect(coverage(web("d", "domain"))).toBeNull();
+});
+
+test("a shared domain is one with pages of more than one institution", () => {
+  const shared = sharedDomains(picture.nodes, picture.edges);
+  expect([...shared.keys()]).toEqual(["elmcounty.ca"]);
+  expect([...shared.get("elmcounty.ca")!]).toEqual(["county", "library"]);
+  expect([...sharedDomainEmphasis(shared, picture.edges)].toSorted()).toEqual([
+    "county",
+    "county-home",
+    "elmcounty.ca",
+    "library",
+    "library-home",
+    "tenders",
+  ]);
+  const alone = sharedDomains(
+    picture.nodes,
+    picture.edges.filter((edge) => edge.source !== "library-home"),
+  );
+  expect(alone.size).toBe(0);
+});
+
+test("a node's connections are grouped by what they are to it", () => {
+  const byId = new Map(picture.nodes.map((node) => [node.id, node]));
+  const county = connections(byId.get("county")!, byId, picture.edges);
+  expect(county.map((group) => [group.label, group.nodes.map((node) => node.id)])).toEqual([
+    ["Governs", ["elm"]],
+    ["Homepage", ["county-home"]],
+    ["Sources", ["tenders"]],
+  ]);
+  const oakville = connections(byId.get("oakville")!, byId, picture.edges);
+  expect(oakville.map((group) => group.label)).toEqual([
+    "Parent place",
+    "Government",
+    "Institutions",
+  ]);
+  const library = connections(byId.get("library")!, byId, picture.edges);
+  expect(library.map((group) => group.label)).toEqual([
+    "Place",
+    "Parent body",
+    "Homepage",
+    "Serves",
+  ]);
+  const domain = connections(byId.get("elmcounty.ca")!, byId, picture.edges);
+  expect(domain[0]?.nodes.map((node) => node.id)).toEqual([
+    "county-home",
+    "library-home",
+    "tenders",
+  ]);
 });

@@ -123,6 +123,33 @@ def test_the_graph_under_a_region(
     assert by_label["Oakville Library"]["status"] == "candidate"
     assert by_label["https://www.elmcounty.ca/tenders"]["source_type"] == "tender"
     assert by_label["elmcounty.ca"]["domain_kind"] == "official"
+    # What an expansion would bring, and the coverage: the rejected body is not counted.
+    assert (
+        by_label["Elm"]
+        | {"child_count": 2, "institution_count": 1, "governed": True, "online": True}
+        == by_label["Elm"]
+    )
+    assert (
+        by_label["Milton"]
+        | {"child_count": 0, "institution_count": 1, "governed": True, "online": False}
+        == by_label["Milton"]
+    )
+    assert (
+        by_label["County of Elm"] | {"has_homepage": True, "homepage_count": 1}
+        == by_label["County of Elm"]
+    )
+    assert (
+        by_label["Oakville Library"] | {"has_homepage": False, "homepage_count": 1}
+        == by_label["Oakville Library"]
+    )
+    assert (
+        by_label["Town of Milton"] | {"has_homepage": False, "homepage_count": 0}
+        == by_label["Town of Milton"]
+    )
+    assert by_label["elmcounty.ca"]["child_count"] is None
+    # The breadcrumb: the places above the root, from the top.
+    assert [a["label"] for a in body["ancestors"]] == ["Canada", "Ontario"]
+    assert body["ancestors"][1]["id"] == str(world.ontario.id)
 
     # The platform domain, when asked for, with the claim's edge to it.
     with_platforms = client.get(
@@ -144,10 +171,10 @@ def test_the_default_root_is_the_country(
     assert body["root_id"] == str(next(n["id"] for n in body["nodes"] if n["label"] == "Canada"))
     assert {"Canada", "Ontario", "Elm", "Oakville", "Milton"} <= labels(body, "place")
     assert "Government of Ontario" in labels(body, "institution")
+    assert body["ancestors"] == []
     assert client.get("/graph", params={"country_code": "CA"}).json()["root_id"] == body["root_id"]
     assert client.get("/graph", params={"country_code": "FR"}).status_code == 404
     assert client.get("/graph", params={"place_id": str(uuid.uuid4())}).status_code == 404
-    assert client.get("/graph", params={"institution_id": str(uuid.uuid4())}).status_code == 404
 
 
 def test_filters_keep_the_root_and_narrow_the_rest(
@@ -162,6 +189,14 @@ def test_filters_keep_the_root_and_narrow_the_rest(
     assert edges(places_only) == {("Oakville", "Elm", "parent"), ("Milton", "Elm", "parent")}
     two = client.get("/graph", params={**root, "kinds": ["place", "institution"]}).json()
     assert {n["kind"] for n in two["nodes"]} == {"place", "institution"}
+    # The governments alone: the hierarchy, as the cap's fallback draws it.
+    hierarchy = client.get("/graph", params={**root, "governments": "true"}).json()
+    assert labels(hierarchy, "institution") == {
+        "County of Elm",
+        "Town of Oakville",
+        "Town of Milton",
+    }
+    assert labels(hierarchy, "homepage") == {"https://www.elmcounty.ca/"}
     # Domains alone still hang off the institutions' web, which is walked but not drawn.
     domains_only = client.get("/graph", params={**root, "kinds": ["domain"]}).json()
     assert labels(domains_only) == {"elmcounty.ca"}
@@ -193,43 +228,6 @@ def test_filters_keep_the_root_and_narrow_the_rest(
     assert labels(rejected) == {"Elm", "Milton Arena Board"}
     assert str(picture.rejected) in {n["id"] for n in rejected["nodes"]}
 
-    # The search: a name or an alias of a place or an institution.
-    found = client.get("/graph", params={**root, "q": "oakville"}).json()
-    assert labels(found, "place") == {"Elm", "Oakville"}
-    assert labels(found, "institution") == {"Town of Oakville", "Oakville Library"}
-
-
-def test_an_expansion_from_a_place_or_an_institution(
-    client: TestClient, db: Database, world: World, build: type[Build]
-):
-    picture = db.run(make_picture, db, world, build)
-
-    # A place, by itself: what hangs off it and nothing below.
-    alone = client.get("/graph", params={"place_id": str(world.elm.id), "depth": 0}).json()
-    assert labels(alone, "place") == {"Elm"}
-    assert labels(alone, "institution") == {"County of Elm"}
-    assert labels(alone, "source") == {"https://www.elmcounty.ca/tenders"}
-    one_down = client.get("/graph", params={"place_id": str(world.oakville.id), "depth": 1})
-    assert labels(one_down.json(), "place") == {"Oakville"}
-    assert labels(one_down.json(), "institution") == {"Town of Oakville", "Oakville Library"}
-    from_the_top = client.get("/graph", params={"depth": 1}).json()
-    assert labels(from_the_top, "place") == {"Canada", "Ontario"}
-
-    # An institution: its web alone, the edges to its place and parent left for the picture
-    # that holds them.
-    body = client.get("/graph", params={"institution_id": str(picture.library)}).json()
-    assert body["root_id"] == str(picture.library)
-    assert labels(body) == {"Oakville Library", "https://sites.example/oakville-library/"}
-    assert edges(body) == {
-        ("https://sites.example/oakville-library/", "Oakville Library", "homepage")
-    }
-    assert str(picture.library_claim) in {n["id"] for n in body["nodes"]}
-    county = client.get(
-        "/graph", params={"institution_id": str(world.county.id), "kinds": ["source", "domain"]}
-    ).json()
-    assert labels(county) == {"https://www.elmcounty.ca/tenders", "elmcounty.ca"}
-    assert str(picture.source) in {n["id"] for n in county["nodes"]}
-
 
 def test_a_big_picture_is_cut_down_to_places_and_governments(
     client: TestClient,
@@ -259,7 +257,7 @@ def test_a_big_picture_is_cut_down_to_places_and_governments(
     body = client.get("/graph", params={"place_id": str(world.elm.id)}).json()
     assert body["truncated"] is True
     assert labels(body, "institution") == {"County of Elm", "Town of Oakville", "Town of Milton"}
-    # A place expanded on its own fits.
-    body = client.get("/graph", params={"place_id": str(picture.milton), "depth": 0}).json()
+    # A small place on its own fits.
+    body = client.get("/graph", params={"place_id": str(picture.milton)}).json()
     assert body["truncated"] is False
     assert labels(body) == {"Milton", "Town of Milton"}

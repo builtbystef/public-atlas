@@ -8,12 +8,11 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 
-from sqlalchemy import CTE, ColumnElement, Select, and_, exists, func, literal, or_, select
+from sqlalchemy import CTE, ColumnElement, Select, and_, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from public_atlas.modules.graph.models import (
-    Alias,
     Domain,
     DomainKind,
     Entity,
@@ -27,40 +26,38 @@ from public_atlas.modules.graph.models import (
     Webpage,
 )
 from public_atlas.modules.graph.reading import get_place, population_figure
-from public_atlas.modules.graph.schemas import GraphEdge, GraphNode, GraphRelation
+from public_atlas.modules.graph.schemas import GraphAncestor, GraphEdge, GraphNode, GraphRelation
 from public_atlas.shared.exceptions import NotFoundError
 
 __all__ = ["MAX_NODES", "GraphFilters", "Subgraph", "subgraph"]
 
 # Over this many nodes the picture reads as a hairball: the places and their governments come
-# back alone, and the client expands a place or an institution on demand.
+# back alone, and the user centres the graph lower down to see more.
 MAX_NODES = 3000
 
 
 @dataclass(frozen=True, slots=True)
 class GraphFilters:
-    """What the picture holds. The root is `institution_id`, with its web alone; else `place_id`
-    and every place under it, `depth` levels down (all of them when None); else the country's
-    top place, of `country_code` or the first country. `kinds` says which kinds are drawn. The
-    other filters keep the matching places and institutions; the root is always kept. Without
-    `status`, rejected entities are left out. Platform domains are left out unless asked for:
-    one links to hundreds of homepages and pulls the layout toward it."""
+    """What the picture holds. The root is `place_id` and every place under it; else the
+    country's top place, of `country_code` or the first country. `kinds` says which kinds are
+    drawn. The other filters keep the matching places and institutions; the root is always
+    kept. Without `status`, rejected entities are left out. Platform domains are left out
+    unless asked for: one links to hundreds of homepages and pulls the layout toward it."""
 
     place_id: uuid.UUID | None = None
-    institution_id: uuid.UUID | None = None
     country_code: str | None = None
-    depth: int | None = None
     kinds: frozenset[EntityKind] = frozenset(EntityKind)
     administrative_level: str | None = None
     institution_type: str | None = None
     status: EntityStatus | None = None
-    q: str | None = None
     platforms: bool = False
+    governments: bool = False
 
 
 @dataclass(slots=True)
 class Subgraph:
     root_id: uuid.UUID
+    ancestors: list[GraphAncestor]
     nodes: list[GraphNode]
     edges: list[GraphEdge]
     # Whether the cap cut the picture down to the places and their governments.
@@ -70,25 +67,18 @@ class Subgraph:
 # Each kind extends `entities`, so a query over two kinds joins the second through a flat alias
 # (see reading.py).
 _source = aliased(Source, flat=True)
+_homepage = aliased(Homepage, flat=True)
+_child = aliased(Place, flat=True)
+_institution = aliased(Institution, flat=True)
 
 
 async def subgraph(session: AsyncSession, filters: GraphFilters) -> Subgraph:
     """The nodes and edges the filters admit, the walk cut short at the cap."""
-    if filters.institution_id is not None:
-        institution = await session.get(Institution, filters.institution_id)
-        if institution is None:
-            raise NotFoundError("no such institution")
-        root_id = institution.id
-        places: list[_PlaceNode] = []
-        institutions = await _institutions(
-            session, select(Institution.id).where(Institution.id == root_id)
-        )
-    else:
-        root = await _root(session, filters)
-        root_id = root.id
-        tree = _place_tree(root.id, filters.depth)
-        places = await _places(session, tree, filters)
-        institutions = await _institutions(session, _institutions_in(tree, filters))
+    root = await _root(session, filters)
+    ancestors = await _ancestors(session, root)
+    tree = _place_tree(root.id)
+    places = await _places(session, tree, filters)
+    institutions = await _institutions(session, _institutions_in(tree, filters))
     governments = {place.place.government_institution_id for place in places}
     truncated = False
     homepages: list[_WebNode] = []
@@ -111,7 +101,13 @@ async def subgraph(session: AsyncSession, filters: GraphFilters) -> Subgraph:
     nodes = _nodes(filters.kinds, places, institutions, homepages, sources, domains)
     served = await _served(session, institutions) if institutions and places else []
     edges = _edges({node.id for node in nodes}, places, institutions, homepages, sources, served)
-    return Subgraph(root_id=root_id, nodes=nodes, edges=edges, truncated=truncated)
+    return Subgraph(
+        root_id=root.id,
+        ancestors=[GraphAncestor(id=place.id, label=place.name) for place in ancestors],
+        nodes=nodes,
+        edges=edges,
+        truncated=truncated,
+    )
 
 
 # --- The walk ---
@@ -121,12 +117,17 @@ async def subgraph(session: AsyncSession, filters: GraphFilters) -> Subgraph:
 class _PlaceNode:
     place: Place
     population: int | None
+    child_count: int
+    institution_count: int
+    governed: bool
+    online: bool
 
 
 @dataclass(frozen=True, slots=True)
 class _InstitutionNode:
     institution: Institution
     source_count: int
+    homepage_count: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -154,8 +155,23 @@ async def _root(session: AsyncSession, filters: GraphFilters) -> Place:
     return root
 
 
-def _place_tree(root_id: uuid.UUID, depth: int | None) -> CTE:
-    """The root and every place under it, `depth` levels down, with how far down each is."""
+async def _ancestors(session: AsyncSession, place: Place) -> list[Place]:
+    """The places above one, from the top down. A hierarchy is a few levels deep, so this walks
+    up a step at a time."""
+    chain: list[Place] = []
+    parent_id = place.parent_place_id
+    while parent_id is not None:
+        parent = await session.get(Place, parent_id)
+        if parent is None:
+            break
+        chain.append(parent)
+        parent_id = parent.parent_place_id
+    chain.reverse()
+    return chain
+
+
+def _place_tree(root_id: uuid.UUID) -> CTE:
+    """The root and every place under it, with how far down each is."""
     tree = (
         select(Place.id, literal(0).label("depth"))
         .where(Place.id == root_id)
@@ -165,8 +181,6 @@ def _place_tree(root_id: uuid.UUID, depth: int | None) -> CTE:
     step = select(child.id, (tree.c.depth + 1).label("depth")).where(
         child.parent_place_id == tree.c.id
     )
-    if depth is not None:
-        step = step.where(tree.c.depth < depth)
     return tree.union_all(step)
 
 
@@ -177,31 +191,55 @@ def _status_clause(entity: type[Entity], status: EntityStatus | None) -> ColumnE
     return entity.status != EntityStatus.REJECTED
 
 
-def _named(entity: type[Place | Institution], q: str) -> ColumnElement[bool]:
-    """A name or an alias with `q` in it, case-folded."""
-    pattern = f"%{' '.join(q.split())}%"
-    owner = Alias.place_id if entity is Place else Alias.institution_id
-    return entity.name.ilike(pattern) | exists().where(
-        owner == entity.id, Alias.text.ilike(pattern)
-    )
-
-
 async def _places(session: AsyncSession, tree: CTE, filters: GraphFilters) -> list[_PlaceNode]:
     """The places of the tree the filters keep, the root among them whatever they say."""
     kept = [_status_clause(Place, filters.status)]
     if filters.administrative_level is not None:
         kept.append(Place.administrative_level == filters.administrative_level)
-    if filters.q:
-        kept.append(_named(Place, filters.q))
+    child_count = (
+        select(func.count())
+        .select_from(_child)
+        .where(_child.parent_place_id == Place.id, _child.status != EntityStatus.REJECTED)
+        .scalar_subquery()
+    )
+    institution_count = (
+        select(func.count())
+        .select_from(_institution)
+        .where(_institution.place_id == Place.id, _institution.status != EntityStatus.REJECTED)
+        .scalar_subquery()
+    )
+    governed = (
+        select(_institution.id)
+        .where(
+            _institution.id == Place.government_institution_id,
+            _institution.status != EntityStatus.REJECTED,
+        )
+        .exists()
+    )
+    online = (
+        select(_institution.id)
+        .where(
+            _institution.id == Place.government_institution_id,
+            _institution.homepage_id.is_not(None),
+        )
+        .exists()
+    )
     rows = await session.execute(
-        select(Place, population_figure(Place.id))
+        select(Place, population_figure(Place.id), child_count, institution_count, governed, online)
         .join(tree, tree.c.id == Place.id)
         .where(or_(tree.c.depth == 0, and_(*kept)))
         .order_by(tree.c.depth, func.lower(Place.name), Place.id)
     )
     return [
-        _PlaceNode(place=place, population=_whole(population))
-        for place, population in rows.tuples()
+        _PlaceNode(
+            place=place,
+            population=_whole(population),
+            child_count=int(children),
+            institution_count=int(institutions),
+            governed=bool(is_governed),
+            online=bool(is_online),
+        )
+        for place, population, children, institutions, is_governed, is_online in rows.tuples()
     ]
 
 
@@ -218,31 +256,46 @@ def _institutions_in(tree: CTE, filters: GraphFilters) -> Select[tuple[uuid.UUID
     query = select(Institution.id).where(
         Institution.place_id.in_(places), _status_clause(Institution, filters.status)
     )
+    if filters.governments:
+        query = query.where(
+            Institution.id.in_(
+                select(Place.government_institution_id).where(Place.id.in_(select(tree.c.id)))
+            )
+        )
     if filters.institution_type is not None:
         query = query.where(Institution.institution_type == filters.institution_type)
-    if filters.q:
-        query = query.where(_named(Institution, filters.q))
     return query
 
 
 async def _institutions(
     session: AsyncSession, ids: Select[tuple[uuid.UUID]]
 ) -> list[_InstitutionNode]:
-    """The institutions with those ids, each with its number of sources."""
+    """The institutions with those ids, each with its number of sources and of homepage claims."""
     source_count = (
         select(func.count())
         .select_from(_source)
         .where(_source.institution_id == Institution.id, _source.status != EntityStatus.REJECTED)
         .scalar_subquery()
     )
+    homepage_count = (
+        select(func.count())
+        .select_from(_homepage)
+        .where(
+            _homepage.institution_id == Institution.id,
+            _homepage.status != EntityStatus.REJECTED,
+        )
+        .scalar_subquery()
+    )
     rows = await session.execute(
-        select(Institution, source_count)
+        select(Institution, source_count, homepage_count)
         .where(Institution.id.in_(ids))
         .order_by(func.lower(Institution.name), Institution.id)
     )
     return [
-        _InstitutionNode(institution=institution, source_count=int(count))
-        for institution, count in rows.tuples()
+        _InstitutionNode(
+            institution=institution, source_count=int(sources), homepage_count=int(homepages)
+        )
+        for institution, sources, homepages in rows.tuples()
     ]
 
 
@@ -340,6 +393,10 @@ def _nodes(  # noqa: PLR0913, PLR0917 - one argument per kind
                 status=row.place.status,
                 population=row.population,
                 administrative_level=row.place.administrative_level,
+                child_count=row.child_count,
+                institution_count=row.institution_count,
+                governed=row.governed,
+                online=row.online,
             )
             for row in places
         ]
@@ -352,6 +409,8 @@ def _nodes(  # noqa: PLR0913, PLR0917 - one argument per kind
                 status=row.institution.status,
                 source_count=row.source_count,
                 institution_type=row.institution.institution_type,
+                has_homepage=row.institution.homepage_id is not None,
+                homepage_count=row.homepage_count,
             )
             for row in institutions
         ]

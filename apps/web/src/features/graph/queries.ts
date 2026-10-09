@@ -2,11 +2,11 @@ import type { ApiClient, EntityKind, EntityStatus } from "@public-atlas/api-clie
 import { queryOptions } from "@tanstack/react-query";
 
 import type { EntityOption } from "@/components/shared/entity-combobox";
-import { unwrap } from "@/lib/api/errors";
+import { ApiError, unwrap } from "@/lib/api/errors";
 import { humanize } from "@/lib/labels";
 import { paged, PICKER_ROWS, queryParams, type ListPage, type SortOrder } from "@/lib/lists";
 
-import { parseKinds } from "./graph-data";
+import { detailKinds } from "./graph-data";
 import type {
   GraphSearch,
   InstitutionFilterValues,
@@ -44,14 +44,13 @@ export interface PlaceListFilters extends ListPage {
 /** What `GET /graph` takes: a root and the filters on what hangs off it. */
 export interface GraphViewFilters {
   place_id?: string | undefined;
-  institution_id?: string | undefined;
   country_code?: string | undefined;
-  depth?: number | undefined;
   kinds?: EntityKind[] | undefined;
   administrative_level?: string | undefined;
   institution_type?: string | undefined;
   status?: EntityStatus | undefined;
   platforms?: boolean | undefined;
+  governments?: boolean | undefined;
 }
 
 export const graphKeys = {
@@ -118,14 +117,17 @@ export function placeListQuery(api: ApiClient, filters: PlaceListFilters) {
 
 /** The filters the graph view's URL asks the API for. */
 export function graphViewFilters(search: GraphSearch): GraphViewFilters {
+  // The shared-domains overlay is about the web, so it draws it, platforms and all.
+  const detail = search.overlay === "domains" ? "web" : (search.detail ?? "hierarchy");
   return {
     place_id: search.place_id,
     country_code: search.country_code,
-    kinds: search.kinds === undefined ? undefined : parseKinds(search.kinds),
+    kinds: detail === "web" ? undefined : detailKinds(detail),
+    governments: detail === "hierarchy" ? true : undefined,
     administrative_level: search.administrative_level,
     institution_type: search.institution_type,
     status: search.status,
-    platforms: search.platforms === "1" ? true : undefined,
+    platforms: search.platforms === "1" || search.overlay === "domains" ? true : undefined,
   };
 }
 
@@ -135,6 +137,9 @@ export function graphQuery(api: ApiClient, filters: GraphViewFilters) {
     queryKey: graphKeys.view(filters),
     queryFn: async () =>
       unwrap(await api.GET("/graph", { params: { query: queryParams(filters) } })),
+    // A root that is not there stays not there: say so at once rather than after the retries.
+    retry: (failures, error) =>
+      !(error instanceof ApiError && error.status === 404) && failures < 2,
   });
 }
 

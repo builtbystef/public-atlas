@@ -1,46 +1,48 @@
 "use client";
 
 import type { GraphNode } from "@public-atlas/api-client";
-import { useQuery } from "@tanstack/react-query";
-import { ExpandIcon, ExternalLinkIcon, XIcon } from "lucide-react";
+import { ChevronRightIcon, ExternalLinkIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Detail } from "@/components/shared/detail-list";
-import { EmptyState } from "@/components/shared/empty-state";
 import { ExternalLink } from "@/components/shared/external-link";
-import { DetailSkeleton } from "@/components/shared/skeletons";
 import { EntityStatusBadge } from "@/components/shared/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { browserApi } from "@/lib/api/client";
-import { errorMessage } from "@/lib/api/errors";
-import { entityKindLabels, humanize } from "@/lib/labels";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { formatCount } from "@/lib/formatting/money";
+import { entityKindLabels, entityStatusLabels, humanize } from "@/lib/labels";
 import { paths } from "@/lib/routes";
+import { cn } from "@/lib/utils";
 
-import { institutionQuery, placeQuery } from "../queries";
-import { InstitutionDetail } from "./institution-detail";
-import { PlaceDetail } from "./place-detail";
+import { shortLabel, type Connection } from "../graph-data";
+import { Population } from "./population";
+
+export const kindDot: Record<GraphNode["kind"], string> = {
+  place: "bg-graph-place",
+  institution: "bg-graph-institution",
+  homepage: "bg-graph-homepage",
+  source: "bg-graph-source",
+  domain: "bg-graph-domain",
+};
+
+/** The connection groups that can run long; they start folded so the short ones stay in view. */
+const FOLDED = new Set(["Places within", "Institutions", "Sources"]);
 
 /**
- * The panel beside the canvas for the clicked node: a place or an institution
- * as its own page shows it, with a link to that page; a homepage, a source or
- * a domain as a short card, with the institution it belongs to.
+ * The panel beside the canvas for the clicked node: what the graph knows of
+ * it in a few lines, a link to its page, and its connections grouped by what
+ * they are to it, each a step to take in the picture.
  */
 export function GraphPanel({
   node,
-  owner,
-  timeZone,
+  connections,
   onClose,
-  onExpand,
   onSelect,
 }: {
   node: GraphNode;
-  /** For a homepage or a source: the institution it belongs to, when it is in the picture. */
-  owner: GraphNode | undefined;
-  timeZone: string;
+  connections: Connection[];
   onClose: () => void;
-  onExpand: (node: GraphNode) => void;
   onSelect: (id: string) => void;
 }) {
   const page =
@@ -49,81 +51,148 @@ export function GraphPanel({
       : node.kind === "institution"
         ? paths.institution(node.id)
         : null;
-  const actions = (
-    <>
-      {(node.kind === "place" || node.kind === "institution") && (
-        <Button variant="outline" onClick={() => onExpand(node)}>
-          <ExpandIcon /> Expand
-        </Button>
-      )}
-      {page && (
-        <Button variant="outline" nativeButton={false} render={<Link href={page} />}>
-          <ExternalLinkIcon /> Open page
-        </Button>
-      )}
-      <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close panel">
-        <XIcon />
-      </Button>
-    </>
-  );
   return (
     <aside className="flex flex-col gap-4" aria-label={`${entityKindLabels[node.kind]} details`}>
-      <div className="flex items-center justify-between gap-2">
-        <Badge variant="secondary">{entityKindLabels[node.kind]}</Badge>
-        <div className="flex items-center gap-2">{actions}</div>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="secondary">{entityKindLabels[node.kind]}</Badge>
+            <EntityStatusBadge status={node.status} />
+          </div>
+          <h2 className="font-heading text-base font-medium wrap-anywhere">
+            {node.kind === "homepage" || node.kind === "source" ? shortLabel(node) : node.label}
+          </h2>
+        </div>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close panel">
+          <XIcon />
+        </Button>
       </div>
-      {node.kind === "place" ? (
-        <PlacePanel id={node.id} timeZone={timeZone} />
-      ) : node.kind === "institution" ? (
-        <InstitutionPanel id={node.id} timeZone={timeZone} />
-      ) : (
-        <WebPanel node={node} owner={owner} onSelect={onSelect} />
+      <dl className="flex flex-col gap-2 text-sm">
+        <Facts node={node} />
+      </dl>
+      {page && (
+        <div>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={page} />}>
+            <ExternalLinkIcon /> Open page
+          </Button>
+        </div>
       )}
+      {/* Keyed by the node, so each one's groups start in their default fold. */}
+      <section key={node.id} className="flex flex-col gap-3" aria-label="Connections">
+        {connections.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Nothing connected to it is in the picture.
+          </p>
+        ) : (
+          connections.map((group) => (
+            <Collapsible
+              key={group.label}
+              defaultOpen={!FOLDED.has(group.label)}
+              className="flex flex-col gap-1"
+            >
+              <CollapsibleTrigger className="group/fold flex items-center gap-1 rounded-md text-left text-xs font-medium text-muted-foreground hover:text-foreground">
+                <ChevronRightIcon
+                  className="size-3.5 transition-transform group-data-panel-open/fold:rotate-90"
+                  aria-hidden="true"
+                />
+                {group.label}
+                <span className="tabular-nums">({group.nodes.length})</span>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <ul className="flex flex-col">
+                  {group.nodes.map((other) => (
+                    <li key={other.id}>
+                      <button
+                        type="button"
+                        onClick={() => onSelect(other.id)}
+                        className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left text-sm hover:bg-muted"
+                      >
+                        <span
+                          aria-hidden="true"
+                          className={cn("size-2 shrink-0 rounded-full", kindDot[other.kind])}
+                        />
+                        <span className="min-w-0 flex-1 truncate">{shortLabel(other)}</span>
+                        {other.status !== "verified" && (
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {entityStatusLabels[other.status]}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </CollapsibleContent>
+            </Collapsible>
+          ))
+        )}
+      </section>
     </aside>
   );
 }
 
-function PlacePanel({ id, timeZone }: { id: string; timeZone: string }) {
-  const place = useQuery(placeQuery(browserApi, id));
-  if (place.isPending) return <DetailSkeleton />;
-  if (place.isError) return <EmptyState boxed>{errorMessage(place.error)}</EmptyState>;
-  return <PlaceDetail place={place.data} timeZone={timeZone} />;
-}
-
-function InstitutionPanel({ id, timeZone }: { id: string; timeZone: string }) {
-  const institution = useQuery(institutionQuery(browserApi, id));
-  if (institution.isPending) return <DetailSkeleton />;
-  if (institution.isError) {
-    return <EmptyState boxed>{errorMessage(institution.error)}</EmptyState>;
-  }
-  return <InstitutionDetail institution={institution.data} timeZone={timeZone} />;
-}
-
-/** A homepage, a source or a domain: what the graph itself knows of it. */
-function WebPanel({
-  node,
-  owner,
-  onSelect,
-}: {
-  node: GraphNode;
-  owner: GraphNode | undefined;
-  onSelect: (id: string) => void;
-}) {
-  return (
-    <Card>
-      <CardContent>
-        <dl className="flex flex-col gap-3 text-sm">
-          <Detail label={node.kind === "domain" ? "Domain" : "URL"}>
-            {node.kind === "domain" ? (
-              <ExternalLink href={`https://${node.label}/`}>{node.label}</ExternalLink>
+/** The few facts the graph carries about a node, by kind. */
+function Facts({ node }: { node: GraphNode }) {
+  switch (node.kind) {
+    case "place":
+      return (
+        <>
+          {node.administrative_level && (
+            <Detail label="Level">{humanize(node.administrative_level)}</Detail>
+          )}
+          <Detail label="Population">
+            <Population value={node.population} />
+          </Detail>
+          <Detail label="Beneath">
+            {formatCount(node.child_count ?? 0)} {node.child_count === 1 ? "place" : "places"},{" "}
+            {formatCount(node.institution_count ?? 0)}{" "}
+            {node.institution_count === 1 ? "institution" : "institutions"}
+          </Detail>
+          <Detail label="Government">
+            {node.online ? (
+              <span className="text-success">Online</span>
+            ) : node.governed ? (
+              <span className="text-warning">No verified homepage</span>
             ) : (
-              <ExternalLink href={node.label} />
+              <span className="text-destructive">None</span>
             )}
           </Detail>
-          <Detail label="Status">
-            <EntityStatusBadge status={node.status} />
+        </>
+      );
+    case "institution":
+      return (
+        <>
+          {node.institution_type && <Detail label="Type">{humanize(node.institution_type)}</Detail>}
+          <Detail label="Homepage">
+            {node.has_homepage ? (
+              <span className="text-success">Verified</span>
+            ) : (node.homepage_count ?? 0) > 0 ? (
+              <span className="text-warning">
+                {node.homepage_count} {node.homepage_count === 1 ? "claim" : "claims"} awaiting
+                review
+              </span>
+            ) : (
+              <span className="text-destructive">None</span>
+            )}
+          </Detail>
+          <Detail label="Sources">{formatCount(node.source_count ?? 0)}</Detail>
+        </>
+      );
+    case "homepage":
+    case "source":
+      return (
+        <>
+          <Detail label="URL">
+            <ExternalLink href={node.label} />
           </Detail>
           {node.source_type && <Detail label="Type">{humanize(node.source_type)}</Detail>}
+        </>
+      );
+    case "domain":
+      return (
+        <>
+          <Detail label="Domain">
+            <ExternalLink href={`https://${node.label}/`}>{node.label}</ExternalLink>
+          </Detail>
           {node.domain_kind && (
             <Detail label="Kind">
               {node.domain_kind === "official"
@@ -131,29 +200,7 @@ function WebPanel({
                 : "Platform: anyone can publish on it"}
             </Detail>
           )}
-          {node.kind !== "domain" && (
-            <Detail label="Institution">
-              {owner && (
-                <span className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onSelect(owner.id)}
-                    className="text-left hover:underline"
-                  >
-                    {owner.label}
-                  </button>
-                  <Link
-                    href={paths.institution(owner.id)}
-                    className="text-xs text-muted-foreground hover:underline"
-                  >
-                    Open page
-                  </Link>
-                </span>
-              )}
-            </Detail>
-          )}
-        </dl>
-      </CardContent>
-    </Card>
-  );
+        </>
+      );
+  }
 }
