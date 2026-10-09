@@ -10,7 +10,7 @@ from public_atlas.modules.countries.seeds import canada
 from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
-from public_atlas.modules.imports.lists import ontario_places
+from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
 
 REGIONS = 40
 MUNICIPALITIES = 414
@@ -30,7 +30,7 @@ def opened() -> dict[str, files.OpenedFile]:
     cache_dir = Settings().lists_cache_dir
     try:
         return {
-            source.name: files.open_source(source, cache_dir) for source in ontario_places.SOURCES
+            source.name: files.open_file(source, cache_dir) for source in ontario_places.SOURCES
         }
     except files.ListFileError as exc:
         pytest.skip(f"the list's files are not cached and could not be fetched: {exc}")

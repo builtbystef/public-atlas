@@ -1,6 +1,7 @@
-"""`public-atlas`: the operator's command line. Each command builds the resources the way the
-API's lifespan does and calls a module's service; the logic lives there, not here. The one
-place, with asgi.py and the worker, that reads the environment."""
+"""`public-atlas`: the operator's command line (seed, load-list, lists, run, eval, worker).
+Each command builds the resources the way the API's lifespan does and calls a module's service;
+the logic lives there, not here. The one place, with asgi.py and the worker, that reads the
+environment."""
 
 import argparse
 import asyncio
@@ -72,6 +73,15 @@ def run_load_list(args: argparse.Namespace) -> None:
     except (ListFileError, AppError) as exc:
         sys.exit(f"load-list {args.name}: {exc}")
     print(report.render())  # noqa: T201
+
+
+# --- lists ---
+
+
+def run_lists(args: argparse.Namespace) -> None:
+    match args.action:
+        case "manifest":
+            print(imports.manifest(Settings().lists_cache_dir))  # noqa: T201
 
 
 # --- run ---
@@ -301,6 +311,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--apply", action="store_true", help="write the rows; without it nothing is written"
     )
     load_command.set_defaults(run=run_load_list)
+
+    lists_command = commands.add_parser("lists", help="the official list modules")
+    lists_actions = lists_command.add_subparsers(dest="action", required=True)
+    lists_actions.add_parser(
+        "manifest",
+        help="the from-scratch checklist, read from every list module: the fetched URLs with "
+        "their hashes, and the steps that obtain each manual file",
+    )
+    lists_command.set_defaults(run=run_lists)
 
     run_command = commands.add_parser(
         "run", help="start, pause, resume, stop or advance a run (spec section 7.1)"

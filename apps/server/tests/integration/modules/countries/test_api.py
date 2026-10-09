@@ -251,13 +251,15 @@ def test_a_name_pattern_is_tried_on_the_countrys_institutions(client: TestClient
     db.run(seed, db)
     url = "/countries/CA/institution-types/provincial_government/name-pattern-check"
 
-    # Searched case-insensitively, as the rules apply it.
+    # Searched case-insensitively, as the rules apply it. The thirteen provincial and
+    # territorial governments the seed anchors; Quebec's is named in French.
     check = client.post(url, json={"name_pattern": "^government of"}).json()
-    assert check == {"error": None, "total": 1, "matching": 1, "misses": []}
+    assert (check["error"], check["total"], check["matching"]) == (None, 13, 12)
+    assert [miss["name"] for miss in check["misses"]] == ["Gouvernement du Québec"]
 
     check = client.post(url, json={"name_pattern": "^Ministry of"}).json()
-    assert (check["total"], check["matching"]) == (1, 0)
-    assert [miss["name"] for miss in check["misses"]] == ["Government of Ontario"]
+    assert (check["total"], check["matching"]) == (13, 0)
+    assert "Government of Ontario" in [miss["name"] for miss in check["misses"]]
 
     check = client.post(url, json={"name_pattern": "("}).json()
     assert check["error"].startswith("not a regular expression")

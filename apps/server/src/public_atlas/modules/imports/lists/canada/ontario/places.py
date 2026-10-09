@@ -5,7 +5,9 @@ name and, where the province links one, the government's homepage as a candidate
 
 The census population table gives every unit's code, names and population; the census
 geographic attribute file says what each unit is (a county, a township, a reserve); the
-province's directory gives each government's legal name, its tier and its website. The rules:
+province's directory gives each government's legal name, its tier and its website. The two
+census files and their readers are shared with every province (`canada/statcan.py`); the
+directory and the rules below are Ontario's:
 
 - A county (`CTY`), regional municipality (`RM`), district municipality (`DM`) or united counties
   (`UC`) is a region with a government, named and linked from the directory's Upper Tier row. A
@@ -44,7 +46,14 @@ from public_atlas.modules.imports.entries import (
     Figure,
     PlaceEntry,
 )
-from public_atlas.modules.imports.files import Format, ListFileError, OpenedFile, Source
+from public_atlas.modules.imports.files import Format, ListFile, ListFileError, OpenedFile
+from public_atlas.modules.imports.lists.canada import statcan
+from public_atlas.modules.imports.lists.canada.statcan import (
+    ATTRIBUTES,
+    CENSUS_YEAR,
+    POPULATION,
+    Counted,
+)
 from public_atlas.shared.text import repair_mojibake
 
 if TYPE_CHECKING:
@@ -58,57 +67,11 @@ logger = logging.getLogger(__name__)
 COUNTRY = "CA"
 PROVINCE = "Ontario"
 PROVINCE_CODE = "35"
+ONTARIO = statcan.Province(PROVINCE_CODE)
 REGION = "region"
 MUNICIPALITY = "municipality"
-CENSUS_YEAR = 2021
-# A division code is the province's two digits plus two; a subdivision's is longer and starts
-# with its division's.
-DIVISION_CODE_LENGTH = 4
 
-POPULATION_COLUMN = "Population and dwelling counts (13): Population, 2021 [1]"
-# A DGUID is the vintage, the geographic level and the code: 2021A0005 3510010 is Kingston.
-# Ontario's rows only (35).
-DGUID = re.compile(r"^2021A000[235](?P<code>35\d*)$")
-# Between the names of a row that has two ("Greater Sudbury / Grand Sudbury").
-NAME_SEPARATOR = " / "
-
-POPULATION = Source(
-    name="statcan_population_2021",
-    title=(
-        "Statistics Canada, table 98-10-0002-01: Population and dwelling counts, Canada and "
-        "census subdivisions (municipalities), 2021 Census"
-    ),
-    url="https://www150.statcan.gc.ca/n1/tbl/csv/98100002-eng.zip",
-    sha256="36ab6c8f3f6b82d70d9dea927cb5cf04f6fbf9b543a7ad543695e6ea70d22876",
-    format=Format.CSV,
-    member="98100002.csv",
-    columns=("GEO", "DGUID", POPULATION_COLUMN),
-)
-# One row per dissemination block in the country (half a million); read for the division and
-# subdivision columns, once per distinct unit.
-ATTRIBUTES = Source(
-    name="statcan_geographic_attributes_2021",
-    title="Statistics Canada, 2021 Census Geographic Attribute File (92-151-X)",
-    url=(
-        "https://www12.statcan.gc.ca/census-recensement/2021/geo/aip-pia/attribute-attribs/"
-        "files-fichiers/2021_92-151_X.zip"
-    ),
-    sha256="918aa8502d9d95b1ae5ce437ed9674e0977ec55977c08b8d01822a9dab6fe5da",
-    format=Format.CSV,
-    member="2021_92-151_X.csv",
-    encoding="cp1252",
-    columns=(
-        "PRUID_PRIDU",
-        "CDUID_DRIDU",
-        "CDNAME_DRNOM",
-        "CDTYPE_DRGENRE",
-        "CSDUID_SDRIDU",
-        "CSDNAME_SDRNOM",
-        "CSDTYPE_SDRGENRE",
-    ),
-    distinct=True,
-)
-DIRECTORY = Source(
+DIRECTORY = ListFile(
     name="ontario_municipal_directory_2026_05",
     title=(
         "Ontario Ministry of Municipal Affairs and Housing, List of Ontario municipalities, "
@@ -123,34 +86,15 @@ DIRECTORY = Source(
 )
 SOURCES = (POPULATION, ATTRIBUTES, DIRECTORY)
 
-# Census division types (SGC 2021): a government, a territorial district, or a unit the census
-# counts and nothing governs.
-UPPER_TIER_TYPES = {
-    "CTY": "County",
-    "RM": "Regional Municipality",
-    "UC": "United Counties",
-    "DM": "District Municipality",
-}
-DISTRICT_TYPE = "DIS"
-CENSUS_ONLY_TYPE = "CDR"
-# Census subdivision types that are municipalities, with the designator each gives a
-# government's name when the directory has no row for it.
-MUNICIPAL_TYPES = {
-    "C": "City",
-    "CV": "City",
-    "CY": "City",
-    "T": "Town",
-    "TV": "Town",
-    "TP": "Township",
-    "VL": "Village",
-    "M": "Municipality",
-    "MU": "Municipality",
-}
-DROPPED_TYPES = {
-    "IRI": "Indian reserve",
-    "NO": "unorganized area",
-    "S-É": "Indian settlement",
-}
+# What Ontario's census unit types are (SGC 2021, `statcan.py`): a division is a government
+# (with the designator a composed name takes), a territorial district, or a unit the census
+# counts and nothing governs; a subdivision is a municipality (with its designator) or no
+# government.
+UPPER_TIER_TYPES = ONTARIO.upper_tier_types
+DISTRICT_TYPES = ONTARIO.district_types
+CENSUS_ONLY_TYPES = ONTARIO.census_only_types
+MUNICIPAL_TYPES = ONTARIO.municipal_types
+DROPPED_TYPES = ONTARIO.dropped_types
 
 UPPER_TIER = "Upper Tier"
 # A directory cell is a link whose title is the legal name.
@@ -226,20 +170,6 @@ OVERRIDES: dict[str, dict[str, str]] = {
 # --- The files ---
 
 
-@dataclass
-class Counted:
-    """A census unit: a division or a subdivision."""
-
-    code: str
-    names: tuple[str, ...]
-    population: int | None
-    # The population table's line.
-    line: int
-    type_: str = ""
-    # The division's code for a subdivision; None for a division.
-    division: str | None = None
-
-
 @dataclass(frozen=True)
 class DirectoryRow:
     # The legal name in the list's inverted form: "Kingston, City of".
@@ -248,49 +178,6 @@ class DirectoryRow:
     area: str
     homepage: str | None
     line: int
-
-
-def _read_population(opened: OpenedFile) -> dict[str, Counted]:
-    """The province, its divisions and subdivisions, with their names and 2021 population."""
-    counted: dict[str, Counted] = {}
-    for row in opened.rows:
-        match = DGUID.match(row["DGUID"])
-        if match is None:
-            continue
-        code = match.group("code")
-        names = tuple(part.strip() for part in row["GEO"].split(NAME_SEPARATOR) if part.strip())
-        figure = row[POPULATION_COLUMN].replace(",", "")
-        counted[code] = Counted(
-            code=code,
-            names=names,
-            population=int(figure) if figure.isdigit() else None,
-            line=row.line,
-        )
-    return counted
-
-
-def _read_types(counted: dict[str, Counted], opened: OpenedFile) -> None:
-    """The type of each division and subdivision, and which division a subdivision is in."""
-    for row in opened.rows:
-        if row["PRUID_PRIDU"] != PROVINCE_CODE:
-            continue
-        for code, type_ in (
-            (row["CDUID_DRIDU"], row["CDTYPE_DRGENRE"]),
-            (row["CSDUID_SDRIDU"], row["CSDTYPE_SDRGENRE"]),
-        ):
-            unit = counted.get(code)
-            if unit is not None and not unit.type_:
-                unit.type_ = type_
-                unit.division = (
-                    code[:DIVISION_CODE_LENGTH] if len(code) > DIVISION_CODE_LENGTH else None
-                )
-    missing = [
-        unit.code for unit in counted.values() if not unit.type_ and unit.code != PROVINCE_CODE
-    ]
-    if missing:
-        raise ListFileError(
-            f"no type in the attribute file for {len(missing)} census codes: {missing[:5]}"
-        )
 
 
 def _read_directory(opened: OpenedFile) -> list[DirectoryRow]:
@@ -529,8 +416,8 @@ class Builder:
 def entries(files: Mapping[str, OpenedFile], rules: CountryRules) -> list[PlaceEntry]:
     """Ontario's regions and municipalities, regions first."""
     naming = rules.naming
-    counted = _read_population(files[POPULATION.name])
-    _read_types(counted, files[ATTRIBUTES.name])
+    counted = ONTARIO.read_population(files[POPULATION.name])
+    ONTARIO.read_types(counted, files[ATTRIBUTES.name])
     notes = Notes()
     directory = Directory(_read_directory(files[DIRECTORY.name]), naming)
     builder = Builder(naming, directory, notes)
@@ -547,7 +434,7 @@ def entries(files: Mapping[str, OpenedFile], rules: CountryRules) -> list[PlaceE
     regions: list[PlaceEntry] = []
     region_names: dict[str, str] = {}
     for code, division in sorted(divisions.items()):
-        if division.type_ == CENSUS_ONLY_TYPE:
+        if division.type_ in CENSUS_ONLY_TYPES:
             inside = sorted(
                 unit.names[0]
                 for unit in subdivisions
@@ -555,7 +442,7 @@ def entries(files: Mapping[str, OpenedFile], rules: CountryRules) -> list[PlaceE
             )
             notes.census_only.append(f"{code} {division.names[0]}: {', '.join(inside)}")
             continue
-        if division.type_ == DISTRICT_TYPE:
+        if division.type_ in DISTRICT_TYPES:
             draft = builder.draft(division, level=REGION, parent=PROVINCE)
         elif division.type_ in UPPER_TIER_TYPES:
             found = directory.find(division, upper=True, area_names=division.names)

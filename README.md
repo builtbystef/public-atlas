@@ -76,9 +76,10 @@ vp run test          # Vitest + pytest
 vp run ci            # everything CI runs
 vp run infra:up      # PostgreSQL and RustFS in Docker (infra:down stops them)
 vp run db:migrate    # alembic upgrade head
-cd apps/server && uv run public-atlas seed canada   # the country tables and the Ontario anchor; safe to rerun
-cd apps/server && uv run public-atlas load-list ontario_places           # what loading Ontario's places would change
-cd apps/server && uv run public-atlas load-list ontario_places --apply   # load them; a rerun changes nothing
+cd apps/server && uv run public-atlas seed canada   # the country tables and the anchors (Canada and its thirteen provinces and territories); safe to rerun
+cd apps/server && uv run public-atlas load-list canada/ontario/places           # what loading Ontario's places would change
+cd apps/server && uv run public-atlas load-list canada/ontario/places --apply   # load them; a rerun changes nothing
+cd apps/server && uv run public-atlas lists manifest                            # every list's files: the URLs to fetch with their hashes, and the steps for the hand-collected ones
 cd apps/server && uv run public-atlas run create pilot --mode step --level municipality   # a run, seeded with the work due (--video records the browser)
 cd apps/server && uv run public-atlas run release <run id> --limit 2      # queue held assignments of a step-mode run
 cd apps/server && uv run public-atlas run pause|resume|stop|show <run id>
@@ -112,7 +113,7 @@ are listed under `[tool.uv.workspace] members` in the root `pyproject.toml`.
 ```
 apps/server/src/public_atlas/
   asgi.py                 the ASGI app for `fastapi run`; the one place the API reads the environment
-  cli.py                  `public-atlas`: the operator's commands (seed, load-list, run, worker), reading the environment like asgi.py
+  cli.py                  `public-atlas`: the operator's commands (seed, load-list, lists, run, eval, worker), reading the environment like asgi.py
   main.py                 create_app(settings): the FastAPI app; its lifespan calls build_resources once
   resources.py            build_resources(settings): database, store, jobs, searcher, models, parser
   dependencies.py         FastAPI dependencies that read the resources from request.state

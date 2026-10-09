@@ -1,6 +1,8 @@
 """Canada: its settings and naming rules, its administrative levels with the types expected at
-each, the types it uses, its platforms, and its anchor. The pilot works Ontario alone; to widen
-it, add Quebec, or Canada itself (`canada.ca`, `gc.ca`) for the federal government."""
+each, the types it uses, its platforms, and its anchors: the federal government and the
+government of each province and territory. The pilot works Ontario alone; the other anchors
+are there so a province's places list can load under it (the loader refuses a municipality
+whose province is not loaded) and so the federal institutions list has Canada to sit under."""
 
 from typing import Any
 
@@ -143,22 +145,49 @@ PLATFORMS: list[str] = [
     "rogerstv.com",
 ]
 
-# The country as a place, and the anchor: a place whose government and domains were verified by
-# hand. Every host under gov.on.ca is the Government of Ontario, and the allowlist takes
-# subdomains, so the one entry covers the Public Appointments Secretariat (pas.gov.on.ca, the
-# list of every provincial agency by ministry, where ontario.ca's "Agencies, boards and
-# commissions" page sends readers), INFO-GO (www.infogo.gov.on.ca) and the ministries' legacy
-# sites such as www.mto.gov.on.ca. Agency domains such as supplyontario.ca stay out:
-# find_homepage verifies them like any other candidate.
+# The anchors: places whose government and domains were verified by hand. The names are the
+# census's English names, so a places list finds its province. Every host under gov.on.ca is
+# the Government of Ontario, and the allowlist takes subdomains, so the one entry covers the
+# Public Appointments Secretariat (pas.gov.on.ca, the list of every provincial agency by
+# ministry, where ontario.ca's "Agencies, boards and commissions" page sends readers), INFO-GO
+# (www.infogo.gov.on.ca) and the ministries' legacy sites such as www.mto.gov.on.ca. Agency
+# domains such as supplyontario.ca stay out: find_homepage verifies them like any other
+# candidate. The other governments' domains are from lists-research section 2.3.
 PLACES: list[dict[str, Any]] = [
-    {"name": "Canada", "level": "country"},
     {
-        "name": "Ontario",
-        "level": "province_territory",
-        "parent": "Canada",
-        "government": "Government of Ontario",
-        "domains": ["ontario.ca", "gov.on.ca"],
+        "name": "Canada",
+        "level": "country",
+        "government": "Government of Canada",
+        "domains": ["canada.ca", "gc.ca"],
     },
+    *(
+        {
+            "name": name,
+            "level": "province_territory",
+            "parent": "Canada",
+            "government": government,
+            "domains": domains,
+        }
+        for name, government, domains in [
+            ("Ontario", "Government of Ontario", ["ontario.ca", "gov.on.ca"]),
+            ("Quebec", "Gouvernement du Québec", ["quebec.ca", "gouv.qc.ca"]),
+            ("British Columbia", "Government of British Columbia", ["gov.bc.ca"]),
+            ("Alberta", "Government of Alberta", ["alberta.ca"]),
+            ("Saskatchewan", "Government of Saskatchewan", ["saskatchewan.ca", "gov.sk.ca"]),
+            ("Manitoba", "Government of Manitoba", ["gov.mb.ca", "manitoba.ca"]),
+            ("New Brunswick", "Government of New Brunswick", ["gnb.ca"]),
+            ("Nova Scotia", "Government of Nova Scotia", ["novascotia.ca", "gov.ns.ca"]),
+            (
+                "Prince Edward Island",
+                "Government of Prince Edward Island",
+                ["princeedwardisland.ca", "gov.pe.ca"],
+            ),
+            ("Newfoundland and Labrador", "Government of Newfoundland and Labrador", ["gov.nl.ca"]),
+            ("Yukon", "Government of Yukon", ["yukon.ca", "gov.yk.ca"]),
+            ("Northwest Territories", "Government of the Northwest Territories", ["gov.nt.ca"]),
+            ("Nunavut", "Government of Nunavut", ["gov.nu.ca"]),
+        ]
+    ),
 ]
 
 SEED: dict[str, Any] = {

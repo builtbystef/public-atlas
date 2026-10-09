@@ -1,9 +1,9 @@
 """The shared list loader (spec section 5.2), written once: it never changes when a list is
-added. It opens the module's sources (fetched, hash-checked and cached), stores each as a
-snapshot and an `official_lists` row, asks the module for its entries, and writes what the
-database lacks: a place by its code, then by its name under the same parent, with its
-government, identifier, metrics, aliases, candidate homepage and an evidence row quoting the
-list's own line for each fact.
+added. It opens the module's files (fetched, hash-checked and cached, or collected by hand and
+read from the cache), stores each as a snapshot and an `official_lists` row, asks the module
+for its entries, and writes what the database lacks: a place by its code, then by its name
+under the same parent, with its government, identifier, metrics, aliases, candidate homepage
+and an evidence row quoting the list's own line for each fact.
 
 Every run writes in the session and reports what it changed; the caller commits an apply and
 rolls a dry run back, so the diff a dry run prints is exactly what an apply would do. A second
@@ -43,7 +43,7 @@ from public_atlas.modules.graph.models import (
     Metric,
     Place,
 )
-from public_atlas.modules.imports import files
+from public_atlas.modules.imports import files, lists
 from public_atlas.modules.imports.entries import (
     AliasEntry,
     Citation,
@@ -53,7 +53,7 @@ from public_atlas.modules.imports.entries import (
     InstitutionEntry,
     PlaceEntry,
 )
-from public_atlas.modules.imports.models import OfficialList
+from public_atlas.modules.imports.models import OfficialList, Retrieval
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +87,9 @@ class LoadReport:
     changes: list[Change] = field(default_factory=list)
     # Entries left as they are, with the reason.
     skipped: list[str] = field(default_factory=list)
+    # Keys of the module's `OVERRIDES` that matched no entry: a new export or a bumped hash can
+    # strand one.
+    idle_overrides: list[str] = field(default_factory=list)
 
     def count(self, action: Action, table: str | None = None) -> int:
         return sum(
@@ -120,6 +123,9 @@ class LoadReport:
         if self.skipped:
             lines.append(f"  skipped: {len(self.skipped)}")
             lines.extend(f"    {line}" for line in self.skipped)
+        if self.idle_overrides:
+            lines.append(f"  overrides that matched nothing: {len(self.idle_overrides)}")
+            lines.extend(f"    {line}" for line in self.idle_overrides)
         return "\n".join(lines)
 
 
@@ -128,7 +134,9 @@ class Skip(Exception):  # noqa: N818 - a signal, not an error
 
 
 def module_name(module: ModuleType) -> str:
-    return module.__name__.rsplit(".", 1)[-1]
+    """The list's name: its path under `lists/` with slashes (`canada/ontario/places`), so two
+    provinces' `places` modules do not collide. `official_lists.name` starts with it."""
+    return lists.list_name(module.__name__)
 
 
 async def load_list(  # noqa: PLR0913 - the resources a load needs
@@ -146,13 +154,14 @@ async def load_list(  # noqa: PLR0913 - the resources a load needs
     report = LoadReport(list_name=name, applied=apply)
     rules = await countries.load_rules(session, module.COUNTRY)
     opened: dict[str, files.OpenedFile] = {}
-    for source in module.SOURCES:
-        opened[source.name] = await asyncio.to_thread(
-            files.open_source, source, cache_dir, parser=parser
-        )
-        report.sources.append(source.name)
+    for file in module.SOURCES:
+        opened[file.name] = await asyncio.to_thread(files.open_file, file, cache_dir, parser=parser)
+        report.sources.append(file.name)
     entries: list[Entry] = list(module.entries(opened, rules))
     report.entries = len(entries)
+    report.idle_overrides = idle_overrides(getattr(module, "OVERRIDES", {}), entries)
+    for line in report.idle_overrides:
+        logger.warning("%s: override %s matched nothing", name, line)
     loader = Loader(
         session=session,
         store=store,
@@ -171,6 +180,46 @@ async def load_list(  # noqa: PLR0913 - the resources a load needs
     await loader.report_removed(entries)
     await session.flush()
     return report
+
+
+def idle_overrides(overrides: Mapping[str, object], entries: Sequence[Entry]) -> list[str]:
+    """The override keys no entry answers to: an override is keyed by a code, a name or an
+    alias of the entry it corrects, so a key none of the entries carries corrected nothing."""
+    keyed: set[str] = set()
+    for entry in entries:
+        keyed.add(entry.name)
+        keyed.update(alias.text for alias in entry.aliases)
+        if isinstance(entry, PlaceEntry):
+            keyed.add(entry.code.value)
+    return [key for key in overrides if key not in keyed]
+
+
+def manifest(cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS) -> str:
+    """The from-scratch checklist, read from the list modules so it cannot drift from them: the
+    fetched URLs with their hashes, then the manual files with the steps that obtain each and
+    where in the cache it goes."""
+    fetched: list[str] = []
+    manual: list[str] = []
+    for name, module in modules.items():
+        for file in module.SOURCES:
+            if file.retrieval is Retrieval.FETCHED:
+                fetched.append(f"{name}/{file.name}: {file.title}")
+                fetched.append(f"  {file.url}")
+                fetched.append(f"  sha256 {file.sha256}")
+            else:
+                manual.append(f"{name}/{file.name}: {file.title}")
+                manual.append(f"  {file.url}")
+                manual.append(f"  put it at {file.cache_path(cache_dir)}")
+                if file.min_rows:
+                    manual.append(f"  at least {file.min_rows} rows")
+                manual.extend(f"  {line}" for line in file.instructions.strip().splitlines())
+    lines = [f"Fetched files ({len(fetched) // 3})", *fetched]
+    if not fetched:
+        lines.append("  none")
+    lines.append("")
+    lines.append(f"Manual files ({sum(1 for line in manual if not line.startswith(' '))})")
+    lines.extend(manual or ["  none"])
+    return "\n".join(lines)
 
 
 @dataclass
@@ -198,13 +247,14 @@ class Loader:
 
     # --- Sources ---
 
-    async def store_sources(self, sources: Iterable[files.Source]) -> None:
-        """Each source file as a snapshot on a webpage of its own domain, and its
-        `official_lists` row. A list's domain is trusted from the start (spec section 6.1)."""
-        for source in sources:
-            opened = self.files[source.name]
+    async def store_sources(self, sources: Iterable[files.ListFile]) -> None:
+        """Each file as a snapshot on a webpage of its own domain, and its `official_lists` row
+        with the hash of the file as given, fetched or by hand. A list's domain is trusted from
+        the start (spec section 6.1)."""
+        for file in sources:
+            opened = self.files[file.name]
             domain, created = await graph.ensure_domain(
-                self.session, graph.host_of(source.url), entered_by=EnteredBy.SCRIPT
+                self.session, graph.host_of(file.url), entered_by=EnteredBy.SCRIPT
             )
             if not graph.is_trusted(domain):
                 await status_changes.verify_domain(
@@ -212,20 +262,20 @@ class Loader:
                 )
             if created:
                 self.changed("add", "domain", domain.name, "trusted: an official list's")
-            webpage = await graph.ensure_webpage(self.session, source.url, domain=domain)
+            webpage = await graph.ensure_webpage(self.session, file.url, domain=domain)
             snapshot, created = await evidence.store_snapshot(
                 self.session,
                 self.store,
                 webpage,
                 opened.data,
                 text=opened.text,
-                media_type=source.media_type,
-                filename=source.filename,
+                media_type=file.media_type,
+                filename=file.filename,
                 write_store=self.apply,
             )
             if created:
-                self.changed("add", "snapshot", source.filename, f"{len(opened.lines)} lines")
-            list_name = f"{self.list_name}/{source.name}"
+                self.changed("add", "snapshot", file.filename, f"{len(opened.lines)} lines")
+            list_name = f"{self.list_name}/{file.name}"
             row = await self.session.scalar(
                 select(OfficialList).where(
                     OfficialList.name == list_name, OfficialList.sha256 == opened.sha256
@@ -234,16 +284,17 @@ class Loader:
             if row is None:
                 row = OfficialList(
                     name=list_name,
-                    title=source.title,
-                    url=source.url,
+                    title=file.title,
+                    url=file.url,
                     sha256=opened.sha256,
+                    retrieval=file.retrieval,
                     retrieved_at=utcnow(),
                     snapshot_id=snapshot.id,
                 )
                 self.session.add(row)
                 await self.session.flush()
-                self.changed("add", "official_list", list_name)
-            self.lists[source.name] = (row, snapshot)
+                self.changed("add", "official_list", list_name, file.retrieval.value)
+            self.lists[file.name] = (row, snapshot)
 
     def cited(self, citation: Citation) -> tuple[OfficialList, Snapshot, str]:
         """The list, its snapshot and the quoted line."""

@@ -68,6 +68,17 @@ class World:
     oakville: Place
     town: Institution
     run: Run
+    # The seed's anchors: Canada and the thirteen provinces and territories, each with a
+    # government that has trusted domains and no homepage yet.
+    anchors: list[Place]
+
+    @property
+    def anchor_government_ids(self) -> set[uuid.UUID]:
+        return {
+            place.government_institution_id
+            for place in self.anchors
+            if place.government_institution_id
+        }
 
 
 class Build:
@@ -201,6 +212,13 @@ async def build_world(db: Database) -> World:
         run = Run(name="test", country_code="CA", mode=RunMode.STEP)
         session.add(run)
         await session.commit()
+        anchors = list(
+            await session.scalars(
+                select(Place)
+                .where(Place.country_code == "CA", Place.government_institution_id.is_not(None))
+                .order_by(Place.name)
+            )
+        )
         return World(
             rules=rules,
             ontario=ontario,
@@ -211,6 +229,7 @@ async def build_world(db: Database) -> World:
             oakville=oakville,
             town=town,
             run=run,
+            anchors=[place for place in anchors if place.id not in (elm.id, oakville.id)],
         )
 
 

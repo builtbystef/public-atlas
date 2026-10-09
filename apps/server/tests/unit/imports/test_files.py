@@ -1,4 +1,5 @@
-"""The loader's file layer: the cache and hash check, and one renderer per format."""
+"""The loader's file layer: the cache and hash check, the two ways a file is obtained, and one
+renderer per format."""
 
 import io
 import json
@@ -12,12 +13,12 @@ import pytest
 from public_atlas.integrations.parse import MemoryParser
 from public_atlas.modules.evidence.service import content_hash
 from public_atlas.modules.imports import files
-from public_atlas.modules.imports.files import Format, ListFileError, Source
+from public_atlas.modules.imports.files import Format, ListFile, ListFileError, Retrieval
 
 CSV = b"\xef\xbb\xbfname,code,note\nElmwood,3501,  a township \nOakville,3502,a town\n"
 
 
-def source(data: bytes, **fields: Any) -> Source:
+def source(data: bytes, **fields: Any) -> ListFile:
     defaults: dict[str, Any] = {
         "name": "tiny",
         "title": "A tiny list",
@@ -25,7 +26,20 @@ def source(data: bytes, **fields: Any) -> Source:
         "sha256": content_hash(data),
         "format": Format.CSV,
     }
-    return Source(**{**defaults, **fields})
+    return ListFile(**{**defaults, **fields})
+
+
+def manual(**fields: Any) -> ListFile:
+    defaults: dict[str, Any] = {
+        "name": "tiny_export",
+        "title": "A tiny export",
+        "url": "https://example.test/directory",
+        "format": Format.CSV,
+        "retrieval": Retrieval.MANUAL,
+        "instructions": "Open the directory, choose Export, all rows, CSV (3 rows).",
+        "filename_override": "tiny_export.csv",
+    }
+    return ListFile(**{**defaults, **fields})
 
 
 def test_a_csv_is_one_line_per_row_with_the_header_first():
@@ -63,7 +77,7 @@ def test_a_zip_member_is_read_and_a_missing_one_refused():
         source(data, url="https://example.test/tiny.zip", member="inner/tiny.csv"), data
     )
     assert opened.lines[1] == "Elmwood | 3501 |   a township "
-    assert opened.source.media_type == files.ZIP_MEDIA_TYPE
+    assert opened.file.media_type == files.ZIP_MEDIA_TYPE
     with pytest.raises(ListFileError, match="no member"):
         files.render(source(data, url="https://example.test/tiny.zip", member="nope.csv"), data)
 
@@ -126,11 +140,11 @@ def test_the_cache_is_read_when_the_hash_matches(tmp_path: Path):
     tiny = source(CSV)
     assert tiny.filename == "tiny.csv"
     path = tiny.cache_path(tmp_path)
-    assert path.name == f"tiny-{tiny.sha256[:12]}.csv"
+    assert path.name == f"tiny-{content_hash(CSV)[:12]}.csv"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(CSV)
     assert files.fetch(tiny, tmp_path) == CSV
-    assert files.open_source(tiny, tmp_path).rows[0]["name"] == "Elmwood"
+    assert files.open_file(tiny, tmp_path).rows[0]["name"] == "Elmwood"
 
 
 def test_a_stale_cache_is_fetched_again_and_a_failed_fetch_is_an_error(tmp_path: Path):
@@ -140,3 +154,51 @@ def test_a_stale_cache_is_fetched_again_and_a_failed_fetch_is_an_error(tmp_path:
     unreachable.cache_path(tmp_path).write_bytes(b"stale")
     with pytest.raises(ListFileError, match="cannot fetch"):
         files.fetch(unreachable, tmp_path)
+
+
+def test_a_fetched_file_pins_a_hash_and_a_manual_one_does_not():
+    with pytest.raises(ValueError, match="sha256"):
+        source(CSV, sha256=None)
+    with pytest.raises(ValueError, match="sha256"):
+        source(CSV, sha256="abc")
+    with pytest.raises(ValueError, match="no instructions"):
+        source(CSV, instructions="Download it.")
+    with pytest.raises(ValueError, match="pins no hash"):
+        manual(sha256=content_hash(CSV))
+    with pytest.raises(ValueError, match="instructions"):
+        manual(instructions=" ")
+    assert manual().is_manual
+    assert not source(CSV).is_manual
+
+
+def test_a_manual_file_is_read_from_the_cache_with_whatever_hash_it_has(tmp_path: Path):
+    export = manual()
+    assert export.filename == "tiny_export.csv"
+    assert export.cache_path(tmp_path) == tmp_path / "tiny_export.csv"
+    export.cache_path(tmp_path).write_bytes(CSV)
+    opened = files.open_file(export, tmp_path)
+    assert opened.sha256 == content_hash(CSV)
+    assert opened.rows[0]["name"] == "Elmwood"
+    # Another export of the same page is read just the same.
+    export.cache_path(tmp_path).write_bytes(CSV + b"Pine,3503,a village\n")
+    assert len(files.open_file(export, tmp_path).rows) == 3
+
+
+def test_a_manual_file_missing_from_the_cache_fails_with_its_instructions(tmp_path: Path):
+    export = manual()
+    with pytest.raises(ListFileError) as caught:
+        files.fetch(export, tmp_path)
+    message = str(caught.value)
+    assert "obtained by hand" in message
+    assert str(tmp_path / "tiny_export.csv") in message
+    assert "choose Export, all rows" in message
+    assert not list(tmp_path.iterdir())
+
+
+def test_a_table_with_fewer_rows_than_expected_is_refused(tmp_path: Path):
+    export = manual(min_rows=3)
+    export.cache_path(tmp_path).write_bytes(CSV)
+    with pytest.raises(ListFileError, match="2 rows, fewer than the 3"):
+        files.open_file(export, tmp_path)
+    export = manual(min_rows=2)
+    assert len(files.open_file(export, tmp_path).rows) == 2

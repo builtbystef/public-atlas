@@ -33,7 +33,7 @@ Conventions every list follows:
 
 ## Session 1: groundwork
 
-- [ ] **Lists package layout.** `imports/lists/` becomes a package tree by country and
+- [x] **Lists package layout.** `imports/lists/` becomes a package tree by country and
       region: `ontario_places.py` moves to `lists/canada/ontario/places.py` and its test to
       `tests/unit/imports/lists/canada/ontario/test_places.py`. `LISTS` in `lists/__init__.py`
       is built by walking the package (`pkgutil.walk_packages`) for modules that define
@@ -45,20 +45,20 @@ Conventions every list follows:
       `<list>/<source>`, so the migration also renames Ontario's existing rows from
       `ontario_places/…` to `canada/ontario/places/…` (the loader looks lists up by this
       prefix; a rerun after the rename must change nothing).
-- [ ] **Shared census readers.** Move `_read_population`, `_read_types`, `Counted`, the
+- [x] **Shared census readers.** Move `_read_population`, `_read_types`, `Counted`, the
       DGUID pattern and the two StatCan `Source` objects out of `canada/ontario/places.py`
       into `imports/lists/canada/statcan.py`, parameterized by province code (the DGUID regex and the
       attribute file's `PRUID_PRIDU` filter are the only two places `35` is hard-coded). Add
       the 2021 CD and CSD type tables from the research (code, English name, provinces) as
       data in that module, with the municipal, upper-tier, census-only and dropped sets per
       province. `canada/ontario/places.py` imports from it and its test passes unchanged.
-- [ ] **Schema.** `IdentifierScheme` gains `fips`, `gnis`, `census_gid`, `nces`, `ipeds`;
+- [x] **Schema.** `IdentifierScheme` gains `fips`, `gnis`, `census_gid`, `nces`, `ipeds`;
       one migration for the check constraint.
-- [ ] **Types.** `shared.py` gains the global type `park_district` ("an independent district
+- [x] **Types.** `shared.py` gains the global type `park_district` ("an independent district
       that runs parks, recreation facilities or forest preserves", default sources
       procurement, tender, budget, board_meeting) and widens `department` to "a department of
       the national or state government".
-- [ ] **Manual sources.** Rename the `Source` dataclass in `imports/files.py` to `ListFile`
+- [x] **Manual sources.** Rename the `Source` dataclass in `imports/files.py` to `ListFile`
       (it is a file a list module reads, not the graph's `Source` entity, which is a web page
       carrying a procurement signal). It gains `retrieval: Retrieval` with two values,
       `fetched` and `manual`, and for manual files `instructions: str` (the exact steps: the
@@ -76,7 +76,7 @@ Conventions every list follows:
       fetched URLs with their hashes and the manual steps: the from-scratch checklist, so it
       cannot drift from the code. The "Sources to fetch by hand" section below becomes the
       first manual `instructions` strings.
-- [ ] **Canada anchors.** The Canada seed gains Canada's government ("Government of Canada",
+- [x] **Canada anchors.** The Canada seed gains Canada's government ("Government of Canada",
       `canada.ca`, `gc.ca`) and an anchor for each of the twelve other provinces and
       territories with its government's name and domains (research section 2.3). `seed
       canada` on the live database adds them and changes nothing else.

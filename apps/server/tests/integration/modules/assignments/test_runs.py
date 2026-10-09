@@ -65,14 +65,16 @@ def test_a_step_run_seeds_itself_with_the_work_due_and_holds_it(
     db: Database, world: World, queue: InlineConnector
 ):
     """The county has a verified homepage: its sources and, as Elm's government, Elm's
-    institutions are due. The town and the province's government have none: their homepages
-    are due. Nothing is queued in step mode, and a second run finds the work open already."""
+    institutions are due. The town and the seed's fourteen anchor governments have none: their
+    homepages are due. Nothing is queued in step mode, and a second run finds the work open
+    already."""
     run, rows = db.run(create, db, queue)
+    assert len(world.anchors) == 14
     assert work(rows) == {
         (FIND_SOURCES, world.county.id),
         (FIND_INSTITUTIONS, world.elm.id),
         (FIND_HOMEPAGE, world.town.id),
-        (FIND_HOMEPAGE, world.ontario.government_institution_id),
+        *((FIND_HOMEPAGE, government) for government in world.anchor_government_ids),
     }
     assert {row.status for row in rows} == {AssignmentStatus.HELD}
     assert all(row.run_id == run.id and row.budget_requests > 0 for row in rows)
@@ -178,7 +180,7 @@ def test_release_queues_held_work_a_few_at_a_time_and_the_worker_runs_it(
         AssignmentResult.COMPLETE,
         "Looked everywhere.",
     )
-    assert by_status == {AssignmentStatus.HELD: 3, AssignmentStatus.FINISHED: 1}
+    assert by_status == {AssignmentStatus.HELD: 2 + 14, AssignmentStatus.FINISHED: 1}
 
 
 def test_a_paused_run_puts_the_job_back_and_the_assignment_stays_queued(
@@ -254,7 +256,7 @@ def test_stop_cancels_held_and_queued_work_and_refuses_more(
             return cancelled, spawned, await service.list_assignments(session, run_id=run.id)
 
     cancelled, spawned, after = db.run(stop)
-    assert len(cancelled) == len(rows) == 4
+    assert len(cancelled) == len(rows) == 3 + 14
     assert spawned == []
     assert {row.status for row in after} == {AssignmentStatus.CANCELLED}
 
@@ -341,11 +343,12 @@ def test_the_runs_api_creates_controls_and_reads_runs(
     assert created.status_code == 201, created.text
     run = created.json()
     assert (run["mode"], run["status"], run["record_video"]) == ("step", "active", False)
-    assert run["progress"] == {"by_status": {"held": 3}, "by_result": {}, "cost": "0"}
+    # The county's sources, and the homepages of the town and the fourteen anchor governments.
+    assert run["progress"] == {"by_status": {"held": 16}, "by_result": {}, "cost": "0"}
 
     listed = client.get("/assignments", params={"run_id": run["id"], "status": "held"}).json()
-    assert listed["total"] == 3
-    assert len(listed["items"]) == 3
+    assert listed["total"] == 16
+    assert len(listed["items"]) == 16
     assert {row["subject"]["kind"] for row in listed["items"]} == {"institution"}
     released = client.post(
         f"/runs/{run['id']}/release", json={"limit": 1, "assignment_type": "find_sources"}
@@ -372,18 +375,18 @@ def test_the_runs_api_creates_controls_and_reads_runs(
     assert events[2]["tool"] == "finish"
 
     progress = client.get(f"/runs/{run['id']}").json()["progress"]
-    assert progress["by_status"] == {"held": 2, "finished": 1}
+    assert progress["by_status"] == {"held": 15, "finished": 1}
     assert progress["by_result"] == {"complete": 1}
     assert client.post(f"/runs/{run['id']}/pause").json()["status"] == "paused"
     assert client.post(f"/runs/{run['id']}/pause").status_code == 409
     assert client.post(f"/runs/{run['id']}/resume").json()["status"] == "active"
     assert client.post(f"/runs/{run['id']}/stop").json()["progress"]["by_status"] == {
-        "cancelled": 2,
+        "cancelled": 15,
         "finished": 1,
     }
     runs = client.get("/runs").json()
     assert runs["items"][0]["id"] == run["id"]
-    assert runs["items"][0]["progress"]["by_status"] == {"cancelled": 2, "finished": 1}
+    assert runs["items"][0]["progress"]["by_status"] == {"cancelled": 15, "finished": 1}
     assert client.get(f"/runs/{uuid.uuid7()}").status_code == 404
 
 

@@ -20,10 +20,34 @@ def test_the_canada_seed_validates_against_the_shared_seed():
     shared_seed, seed = service.validate(canada.SEED)
     assert seed.settings.country_code == "CA"
     assert [level.rank for level in seed.administrative_levels] == [1, 2, 3, 4]
-    assert seed.institution_type_names == shared_seed.institution_type_names
+    # A park district is the United States' alone.
+    assert seed.institution_type_names < shared_seed.institution_type_names
+    assert shared_seed.institution_type_names - seed.institution_type_names == {"park_district"}
     ontario = next(place for place in seed.places if place.name == "Ontario")
     assert ontario.government == "Government of Ontario"
     assert ontario.domains == ["ontario.ca", "gov.on.ca"]
+
+
+def test_the_canada_seed_anchors_the_federal_and_every_provincial_government():
+    _, seed = service.validate(canada.SEED)
+    country = seed.places[0]
+    assert (country.name, country.level, country.government) == (
+        "Canada",
+        "country",
+        "Government of Canada",
+    )
+    assert country.domains == ["canada.ca", "gc.ca"]
+    provinces = [place for place in seed.places if place.level == "province_territory"]
+    assert len(provinces) == 13
+    assert all(place.parent == "Canada" for place in provinces)
+    assert all(place.government and place.domains for place in provinces)
+    quebec = next(place for place in provinces if place.name == "Quebec")
+    assert (quebec.government, quebec.domains) == (
+        "Gouvernement du Québec",
+        ["quebec.ca", "gouv.qc.ca"],
+    )
+    domains = [domain for place in seed.places for domain in place.domains]
+    assert len(set(domains)) == len(domains)
 
 
 def test_every_registered_seed_validates():

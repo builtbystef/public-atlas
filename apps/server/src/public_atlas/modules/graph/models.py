@@ -70,10 +70,17 @@ class DomainKind(StrEnum):
 
 
 class IdentifierScheme(StrEnum):
-    """Outside schemes a place or institution has a code in. `fips` and `nces` come with their
-    countries."""
+    """Outside schemes a place or institution has a code in: Canada's Standard Geographical
+    Classification; the United States' FIPS codes (state, county, place, county subdivision), the
+    GNIS ids that survive a rename, the Census of Governments' unit ids, and the NCES and IPEDS
+    ids of school districts and campuses."""
 
     STATCAN_SGC = "statcan_sgc"
+    FIPS = "fips"
+    GNIS = "gnis"
+    CENSUS_GID = "census_gid"
+    NCES = "nces"
+    IPEDS = "ipeds"
 
 
 class MetricName(StrEnum):

@@ -45,8 +45,9 @@ from public_atlas.modules.imports.entries import (
     InstitutionEntry,
     PlaceEntry,
 )
-from public_atlas.modules.imports.files import Format, OpenedFile, Source
-from public_atlas.modules.imports.lists import ontario_places
+from public_atlas.modules.imports.files import Format, ListFile, OpenedFile, Retrieval
+from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
+from public_atlas.modules.imports.models import OfficialList
 
 if TYPE_CHECKING:
     from tests.integration.conftest import Database
@@ -95,23 +96,43 @@ def csv_bytes(rows: list[list[str]]) -> bytes:
     return buffer.getvalue().encode()
 
 
-def list_module(name: str, source: Source, entries: Callable[..., object]) -> ModuleType:
+def list_module(name: str, source: ListFile, entries: Callable[..., object]) -> ModuleType:
     """A list module as the loader reads one: the four names it looks for."""
     module = ModuleType(f"public_atlas.modules.imports.lists.{name}")
     module.__dict__.update(COUNTRY="CA", SOURCES=(source,), OVERRIDES={}, entries=entries)
     return module
 
 
-def tiny_places(rows: list[list[str]], cache_dir: Path, name: str = "tiny_places") -> ModuleType:
-    """A list module written for the test, its one file placed in the cache."""
+def tiny_places(
+    rows: list[list[str]],
+    cache_dir: Path,
+    name: str = "tiny_places",
+    *,
+    manual: bool = False,
+    overrides: dict[str, dict[str, str]] | None = None,
+) -> ModuleType:
+    """A list module written for the test, its one file placed in the cache: fetched with its
+    hash pinned, or obtained by hand."""
     data = csv_bytes(rows)
-    source = Source(
-        name="tiny_register",
-        title="The tiny register",
-        url="https://register.example/places.csv",
-        sha256=evidence.content_hash(data),
-        format=Format.CSV,
-    )
+    if manual:
+        source = ListFile(
+            name="tiny_export",
+            title="The tiny directory's export",
+            url="https://register.example/directory",
+            format=Format.CSV,
+            retrieval=Retrieval.MANUAL,
+            instructions="Open the directory and export every row as CSV.",
+            filename_override="places.csv",
+            min_rows=len(rows),
+        )
+    else:
+        source = ListFile(
+            name="tiny_register",
+            title="The tiny register",
+            url="https://register.example/places.csv",
+            sha256=evidence.content_hash(data),
+            format=Format.CSV,
+        )
     source.cache_path(cache_dir).parent.mkdir(parents=True, exist_ok=True)
     source.cache_path(cache_dir).write_bytes(data)
 
@@ -147,12 +168,14 @@ def tiny_places(rows: list[list[str]], cache_dir: Path, name: str = "tiny_places
         assert rules.country_code == "CA"
         return found
 
-    return list_module(name, source, entries)
+    module = list_module(name, source, entries)
+    module.__dict__["OVERRIDES"] = overrides or {}
+    return module
 
 
 def tiny_libraries(cache_dir: Path) -> ModuleType:
     data = b"name,place,served\nOakville Public Library,Oakville,Pine\n"
-    source = Source(
+    source = ListFile(
         name="tiny_libraries",
         title="The tiny library list",
         url="https://libraries.example/list.csv",
@@ -302,7 +325,8 @@ def test_a_dry_run_reports_and_writes_nothing(
     assert report.skipped == []
     assert "dry run" in report.render()
     # Only Canada and Ontario.
-    assert db.run(count, db, Place) == 2
+    # The seed's Canada and thirteen provinces and territories, and nothing else.
+    assert db.run(count, db, Place) == 14
     assert object_store.objects == {}
 
 
@@ -314,8 +338,8 @@ def test_an_apply_writes_the_rows_and_a_rerun_changes_nothing(
 
     report = db.run(apply, db, object_store, module, tmp_path)
     assert report.applied
-    assert db.run(count, db, Place) == 6
-    assert db.run(count, db, Institution) == 4
+    assert db.run(count, db, Place) == 14 + 4
+    assert db.run(count, db, Institution) == 14 + 3
     assert db.run(count, db, Identifier) == 4
     assert db.run(count, db, Metric) == 4
     assert db.run(count, db, Homepage) == 2
@@ -374,7 +398,9 @@ def test_an_apply_writes_the_rows_and_a_rerun_changes_nothing(
     assert again.skipped == []
     assert "nothing to change" in again.render()
     assert db.run(count, db, Evidence) == 9
-    assert db.run(count, db, Alias) == 3 + 4 + 1 + 3
+    # The seed's 14 places and 14 governments, the 4 places, Oakville's French name, the 3
+    # governments.
+    assert db.run(count, db, Alias) == 28 + 4 + 1 + 3
 
 
 def test_a_district_has_no_government_and_the_lists_domain_is_trusted(
@@ -422,7 +448,7 @@ def test_a_new_release_changes_what_moved_and_reports_what_left(
     assert ("add", "place", "Elm (region)") not in changes
     # Pine is kept.
     assert db.run(count, db, Place, Place.name == "Pine") == 1
-    assert db.run(count, db, Place) == 7
+    assert db.run(count, db, Place) == 14 + 5
 
     async def oakville_population(db: Database) -> Decimal:
         async with db.session() as session:
@@ -505,6 +531,48 @@ def test_an_institution_list_loads_under_the_places(
     assert again.changes == []
 
 
+async def read_lists(db: Database) -> list[tuple[str, Retrieval]]:
+    async with db.session() as session:
+        rows = await session.execute(
+            select(OfficialList.name, OfficialList.retrieval).order_by(OfficialList.name)
+        )
+        return list(rows.tuples().all())
+
+
+def test_a_manual_file_loads_like_a_fetched_one_and_is_recorded_as_manual(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    db.run(seed, db)
+    module = tiny_places(ROWS_V1, tmp_path, "tiny_manual", manual=True)
+
+    report = db.run(apply, db, object_store, module, tmp_path)
+
+    assert report.skipped == []
+    assert report.count("add", "place") == 4
+    changes = {(c.action, c.table, c.label, c.detail) for c in report.changes}
+    assert ("add", "official_list", "tiny_manual/tiny_export", "manual") in changes
+    assert db.run(read_lists, db) == [("tiny_manual/tiny_export", Retrieval.MANUAL)]
+    assert db.run(apply, db, object_store, module, tmp_path).changes == []
+
+
+def test_an_override_that_matches_nothing_is_reported(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    db.run(seed, db)
+    overrides = {
+        "3598001": {"reason": "keyed by Oakville's code"},
+        "Pine": {"reason": "keyed by a name"},
+        "Oakville-les-Chênes": {"reason": "keyed by an alias"},
+        "3598999": {"reason": "a code no row carries"},
+    }
+    module = tiny_places(ROWS_V1, tmp_path, overrides=overrides)
+
+    report = db.run(dry_run, db, object_store, module, tmp_path)
+
+    assert report.idle_overrides == ["3598999"]
+    assert "overrides that matched nothing: 1" in report.render()
+
+
 ONTARIO_CACHED = all(
     source.cache_path(Settings().lists_cache_dir).exists() for source in ontario_places.SOURCES
 )
@@ -521,8 +589,8 @@ def test_loading_ontario_gives_the_pilots_places(db: Database, object_store: Mem
     assert report.entries == 454
     assert db.run(count, db, Place, Place.administrative_level == "region") == 40
     assert db.run(count, db, Place, Place.administrative_level == "municipality") == 414
-    # The 444 governments and the Government of Ontario.
-    assert db.run(count, db, Institution) == 445
+    # The 444 governments and the seed's fourteen.
+    assert db.run(count, db, Institution) == 444 + 14
     assert db.run(count, db, Identifier) == 454
     assert db.run(count, db, Metric) == 454
     assert db.run(count, db, Homepage) == 441

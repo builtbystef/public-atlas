@@ -15,16 +15,23 @@ def test_seed_refuses_an_unknown_country(capsys):
 
 
 def test_load_list_is_a_dry_run_unless_applied():
-    args = build_parser().parse_args(["load-list", "ontario_places"])
-    assert (args.name, args.apply) == ("ontario_places", False)
-    args = build_parser().parse_args(["load-list", "ontario_places", "--apply"])
+    args = build_parser().parse_args(["load-list", "canada/ontario/places"])
+    assert (args.name, args.apply) == ("canada/ontario/places", False)
+    args = build_parser().parse_args(["load-list", "canada/ontario/places", "--apply"])
     assert args.apply is True
 
 
 def test_load_list_refuses_an_unknown_list(capsys):
     with pytest.raises(SystemExit):
-        build_parser().parse_args(["load-list", "atlantis_places"])
+        build_parser().parse_args(["load-list", "ontario_places"])
     assert "invalid choice" in capsys.readouterr().err
+
+
+def test_lists_manifest_is_a_command():
+    args = build_parser().parse_args(["lists", "manifest"])
+    assert (args.command, args.action) == ("lists", "manifest")
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["lists"])
 
 
 def test_run_create_takes_a_filter_and_a_mode():

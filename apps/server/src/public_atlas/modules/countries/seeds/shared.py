@@ -100,7 +100,7 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
         "description": ("The government of a city, town, township, village or other municipality"),
     },
     # National and provincial bodies.
-    {"name": "department", "description": "A department of the national government"},
+    {"name": "department", "description": "A department of the national or state government"},
     {"name": "ministry", "description": "A ministry of a provincial or territorial government"},
     {
         "name": "agency",
@@ -162,6 +162,12 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
     {
         "name": "public_health_unit",
         "description": "The current public health unit or board of health; not a former one",
+    },
+    {
+        "name": "park_district",
+        "description": (
+            "An independent district that runs parks, recreation facilities or forest preserves"
+        ),
     },
     {
         "name": "municipal_corporation",
@@ -228,6 +234,7 @@ DEFAULT_EXPECTED_SOURCE_TYPES: dict[str, list[str]] = {
     "library": ["procurement", "tender", "budget", "board_meeting"],
     "conservation_authority": ["procurement", "tender", "budget", "board_meeting"],
     "public_health_unit": ["procurement", "budget", "board_meeting"],
+    "park_district": ["procurement", "tender", "budget", "board_meeting"],
     "municipal_corporation": ["procurement", "tender", "annual_report", "board_meeting"],
     "other": ["procurement", "tender"],
 }

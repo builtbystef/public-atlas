@@ -137,7 +137,7 @@ These belong only to places and institutions. Each has two nullable columns,
 | Table | Fields |
 | --- | --- |
 | `aliases` | text, language (BCP 47), is_acronym, entered_by; unique per owner and text. Every name a body goes by, in any language. The trigram index for duplicate matching lives here |
-| `identifiers` | scheme (`statcan_sgc`, later `fips`, `nces`), value, official_list_id; one per owner and scheme, one owner per value |
+| `identifiers` | scheme (`statcan_sgc`, `fips`, `gnis`, `census_gid`, `nces`, `ipeds`), value, official_list_id; one per owner and scheme, one owner per value |
 | `metrics` | name (`population`), year, value, official_list_id |
 
 `institution_served_places` (institution_id, place_id) records the places a
@@ -153,7 +153,7 @@ institutions have no rows here.
 | `snapshots` | webpage_id, assignment_id, fetched_at, content_hash, media_type, size, filename, bytes_key, text_key, text_status (`ready`, `parsing`, `failed`), text_error (why extraction failed), page_count, pruned_at |
 | `evidence` | entity_id, snapshot_id, kind (`appears_on`, `links_to`), quote, locator (page number), link_url, assignment_id, entered_by |
 | `blocked_attempts` | url, reason, assignment_id, at. A URL the fence refused |
-| `official_lists` | name, title, url, sha256, retrieved_at, snapshot_id. One row per source file a list module loaded (section 5.2), written by the loader, so an identifier or a metric can say which list it came from |
+| `official_lists` | name, title, url, sha256, retrieval (`fetched`, `manual`), retrieved_at, snapshot_id. One row per source file a list module loaded (section 5.2), written by the loader, so an identifier or a metric can say which list it came from and whether that file was fetched or collected by hand |
 
 A snapshot holds both the raw bytes and the extracted text. Identical bytes
 fetched twice share one text, keyed by content hash.
@@ -219,9 +219,9 @@ expected sources per type that a country starts from. `countries/seeds/canada.py
 holds Canada's settings row and naming rules, its administrative levels with
 the types expected at each, its `country_institution_types` rows (which
 types Canada uses, with any change to the default sources and its name
-patterns), its platforms, and its anchors: the Ontario place, its government
-institution and its two domains, all created verified with
-`entered_by = manual`. Each is a plain dictionary validated by the same
+patterns), its platforms, and its anchors: Canada and each province and
+territory with its government institution and domains, all created verified
+with `entered_by = manual`. Each is a plain dictionary validated by the same
 Pydantic models the countries API uses, so the schema lives in one place.
 `public-atlas seed canada` fills the tables. From then on the tables are the
 truth and the console edits them. Re-seeding adds what is missing and never
@@ -245,14 +245,16 @@ it; compares the entries the module produces with what the database holds
 and prints what would be added, changed or removed; and, with `--apply`,
 writes the rows. A rerun changes nothing the second time.
 
-**One module per list** (`modules/imports/lists/<name>.py`) is the only code
-written to add a list. It holds `SOURCES`, a list of the files to fetch with
-their URL, hash and format; `OVERRIDES`, a dictionary of hand corrections for
-the rows the official files get wrong; and `entries()`, one function that
-receives the opened files (rows for a CSV, the parsed object for JSON, text
-lines for a page or PDF), joins them, applies the corrections and returns
-plain records. The module knows everything about its list and nothing about
-the database.
+**One module per list** (`modules/imports/lists/<country>/<region>/<list>.py`,
+named by that path: `canada/ontario/places`) is the only code written to add a
+list. It holds `SOURCES`, the files it reads (`ListFile`), each fetched from
+its URL with its hash pinned or obtained by hand by the steps the module spells
+out; `OVERRIDES`, a dictionary of hand corrections for the rows the official
+files get wrong; and `entries()`, one function that receives the opened files
+(rows for a CSV, the parsed object for JSON, text lines for a page or PDF),
+joins them, applies the corrections and returns plain records. The module
+knows everything about its list and nothing about the database. `public-atlas
+lists manifest` prints every list's files, the from-scratch checklist.
 
 The records are Pydantic models that exist only while the loader runs:
 
@@ -262,14 +264,15 @@ The records are Pydantic models that exist only while the loader runs:
 | `InstitutionEntry` | name, type, place, parent institution, homepage URL, served places, a citation per fact | A verified `institutions` row, `institution_served_places` rows, a candidate `homepages` row |
 | `Citation` | which source and which line a fact came from | An `evidence` row quoting that line, `entered_by = script` |
 
-The first module is `lists/ontario_places.py`: three sources (the census
-population table, the census geography file, the Ontario municipal
-directory), about twenty overrides, and an `entries()` that returns 454
-`PlaceEntry` records. `public-atlas load-list ontario_places` shows the
-diff; `--apply` loads it. The second, `lists/ontario_agencies.py`, reads the
-province's directory of its agencies and returns `InstitutionEntry` records,
-each agency under its ministry; the same command loads it and nothing in the
-loader changes. A later `lists/ontario_hospitals.py` is the same again.
+The first module is `lists/canada/ontario/places.py`: three sources (the
+census population table and geography file, shared with every province
+through `lists/canada/statcan.py`, and the Ontario municipal directory), about
+twenty overrides, and an `entries()` that returns 454 `PlaceEntry` records.
+`public-atlas load-list canada/ontario/places` shows the diff; `--apply` loads
+it. The second, `lists/canada/ontario/agencies.py`, reads the province's list
+of its agencies and returns `InstitutionEntry` records, each agency under its
+ministry; the same command loads it and nothing in the loader changes. A later
+`lists/canada/ontario/fippa_bodies.py` is the same again.
 
 This is also where the bodies under a body come from. `find_institutions`
 takes a place and finds the types its level expects; it is never pointed at a
@@ -278,7 +281,7 @@ the list of them, and a list beats a discovery that starts from one homepage.
 A hierarchy below a place is loaded from the list its authority publishes, or
 it waits until there is one.
 
-A rule test per list (`tests/unit/imports/test_ontario_places.py`) calls
+A rule test per list (`tests/unit/imports/lists/canada/ontario/test_places.py`) calls
 `entries()` on the cached files and checks every record: a numeric code, a
 population, a government name the naming rules give, a lower tier inside its
 upper tier, the overrides applied, and the expected counts.

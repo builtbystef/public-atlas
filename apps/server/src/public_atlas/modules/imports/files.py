@@ -1,13 +1,22 @@
-"""The files an official list is read from: what a list module declares about each (`Source`),
-fetching it once into a local cache and checking its hash, and turning it into lines of text
-with one renderer per format. A CSV or spreadsheet is one line per row with the header first,
-JSON is one line per record, a web page is its visible text; a ZIP names the member to use.
-The text is what the snapshot stores, so a citation's line can be checked against it."""
+"""The files an official list is read from: what a list module declares about each
+(`ListFile`), fetching it once into a local cache and checking its hash, and turning it into
+lines of text with one renderer per format. A CSV or spreadsheet is one line per row with the
+header first, JSON is one line per record, a web page is its visible text; a ZIP names the
+member to use. The text is what the snapshot stores, so a citation's line can be checked
+against it.
+
+A file is `fetched` (the URL is the file: the loader downloads it and checks its pinned hash)
+or `manual` (a site that blocks scripts or only offers an interactive export: a person obtains
+the file by the module's instructions and drops it in the cache, and no hash is pinned since
+the next export differs). It is a file a list module reads, not the graph's `Source`, which is
+a web page carrying a procurement signal.
+"""
 
 import csv
 import io
 import json
 import logging
+import re
 import zipfile
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
@@ -22,6 +31,7 @@ import openpyxl
 
 from public_atlas.integrations.parse import Parser
 from public_atlas.modules.evidence.service import content_hash
+from public_atlas.modules.imports.models import Retrieval
 
 logger = logging.getLogger(__name__)
 
@@ -80,22 +90,35 @@ ZIP_MEDIA_TYPE = "application/zip"
 TABLE_FORMATS = frozenset({Format.CSV, Format.SPREADSHEET})
 
 
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
+
+
 class ListFileError(Exception):
-    """A source file cannot be read as the module declares it: it is missing, its hash is not
-    the recorded one, or its format is not one the loader renders."""
+    """A list's file cannot be read as the module declares it: it is missing, its hash is not
+    the recorded one, it is too short, or its format is not one the loader renders."""
 
 
 @dataclass(frozen=True, slots=True)
-class Source:
-    """One file a list module reads: where it comes from and how to read it. The hash pins the
-    release; a new release means a new hash and a review of the diff it makes."""
+class ListFile:
+    """One file a list module reads: where it comes from, how it is obtained and how to read it.
+    For a fetched file the hash pins the release; a new release means a new hash and a review of
+    the diff it makes. A manual file pins no hash: `instructions` say how a person gets it and
+    `min_rows` catches a short export."""
 
-    # Unique among the lists; `official_lists.name` is `<module>/<name>`.
+    # Unique within the list; `official_lists.name` is `<list>/<name>`.
     name: str
     title: str
+    # The file itself when fetched; the page the instructions start from when manual.
     url: str
-    sha256: str
     format: Format
+    sha256: str | None = None
+    retrieval: Retrieval = Retrieval.FETCHED
+    # Manual files: the exact steps (the page, the tab, the object, the menu item, the expected
+    # row count), as `lists manifest` prints them and as the error names them when the file is
+    # not in the cache.
+    instructions: str = ""
+    # Manual tables: fewer rows than this is a wrong or truncated export.
+    min_rows: int = 0
     # The file inside the ZIP at `url`, when it is one.
     member: str | None = None
     # Text formats only.
@@ -106,10 +129,32 @@ class Source:
     # Table formats: one line per distinct row of the kept columns, first seen first. For a file
     # that repeats the rows of interest once per finer unit.
     distinct: bool = False
+    # Manual files: the name the file has in the cache when its URL does not end in one.
+    filename_override: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.retrieval is Retrieval.FETCHED:
+            if self.sha256 is None or not SHA256.match(self.sha256):
+                raise ValueError(f"{self.name}: a fetched file needs its sha256 pinned")
+            if self.instructions:
+                raise ValueError(f"{self.name}: a fetched file has no instructions")
+        else:
+            if self.sha256 is not None:
+                raise ValueError(f"{self.name}: a manual file pins no hash")
+            if not self.instructions.strip():
+                raise ValueError(f"{self.name}: a manual file needs its instructions")
+            if not self.filename:
+                raise ValueError(f"{self.name}: a manual file needs a file name")
+
+    @property
+    def is_manual(self) -> bool:
+        return self.retrieval is Retrieval.MANUAL
 
     @property
     def filename(self) -> str:
-        """The file's own name, from its URL."""
+        """The file's own name: from its URL, or as the module names it."""
+        if self.filename_override is not None:
+            return self.filename_override
         name = PurePosixPath(unquote(urlsplit(self.url).path)).name
         return name or self.name
 
@@ -118,7 +163,11 @@ class Source:
         return ZIP_MEDIA_TYPE if self.member else MEDIA_TYPES[self.format]
 
     def cache_path(self, cache_dir: Path) -> Path:
+        """Where the file sits in the cache: `<name>-<hash prefix><suffix>` for a fetched file,
+        so a new release sits beside the old one, and `<name><suffix>` for a manual one."""
         suffix = PurePosixPath(self.filename).suffix
+        if self.sha256 is None:
+            return cache_dir / f"{self.name}{suffix}"
         return cache_dir / f"{self.name}-{self.sha256[:12]}{suffix}"
 
 
@@ -138,10 +187,10 @@ class Row:
 
 @dataclass(frozen=True, slots=True)
 class OpenedFile:
-    """A source as `entries()` receives it: its bytes as fetched, its text as lines, and the
+    """A file as `entries()` receives it: its bytes as fetched, its text as lines, and the
     rows (a table) or the parsed object (JSON) the lines were made from."""
 
-    source: Source
+    file: ListFile
     data: bytes
     sha256: str
     lines: list[str]
@@ -160,26 +209,34 @@ class OpenedFile:
 # --- Fetching ---
 
 
-def fetch(source: Source, cache_dir: Path) -> bytes:
-    """The file's bytes: from the cache when they are there with the right hash, else
-    downloaded, checked and cached."""
-    path = source.cache_path(cache_dir)
+def fetch(file: ListFile, cache_dir: Path) -> bytes:
+    """The file's bytes. A fetched file comes from the cache when it is there with the right
+    hash, else it is downloaded, checked and cached. A manual file is only ever read from the
+    cache: when it is not there, the error says how to get it and where to put it."""
+    path = file.cache_path(cache_dir)
+    if file.is_manual:
+        if not path.exists():
+            raise ListFileError(
+                f"{file.name}: the file is obtained by hand and is not in the cache. "
+                f"Put it at {path}. {file.instructions.strip()}"
+            )
+        return path.read_bytes()
     if path.exists():
         data = path.read_bytes()
-        if content_hash(data) == source.sha256:
+        if content_hash(data) == file.sha256:
             return data
-        logger.warning("%s does not match %s's hash; fetching again", path, source.name)
-    logger.info("fetching %s", source.url)
+        logger.warning("%s does not match %s's hash; fetching again", path, file.name)
+    logger.info("fetching %s", file.url)
     try:
-        response = httpx.get(source.url, follow_redirects=True, timeout=DOWNLOAD_TIMEOUT)
+        response = httpx.get(file.url, follow_redirects=True, timeout=DOWNLOAD_TIMEOUT)
         response.raise_for_status()
     except httpx.HTTPError as exc:
-        raise ListFileError(f"{source.name}: cannot fetch {source.url}: {exc}") from None
+        raise ListFileError(f"{file.name}: cannot fetch {file.url}: {exc}") from None
     data = response.content
     found = content_hash(data)
-    if found != source.sha256:
+    if found != file.sha256:
         raise ListFileError(
-            f"{source.name}: {source.url} has sha256 {found}, not the recorded {source.sha256}. "
+            f"{file.name}: {file.url} has sha256 {found}, not the recorded {file.sha256}. "
             "A new release needs its hash recorded in the list module and the diff reviewed"
         )
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -187,58 +244,54 @@ def fetch(source: Source, cache_dir: Path) -> bytes:
     return data
 
 
-def open_source(source: Source, cache_dir: Path, *, parser: Parser | None = None) -> OpenedFile:
-    return render(source, fetch(source, cache_dir), parser=parser)
+def open_file(file: ListFile, cache_dir: Path, *, parser: Parser | None = None) -> OpenedFile:
+    return render(file, fetch(file, cache_dir), parser=parser)
 
 
 # --- Rendering ---
 
 
-def render(source: Source, data: bytes, *, parser: Parser | None = None) -> OpenedFile:
+def render(file: ListFile, data: bytes, *, parser: Parser | None = None) -> OpenedFile:
     """The file as lines of text, with its rows or parsed object. A PDF goes through `parser`,
-    one line of text per line of its pages."""
+    one line of text per line of its pages. A manual file's hash is whatever it is."""
     digest = content_hash(data)
-    if digest != source.sha256:
-        raise ListFileError(f"{source.name}: sha256 {digest} is not the recorded {source.sha256}")
-    with _member(source, data) as stream:
-        if source.format in TABLE_FORMATS:
+    if file.sha256 is not None and digest != file.sha256:
+        raise ListFileError(f"{file.name}: sha256 {digest} is not the recorded {file.sha256}")
+    with _member(file, data) as stream:
+        if file.format in TABLE_FORMATS:
             raw = (
-                _csv_rows(stream, source.encoding)
-                if source.format is Format.CSV
+                _csv_rows(stream, file.encoding)
+                if file.format is Format.CSV
                 else _sheet_rows(stream)
             )
-            lines, rows = _table(source, raw)
-            return OpenedFile(source=source, data=data, sha256=digest, lines=lines, rows=rows)
-        if source.format is Format.JSON:
-            document = json.loads(stream.read().decode(source.encoding))
+            lines, rows = _table(file, raw)
+            return OpenedFile(file=file, data=data, sha256=digest, lines=lines, rows=rows)
+        if file.format is Format.JSON:
+            document = json.loads(stream.read().decode(file.encoding))
             return OpenedFile(
-                source=source,
-                data=data,
-                sha256=digest,
-                lines=_json_lines(document),
-                document=document,
+                file=file, data=data, sha256=digest, lines=_json_lines(document), document=document
             )
-        if source.format is Format.HTML:
-            text = stream.read().decode(source.encoding, errors="replace")
-            return OpenedFile(source=source, data=data, sha256=digest, lines=visible_lines(text))
-        if source.format is Format.PDF:
+        if file.format is Format.HTML:
+            text = stream.read().decode(file.encoding, errors="replace")
+            return OpenedFile(file=file, data=data, sha256=digest, lines=visible_lines(text))
+        if file.format is Format.PDF:
             if parser is None:
-                raise ListFileError(f"{source.name}: a PDF list needs a parser")
-            document = parser.parse(stream.read(), source.filename)
+                raise ListFileError(f"{file.name}: a PDF list needs a parser")
+            document = parser.parse(stream.read(), file.filename)
             lines = [line for page in document.pages for line in page.splitlines()]
-            return OpenedFile(source=source, data=data, sha256=digest, lines=lines)
-    raise ListFileError(f"{source.name}: no renderer for {source.format}")  # pragma: no cover
+            return OpenedFile(file=file, data=data, sha256=digest, lines=lines)
+    raise ListFileError(f"{file.name}: no renderer for {file.format}")  # pragma: no cover
 
 
-def _member(source: Source, data: bytes) -> IO[bytes]:
+def _member(file: ListFile, data: bytes) -> IO[bytes]:
     """The bytes to read: the ZIP member, streamed, or the file itself."""
-    if source.member is None:
+    if file.member is None:
         return io.BytesIO(data)
     try:
         archive = zipfile.ZipFile(io.BytesIO(data))
-        return archive.open(source.member)
+        return archive.open(file.member)
     except (zipfile.BadZipFile, KeyError) as exc:
-        raise ListFileError(f"{source.name}: no member {source.member!r}: {exc}") from None
+        raise ListFileError(f"{file.name}: no member {file.member!r}: {exc}") from None
 
 
 def _csv_rows(stream: IO[bytes], encoding: str) -> Iterator[list[str]]:
@@ -257,20 +310,21 @@ def _sheet_rows(stream: IO[bytes]) -> Iterator[list[str]]:
         workbook.close()
 
 
-def _table(source: Source, raw: Iterable[list[str]]) -> tuple[list[str], list[Row]]:
+def _table(file: ListFile, raw: Iterable[list[str]]) -> tuple[list[str], list[Row]]:
     """Lines and rows from a table: the header first, each row's cells joined, the columns kept
-    as the source says and repeats dropped when it asks."""
+    as the file says and repeats dropped when it asks. Fewer rows than the file's `min_rows`
+    is a wrong or truncated export."""
     rows_iter = iter(raw)
     header = next(rows_iter, None)
     if header is None:
-        raise ListFileError(f"{source.name}: the table is empty")
+        raise ListFileError(f"{file.name}: the table is empty")
     header = [cell.strip() for cell in header]
-    if source.columns is not None:
+    if file.columns is not None:
         try:
-            keep = [header.index(column) for column in source.columns]
+            keep = [header.index(column) for column in file.columns]
         except ValueError as exc:
-            raise ListFileError(f"{source.name}: the table has no column {exc}") from None
-        header = list(source.columns)
+            raise ListFileError(f"{file.name}: the table has no column {exc}") from None
+        header = list(file.columns)
     else:
         keep = None
     lines = [CELL_SEPARATOR.join(header)]
@@ -278,13 +332,18 @@ def _table(source: Source, raw: Iterable[list[str]]) -> tuple[list[str], list[Ro
     seen: set[tuple[str, ...]] = set()
     for raw_cells in rows_iter:
         cells = raw_cells if keep is None else [_cell(raw_cells, index) for index in keep]
-        if source.distinct:
+        if file.distinct:
             key = tuple(cells)
             if key in seen:
                 continue
             seen.add(key)
         lines.append(CELL_SEPARATOR.join(cells))
         rows.append(Row(line=len(lines), cells=dict(zip(header, cells, strict=False))))
+    if len(rows) < file.min_rows:
+        raise ListFileError(
+            f"{file.name}: the table has {len(rows)} rows, fewer than the {file.min_rows} "
+            "expected: a wrong or truncated export"
+        )
     return lines, rows
 
 

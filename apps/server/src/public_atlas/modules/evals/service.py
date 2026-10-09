@@ -41,7 +41,7 @@ from public_atlas.modules.evals.schemas import (
     EvalScoreOutput,
     TypeSummary,
 )
-from public_atlas.modules.imports.lists import ontario_places
+from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
 from public_atlas.resources import Resources, build_resources
 from public_atlas.shared.exceptions import NotFoundError
 

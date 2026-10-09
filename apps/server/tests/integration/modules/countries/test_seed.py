@@ -1,5 +1,5 @@
-"""Seeding Canada fills the country tables and creates the Ontario anchor; a second run adds
-nothing and leaves an edit alone."""
+"""Seeding Canada fills the country tables and creates the anchors (the federal government and
+each province's and territory's); a second run adds nothing and leaves an edit alone."""
 
 from typing import TYPE_CHECKING
 
@@ -49,11 +49,12 @@ def test_seeding_fills_the_country_tables(db: Database):
     assert report.country_settings == 1
     assert report.administrative_levels == len(canada.ADMINISTRATIVE_LEVELS)
     assert report.country_institution_types == len(canada.INSTITUTION_TYPES)
-    assert report.domains == len(canada.PLATFORMS) + 2
-    assert report.places == 2
-    assert report.institutions == 1
-    # Canada, Ontario and the Government of Ontario.
-    assert report.aliases == 3
+    anchors = [place for place in canada.PLACES if place.get("government")]
+    assert report.domains == len(canada.PLATFORMS) + sum(len(p["domains"]) for p in anchors)
+    assert report.places == len(canada.PLACES) == 14
+    assert report.institutions == len(anchors) == 14
+    # Each place's name and each government's.
+    assert report.aliases == len(canada.PLACES) + len(anchors)
     assert db.run(count, db, InstitutionType) == len(shared.INSTITUTION_TYPES)
     assert db.run(count, db, SourceType) == len(shared.SOURCE_TYPES)
     assert db.run(count, db, AdministrativeLevel) == len(canada.ADMINISTRATIVE_LEVELS)
@@ -84,7 +85,7 @@ def test_seeding_creates_the_ontario_anchor_verified_by_hand(db: Database):
 
     assert canada_place.administrative_level == "country"
     assert canada_place.parent_place_id is None
-    assert canada_place.government_institution_id is None
+    assert canada_place.government_institution_id is not None
     assert ontario.parent_place_id == canada_place.id
     assert ontario.administrative_level == "province_territory"
     assert (ontario.status, ontario.entered_by) == (EntityStatus.VERIFIED, EnteredBy.MANUAL)
