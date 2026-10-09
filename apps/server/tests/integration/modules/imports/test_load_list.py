@@ -206,10 +206,11 @@ def tiny_libraries(cache_dir: Path) -> ModuleType:
 
 
 def tiny_colleges(cache_dir: Path, rows: list[list[str]]) -> ModuleType:
-    """Institutions placed by name: columns name, alias, place."""
+    """Institutions placed by name, level and parent: columns name, alias, place, level,
+    parent."""
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-    writer.writerow(["name", "alias", "place"])
+    writer.writerow(["name", "alias", "place", "level", "parent"])
     writer.writerows(rows)
     data = buffer.getvalue().encode()
     source = ListFile(
@@ -230,6 +231,8 @@ def tiny_colleges(cache_dir: Path, rows: list[list[str]]) -> ModuleType:
                 aliases=(AliasEntry(text=row["alias"]),) if row["alias"] else (),
                 institution_type="college",
                 place=row["place"],
+                place_level=row["level"] or None,
+                place_parent=row["parent"] or None,
                 citations={"institution": Citation(source=source.name, line=row.line)},
             )
             for row in files[source.name].rows
@@ -583,6 +586,21 @@ async def institutions_named(db: Database, name: str) -> list[tuple[str, list[st
         return sorted(found)
 
 
+async def colleges_placed(db: Database) -> dict[str, tuple[str, str, str | None]]:
+    """Each college's place: its name, level and parent's name."""
+    async with db.session() as session:
+        found = {}
+        for institution in await session.scalars(
+            select(Institution).where(Institution.institution_type == "college")
+        ):
+            place = await session.get_one(Place, institution.place_id)
+            parent = None
+            if place.parent_place_id is not None:
+                parent = (await session.get_one(Place, place.parent_place_id)).name
+            found[institution.name] = (place.name, place.administrative_level, parent)
+        return found
+
+
 def test_institutions_are_matched_by_their_whole_names(
     db: Database, object_store: MemoryObjectStore, tmp_path: Path
 ):
@@ -591,16 +609,16 @@ def test_institutions_are_matched_by_their_whole_names(
     db.run(seed, db)
     db.run(apply, db, object_store, tiny_places(ROWS_V1, tmp_path), tmp_path)
     rows = [
-        ["Centennial College of Applied Arts and Technology", "", "Oakville"],
-        ["Seneca Polytechnic", "Seneca College of Applied Arts and Technology", "Oakville"],
+        ["Centennial College of Applied Arts and Technology", "", "Oakville", "", ""],
+        ["Seneca Polytechnic", "Seneca College of Applied Arts and Technology", "Oakville", "", ""],
     ]
     report = db.run(apply, db, object_store, tiny_colleges(tmp_path, rows), tmp_path)
     assert report.count("add", "institution") == 2
     assert report.skipped == []
 
     renamed = [
-        ["seneca  college of applied arts & technology", "", "Oakville"],
-        ["Centennial College of Applied Arts and Technology", "CCAAT", "Oakville"],
+        ["seneca  college of applied arts & technology", "", "Oakville", "", ""],
+        ["Centennial College of Applied Arts and Technology", "CCAAT", "Oakville", "", ""],
     ]
     again = db.run(apply, db, object_store, tiny_colleges(tmp_path, renamed), tmp_path)
     assert again.count("add", "institution") == 0
@@ -616,6 +634,50 @@ def test_institutions_are_matched_by_their_whole_names(
             ],
         )
     ]
+
+
+def test_an_institution_names_the_place_it_means_by_level_and_parent(
+    db: Database, object_store: MemoryObjectStore, tmp_path: Path
+):
+    db.run(seed, db)
+    rows = [
+        *ROWS_V1,
+        # A municipality named like its region, and a township named like a city elsewhere.
+        ["Elm", "municipality", "Elm", "City of Elm", "3598004", "900", "", ""],
+        ["Oakville", "municipality", "Ontario", "Township of Oakville", "3598005", "90", "", ""],
+    ]
+    db.run(apply, db, object_store, tiny_places(rows, tmp_path), tmp_path)
+    colleges = [
+        ["Elm College", "", "Elm", "", ""],
+        ["Elm City College", "", "Elm", "municipality", ""],
+        ["Elm County College", "", "Elm", "region", ""],
+        ["Oakville College", "", "Oakville", "municipality", ""],
+        ["Oakville Town College", "", "Oakville", "municipality", "Elm"],
+        ["Oakville Township College", "", "Oakville", "", "Ontario"],
+        ["Atlantis College", "", "Oakville", "municipality", "Atlantis"],
+        ["Parish College", "", "Oakville", "parish", ""],
+    ]
+    report = db.run(apply, db, object_store, tiny_colleges(tmp_path, colleges), tmp_path)
+
+    assert [line.split(":")[0] for line in report.skipped] == [
+        "Elm College",
+        "Oakville College",
+        "Atlantis College",
+        "Parish College",
+    ]
+    assert "2 places go by 'Elm' at levels" in report.skipped[0]
+    assert "2 places go by 'Oakville' at levels ['municipality']" in report.skipped[1]
+    assert "no place named 'Oakville' sits under 'Atlantis'" in report.skipped[2]
+    assert "no administrative level 'parish'" in report.skipped[3]
+    assert report.count("add", "institution") == 4, report.render()
+
+    found = db.run(colleges_placed, db)
+    assert found == {
+        "Elm City College": ("Elm", "municipality", "Elm"),
+        "Elm County College": ("Elm", "region", "Ontario"),
+        "Oakville Town College": ("Oakville", "municipality", "Elm"),
+        "Oakville Township College": ("Oakville", "municipality", "Ontario"),
+    }
 
 
 async def read_lists(db: Database) -> list[tuple[str, Retrieval]]:

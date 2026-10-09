@@ -412,15 +412,36 @@ class Loader:
             return None
         return await self.session.get(Place, held.place_id)
 
-    async def _find_place(self, name: str, levels: list[str]) -> Place | None:
-        """The one place at any of `levels` that goes by `name`."""
+    async def _find_place(
+        self, name: str, levels: list[str], *, parent: str | None = None
+    ) -> Place | None:
+        """The one place at any of `levels` that goes by `name`, under the place named `parent`
+        when one is given: the City of Hamilton under Ontario, not the township of that name
+        under Northumberland."""
         forms = self.rules.naming.forms(name)
         found: list[Place] = []
         for level in levels:
             found.extend(known.row for known in await self._known(level) if known.forms & forms)
+        if parent is not None and len(found) > 1:
+            wanted = self.rules.naming.forms(parent)
+            kept = [place for place in found if (await self._parent_forms(place)) & wanted]
+            if not kept:
+                raise Skip(f"no place named {name!r} sits under {parent!r}")
+            found = kept
         if len(found) > 1:
-            raise Skip(f"{len(found)} places go by {name!r} at levels {levels}")
+            where = f"at levels {levels}" if parent is None else f"under {parent!r}"
+            raise Skip(f"{len(found)} places go by {name!r} {where}")
         return found[0] if found else None
+
+    async def _parent_forms(self, place: Place) -> set[str]:
+        """The forms of the names of the place's parent."""
+        if place.parent_place_id is None:
+            return set()
+        above = await self.session.get_one(Place, place.parent_place_id)
+        for known in await self._known(above.administrative_level):
+            if known.row.id == above.id:
+                return known.forms
+        return self._forms([above.name])
 
     async def _known(self, level: str) -> list[Known]:
         """The country's places at `level` with the forms of their names, read once."""
@@ -636,7 +657,12 @@ class Loader:
     async def _load_institution(self, entry: InstitutionEntry) -> None:
         if entry.institution_type not in self.rules.institution_types:
             raise Skip(f"no institution type {entry.institution_type!r}")
-        place = await self._find_place(entry.place, list(self.rules.levels))
+        levels = list(self.rules.levels)
+        if entry.place_level is not None:
+            if entry.place_level not in self.rules.levels:
+                raise Skip(f"{self.rules.name} has no administrative level {entry.place_level!r}")
+            levels = [entry.place_level]
+        place = await self._find_place(entry.place, levels, parent=entry.place_parent)
         if place is None:
             raise Skip(f"place {entry.place!r} is not loaded")
         label = f"{entry.name} ({entry.institution_type})"

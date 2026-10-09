@@ -106,6 +106,11 @@ class InstitutionEntry(BaseModel):
     institution_type: str
     # The name of a loaded or seeded place.
     place: str
+    # Which place of that name, when the name alone does not say: its administrative level
+    # (the City of Thunder Bay, not the district) and the name of its parent (the City of
+    # Hamilton under Ontario, not the township under Northumberland).
+    place_level: str | None = None
+    place_parent: str | None = None
     # The name of an institution at the place; None defaults to the place's government.
     parent_institution: str | None = None
     served_places: tuple[str, ...] = ()
