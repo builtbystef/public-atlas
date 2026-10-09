@@ -92,20 +92,35 @@ and `seed canada` is idempotent with the thirteen provincial anchors in place.
 Three tabular lists of the same shape. The first replaces the planned PAS scrape in
 `todo.md` Phase 7; update that item to point here.
 
-- [ ] **`canada/ontario/agencies`** from the Treasury Board's *List of provincial agencies* XLSX
+- [x] **`canada/ontario/agencies`** from the Treasury Board's *List of provincial agencies* XLSX
       (137 rows, header on row 3; add a header-row option to the spreadsheet reader if it
       has none). `crown_corporation` for classification "Operational Enterprise", `agency`
       for the rest; parent = the ministry in the `Ministry` column, created under Ontario as
       a `ministry` when missing (compose "Ministry of ..."); website from `Website`, cleaned.
-- [ ] **`canada/ontario/fippa_bodies`**: hospitals (144), colleges (24) and universities (22) from
+- [x] **`canada/ontario/fippa_bodies`**: hospitals (144), colleges (24) and universities (22) from
       the FIPPA/MFIPPA Directory of Institutions CSV, each with its website, attached to the
       municipality in `City`. Strip the HTML in cells; "not available" is null. Cross-check
       the universities and colleges against the two ontario.ca pages (drop Royal Military
       College) and pin both counts.
-- [ ] **`canada/ontario/school_boards`** from the monthly contact CSV (85 rows, ISO-8859-1; note
+- [x] **`canada/ontario/school_boards`** from the monthly contact CSV (85 rows, ISO-8859-1; note
       the CKAN resource id because the filename changes monthly). 72 district school boards
       and 13 school authorities as `school_board`, the authority kind as an alias. Dedupe
       Grandview; skip "Provincial and Demonstration Schools". Attach by `City`.
+
+The session changed the loader three times, each before the list that needed it: `ListFile`
+gained `header_row` (the rows above it stay in the text, so a line number is still the
+file's row number); `InstitutionEntry` gained `place_level` and `place_parent`, so a list
+that attaches bodies by city can say it means the City of Thunder Bay and not the district,
+and the City of Hamilton under Ontario and not the township in Northumberland; and the
+loader matches an institution at a place by its whole name and aliases, not by the forms a
+place's name takes inside a government's name, which read "Centennial College of Applied
+Arts and Technology" as "Applied Arts and Technology" and merged every college so named at
+one place. The lists that attach by city share `canada/ontario/communities.py`, the map from
+a post-office community to its municipality. The ontario.ca pages are not sources: each
+fetch carries a new bot-detection token, so no hash can be pinned; the cross-check is a hand
+table in the module, and the three universities the page lists and the directory does not
+(NOSM University, Université de Hearst, Université de l'Ontario français) wait for a list
+that names them.
 
 **Done when** the three loads are applied, each rule test pins its counts, and the agencies
 sit under their ministries.

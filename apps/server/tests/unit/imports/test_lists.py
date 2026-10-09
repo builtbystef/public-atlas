@@ -43,7 +43,8 @@ def _module(name: str, *sources: ListFile) -> ModuleType:
 
 def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
     text = service.manifest(Path("/cache"))
-    assert text.startswith("Fetched files (3)")
+    fetched = sum(len(module.SOURCES) for module in LISTS.values())
+    assert text.startswith(f"Fetched files ({fetched})")
     for file in places.SOURCES:
         assert f"canada/ontario/places/{file.name}: {file.title}" in text
         assert f"  {file.url}" in text

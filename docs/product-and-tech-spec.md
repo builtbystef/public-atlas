@@ -261,7 +261,7 @@ The records are Pydantic models that exist only while the loader runs:
 | Record | Holds | Becomes |
 | --- | --- | --- |
 | `PlaceEntry` | name, level, parent, government name, code, population, homepage URL, a citation per fact | A verified `places` row, its government `institutions` row, an `identifiers` row, a `metrics` row, a candidate `homepages` row |
-| `InstitutionEntry` | name, type, place, parent institution, homepage URL, served places, a citation per fact | A verified `institutions` row, `institution_served_places` rows, a candidate `homepages` row |
+| `InstitutionEntry` | name, type, place (with its level and parent when the name alone does not say which), parent institution, homepage URL, served places, a citation per fact | A verified `institutions` row, `institution_served_places` rows, a candidate `homepages` row |
 | `Citation` | which source and which line a fact came from | An `evidence` row quoting that line, `entered_by = script` |
 
 The first module is `lists/canada/ontario/places.py`: three sources (the
@@ -269,10 +269,11 @@ census population table and geography file, shared with every province
 through `lists/canada/statcan.py`, and the Ontario municipal directory), about
 twenty overrides, and an `entries()` that returns 454 `PlaceEntry` records.
 `public-atlas load-list canada/ontario/places` shows the diff; `--apply` loads
-it. The second, `lists/canada/ontario/agencies.py`, reads the province's list
-of its agencies and returns `InstitutionEntry` records, each agency under its
-ministry; the same command loads it and nothing in the loader changes. A later
-`lists/canada/ontario/fippa_bodies.py` is the same again.
+it. The second, `lists/canada/ontario/agencies.py`, reads the Treasury Board's
+list of the province's agencies and returns `InstitutionEntry` records, each
+agency under its ministry; the same command loads it. `fippa_bodies.py`
+(hospitals, colleges and universities) and `school_boards.py` are the same
+again, attaching each body to the municipality of its address.
 
 This is also where the bodies under a body come from. `find_institutions`
 takes a place and finds the types its level expects; it is never pointed at a
