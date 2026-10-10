@@ -3,6 +3,7 @@ renderer per format."""
 
 import io
 import json
+import re
 import zipfile
 from pathlib import Path
 from typing import Any
@@ -166,6 +167,32 @@ def test_a_table_may_start_below_a_title_and_a_note():
     opened = files.render(source(csv_below, header_row=2, columns=("code", "name")), csv_below)
     assert opened.lines == ["A note", "code | name", "3501 | Elmwood"]
     assert opened.rows[0].line == 3
+
+
+def test_a_worksheet_that_declares_a_wrong_dimension_is_read_to_its_end():
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet.append(["name", "code"])
+    sheet.append(["Elmwood", 3501])
+    sheet.append(["Oakville", 3502])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    # Alberta's dashboard export declares one cell, which the read-only reader would trust.
+    source_zip = zipfile.ZipFile(buffer)
+    rewritten = io.BytesIO()
+    with zipfile.ZipFile(rewritten, "w", zipfile.ZIP_DEFLATED) as target:
+        for item in source_zip.infolist():
+            content = source_zip.read(item.filename)
+            if item.filename == "xl/worksheets/sheet1.xml":
+                content = re.sub(rb'<dimension ref="[^"]*"/>', b'<dimension ref="A1"/>', content)
+                assert b'<dimension ref="A1"/>' in content
+            target.writestr(item, content)
+    data = rewritten.getvalue()
+    opened = files.render(
+        source(data, format=Format.SPREADSHEET, url="https://x.test/list.xlsx"), data
+    )
+    assert opened.lines == ["name | code", "Elmwood | 3501", "Oakville | 3502"]
 
 
 def test_a_workbooks_named_sheets_are_read_one_after_another():

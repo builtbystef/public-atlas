@@ -186,9 +186,15 @@ async def load_list(  # noqa: PLR0913 - the resources a load needs
     return report
 
 
+# An override with this key removes its entry (a municipality dissolved since the census), so
+# that it matches no entry is what it is for, not a stranded key.
+DISSOLVED = "dissolved"
+
+
 def idle_overrides(overrides: Mapping[str, object], entries: Sequence[Entry]) -> list[str]:
     """The override keys no entry answers to: an override is keyed by a code, a name or an
-    alias of the entry it corrects, so a key none of the entries carries corrected nothing."""
+    alias of the entry it corrects, so a key none of the entries carries corrected nothing.
+    An override that dissolves its entry is expected to match nothing and is not reported."""
     keyed: set[str] = set()
     for entry in entries:
         keyed.add(entry.name)
@@ -196,7 +202,11 @@ def idle_overrides(overrides: Mapping[str, object], entries: Sequence[Entry]) ->
         keyed.update(code.value for code in entry.codes)
         if isinstance(entry, PlaceEntry):
             keyed.add(entry.code.value)
-    return [key for key in overrides if key not in keyed]
+    return [
+        key
+        for key, fields in overrides.items()
+        if key not in keyed and not (isinstance(fields, Mapping) and DISSOLVED in fields)
+    ]
 
 
 def manifest(cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS) -> str:

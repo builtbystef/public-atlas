@@ -13,7 +13,7 @@ class MemoryParser:
     def warm_up(self) -> None:
         return
 
-    def parse(
+    def parse(  # noqa: PLR0913 - the range and the rows asked for, all keyword
         self,
         data: bytes,
         filename: str,
@@ -21,6 +21,7 @@ class MemoryParser:
         start: int = 1,
         limit: int | None = None,
         page_batch: int | None = None,  # noqa: ARG002 - the text has no ranges to hold
+        tables: bool = False,  # noqa: ARG002 - the text has no tables to reconstruct
     ) -> ParsedDocument:
         try:
             text = data.decode()

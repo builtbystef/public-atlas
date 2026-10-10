@@ -57,7 +57,7 @@ class Parser(Protocol):
         """Loads models now, so the first job does not pay for it."""
         ...
 
-    def parse(
+    def parse(  # noqa: PLR0913 - the range and the rows asked for, all keyword
         self,
         data: bytes,
         filename: str,
@@ -65,10 +65,13 @@ class Parser(Protocol):
         start: int = 1,
         limit: int | None = None,
         page_batch: int | None = None,
+        tables: bool = False,
     ) -> ParsedDocument:
         """Raises `ParseFailed`. `filename` carries the format in its extension. The pages from
         `start`, at most `limit` of them (None: to the end), so a long file is parsed as the
         agent reads it. A format without pages is parsed whole whatever the range asked for.
         `page_batch` asks for fewer pages in memory at a time than the parser's own setting; a
-        parser that does not parse in ranges may ignore it."""
+        parser that does not parse in ranges may ignore it. `tables` asks for a PDF's tables
+        reconstructed, one row per line, for a list whose records are rows; the agent's
+        reading leaves it off."""
         ...

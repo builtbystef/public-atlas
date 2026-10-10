@@ -535,8 +535,11 @@ book the agent opens to classify costs one range, not forty. Its text is
 `partial` in between and the agent is told how far it goes. OCR stays on for
 scanned minutes; table structure recognition is off, since the agent reads a
 file to classify it and to quote a line, and neither needs a table's cells
-reconstructed. A file already parsed by any assignment shares its text, as far
-as it goes. `read_file` waits up to ninety seconds and then tells the agent to
+reconstructed. The one exception is an official list read from a PDF whose
+records are a table's rows (a municipal directory): its `ListFile` asks for the
+tables (`tables`), the list loader parses it with table structure on, and each
+row is a line a citation can name. A file already parsed by any assignment
+shares its text, as far as it goes. `read_file` waits up to ninety seconds and then tells the agent to
 check `status` later.
 
 ### 8.4 Model

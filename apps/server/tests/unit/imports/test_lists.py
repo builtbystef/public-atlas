@@ -112,3 +112,8 @@ def test_an_override_matches_an_entry_by_code_name_or_alias():
     )
     overrides = {"3598001": {}, "Oakville": {}, "3598999": {}, "Pine": {}}
     assert service.idle_overrides(overrides, [entry]) == ["3598999", "Pine"]
+
+
+def test_an_override_that_dissolves_its_entry_is_expected_to_match_nothing():
+    overrides = {"3598999": {"dissolved": "2023-01-01", "reason": "merged"}, "Pine": {}}
+    assert service.idle_overrides(overrides, []) == ["Pine"]

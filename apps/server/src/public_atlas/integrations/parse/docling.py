@@ -20,7 +20,9 @@ if TYPE_CHECKING:
 
 # What the parse image and CI download with `docling-tools models download`, into the
 # directory `DOCLING_ARTIFACTS_PATH` names (unset, Docling uses its Hugging Face cache). Keep
-# in step with `converter`: no table model, since table structure is off.
+# in step with `converter`: no table model, since the parse worker reads with table structure
+# off. The list loader's `tables` parse uses the table model (`tableformer`), which Docling
+# fetches into its Hugging Face cache on the machine that loads such a list.
 MODELS = ("layout", "rapidocr")
 
 logger = logging.getLogger(__name__)
@@ -61,6 +63,16 @@ class DoclingParser:
 
     @cached_property
     def converter(self) -> DocumentConverter:
+        """The reading-order converter the parse worker uses."""
+        return self._build_converter(tables=False)
+
+    @cached_property
+    def table_converter(self) -> DocumentConverter:
+        """The converter for a list PDF whose records are a table's rows: table structure on,
+        so each row renders as a markdown table row, one line each."""
+        return self._build_converter(tables=True)
+
+    def _build_converter(self, *, tables: bool) -> DocumentConverter:
         """Other formats than PDF take Docling's defaults."""
         from docling.datamodel.accelerator_options import (  # noqa: PLC0415
             AcceleratorDevice,
@@ -80,7 +92,8 @@ class DoclingParser:
             ocr_options=RapidOcrOptions(rapidocr_params=ocr_params()),
             # The agent reads a file to classify it and to quote a line; neither needs a
             # table's cells reconstructed, and the table model cost minutes per budget book.
-            do_table_structure=False,
+            # A list whose records are a table's rows asks for them (`tables`).
+            do_table_structure=tables,
             heading_hierarchy_options=HeadingHierarchyOptions(enabled=True),
             do_code_enrichment=False,
             do_formula_enrichment=False,
@@ -105,7 +118,7 @@ class DoclingParser:
 
         self.converter.initialize_pipeline(InputFormat.PDF)
 
-    def parse(
+    def parse(  # noqa: PLR0913 - the range and the rows asked for, all keyword
         self,
         data: bytes,
         filename: str,
@@ -113,16 +126,18 @@ class DoclingParser:
         start: int = 1,
         limit: int | None = None,
         page_batch: int | None = None,
+        tables: bool = False,
     ) -> ParsedDocument:
         """The pages from `start`, at most `limit` of them, in ranges of `page_batch` pages
         (the parser's own size unless given: the parse job passes 1 when an earlier attempt
-        took the worker down, so the peak is one page's worth)."""
+        took the worker down, so the peak is one page's worth). `tables` reconstructs the
+        tables, for a list read by rows."""
         batch = page_batch or self.page_batch
 
         def span(from_page: int) -> int:
             return batch if limit is None else max(1, min(batch, start + limit - from_page))
 
-        pages, total = self._convert(data, filename, start=start, batch=span(start))
+        pages, total = self._convert(data, filename, start=start, batch=span(start), tables=tables)
         if total > self.max_pages:
             raise ParseFailed(
                 f"the file has {total} pages; files over {self.max_pages} pages are not parsed"
@@ -133,7 +148,11 @@ class DoclingParser:
         end = total if limit is None else min(total, start - 1 + limit)
         while start + len(pages) <= end:
             more, _ = self._convert(
-                data, filename, start=start + len(pages), batch=span(start + len(pages))
+                data,
+                filename,
+                start=start + len(pages),
+                batch=span(start + len(pages)),
+                tables=tables,
             )
             if not more:
                 break
@@ -143,7 +162,7 @@ class DoclingParser:
         )
 
     def _convert(
-        self, data: bytes, filename: str, *, start: int, batch: int
+        self, data: bytes, filename: str, *, start: int, batch: int, tables: bool = False
     ) -> tuple[list[str], int]:
         """The pages from `start` to the end of its range, and how many pages the document has:
         0 for a format without pages, whose one call is the whole document."""
@@ -153,7 +172,8 @@ class DoclingParser:
         stream = DocumentStream(name=filename, stream=BytesIO(data))
         page_range = (start, start + batch - 1)
         try:
-            result = self.converter.convert(
+            converter = self.table_converter if tables else self.converter
+            result = converter.convert(
                 stream, raises_on_error=False, max_num_pages=self.max_pages, page_range=page_range
             )
         except ConversionError as exc:

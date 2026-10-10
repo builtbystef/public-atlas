@@ -18,6 +18,7 @@ import io
 import json
 import logging
 import re
+import warnings
 import zipfile
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
@@ -148,12 +149,18 @@ class ListFile:
     # raw.githubusercontent.com, where anyone publishes). The loader admits the host as a
     # platform, fetchable and never trusted, instead of trusting it as the list's domain.
     shared_host: bool = False
+    # PDF lists whose records are a table's rows (a directory): the parser reconstructs the
+    # tables, so each row is a line of its own and a record is cited by its line. Off, a table
+    # is one cell per page (spec section 8.3), which suits the agent's reading and not a list.
+    tables: bool = False
 
     def __post_init__(self) -> None:
         if self.header_row < 1:
             raise ValueError(f"{self.name}: the header row is counted from 1")
         if self.sheets is not None and (self.format is not Format.SPREADSHEET or not self.sheets):
             raise ValueError(f"{self.name}: `sheets` names a spreadsheet's worksheets")
+        if self.tables and self.format is not Format.PDF:
+            raise ValueError(f"{self.name}: `tables` reconstructs a PDF's tables")
 
         if self.retrieval is Retrieval.FETCHED:
             if self.sha256 is None or not SHA256.match(self.sha256):
@@ -301,7 +308,7 @@ def render(file: ListFile, data: bytes, *, parser: Parser | None = None) -> Open
         if file.format is Format.PDF:
             if parser is None:
                 raise ListFileError(f"{file.name}: a PDF list needs a parser")
-            document = parser.parse(stream.read(), file.filename)
+            document = parser.parse(stream.read(), file.filename, tables=file.tables)
             lines = [line for page in document.pages for line in page.splitlines()]
             return OpenedFile(file=file, data=data, sha256=digest, lines=lines)
     raise ListFileError(f"{file.name}: no renderer for {file.format}")  # pragma: no cover
@@ -328,7 +335,10 @@ def _csv_rows(stream: IO[bytes], encoding: str, delimiter: str) -> Iterator[list
 def _sheet_rows(file: ListFile, stream: IO[bytes]) -> list[tuple[str, Iterable[list[str]]]]:
     """The worksheets the file names, or the first, each by its title with every cell as
     text."""
-    workbook = openpyxl.load_workbook(io.BytesIO(stream.read()), read_only=True, data_only=True)
+    with warnings.catch_warnings():
+        # A dashboard export (Alberta's) names no default style; openpyxl applies its own.
+        warnings.filterwarnings("ignore", message="Workbook contains no default style")
+        workbook = openpyxl.load_workbook(io.BytesIO(stream.read()), read_only=True, data_only=True)
     try:
         if file.sheets is None:
             sheets = [workbook.worksheets[0]]
@@ -337,19 +347,28 @@ def _sheet_rows(file: ListFile, stream: IO[bytes]) -> list[tuple[str, Iterable[l
                 if name not in workbook.sheetnames:
                     raise ListFileError(f"{file.name}: the workbook has no sheet {name!r}")
             sheets = [workbook[name] for name in file.sheets]
+        for sheet in sheets:
+            # The read-only reader trusts the worksheet's declared dimension, and an export can
+            # declare one cell (Alberta's dashboard does); this reads to the real end instead.
+            sheet.reset_dimensions()
         return [
+            # A row says which sheet it is from when the file names its sheets.
             (
-                # A row says which sheet it is from when the file names its sheets.
                 sheet.title if file.sheets is not None else "",
-                [
-                    ["" if cell is None else str(cell) for cell in row]
-                    for row in sheet.iter_rows(values_only=True)
-                ],
+                _padded(sheet.iter_rows(values_only=True)),
             )
             for sheet in sheets
         ]
     finally:
         workbook.close()
+
+
+def _padded(raw: Iterable[tuple[object, ...]]) -> list[list[str]]:
+    """Every cell as text, each row as wide as the widest: read to the real end, a row stops
+    at its last filled cell."""
+    rows = [["" if cell is None else str(cell) for cell in row] for row in raw]
+    width = max((len(row) for row in rows), default=0)
+    return [[*row, *[""] * (width - len(row))] for row in rows]
 
 
 def _tables(
