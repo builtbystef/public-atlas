@@ -6,7 +6,7 @@ license = "MIT"
 authors = [{ name = "builtbystef" }]
 
 [dependency-groups]
-dev = ["pytest>=9.1.1", "ruff>=0.16.5", "ty>=0.0.77"]
+dev = ["pytest>=9.1.1", "ruff>=0.16.10", "ty>=0.0.84"]
 
 [tool.uv]
 required-version = ">=0.12"
