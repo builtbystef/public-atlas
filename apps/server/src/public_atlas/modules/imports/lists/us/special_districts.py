@@ -8,12 +8,18 @@ website as a candidate homepage. The rules:
   is `fire_service`; water supply, sewerage, electric power, gas supply, solid waste and the
   combined utilities (91, 80, 92, 93, 81, 98, 97) are `public_utility`; mass transit (94) is
   `transit_agency`; libraries (52) `library`; hospitals (40) `hospital`; parks and recreation
-  and other natural resources (61, 59) `park_district`; housing, airports, ports, parking and
-  industrial development (50, 01, 87, 60, 41) `municipal_corporation`; police protection (62)
-  `police_service`. Every other function (cemeteries, drainage, flood control, irrigation, soil
-  and water conservation, highways, health, correctional, welfare, education, mortgage credit,
-  the single- and multi-function districts the census does not name) is `other` with the
-  function's words as the suggested type, for the reviewer.
+  and other natural resources (61, 59) `park_district`; housing (50) `housing_authority`;
+  airports (01) `airport_authority`; ports (87) `port_authority`; parking and industrial
+  development (60, 41) `municipal_corporation`; police protection (62) `police_service`;
+  soil and water conservation, drainage, flood control and reclamation (88, 51, 63, 86)
+  `conservation_authority`; irrigation (64), which sells water, `public_utility`; toll
+  highways (45), the turnpike authorities, `public_authority`. Every other function
+  (cemeteries, highways, health, correctional, welfare, education, mortgage credit, the
+  single- and multi-function districts the census does not name) is `other` with the
+  function's words as the suggested type, for the reviewer. `OVERRIDES` types a district by
+  name where the function misleads: the one body two lists load (Fresno County's Southwest
+  Transportation Agency, an education district here and a service agency to NCES) takes the
+  type the other list gives it, or the loader refuses the second code.
 - An inactive row (`IS_ACTIVE` N) is left out and counted. A row with no Census of Governments
   id (a unit added after the ids were assigned) is loaded with no identifier and counted.
 - The place is the district's county when it is a loaded place; else the loaded municipality
@@ -58,16 +64,31 @@ FUNCTIONS: dict[str, str] = {
     "40": "hospital",
     "61": "park_district",
     "59": "park_district",
-    "50": "municipal_corporation",
-    "01": "municipal_corporation",
-    "87": "municipal_corporation",
+    "50": "housing_authority",
+    "01": "airport_authority",
+    "87": "port_authority",
     "60": "municipal_corporation",
     "41": "municipal_corporation",
     "62": "police_service",
+    "88": "conservation_authority",
+    "51": "conservation_authority",
+    "63": "conservation_authority",
+    "86": "conservation_authority",
+    "64": "public_utility",
+    "45": "public_authority",
 }
 
-# Hand corrections keyed by the district's name, each with its reason. None are needed yet.
-OVERRIDES: dict[str, dict[str, str]] = {}
+# Hand corrections keyed by the district's name, each with its reason: the type the district
+# takes instead of its function's.
+OVERRIDES: dict[str, dict[str, str]] = {
+    "Southwest Transportation Agency": {
+        "institution_type": "education_service_agency",
+        "reason": (
+            "the census's education district is the joint powers agency NCES lists as a "
+            "service agency (0601394): one body with both codes, typed as the NCES list types it"
+        ),
+    },
+}
 
 
 @dataclass
@@ -83,6 +104,8 @@ class Notes:
     placed: Counter[str] = field(default_factory=Counter)
     inactive: int = 0
     no_id: int = 0
+    # Districts typed by `OVERRIDES` rather than by their function.
+    overridden: int = 0
     websites: int = 0
 
     def log(self) -> None:
@@ -122,7 +145,11 @@ def build(
         if not unit.active:
             notes.inactive += 1
             continue
+        name = governments.title_case(unit.name)
         institution_type, suggested_type = function_type(unit.function)
+        if name in OVERRIDES:
+            institution_type, suggested_type = OVERRIDES[name]["institution_type"], None
+            notes.overridden += 1
         place = places.attach(
             unit.fips_state, unit.fips_county, city=governments.title_case(unit.city)
         )
@@ -144,7 +171,7 @@ def build(
             notes.websites += 1
         found.append(
             InstitutionEntry(
-                name=governments.title_case(unit.name),
+                name=name,
                 institution_type=institution_type,
                 suggested_type=suggested_type,
                 codes=codes,

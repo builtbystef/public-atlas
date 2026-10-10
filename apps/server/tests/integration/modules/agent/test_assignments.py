@@ -43,6 +43,7 @@ FIND_SOURCES = AssignmentType.FIND_SOURCES
 OAKVILLE = "https://www.oakville.ca/"
 REGIONAL_TYPES = [
     "conservation_authority",
+    "housing_authority",
     "municipal_corporation",
     "police_service",
     "public_health_unit",

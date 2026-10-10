@@ -20,9 +20,12 @@ def test_the_canada_seed_validates_against_the_shared_seed():
     shared_seed, seed = service.validate(canada.SEED)
     assert seed.settings.country_code == "CA"
     assert [level.rank for level in seed.administrative_levels] == [1, 2, 3, 4]
-    # A park district is the United States' alone.
+    # A park district and an education service agency are the United States' alone.
     assert seed.institution_type_names < shared_seed.institution_type_names
-    assert shared_seed.institution_type_names - seed.institution_type_names == {"park_district"}
+    assert shared_seed.institution_type_names - seed.institution_type_names == {
+        "park_district",
+        "education_service_agency",
+    }
     ontario = next(place for place in seed.places if place.name == "Ontario")
     assert ontario.government == "Government of Ontario"
     assert ontario.domains == ["ontario.ca", "gov.on.ca"]

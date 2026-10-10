@@ -16,14 +16,20 @@ INACTIVE = 242
 NO_ID = 36
 WEBSITES = 11209
 TYPED = {
+    "airport_authority": 433,
+    "conservation_authority": 5680,
+    "education_service_agency": 1,
     "fire_service": 5998,
     "hospital": 641,
+    "housing_authority": 3298,
     "library": 1668,
-    "municipal_corporation": 4088,
-    "other": 17034,
+    "municipal_corporation": 219,
+    "other": 10378,
     "park_district": 1901,
     "police_service": 35,
-    "public_utility": 7583,
+    "port_authority": 138,
+    "public_authority": 24,
+    "public_utility": 8534,
     "transit_agency": 365,
 }
 PLACED = {"county": 38403, "municipality": 749, "state": 161}
@@ -81,7 +87,8 @@ def test_the_counts(
     assert len(set(ids)) == len(ids)
     assert sum(notes.suggested.values()) == TYPED["other"]
     assert notes.suggested["cemeteries"] == 1673
-    assert notes.suggested["soil and water conservation"] == 2536
+    assert notes.suggested["other multi-function districts"] == 5091
+    assert notes.overridden == len(special_districts.OVERRIDES) == 1
 
 
 def test_every_entry_cites_the_line_that_names_it_and_sits_at_a_place(
@@ -109,7 +116,7 @@ def test_the_districts_that_show_the_rules(by_id: dict[str, InstitutionEntry]):
     housing = by_id["01400150100000"]
     assert (housing.name, housing.institution_type, housing.place, housing.place_level) == (
         "Prattville Housing Authority",
-        "municipal_corporation",
+        "housing_authority",
         "Autauga County",
         "county",
     )
@@ -126,6 +133,20 @@ def test_the_districts_that_show_the_rules(by_id: dict[str, InstitutionEntry]):
         "other multi-function districts",
     )
     assert special_districts.function_type("62 - POLICE PROTECTION") == ("police_service", None)
+    assert special_districts.function_type("88 - SOIL AND WATER CONSERVATION") == (
+        "conservation_authority",
+        None,
+    )
+    assert special_districts.function_type("64 - IRRIGATION") == ("public_utility", None)
+    assert special_districts.function_type("45 - TOLL HIGHWAYS") == ("public_authority", None)
+    assert special_districts.function_type("44 - HIGHWAYS") == ("other", "highways")
+    # The one district an override types: the body the school districts list loads too.
+    southwest = by_id["05401041700000"]
+    assert (southwest.institution_type, southwest.suggested_type, southwest.place) == (
+        "education_service_agency",
+        None,
+        "Fresno County",
+    )
 
 
 def test_a_district_in_a_county_that_is_no_place_sits_under_its_city_or_state(

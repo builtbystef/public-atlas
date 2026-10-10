@@ -300,16 +300,19 @@ one parsing pass.
 - [x] **`us/school_districts`**: the NCES CCD LEA directory 2023-24 (19,637 rows) as
 
       `school_board` with `LEAID` in `nces`; `LEA_TYPE` 1 and 2 as boards, 7 (charter
-      districts) kept with a marking alias, 4 (service agencies) as `other`; website from
+      districts) kept with a marking alias, 4 (service agencies) as
+      `education_service_agency` (`other` until the Session 7 follow-up); website from
       `WEBSITE`; place = the county of the location address, the city as a served place
       where it matches a loaded municipality.
 - [x] **`us/special_districts`**: the Special District sheet (39,555 rows) typed by
 
       `FUNCTION_NAME`: fire → `fire_service`; water supply, sewerage, electric, gas, solid
       waste → `public_utility`; transit → `transit_agency`; libraries → `library`; hospitals
-      → `hospital`; parks and recreation, natural resources → `park_district`; housing,
-      airports, ports, parking, industrial development → `municipal_corporation`; the rest
-      → `other` with the function as the suggested type. Place = county; website from
+      → `hospital`; parks and recreation, natural resources → `park_district`; housing →
+      `housing_authority`, airports → `airport_authority`, ports → `port_authority` (the
+      three were `municipal_corporation` until the Session 7 follow-up); parking, industrial
+      development → `municipal_corporation`; the rest → `other` with the function as the
+      suggested type. Place = county; website from
       `WEB_ADDRESS`; `census_gid` identifier.
 
 The session changed the loader three times, each before the list that needed it, and found
@@ -532,10 +535,12 @@ scores in the database.
 - [x] **`canada/federal`**: the TBS *Inventory of Federal Organizations and Interests* CSV
       (277 active rows): ministerial departments as `department`; departmental, service and
       special operating agencies and departmental corporations as `agency`; Crown
-      corporations as `crown_corporation`; shared-governance corporations, international
-      organizations and parliamentary entities as `other`. Parent = the portfolio's
-      department (`min_port`), place = Canada, `legal_title` as the name with
-      `applied_title` and `abbr_en` as aliases, website from `website`.
+      corporations as `crown_corporation`; shared-governance corporations as
+      `airport_authority`, `port_authority` or `public_authority` by name, the chambers of
+      Parliament as `legislature` and the other parliamentary entities as `agency`;
+      international organizations, joint enterprises and other organizations as `other`.
+      Parent = the portfolio's department (`min_port`), place = Canada, `legal_title` as the
+      name with `applied_title` and `abbr_en` as aliases, website from `website`.
 - [x] **`canada/quebec/places`**: MRCs as regions from `MRC_CM_Arg.csv` (87 with websites; the
       two communautés métropolitaines and Kativik as `regional_government` institutions with
       `served_places`, not places); municipalities from the census joined to `MUN.csv` by
@@ -609,6 +614,28 @@ about the sources and the plan:
   "Municipalité régionale de comté de ..." with "MRC de ..." as an alias; the rule test asserts
   the place name sits whole inside its government's name, less the article the connector
   contracts.
+- **Five types for the bodies that were `other`.** The 115 federal bodies typed `other` were
+  mostly buyers: the follow-up added the shared types `airport_authority`, `port_authority`,
+  `housing_authority`, `public_authority` (a statutory or appointed board that is no Crown
+  corporation: NAV CANADA, the Seaway, CIHI, the Canada Foundation for Innovation) and
+  `legislature` (the House of Commons and the Senate; the five parliamentary offices are
+  `agency`). The federal list types a shared-governance corporation by its name (21 airports,
+  18 ports, 41 public authorities); the 16 international organizations, 10 dormant "other
+  organizations" and 2 joint enterprises stay `other`. The US special districts list moved
+  housing (3,298), airports (433) and ports (138) out of `municipal_corporation`, which keeps
+  parking and industrial development (219). A sixth type, `education_service_agency`, took
+  the school districts list's 681 service agencies (BOCES, intermediate units, education
+  service centers: the cooperative purchasers of US school procurement) out of `other`, and
+  the special districts list reuses existing types for three more census functions: soil and
+  water conservation, drainage, flood control and reclamation districts (5,680) are
+  `conservation_authority`, irrigation districts (951) `public_utility`, toll highway
+  authorities (24) `public_authority`. The 10,379 special districts still `other` are the
+  census's unnamed single- and multi-function districts (6,249), cemeteries, road districts,
+  health districts and the small rest, left for review. The loader matches a body by name and
+  type, so a retype in a list would create duplicates on rerun; rather than teach the loader a
+  rule for a rare case, a one-off script set the type on the existing rows (87 in Canada,
+  11,205 in the US, matched by census or NCES id or by name at the place) after the seeds
+  added the types, and the reruns then changed nothing.
 - **The Kativik administration** serves the fourteen northern villages and the Naskapi village
   of Kawawachikamach, as the directory's `admregionale` column says; the communautés
   métropolitaines serve 82 and 28 municipalities by `mcm`. A served place names its parent, so

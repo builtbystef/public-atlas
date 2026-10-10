@@ -14,7 +14,16 @@ from .conftest import open_sources
 
 ROWS = 332
 ENTRIES = 277
-TYPED = {"department": 22, "agency": 95, "crown_corporation": 45, "other": 115}
+TYPED = {
+    "department": 22,
+    "agency": 100,
+    "crown_corporation": 45,
+    "legislature": 2,
+    "public_authority": 41,
+    "airport_authority": 21,
+    "port_authority": 18,
+    "other": 28,
+}
 STRUCTURES = {
     "Ministerial Departments": 22,
     "Departmental Agencies": 52,
@@ -180,9 +189,29 @@ def test_the_bodies_that_show_the_rules(by_name: dict[str, InstitutionEntry]):
     )
     # The shared abbreviation goes to neither body; Parliament's entities have no parent.
     commons = by_name["House of Commons"]
-    assert (commons.institution_type, commons.suggested_type) == ("other", "Parliamentary Entities")
+    assert (commons.institution_type, commons.suggested_type) == ("legislature", None)
     assert commons.aliases == ()
     assert commons.parent_institution is None
+    assert by_name["Senate"].institution_type == "legislature"
+    assert by_name["Library of Parliament"].institution_type == "agency"
+    assert by_name["Library of Parliament"].parent_institution is None
+    # A shared-governance corporation is typed by what its name says it runs.
+    assert by_name["Greater Toronto Airports Authority"].institution_type == "airport_authority"
+    assert by_name["Aéroports de Montréal"].institution_type == "airport_authority"
+    assert by_name["Vancouver Fraser Port Authority"].institution_type == "port_authority"
+    assert by_name["NAV CANADA"].institution_type == "public_authority"
+    assert by_name["NAV CANADA"].suggested_type is None
+    assert by_name["Buffalo and Fort Erie Public Bridge Authority"].institution_type == (
+        "public_authority"
+    )
+    assert by_name["International Monetary Fund"].institution_type == "other"
+    assert federal.type_of("Shared-Governance Corporations", "Saint John Airport Inc.") == (
+        "airport_authority"
+    )
+    assert federal.type_of("Shared-Governance Corporations", "Oshawa Port Authority") == (
+        "port_authority"
+    )
+    assert federal.type_of("Parliamentary Entities", "Senate Ethics Officer") == "agency"
     assert by_name["Department of Health"].aliases == (federal.AliasEntry(text="Health Canada"),)
     # Two sites in one cell: the first is kept.
     assert by_name["Offices of the Information and Privacy Commissioners of Canada"].homepage == (

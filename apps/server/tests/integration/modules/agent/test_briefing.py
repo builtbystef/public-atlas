@@ -76,7 +76,10 @@ def test_a_place_subject_is_briefed_with_its_ids_checklist_and_places_to_save_un
         f"{world.town.id})." in text
     )
     assert "Homepage: none known yet." in text
-    assert "Types still to account for: conservation_authority, fire_service, library" in text
+    assert (
+        "Types still to account for: conservation_authority, fire_service, housing_authority, "
+        "library" in text
+    )
     assert (
         "Places to save under (place_id of save_institution): "
         f"Oakville (municipality) id={world.oakville.id}; Elm (region) id={world.elm.id}; "

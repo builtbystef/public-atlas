@@ -7,11 +7,15 @@ placed under the department that heads its portfolio. The rules:
   counted. The structure (`inst_struct`) gives the type: a ministerial department is a
   `department`; a departmental, service or special operating agency, a departmental
   corporation and an agent of Parliament are an `agency`; a Crown corporation is a
-  `crown_corporation`; a shared-governance corporation, an international organization Canada
-  holds an interest in, a parliamentary entity, a joint enterprise and the inventory's "other
-  organizations" (legal entities such as the Director of Soldier Settlement, without a website
-  or a portfolio) are `other`, with the structure as the suggested type, so a reviewer sees
-  them rather than the list dropping them.
+  `crown_corporation`; a shared-governance corporation is an `airport_authority` or a
+  `port_authority` when its name says so (21 airports, 18 ports) and a `public_authority`
+  otherwise (NAV CANADA, the Seaway, CIHI, the Canada Foundation for Innovation); the House of
+  Commons and the Senate are a `legislature` and the other parliamentary entities (the Library
+  of Parliament, the budget officer, the ethics offices, the protective service) an `agency`;
+  an international organization Canada holds an interest in, a joint enterprise and the
+  inventory's "other organizations" (legal entities such as the Director of Soldier
+  Settlement, without a website or a portfolio) are `other`, with the structure as the
+  suggested type, so a reviewer sees them rather than the list dropping them.
 - The name is the legal title; the applied title (the name the body goes by, "Agriculture and
   Agri-Food Canada" for the Department of Agriculture and Agri-Food) and the abbreviation are
   aliases, the abbreviation marked an acronym when it is one. An abbreviation two bodies share
@@ -56,6 +60,10 @@ PLACE_LEVEL = "country"
 DEPARTMENT = "department"
 AGENCY = "agency"
 CROWN_CORPORATION = "crown_corporation"
+LEGISLATURE = "legislature"
+PUBLIC_AUTHORITY = "public_authority"
+AIRPORT_AUTHORITY = "airport_authority"
+PORT_AUTHORITY = "port_authority"
 OTHER = "other"
 
 INVENTORY = ListFile(
@@ -87,7 +95,9 @@ SOURCES = (INVENTORY,)
 
 ACTIVE = "a"
 MINISTERIAL_DEPARTMENT = "Ministerial Departments"
-# The type each institutional structure takes.
+SHARED_GOVERNANCE = "Shared-Governance Corporations"
+PARLIAMENTARY = "Parliamentary Entities"
+# The type each institutional structure takes, unless `type_of` reads the name.
 TYPES: dict[str, str] = {
     MINISTERIAL_DEPARTMENT: DEPARTMENT,
     "Departmental Agencies": AGENCY,
@@ -96,12 +106,32 @@ TYPES: dict[str, str] = {
     "Departmental Corporations": AGENCY,
     "Agents Of Parliament": AGENCY,
     "Crown Corporations": CROWN_CORPORATION,
-    "Shared-Governance Corporations": OTHER,
+    SHARED_GOVERNANCE: PUBLIC_AUTHORITY,
     "International Organizations": OTHER,
-    "Parliamentary Entities": OTHER,
+    PARLIAMENTARY: AGENCY,
     "Joint Enterprises": OTHER,
     "Other Organizations": OTHER,
 }
+# The chambers of Parliament.
+CHAMBERS = frozenset({"House of Commons", "Senate"})
+_AIRPORT = re.compile(r"\b(airports?|aéroports?)\b", re.IGNORECASE)
+_PORT = re.compile(r"\bport authority\b", re.IGNORECASE)
+
+
+def type_of(structure: str, legal_title: str) -> str:
+    """The type the structure gives, read with the name for the two structures that hold
+    several kinds: a shared-governance corporation named for an airport or a port runs one, and
+    a parliamentary entity is a chamber or an office that serves the chambers."""
+    if structure == SHARED_GOVERNANCE:
+        if _AIRPORT.search(legal_title):
+            return AIRPORT_AUTHORITY
+        if _PORT.search(legal_title):
+            return PORT_AUTHORITY
+    elif structure == PARLIAMENTARY and legal_title in CHAMBERS:
+        return LEGISLATURE
+    return TYPES[structure]
+
+
 # The body heading a portfolio that no ministerial department's own portfolio names, or that
 # two name, by the portfolio as the inventory writes it; None where the portfolio has no head.
 PORTFOLIO_HEADS: dict[str, str | None] = {
@@ -214,8 +244,8 @@ class Notes:
     websites: int = 0
 
     def log(self) -> None:
-        for institution_type, count in sorted(self.typed.items()):
-            logger.info("%d bodies typed %s", count, institution_type)
+        for type_, count in sorted(self.typed.items()):
+            logger.info("%d bodies typed %s", count, type_)
         for structure, count in sorted(self.structures.items()):
             logger.info("%d active bodies are %s", count, structure)
         for status, count in sorted(self.inactive.items()):
@@ -260,7 +290,7 @@ def build(
                 f"{INVENTORY.name}: {organization.legal_title!r} has an unknown structure "
                 f"{organization.structure!r}"
             )
-        institution_type = TYPES[organization.structure]
+        institution_type = type_of(organization.structure, organization.legal_title)
         notes.typed[institution_type] += 1
         notes.structures[organization.structure] += 1
         aliases: list[AliasEntry] = []

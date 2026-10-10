@@ -114,6 +114,22 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
         "description": "A corporation the national or provincial government owns",
     },
     {
+        "name": "legislature",
+        "description": (
+            "A chamber of the national, provincial or state legislature: the House of Commons, "
+            "the Senate, a legislative assembly"
+        ),
+    },
+    {
+        "name": "public_authority",
+        "description": (
+            "A corporation or board the national or provincial government created by statute "
+            "or appoints to, that runs a facility, program or fund in the public interest and "
+            "buys on its own account, and is not a Crown corporation: an air navigation or "
+            "seaway operator, a health information body, a research foundation"
+        ),
+    },
+    {
         "name": "health_authority",
         "description": "A body that plans or funds health services for a province or an area of it",
     },
@@ -121,6 +137,14 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
     {"name": "university", "description": "A public university"},
     {"name": "college", "description": "A public college"},
     {"name": "school_board", "description": "A public school board or school district"},
+    {
+        "name": "education_service_agency",
+        "description": (
+            "A regional agency that runs shared services and cooperative purchasing for the "
+            "school districts of its area (a BOCES, an intermediate unit, an education service "
+            "center); it runs no regular schools of its own"
+        ),
+    },
     # Bodies of a municipality or region that buy on their own account: their own procurement
     # page, their own budget, or their own board that approves spending. Business improvement
     # areas, council committees and tribunals are not institutions: they spend little and buy
@@ -154,6 +178,20 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
     },
     {"name": "library", "description": "A public library, with the board that governs it"},
     {
+        "name": "airport_authority",
+        "description": "The authority, district or corporation that runs a public airport",
+    },
+    {
+        "name": "port_authority",
+        "description": "The authority, district or corporation that runs a public port or harbour",
+    },
+    {
+        "name": "housing_authority",
+        "description": (
+            "A public housing authority or housing corporation that owns and runs housing"
+        ),
+    },
+    {
         "name": "conservation_authority",
         "description": (
             "A watershed or conservation authority, usually shared by several municipalities"
@@ -173,8 +211,9 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
         "name": "municipal_corporation",
         "description": (
             "A corporation, authority or board a municipality or region owns or controls that "
-            "runs a business of its own and buys on its own account: community housing, real "
-            "estate, parking, an airport, a venue, a zoo, economic development. Not a board of "
+            "runs a business of its own and buys on its own account: real estate, parking, a "
+            "venue, a zoo, economic development; housing, an airport and a port have types of "
+            "their own. Not a board of "
             "management for one arena, community centre, theatre or street, a non-profit the "
             "municipality only funds, a holding company above a utility, a subsidiary that buys "
             "through its parent, or a board that invests or grants the municipality's money"
@@ -200,6 +239,8 @@ DEFAULT_EXPECTED_SOURCE_TYPES: dict[str, list[str]] = {
     "ministry": GOVERNMENT_SOURCES,
     "agency": BOARD_SOURCES,
     "crown_corporation": BOARD_SOURCES,
+    "legislature": ["procurement", "tender", "budget", "annual_report"],
+    "public_authority": BOARD_SOURCES,
     "health_authority": [
         "procurement",
         "tender",
@@ -220,6 +261,7 @@ DEFAULT_EXPECTED_SOURCE_TYPES: dict[str, list[str]] = {
         "meeting_video",
         "news",
     ],
+    "education_service_agency": ["procurement", "tender", "budget", "board_meeting"],
     "transit_agency": [
         "procurement",
         "tender",
@@ -232,6 +274,15 @@ DEFAULT_EXPECTED_SOURCE_TYPES: dict[str, list[str]] = {
     "fire_service": ["procurement", "budget"],
     "public_utility": ["procurement", "tender", "capital_plan", "board_meeting"],
     "library": ["procurement", "tender", "budget", "board_meeting"],
+    "airport_authority": [
+        "procurement",
+        "tender",
+        "capital_plan",
+        "annual_report",
+        "board_meeting",
+    ],
+    "port_authority": ["procurement", "tender", "capital_plan", "annual_report", "board_meeting"],
+    "housing_authority": ["procurement", "tender", "budget", "capital_plan", "board_meeting"],
     "conservation_authority": ["procurement", "tender", "budget", "board_meeting"],
     "public_health_unit": ["procurement", "budget", "board_meeting"],
     "park_district": ["procurement", "tender", "budget", "board_meeting"],

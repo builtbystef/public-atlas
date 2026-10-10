@@ -8,8 +8,8 @@ is one loaded municipality under that county. The rules:
   districts of a supervisory union (2) are school boards. An independent charter district (7)
   is a school board that carries the file's words for its kind as an alias, since the type
   cannot say it. A service agency (4: an intermediate unit, a board of cooperative educational
-  services, an education service district) is a body of type `other` with "education service
-  agency" as its suggested type. Supervisory unions (3), state and federal operated agencies
+  services, an education service district) is an `education_service_agency`. Supervisory
+  unions (3), state and federal operated agencies
   (5, 6), other agencies (8) and specialized districts (9) are left out and counted.
 - A row closed, inactive or yet to open (`SY_STATUS` 2, 6, 7) is left out.
 - The place is the county of the location address when that county is a loaded place; else
@@ -89,8 +89,7 @@ GEOCODES = ListFile(
 )
 SOURCES = (DIRECTORY, GEOCODES, SUB_EST)
 SCHOOL_BOARD = "school_board"
-OTHER = "other"
-SERVICE_AGENCY_TYPE = "education service agency"
+EDUCATION_SERVICE_AGENCY = "education_service_agency"
 # `LEA_TYPE`.
 REGULAR = "1"
 COMPONENT = "2"
@@ -156,7 +155,7 @@ def _kind(row: Row) -> tuple[str, str | None, tuple[AliasEntry, ...]] | None:
     if lea_type == CHARTER:
         return SCHOOL_BOARD, None, (AliasEntry(text=row["LEA_TYPE_TEXT"]),)
     if lea_type == SERVICE_AGENCY:
-        return OTHER, SERVICE_AGENCY_TYPE, ()
+        return EDUCATION_SERVICE_AGENCY, None, ()
     return None
 
 

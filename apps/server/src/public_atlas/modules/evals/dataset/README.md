@@ -88,10 +88,11 @@ here.
    `police_service`, `fire_service`, `public_utility`, `library`, and the three
    below. Region: `regional_government`, `transit_agency`, `police_service`,
    `public_utility`, and the three below. Both levels: `conservation_authority`,
-   `public_health_unit` and `municipal_corporation` (a corporation, authority or
-   board the municipality owns or controls that runs a business of its own:
-   community housing, real estate, parking, an airport, a venue, a zoo, economic
-   development). Ministry (province): `ministry`, `agency`, `crown_corporation`,
+   `public_health_unit`, `housing_authority` and `municipal_corporation` (a
+   corporation, authority or board the municipality owns or controls that runs
+   a business of its own: real estate, parking, a venue, a zoo, economic
+   development; an airport or a port is an `airport_authority` or a
+   `port_authority`). Ministry (province): `ministry`, `agency`, `crown_corporation`,
    and the other province types. A known type at a level the seed does not list
    it under (a regional library, a county library) goes in `institutions` with
    `expected: review`. The agent should save it with that type and it should

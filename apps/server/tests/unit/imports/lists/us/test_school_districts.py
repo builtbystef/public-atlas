@@ -12,7 +12,7 @@ from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import school_districts
 
 ENTRIES = 18229
-SERVICE_AGENCIES = "other: Service agency"
+SERVICE_AGENCIES = "education_service_agency: Service agency"
 CHARTERS = "school_board: Independent charter district"
 COMPONENTS = (
     "school_board: Regular public school district that is a component of a supervisory union"
@@ -94,7 +94,7 @@ def test_the_counts(
     assert len(set(ids)) == len(ids)
     assert Counter(entry.institution_type for entry in entries) == {
         "school_board": TYPED[CHARTERS] + TYPED[COMPONENTS] + TYPED[REGULAR],
-        "other": TYPED[SERVICE_AGENCIES],
+        "education_service_agency": TYPED[SERVICE_AGENCIES],
     }
 
 
@@ -111,9 +111,7 @@ def test_every_entry_cites_the_line_that_names_it_and_sits_at_a_place(
         (code,) = entry.codes
         assert code.scheme is IdentifierScheme.NCES
         assert line.startswith(f"{code.value} | ")
-        assert (entry.institution_type == "other") == (
-            entry.suggested_type == school_districts.SERVICE_AGENCY_TYPE
-        )
+        assert entry.suggested_type is None
         assert entry.place_level in PLACED
         assert (entry.place_parent is None) == (entry.place_level == "state")
         for served in entry.served_places:
@@ -145,10 +143,13 @@ def test_the_agencies_that_show_the_rules(by_id: dict[str, InstitutionEntry]):
     assert by_id["0100002"].place == "Montgomery County"
     charters = [entry for entry in by_id.values() if entry.aliases]
     assert len(charters) == TYPED[CHARTERS]
-    agencies = [entry for entry in by_id.values() if entry.institution_type == "other"]
+    agencies = [
+        entry
+        for entry in by_id.values()
+        if entry.institution_type == school_districts.EDUCATION_SERVICE_AGENCY
+    ]
     assert len(agencies) == TYPED[SERVICE_AGENCIES]
-
-    assert all(entry.suggested_type == "education service agency" for entry in agencies)
+    assert not any(entry.aliases for entry in agencies)
     # Connecticut's towns are the places of its districts; the District of Columbia's are at
     # the District.
     connecticut = [entry for entry in by_id.values() if entry.place_parent == "Connecticut"]

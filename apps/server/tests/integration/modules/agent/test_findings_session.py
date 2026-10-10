@@ -48,6 +48,7 @@ FIND_SOURCES = AssignmentType.FIND_SOURCES
 # The institution types Canada expects under a region, sorted, as the checklist names them.
 REGIONAL_TYPES = [
     "conservation_authority",
+    "housing_authority",
     "municipal_corporation",
     "police_service",
     "public_health_unit",
@@ -210,8 +211,8 @@ def test_a_second_short_finish_ends_complete_with_gaps_and_raises_a_review_item(
     assert finished.result is AssignmentResult.COMPLETE_WITH_GAPS
     row = reload(db, discover.assignment_id)
     assert row.summary == (
-        "Not accounted for: conservation_authority, municipal_corporation, public_health_unit, "
-        "public_utility. Nothing here."
+        "Not accounted for: conservation_authority, housing_authority, municipal_corporation, "
+        "public_health_unit, public_utility. Nothing here."
     )
     assert row.types_not_found == ["transit_agency", "police_service"]
 
@@ -223,6 +224,7 @@ def test_a_second_short_finish_ends_complete_with_gaps_and_raises_a_review_item(
     assert (found.entity_id, found.rule) == (world.elm.id, "gaps")
     assert found.question["types_missing"] == [
         "conservation_authority",
+        "housing_authority",
         "municipal_corporation",
         "public_health_unit",
         "public_utility",
