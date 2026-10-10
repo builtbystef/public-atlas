@@ -60,28 +60,6 @@ job commits or rolls back with the rows it is about. A worker whose heartbeat st
 jobs requeued. Pausing a run puts picked-up jobs back with a delay. Every status change goes
 through one door, so there is one place to look when something is wrong.
 
-## Where it stands
-
-The pilot is Ontario: the province, its 444 municipal and regional governments, the bodies
-under them and their sources. The first full eval run (October 2026, twelve subjects and
-the Ontario places file, 222 assignments, $6.78 in model and search spend):
-
-| Assignment type     | Recall | Precision | Gate |
-| ------------------- | ------ | --------- | ---- |
-| `find_homepage`     | 96%    | 100%      | 99%  |
-| `find_institutions` | 81%    | 66%       | 95%  |
-| `find_sources`      | 59%    | 81%       | 90%  |
-
-None of the gates pass yet. The misses are explained in [docs/eval-results.md](docs/eval-results.md)
-and the fixes they led to are in [docs/todo.md](docs/todo.md): mostly uneven source discovery
-(tenders, board meetings and capital plans), over-saving out of scope in big cities, and
-bodies that belong to a list rather than to discovery.
-
-Beyond Ontario, loaders exist for every Canadian province and territory, Canada's federal
-organizations, and for the United States: states, counties, municipalities, school districts,
-special districts, transit agencies and universities. Scaling to a new region is a new list
-module plus the country's naming rules; the agent, the checks and the console do not change.
-
 ## Tech stack
 
 | Layer   | Choice                                                                                                                                 |
