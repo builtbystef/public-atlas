@@ -672,29 +672,214 @@ All from the shared census readers plus the thinnest directory that gives legal 
 module per province; the three territories share one. Websites only where the directory
 has them; `find_homepage` does the rest.
 
-- [ ] **`canada/manitoba/places`**: the Municipal Officials Directory PDF (137 entries with
+- [x] **`canada/manitoba/places`**: the Municipal Officials Directory PDF (137 entries with
       websites, parsed by Docling; pin the entry count).
-- [ ] **`canada/nova_scotia/places`**: the GeoNOVA Socrata JSON (49 rows, `$select` without
+- [x] **`canada/nova_scotia/places`**: the GeoNOVA Socrata JSON (49 rows, `$select` without
       geometry) for legal names; the 9 county municipalities built from their `SC` parts
       with the division's code and summed population; towns under the province; the
       designator rule for the four CD/CSD name collisions.
-- [ ] **`canada/new_brunswick/places`**: the GNB local-government contacts PDF (77 rows with
+- [x] **`canada/new_brunswick/places`**: the GNB local-government contacts PDF (77 rows with
       websites) and StatCan's 2024 interim list of changes CSV for the post-reform CSD codes
       and names; no population; rural districts not loaded.
-- [ ] **`canada/british_columbia/places`**: regional districts as regions; legal names and parent
+- [x] **`canada/british_columbia/places`**: regional districts as regions; legal names and parent
       RD from the BC Data Catalogue WFS JSON (160 municipalities, 28 RDs).
-- [ ] **`canada/alberta/places`**: the 2026 municipal codes PDF for types and the CRA list's legal
+- [x] **`canada/alberta/places`**: the 2026 municipal codes PDF for types and the CRA list's legal
       forms; websites from the manual Local Authority Contact Information export (427 rows,
       columns Name, Type, Website; join on name, the 77 regional services commissions and
       the Métis settlements skipped or loaded as `other`); improvement districts and special
       areas loaded with a note.
-- [ ] **`canada/saskatchewan/places`**, **`canada/newfoundland/places`**, **`canada/pei/places`**,
+- [x] **`canada/saskatchewan/places`**, **`canada/newfoundland/places`**, **`canada/pei/places`**,
       **`canada/territories/places`**: census-driven with composed names (the NL towns directory
       PDF, the hand-fetched PEI directory and the MACA pages add what they have). Lloydminster
-      and Flin Flon as one place each.
-- [ ] *If time remains:* **`canada/ontario/police_boards`**: the 45 municipal police service
-      boards and 88 OPP detachment boards from their PAS agency pages (one HTML source per
-      page) as `police_service` with member municipalities as `served_places`.
+      and Flin Flon as one place each. The territories loaded once Arctic Bay's page was
+      supplied (the module had been tested against a stand-in for it).
+- [x] **`canada/ontario/police_boards`**: the 43 municipal police service boards under the
+      Community Safety and Policing Act, 2019, from their PAS agency pages (the agencies list
+      and one fetched HTML page per board, all hash-pinned: PAS pages are stable) as
+      `police_service`, each at the municipality or region it polices with the places it
+      polices as `served_places`, the parent the place's government. PAS's pages give no
+      website, so the agent finds the homepages. The boards are the buyers; whether a board
+      buys on its own account or through its municipality's purchasing department is left at
+      the default (`self`): the import entries carry no `procurement_handled_by`, and the
+      board is the contracting party either way. PAS lists 45 "Police Service Board" links:
+      two are legacy entries left out with their reasons (Blandford-Blenheim, policed by the
+      OPP under the Oxford O.P.P. Detachment Board 2; North Huron, whose board was disbanded
+      at the end of 2022), both still citing the Police Services Act, 1990, which the module
+      checks for every loaded board. The 88 OPP detachment boards are left out on purpose:
+      under the Act they set local priorities and help choose the detachment commander but
+      employ no officers and own no equipment, the Ontario Provincial Police buys everything
+      the detachment uses, and their own spending is member pay and a secretary levied on the
+      member municipalities, so there is no procurement to find. The OPP itself belongs in the
+      Ontario provincial agencies list as one buyer.
+
+The session changed the loader not at all, the Canada seed once (its naming rules) and the
+shared census reader once, and found these things about the sources and the plan:
+
+- **The shared reader grew.** `canada/statcan.py` gained `Province.read` and `Census` (a
+  province's divisions, subdivisions and municipalities, sorted out), `Draft` (a place put
+  together from a census unit and a directory row, which `entry()` turns into a `PlaceEntry`
+  with the census line citing the place and its population and the directory's line the
+  government and its homepage), `census_name` (the unit's name less " (Part)"),
+  `composed_government`, `population_figure`, and the interim list of changes
+  (`INTERIM_CHANGES`, StatCan 92F0009X to 2024-01-01, with `read_changes`), which New Brunswick
+  and Saskatchewan read. Every province module is a `Builder` or `build()` over these, with its
+  own directory reader, `OVERRIDES` and `Notes`.
+- **The seed's naming rules gained the other provinces' kinds of municipality**, each a group of
+  its own so that a composed name's core is the place: Rural Municipality, Resort Municipality,
+  Resort Village, Summer Village, Northern Village, Northern Hamlet, Northern Town, Hamlet,
+  Municipal District, Specialized Municipality, Improvement District, Special Area, Local
+  Government District, Regional District, Rural Community (Communauté rurale), Community
+  Government, Chartered Community, Inuit Community Government, Municipality of the District and
+  Municipality of the County. "Island Municipality" and "Mountain Resort Municipality" were
+  tried and taken out: "Bowen Island Municipality" and "Sun Peaks Mountain Resort Municipality"
+  are a municipality named Bowen Island and a resort municipality named Sun Peaks Mountain.
+  `seed canada` pushed the rules to the live row and added nothing else.
+- **Docling renders a PDF's table as one line per page.** The parser has table structure off
+  (spec section 8.3), so the New Brunswick contacts table, the Newfoundland towns directory,
+  the Alberta municipal codes and the Yukon directory each come out as one table cell per page:
+  no line can cite one municipality. Manitoba's directory is free text and parses into one
+  heading and one "Website:" line per entry, so it is the one PDF that cites per row. The
+  session kept to the loader as it is: New Brunswick's websites and Yukon's governments and
+  websites cite the page (or page cell) that lists them, the Newfoundland and Alberta PDFs are
+  not sources (Newfoundland is census-driven; Alberta's export carries the kind), and the
+  Manitoba directory is read as before. An experiment with table structure on gave one row per
+  line for all of them (New Brunswick 77 rows, Newfoundland 274, 2 and 22 seconds), so the
+  session after added `tables` to `ListFile`: the loader hands it to the parser, Docling keeps
+  a second converter with table structure on for it (the parse worker's reading is untouched,
+  and the table model is fetched into the Hugging Face cache on the machine that loads such a
+  list), the New Brunswick contacts PDF and the Yukon directory ask for it, and their
+  governments and websites now cite the row that names the municipality. Reloaded, each list
+  added the per-row evidence and changed nothing else. The Newfoundland towns directory and
+  the Alberta municipal codes PDF can now be read the same way, if wanted.
+- **A rule test parses a PDF once.** The Canada tests' conftest wraps Docling in a parser that
+  keeps each file's pages as JSON under `parsed/` in the lists cache, by hash and Docling
+  version (`CachedParser`), and `open_sources` passes it for a module with a PDF source. The
+  loader itself still parses the Manitoba directory on every load (about 200 seconds).
+- **Three more sources are manual than the plan said.** Every page from MACA (the Northwest
+  Territories) carries a form token that changes with each request, so the 33 community pages
+  are manual files fetched once with curl and a browser user agent, as Ontario's health unit
+  page was. The Alberta export's worksheet declares a one-cell dimension, which openpyxl's
+  read-only reader (the loader's) trusts, so it read one row; the session worked from a copy
+  saved again by openpyxl, and the session after made the reader call `reset_dimensions()`
+  (rows then end at their last filled cell, so the reader pads them to the widest) and quieted
+  openpyxl's "no default style" warning the export raises; the original export is the file in
+  the cache, and reloading Alberta added the snapshot and its evidence and changed nothing
+  else. The Nunavut capture in the
+  staging folder held 24 of the 25 community pages: Arctic Bay's was missing, gov.nu.ca refuses
+  curl and the browser tool refuses to hand the page's HTML over, so the territories list was
+  written and dry-run against a copy of the cache with a stand-in page, and loaded for real once
+  the page had been saved by hand. The real page names no body and links no website, so Arctic
+  Bay's government is composed from the census type ("Hamlet of Arctic Bay") and cited at the
+  page's heading; the test allows that for a page that never names the body. The stand-in had
+  also hidden a regex fault: the lazy "<Kind> of <Name>" pattern stopped at the first word
+  ("Municipality of Clyde" for Clyde River), so the pattern is now built per community from its
+  own name.
+- **The BC layers are read as CSV, not JSON.** The WFS service's GeoJSON is one feature
+  collection, which the loader renders as one line, so every municipality would have cited the
+  whole file; its CSV output is one row per feature and the same bytes on every request. Three
+  regional districts and three municipalities are named otherwise than the census (Metro
+  Vancouver for Greater Vancouver, qathet for Powell River, North Coast for Skeena-Queen
+  Charlotte; 100 Mile House, Daajing Giids for Queen Charlotte, Hudsons Hope without its
+  apostrophe), and the Northern Rockies division holds only the regional municipality that
+  replaced its regional district, so it is no region and the municipality sits under the
+  province. The layers have no websites.
+- **Nova Scotia's county municipalities** take their county division's code and line, with the
+  population summed over the `SC` parts (Kings: 47,918 of the division's 62,914); the four
+  district-and-town namesakes and the two county-and-town namesakes (Antigonish, Pictou) are
+  told apart by the layer's kind and, in the loader, by the designators in their governments'
+  names.
+- **Lloydminster and Flin Flon** are one place each: Lloydminster under Alberta (its Act and
+  city hall) with code 4810039 and 19,739 + 11,843 people, Flin Flon under Manitoba with
+  4621064 and 4,940 + 159; Saskatchewan's list leaves its two parts out and counts them.
+- **Saskatchewan's directory is current and the census is not.** Seventeen census villages are
+  not in the directory: Success (2022-07-15), Lancer (2022-08-01), Stewart Valley (2023-07-01,
+  the one the interim list records), Prelate (2024-07-01) and Primate (2015-12-31, which the
+  census still carried) relinquished their status to become part of their rural municipality,
+  and twelve more (Glen Ewen, Tribune, Kincaid, Duff, Yarbo, Findlater, Sceptre, Arran, Margo,
+  Quinton, Plunkett, Denholm) have restructured since with no date found; each is an override
+  naming its rural municipality. The Resort Village of Pasqua Lake (2024-01-01) is loaded by
+  the code the interim list gives it, with no census figure; Elk Ridge (2022-01-01) and Turtle
+  View have no code yet and wait. The directory's name wins where it differs in more than case
+  and accents (the District of Katepwa, the District of Lakeland No. 521), the census's spelling
+  stays where the directory drops an accent (Roche Percée) or capitalizes otherwise. A rural
+  municipality's government is "Rural Municipality of Aberdeen No. 373" from the directory's
+  inverted "Aberdeen, Rural Municipality No. 373".
+- **Alberta** loads its seven improvement districts as municipalities (the Minister is their
+  council), its three special areas as places with no government and the Special Areas Board
+  as a `regional_government` serving them, and the export's 75 regional services commissions
+  (two rows repeat) as institutions under the province typed by their names: 64 water, sewage
+  and waste commissions `public_utility`, 5 emergency services commissions `fire_service`, the
+  Bow Valley transit commission `transit_agency`, the Slave Lake airport commission
+  `airport_authority`, and 4 assessment and planning commissions `other`. The 8 Métis
+  settlements, their General Council and 9 local government associations are left out and
+  counted. Six census municipalities are gone: Hythe (2021-07-01), Improvement District No. 349
+  (2021-05-01), Caroline and Halkirk (2025-01-01), and Black Diamond and Turner Valley, now the
+  Town of Diamond Valley (2023-01-01), which has no census code and waits for one; its export
+  row is the one no place takes.
+- **Manitoba's directory** has 137 entries for the census's 138 municipalities: the rural
+  municipalities of Mountain (North) and Mountain (South) are one Rural Municipality of
+  Mountain, loaded under the northern part's code with both populations and both census names
+  as aliases, and the Municipality of Roblin goes by Roblin where the census keeps
+  Hillsburg-Roblin-Shell River. The directory's kind wins over the census type for the
+  government's designator (the census types the Municipality of Killarney-Turtle Mountain and
+  Mossey River as rural municipalities and West Interlake as a municipality); one heading
+  (Ritchot) comes out of the parser without its heading mark. 130 of 137 have a website.
+- **New Brunswick** is built without the 2021 census: the interim list carries every one of the
+  77 local governments under a post-reform code (the reform renumbered the unchanged ones too,
+  as "SGC code change"), so a local government is a gaining row with a post-reform code and a
+  municipal type, cited at its first row, with no population. The GNB PDF gives 68 websites; 9
+  cells hold a page title or a bare word ("Grand Falls Regional Municipality",
+  "fundystmartins") and are none. The interim list writes "Rivère-du-Nord"; the PDF and the
+  town write Rivière-du-Nord.
+- **Prince Edward Island** has 57 of the census's 59: Darlington dissolved on 2022-12-31 (IRAC;
+  the Canada Revenue Agency's list records the termination) and St. Louis proposed its
+  dissolution in 2021 and is gone from the directory. The directory's spelling wins (St.
+  Peter's Bay, Lot 11 & Area, Annandale-Little Pond-Howe Bay) with the census's as an alias,
+  except for the resort municipality, which the directory names "Resort Municipality" alone.
+  53 websites.
+- **Newfoundland and Labrador** is census-driven: 277 municipalities, the five Inuit community
+  governments named by override, six names the census qualifies ("Charlottetown (Labrador)")
+  kept with the bare name as an alias, except the two Seal Coves. The first dry run merged Seal
+  Cove (White Bay) into Seal Cove (Fortune Bay): the loader finds a place by its aliases too,
+  so two municipalities sharing a bare name get no alias. The namesake replay in the tests now
+  reads aliases as the loader does. Towns dissolved since the census (Tilt Cove, at least) are
+  still loaded until the towns directory can be read per row.
+- **The territories**: Yukon's eight municipalities with their websites from the directory's
+  table rows (page cells until `tables` came); the Northwest Territories' 24 municipalities
+  named as the census names them with
+  MACA's official community name as the government ("Community Government of Behchokǫ̀",
+  "Charter Community of K'asho Got'ine", "Délı̨nę Got'ı̨nę Government") and its spelling as an
+  alias, 11 with a website, and the 9 designated authorities (First Nations as local authority)
+  read and counted; Nunavut's 25 with the page's "Hamlet of", "Municipality of" or "City of"
+  and 18 websites (Arctic Bay's page links none), the three renamed since the census
+  (Kinngait, Sanirajak, Resolute Bay) by the page's name with the census's as an alias.
+- **The loader warned about an override that removes its entry.** An override keyed by the code
+  of a municipality that has dissolved (Saskatchewan 17, Alberta 6, Prince Edward Island 2)
+  produces no entry, so the loader's idle-override check reported it as matching nothing. The
+  session after made the check skip an override with a `dissolved` key (Saskatchewan's
+  `restructured` key became `dissolved`), so the warning means a stranded key again. The
+  warning is a false alarm here; Quebec avoided it by keying mergers by the new municipality,
+  which a dissolution into an unincorporated area has no counterpart for.
+- **Applied**, each with its dry run read first and a rerun that changed nothing, and the
+  Ontario, Quebec and federal lists rerun unchanged after the naming rules changed.
+  `canada/nova_scotia/places`: 49 places and governments, no homepages. `canada/british_columbia/places`:
+  27 regions and 160 municipalities, 187 governments, 5 census names as aliases, no homepages.
+  `canada/pei/places`: 57 places and governments, 53 candidate homepages on 52 domains.
+  `canada/newfoundland/places`: 277 places and governments, no homepages.
+  `canada/saskatchewan/places`: 757 places and governments (756 with a census figure), 293
+  candidate homepages on 244 domains. `canada/alberta/places`: 331 places (328 municipalities
+  with a government and the 3 special areas), the Special Areas Board with 3 served places and 75
+  commissions, 376 candidate homepages on 356 domains. `canada/manitoba/places`: 137 places and
+  governments, 130 candidate homepages. `canada/new_brunswick/places`: 77 places and
+  governments with no population, 68 candidate homepages. `canada/territories/places`: 57
+  places and governments (Yukon 8, Northwest Territories 24, Nunavut 25) and 37 candidate
+  homepages from 61 sources, with no skips, applied once Arctic Bay's page arrived. Canada now
+  holds every province's and territory's municipalities with codes and population, New
+  Brunswick's with no population until the 2026 Census. Every list reruns with nothing to
+  change. `canada/ontario/police_boards`, added after: 43 `police_service` institutions with 44
+  served places from 44 fetched sources, no homepages (PAS gives none), no skips once every
+  place carried its parent: the first dry run skipped Cornwall, Hanover, Kingston, Stratford,
+  Windsor and Woodstock, each a name two or three provinces' municipalities now go by.
 
 **Done when** every province and territory has its municipalities loaded with codes and
 population (NB excepted) and a rerun of every list changes nothing.
@@ -713,7 +898,10 @@ so that someone rebuilding from a fresh clone gets the same file.
   `temp-manual-files/Alberta/alberta-local-authority-contacts-2026-10-09.xlsx` (sheet
   "Results", 427 rows, columns Name, Type, Website, Email, Phone, Address, Address (line 2),
   Municipality, Postal Code, Frequency). The province refreshes the table weekly, so a
-  re-export differs; that is why manual files pin no hash.
+  re-export differs; that is why manual files pin no hash. The export's worksheet declares a
+  one-cell dimension, which the loader's read-only reader trusted until it was made to reset
+  it; the file in the cache (`alberta_local_authority_contacts_2026_10_09.xlsx`) is the export
+  as saved from the dashboard.
 
 - Prince Edward Island, done 2026-10-09: the Municipal Directory on princeedwardisland.ca
   is a single-page app with no export; each of the 57 results of a blank search was opened
@@ -725,9 +913,17 @@ so that someone rebuilding from a fresh clone gets the same file.
   from yukon.ca, text-based (Docling reads it).
 - Nunavut, done 2026-10-09: the 25 community pages under gov.nu.ca/en/communities saved as
   `temp-manual-files/Nunavut/nunavut-community-<slug>.html`, with `nunavut_communities_
-  evidence.csv` as the index (URL, capture time, sha256 per page). About 13 of the 25 link a
-  hamlet website; the module either declares the 25 pages as HTML files or reads one small
-  derived CSV of community and website built from them.
+  evidence.csv` as the index (URL, capture time, sha256 per page). 19 of the 25 link a hamlet
+  website. `canada/territories/places` declares the 25 pages as HTML files, in the cache as
+  `nunavut_community_<slug>.html` (underscores). The folder held 24 of them at first; Arctic
+  Bay's page (`nunavut-community-arctic-bay.html`, listed in the evidence index) was saved by
+  hand afterwards from the browser and put in the cache as `nunavut_community_arctic_bay.html`.
+  It is the one page that names no body and links no website.
+- Northwest Territories, done 2026-10-09 (not foreseen as manual): the 33 community pages under
+  maca.gov.nt.ca/en/content/<slug> each carry a form token that changes with every request,
+  so no hash holds. Fetched once with curl and a browser user agent straight into the cache as
+  `nwt_community_<slug>.html` (ASCII slugs: behchoko, deline, gameti, katlodeeche, lutselke,
+  sambaa_ke, wekweeti, whati); the module's instructions say how.
 - Saskatchewan, done 2026-10-09: the Municipal Directory on saskatchewan.ca has no export;
   all 761 municipality pages were saved (`temp-manual-files/Saskatchewan/
   sk_municipal_directory_2026-10-09/raw_html/`). The loader's file is the derived

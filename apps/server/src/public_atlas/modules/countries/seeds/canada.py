@@ -38,6 +38,34 @@ SETTINGS: dict[str, Any] = {
             ["United Counties", "Comtés unis"],
             ["Region", "Région"],
             ["District"],
+            # The other provinces' and territories' kinds of municipality (lists-research
+            # section 2.1): the prairies' rural, resort, summer and northern municipalities,
+            # Alberta's districts and areas, British Columbia's regional districts and resort
+            # municipalities, Nova Scotia's county and district municipalities, New Brunswick's
+            # rural communities, the territories' hamlets and community governments. Each is a
+            # kind of its own so that a composed name's core is the place ("Rural Municipality
+            # of Morris" and "Town of Morris" are two places; "Municipality of the County of
+            # Kings" is Kings).
+            ["Rural Municipality"],
+            ["Resort Municipality"],
+            ["Resort Village"],
+            ["Summer Village"],
+            ["Northern Village"],
+            ["Northern Hamlet"],
+            ["Northern Town"],
+            ["Hamlet"],
+            ["Municipal District"],
+            ["Specialized Municipality"],
+            ["Improvement District"],
+            ["Special Area"],
+            ["Local Government District"],
+            ["Regional District"],
+            ["Rural Community", "Communauté rurale"],
+            ["Community Government"],
+            ["Chartered Community"],
+            ["Inuit Community Government"],
+            ["Municipality of the District"],
+            ["Municipality of the County"],
         ],
         # What joins a designator to the place name: "Township of Elmwood", "Canton de Elmwood".
         "connectors": ["of the", "of", "de la", "de l'", "du", "des", "de", "d'"],

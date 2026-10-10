@@ -14,10 +14,26 @@ province and answers from these tables. The counts in the comments are the 2021 
 """
 
 import re
-from dataclasses import dataclass
+from collections import Counter
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from decimal import Decimal
 
+from public_atlas.modules.graph.models import IdentifierScheme, MetricName
+from public_atlas.modules.imports.entries import (
+    AliasEntry,
+    Citation,
+    Code,
+    Fact,
+    Figure,
+    PlaceEntry,
+)
 from public_atlas.modules.imports.files import Format, ListFile, ListFileError, OpenedFile
 
+COUNTRY = "CA"
+PROVINCE_LEVEL = "province_territory"
+REGION = "region"
+MUNICIPALITY = "municipality"
 CENSUS_YEAR = 2021
 # A division code is the province's two digits plus two; a subdivision's is longer and starts
 # with its division's.
@@ -61,6 +77,34 @@ ATTRIBUTES = ListFile(
         "CSDTYPE_SDRGENRE",
     ),
     distinct=True,
+)
+# The changes to subdivisions since the census (annexations, amalgamations, dissolutions,
+# renames, recodings) up to 2024-01-01, one row per gaining and losing pair, with the new codes
+# and names: how a post-census municipality (New Brunswick's reformed local governments, a new
+# resort village) gets its code. Three title rows precede the header; a province's rows follow
+# a row holding its name alone.
+INTERIM_CHANGES = ListFile(
+    name="statcan_interim_changes_2024",
+    title=(
+        "Statistics Canada, Interim List of Changes to Municipal Boundaries, Status and Names, "
+        "January 2, 2021 to January 1, 2024 (92F0009X), table 1"
+    ),
+    url="https://www150.statcan.gc.ca/n1/pub/92f0009x/2024001/tbl/tbl01-eng.csv",
+    sha256="fa40a4f1e53fcb84924d70e604cc187cbd3da601b5779188d14e11f867ab5c65",
+    format=Format.CSV,
+    encoding="cp1252",
+    header_row=3,
+    columns=(
+        "Gaining CSDuid",
+        "Gaining CSDname",
+        "Gaining CSDtype",
+        "Gaining CSD Change Code Description",
+        "Losing CSDuid",
+        "Losing CSDname",
+        "Losing CSDtype",
+        "Losing CSD Change Code Description",
+        "Effective Date",
+    ),
 )
 
 # The provinces and territories by their SGC code.
@@ -453,3 +497,179 @@ class Province:
             raise ListFileError(
                 f"no type in the attribute file for {len(missing)} census codes: {missing[:5]}"
             )
+
+    def read(self, files: Mapping[str, OpenedFile]) -> Census:
+        """The province's units from the opened census files."""
+        counted = self.read_population(files[POPULATION.name])
+        self.read_types(counted, files[ATTRIBUTES.name])
+        return Census(province=self, counted=counted)
+
+
+@dataclass(frozen=True)
+class Census:
+    """One province's census units, sorted out: its divisions, its subdivisions, and which of
+    the latter are municipalities."""
+
+    province: Province
+    counted: dict[str, Counted]
+
+    @property
+    def divisions(self) -> dict[str, Counted]:
+        return {
+            code: unit
+            for code, unit in sorted(self.counted.items())
+            if unit.division is None and code != self.province.code
+        }
+
+    @property
+    def subdivisions(self) -> list[Counted]:
+        return sorted(
+            (unit for unit in self.counted.values() if unit.division is not None),
+            key=lambda unit: unit.code,
+        )
+
+    @property
+    def municipalities(self) -> list[Counted]:
+        """The subdivisions whose type is a municipality in this province."""
+        types = self.province.municipal_types
+        return [unit for unit in self.subdivisions if unit.type_ in types]
+
+    def dropped(self) -> Counter[str]:
+        """How many subdivisions of each non-municipal type the province has."""
+        types = self.province.municipal_types
+        return Counter(unit.type_ for unit in self.subdivisions if unit.type_ not in types)
+
+    def unit(self, code: str) -> Counted:
+        return self.counted[code]
+
+
+def census_name(unit: Counted) -> str:
+    """The unit's English name as a place is named: the census marks the part of a city two
+    provinces share ("Lloydminster (Part)"), the place does not."""
+    return unit.names[0].removesuffix(" (Part)").strip()
+
+
+def composed_government(province: Province, unit: Counted, name: str | None = None) -> str:
+    """The government's name the census type gives when no directory names it: "Town of
+    Elmwood"."""
+    designator = province.municipal_types.get(unit.type_) or province.upper_tier_types.get(
+        unit.type_
+    )
+    name = census_name(unit) if name is None else name
+    return name if designator is None else f"{designator} of {name}"
+
+
+def population_figure(unit: Counted, value: int | None = None) -> Figure:
+    """The 2021 count, cited at the unit's line; `value` when the figure is summed over
+    several units."""
+    figure = unit.population if value is None else value
+    if figure is None:
+        raise ListFileError(f"{unit.code} {unit.names[0]} has no population")
+    return Figure(
+        name=MetricName.POPULATION,
+        year=CENSUS_YEAR,
+        value=Decimal(figure),
+        citation=Citation(source=POPULATION.name, line=unit.line),
+    )
+
+
+@dataclass
+class Draft:
+    """One place as a provincial module puts it together from a census unit and, where a
+    directory has a row, the directory: the census line cites the place and its population, the
+    directory's line the government and its homepage."""
+
+    unit: Counted
+    name: str
+    parent: str
+    level: str = MUNICIPALITY
+    parent_level: str | None = PROVINCE_LEVEL
+    parent_parent: str | None = None
+    language: str = "en"
+    government: str | None = None
+    government_citation: Citation | None = None
+    homepage: str | None = None
+    homepage_citation: Citation | None = None
+    aliases: list[AliasEntry] = field(default_factory=list)
+    # The 2021 count when it is not the unit's own (summed over parts); None for no figure.
+    population: int | None = None
+    codes: tuple[Code, ...] = ()
+    cite_population: bool = True
+
+    def alias(self, text: str, language: str = "en") -> None:
+        text = " ".join(text.split())
+        if text and text != self.name and all(alias.text != text for alias in self.aliases):
+            self.aliases.append(AliasEntry(text=text, language=language))
+
+    def entry(self) -> PlaceEntry:
+        place = Citation(source=POPULATION.name, line=self.unit.line)
+        citations: dict[Fact, Citation] = {"place": place}
+        if self.government_citation is not None:
+            citations["government"] = self.government_citation
+        if self.homepage is not None:
+            citations["homepage"] = self.homepage_citation or self.government_citation or place
+        figures: tuple[Figure, ...] = ()
+        if self.cite_population and (self.population or self.unit.population) is not None:
+            figures = (population_figure(self.unit, self.population),)
+        return PlaceEntry(
+            name=self.name,
+            aliases=tuple(self.aliases),
+            language=self.language,
+            level=self.level,
+            parent=self.parent,
+            parent_level=self.parent_level,
+            parent_parent=self.parent_parent,
+            government=self.government,
+            code=Code(scheme=IdentifierScheme.STATCAN_SGC, value=self.unit.code),
+            codes=self.codes,
+            figures=figures,
+            homepage=self.homepage,
+            citations=citations,
+        )
+
+
+# --- The interim list of changes ---
+
+
+@dataclass(frozen=True)
+class Change:
+    """One row of the interim list: what a subdivision gained or became, from which other."""
+
+    code: str
+    name: str
+    type_: str
+    change: str
+    losing_code: str
+    losing_name: str
+    losing_type: str
+    losing_change: str
+    effective: str
+    line: int
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        return tuple(part.strip() for part in self.name.split(NAME_SEPARATOR) if part.strip())
+
+
+def read_changes(opened: OpenedFile, province: Province) -> list[Change]:
+    """The province's rows of the interim list, in the file's order."""
+    found = []
+    for row in opened.rows:
+        code = row["Gaining CSDuid"]
+        if not code.isdigit() or not code.startswith(province.code):
+            continue
+        found.append(
+            Change(
+                code=code,
+                name=" ".join(row["Gaining CSDname"].split()),
+                type_=row["Gaining CSDtype"],
+                change=row["Gaining CSD Change Code Description"],
+                losing_code=row["Losing CSDuid"],
+                losing_name=" ".join(row["Losing CSDname"].split()),
+                losing_type=row["Losing CSDtype"],
+                losing_change=row["Losing CSD Change Code Description"],
+                effective=row["Effective Date"],
+                line=row.line,
+            )
+        )
+    return found
