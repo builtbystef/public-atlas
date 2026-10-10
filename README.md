@@ -21,8 +21,6 @@ belongs to, and being able to prove it. So the project is built around three ide
 
 ## Screenshots
 
-The console, on the Ontario pilot. Each image is a 1600 × 1000 viewport at 2× scale.
-
 |                                                                                                                                                                    |                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Run**: its filter and mode, progress and cost, its assignments, and release / pause / stop<br>![Run](docs/screenshots/runs.png)                                  | **Assignment detail**: every tool call and result, the finish, and the browser session's video<br>![Assignment](docs/screenshots/assignment.png) |
