@@ -15,10 +15,13 @@ concurrency:
 jobs:
   ci:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       # Same database as apps/server/compose.yaml; the job runs on the runner.
       PUBLIC_ATLAS_DATABASE_URL: postgresql+psycopg://public_atlas:public_atlas@localhost:5432/public_atlas
+      # A test marked `lists` fails, instead of skipping, when a list's files are not in the
+      # cache: the steps below put them there first.
+      PUBLIC_ATLAS_REQUIRE_LISTS: "1"
     services:
       postgres:
         image: postgres:18
@@ -68,6 +71,31 @@ jobs:
 
       - run: uv sync --locked --all-packages
 
+      # The official lists' files, for the tests marked `lists`. Cached by the pins and manual
+      # steps the list modules declare (what `lists manifest` prints). On a miss the cache is
+      # seeded from the archive on the `official-lists` release (`lists pack` writes it; see
+      # docs/lists-todo.md), because some hosts answer a script with a bot check instead of the
+      # file and the manual files exist nowhere else; `lists fetch` then downloads what moved
+      # since and fails the job if a file is still missing.
+      - id: lists-manifest
+        run: echo "hash=$(uv run public-atlas lists manifest | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: lists
+        with:
+          path: ~/.cache/public-atlas/official-lists
+          key: official-lists-${{ runner.os }}-${{ steps.lists-manifest.outputs.hash }}
+          restore-keys: |
+            official-lists-${{ runner.os }}-
+      - if: steps.lists.outputs.cache-hit != 'true'
+        run: gh release download official-lists --pattern official-lists.tar.gz --output "$RUNNER_TEMP/official-lists.tar.gz" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+      - if: steps.lists.outputs.cache-hit != 'true'
+        run: uv run public-atlas lists fetch --seed "$RUNNER_TEMP/official-lists.tar.gz"
+      - if: steps.lists.outputs.cache-hit == 'true'
+        run: uv run public-atlas lists fetch
+
       # Playwright's Chromium, for the tests marked `browser`. Cached by the Playwright version
       # in the lockfile.
       - id: playwright-version
@@ -113,12 +141,15 @@ jobs:
           key: ${{ steps.task-cache.outputs.cache-primary-key }}
 
   # The tests marked `parse` run Docling, which the job above does not install: the parse-cpu
-  # group is several gigabytes.
+  # group is several gigabytes. The rule tests of the lists read from PDFs are among them, so
+  # this job has the lists cache too, and keeps the pages Docling parsed beside it.
   parse:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # A cold lists cache parses three directories' PDFs on the CPU before the pages are saved.
+    timeout-minutes: 45
     env:
       PUBLIC_ATLAS_DATABASE_URL: postgresql+psycopg://public_atlas:public_atlas@localhost:5432/public_atlas
+      PUBLIC_ATLAS_REQUIRE_LISTS: "1"
       DOCLING_ARTIFACTS_PATH: ${{ github.workspace }}/models
     services:
       postgres:
@@ -142,6 +173,29 @@ jobs:
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
 
       - run: uv sync --locked --all-packages --group parse-cpu
+
+      # The lists cache, as in the job above, under a key of its own so the parsed pages are
+      # saved with it, by the lockfile since they are kept per Docling version.
+      - id: lists-manifest
+        run: echo "hash=$(uv run public-atlas lists manifest | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: lists
+        with:
+          path: ~/.cache/public-atlas/official-lists
+          key: official-lists-parse-${{ runner.os }}-${{ steps.lists-manifest.outputs.hash }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            official-lists-parse-${{ runner.os }}-${{ steps.lists-manifest.outputs.hash }}-
+            official-lists-parse-${{ runner.os }}-
+            official-lists-${{ runner.os }}-
+      - if: steps.lists.outputs.cache-hit != 'true'
+        run: gh release download official-lists --pattern official-lists.tar.gz --output "$RUNNER_TEMP/official-lists.tar.gz" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+      - if: steps.lists.outputs.cache-hit != 'true'
+        run: uv run public-atlas lists fetch --seed "$RUNNER_TEMP/official-lists.tar.gz"
+      - if: steps.lists.outputs.cache-hit == 'true'
+        run: uv run public-atlas lists fetch
 
       # The models the parse image downloads, kept between runs of one lockfile.
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

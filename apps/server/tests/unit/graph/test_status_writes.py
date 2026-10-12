@@ -19,9 +19,3 @@ def test_only_status_changes_writes_an_entity_status():
             if STATUS_WRITE.search(line):
                 offenders.append(f"{path.relative_to(SOURCE)}:{number}: {line.strip()}")
     assert offenders == []
-
-
-def test_the_one_door_does_write_statuses():
-    text = THE_ONE_DOOR.read_text()
-    assert "entity.status = status" in text
-    assert "entity.status = EntityStatus.NEEDS_REVIEW" in text

@@ -7,6 +7,7 @@ import argparse
 import asyncio
 import json
 import sys
+import tarfile
 import uuid
 from collections.abc import Sequence
 from dataclasses import fields
@@ -82,9 +83,29 @@ def run_load_list(args: argparse.Namespace) -> None:
 
 
 def run_lists(args: argparse.Namespace) -> None:
+    cache_dir = Settings().lists_cache_dir
     match args.action:
         case "manifest":
-            print(imports.manifest(Settings().lists_cache_dir))  # noqa: T201
+            print(imports.manifest(cache_dir))  # noqa: T201
+        case "fetch":
+            if args.seed is not None:
+                try:
+                    unpacked, ignored = imports.unpack(args.seed, cache_dir)
+                except (OSError, tarfile.TarError) as exc:
+                    sys.exit(f"lists fetch: cannot unpack {args.seed}: {exc}")
+                print(f"{len(unpacked)} files unpacked from {args.seed}")  # noqa: T201
+                if ignored:
+                    print(f"  left out, declared by no list: {', '.join(ignored)}")  # noqa: T201
+            report = imports.fetch_all(cache_dir)
+            print(report.render())  # noqa: T201
+            if not report.complete:
+                sys.exit(1)
+        case "pack":
+            try:
+                names = imports.pack(cache_dir, args.archive)
+            except ListFileError as exc:
+                sys.exit(f"lists pack: {exc}")
+            print(f"{len(names)} files packed into {args.archive}")  # noqa: T201
 
 
 # --- run ---
@@ -321,6 +342,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="the from-scratch checklist, read from every list module: the fetched URLs with "
         "their hashes, and the steps that obtain each manual file",
     )
+    fetch = lists_actions.add_parser(
+        "fetch",
+        help="every list's files into the cache: download and hash-check the fetched files "
+        "the cache lacks, and name the manual files still missing; exits 1 when a file could "
+        "not be fetched or is missing",
+    )
+    fetch.add_argument(
+        "--seed",
+        type=Path,
+        metavar="ARCHIVE",
+        help="first unpack the files of this archive, as `lists pack` wrote it, into the cache",
+    )
+    pack = lists_actions.add_parser(
+        "pack",
+        help="every list's files, from the cache into a gzipped tar under their cache names: "
+        "the seed CI starts from; refused while a file is missing or off its hash",
+    )
+    pack.add_argument("archive", type=Path, help="the .tar.gz to write")
     lists_command.set_defaults(run=run_lists)
 
     run_command = commands.add_parser(

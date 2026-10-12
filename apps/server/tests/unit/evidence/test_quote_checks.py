@@ -2,9 +2,10 @@
 
 # ruff: noqa: RUF001 - the odd characters are the point
 
+from public_atlas.integrations.browser import FrameLinks
 from public_atlas.modules.countries.naming import Naming
 from public_atlas.modules.countries.schemas import NamingRules
-from public_atlas.modules.evidence import quote_checks
+from public_atlas.modules.evidence import capture, quote_checks
 from public_atlas.modules.evidence.quote_checks import Found
 
 
@@ -16,11 +17,10 @@ def test_a_quote_matches_across_whitespace_case_and_unicode_width():
 
 
 def test_a_quote_shorter_than_the_floor_is_a_stray_word_not_a_phrase():
-    text = "The council of Fixture met on Monday"
-    assert quote_checks.MIN_QUOTE_CHARS == 12
+    text = "The Town of Ajax met on Monday"
     assert quote_checks.find_quote(text, "the") is None
-    assert quote_checks.find_quote(text, "council of") is None  # 10
-    assert quote_checks.find_quote(text, "council of F") == Found(page=None)  # 12
+    assert quote_checks.find_quote(text, "of Ajax met") is None  # 11
+    assert quote_checks.find_quote(text, "Town of Ajax") == Found(page=None)  # 12
 
 
 def test_a_quote_in_a_multi_page_text_reports_its_page():
@@ -148,3 +148,60 @@ def test_names_compare_across_slashes_and_mojibake_and_by_the_countrys_key():
 def test_two_urls_name_the_same_page_scheme_www_and_slash_aside():
     assert quote_checks.same_address("http://www.elmwood.ca/about/", "https://elmwood.ca/about")
     assert not quote_checks.same_address("https://elmwood.ca/about", "https://elmwood.ca/about?x=1")
+
+
+def test_a_run_together_match_still_respects_words():
+    """The no-whitespace retry is for a block boundary run together inside the quote; it may
+    not start or end in the middle of a word of the page."""
+    assert quote_checks.find_quote("the publicity of a jaxon council", "City of Ajax") is None
+    assert quote_checks.find_quote("Town of Ajaxville", "Town of Ajax") is None
+    assert quote_checks.find_quote("The Downtown of Ajax", "Town of Ajax") is None
+    assert quote_checks.find_quote("Meet the City of Ajax", "City of Ajax") == Found(page=None)
+    # Punctuation is an edge: a quote ending at a full stop or an apostrophe is whole.
+    assert quote_checks.find_quote("Meet the City of Ajax.", "City of Ajax") == Found(page=None)
+    assert quote_checks.find_quote("City of Ajax's council", "City of Ajax") == Found(page=None)
+    assert quote_checks.find_quote("©2026 City of Ajax", "2026 City of Ajax") == Found(page=None)
+    # Run together inside, whole words at the edges: still a match.
+    text = "Welcome\nCity of\nAjax council meets"
+    assert quote_checks.find_quote(text, "City ofAjax council") == Found(page=None)
+    assert quote_checks.find_quote("City ofAjax council", "City of Ajax council") == Found(
+        page=None
+    )
+
+
+def test_a_link_in_a_script_or_comment_is_not_a_link():
+    page = (
+        '<script>var next = "https://example.org/in-script";</script>'
+        '<style>a[href="https://example.org/in-style"] {}</style>'
+        '<!-- <a href="https://example.org/in-comment">old</a> -->'
+        '<p>href="https://example.org/in-text"</p>'
+        '<a href="https://example.org/real">Real</a>'
+    )
+    url = "https://example.org/list"
+    assert quote_checks.link_in_html(page, url, "https://example.org/real")
+    assert quote_checks.link_text(page, url, "https://example.org/real") == "Real"
+    for target in ("in-script", "in-style", "in-comment", "in-text"):
+        assert not quote_checks.link_in_html(page, url, f"https://example.org/{target}"), target
+        assert quote_checks.link_text(page, url, f"https://example.org/{target}") is None, target
+
+
+def test_frame_links_are_linkable_but_not_quotable():
+    """The links of a page's frames are appended to its stored copy as `<template>` blocks: the
+    link check reads them, the page's text does not include them."""
+    frames = (
+        FrameLinks(
+            "https://escribe.example/portal",
+            (("https://escribe.example/m?id=1", "Council 2026-09-30"),),
+        ),
+    )
+    page = "<html><body><h1>Meetings</h1></body></html>\n" + capture.frame_blocks(frames)
+    url = "https://www.elmwood.ca/meetings"
+    assert quote_checks.link_in_html(page, url, "https://escribe.example/portal")
+    assert quote_checks.link_in_html(page, url, "https://escribe.example/m?id=1")
+    assert (
+        quote_checks.link_text(page, url, "https://escribe.example/m?id=1") == "Council 2026-09-30"
+    )
+    text = quote_checks.html_text(page)
+    assert quote_checks.find_quote(text, "Meetings") is None  # too short, as any stray word
+    assert "Council 2026-09-30" not in text
+    assert "escribe.example" not in text

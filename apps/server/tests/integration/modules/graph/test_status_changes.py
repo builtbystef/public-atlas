@@ -1,6 +1,7 @@
 """Every status change goes through `status_changes.py`: each one sets the status once, records
 who did it, keeps the links the tables enforce, and says what to spawn."""
 
+import logging
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -593,3 +594,253 @@ def test_verifying_a_homepage_elsewhere_rejects_the_superseded_candidate_domain(
         AssignmentType.FIND_SOURCES,
         AssignmentType.FIND_INSTITUTIONS,
     ]
+
+
+def test_rejecting_a_domain_with_a_verified_homepage_on_it(
+    db: Database, world: World, build: type[Build]
+):
+    """A rejected domain is dead or nobody's, so a homepage verified on it cannot stand: the
+    claim is rejected with the reason, the institution loses its link and looks again, like
+    every open claim on the domain (spec section 7.3)."""
+
+    async def scenario() -> tuple[Domain, Homepage, Homepage, Institution, list[Spawn]]:
+        async with db.session() as session:
+            town = await session.get_one(Institution, world.town.id)
+            library = await build.candidate_institution(session, world.oakville, "Oakville Library")
+            towns = await build.claim(session, town, "https://www.oakville.example/")
+            librarys = await build.claim(session, library, "https://www.oakville.example/library")
+            domain = await graph.domain_of_host(session, "www.oakville.example")
+            assert domain is not None
+            await status_changes.verify_domain(session, domain, entered_by=MANUAL)
+            await status_changes.verify_homepage(session, towns, entered_by=AGENT)
+            assert town.homepage_id == towns.id
+            spawn = await status_changes.reject_domain(
+                session, domain, entered_by=MANUAL, reason="the site is dead"
+            )
+            await session.commit()
+            return domain, towns, librarys, town, spawn
+
+    domain, towns, librarys, town, spawn = db.run(scenario)
+    assert (domain.status, domain.entered_by) == (EntityStatus.REJECTED, MANUAL)
+    assert (towns.status, towns.entered_by, towns.rejected_reason) == (
+        EntityStatus.REJECTED,
+        MANUAL,
+        "the site is dead",
+    )
+    assert (librarys.status, librarys.rejected_reason) == (
+        EntityStatus.REJECTED,
+        "the site is dead",
+    )
+    assert town.homepage_id is None
+    assert spawn == [
+        Spawn(AssignmentType.FIND_HOMEPAGE, town.id),
+        Spawn(AssignmentType.FIND_HOMEPAGE, librarys.institution_id),
+    ]
+
+
+def test_rejecting_the_verified_homepage_clears_the_link_and_looks_again(
+    db: Database, world: World, build: type[Build]
+):
+    async def scenario() -> tuple[Homepage, Institution, list[Spawn]]:
+        async with db.session() as session:
+            town = await session.get_one(Institution, world.town.id)
+            homepage = await build.claim(session, town, "https://www.elmcounty.ca/oakville/")
+            await status_changes.verify_homepage(session, homepage, entered_by=AGENT)
+            assert town.homepage_id == homepage.id
+            spawn = await status_changes.reject_homepage(
+                session, homepage, entered_by=MANUAL, reason="the county's page, not the town's"
+            )
+            await session.commit()
+            return homepage, town, spawn
+
+    homepage, town, spawn = db.run(scenario)
+    assert (homepage.status, homepage.entered_by, homepage.rejected_reason) == (
+        EntityStatus.REJECTED,
+        MANUAL,
+        "the county's page, not the town's",
+    )
+    assert town.homepage_id is None
+    assert spawn == [Spawn(AssignmentType.FIND_HOMEPAGE, town.id)]
+
+
+def test_sending_to_review_is_recorded_like_any_change(
+    db: Database, world: World, build: type[Build], caplog: pytest.LogCaptureFixture
+):
+    """The move to `needs_review` goes through the one door: it is logged with the rest, a
+    preview of a decision collects it, and nobody is recorded as having decided anything."""
+
+    async def scenario() -> tuple[Institution, Institution, list[status_changes.StatusChange]]:
+        async with db.session() as session:
+            library = await build.candidate_institution(session, world.oakville, "Oakville Library")
+            await status_changes.send_to_review(session, library)
+            archive = await build.candidate_institution(session, world.oakville, "Oakville Archive")
+            with status_changes.previewing() as recorded:
+                await status_changes.send_to_review(session, archive)
+            await session.commit()
+            return library, archive, recorded
+
+    with caplog.at_level(logging.INFO, logger="public_atlas.modules.graph.status_changes"):
+        library, archive, recorded = db.run(scenario)
+    assert (library.status, library.entered_by) == (EntityStatus.NEEDS_REVIEW, AGENT)
+    assert [record.getMessage() for record in caplog.records] == [
+        f"institution {library.id}: candidate -> needs_review by agent"
+    ]
+    # Previewed, the change is collected and not logged.
+    assert recorded == [
+        status_changes.StatusChange(archive, EntityStatus.CANDIDATE, EntityStatus.NEEDS_REVIEW)
+    ]
+    assert archive.status is EntityStatus.NEEDS_REVIEW
+
+
+def test_a_reviewer_or_a_list_may_verify_an_entity_with_no_evidence(
+    db: Database, world: World, build: type[Build]
+):
+    """The door asks for no evidence: a reviewer's approval and an official list's line are
+    each their own warrant. The agent's verifications pass the quote check before they reach
+    the door, which the findings tests pin."""
+
+    async def scenario() -> tuple[Institution, Place, int, int]:
+        async with db.session() as session:
+            library = await build.candidate_institution(session, world.oakville, "Oakville Library")
+            library_rows = len(await evidence.evidence_for(session, library.id))
+            await status_changes.verify_institution(session, library, entered_by=MANUAL)
+            place = await graph.create_place(
+                session,
+                name="Birch",
+                country_code="CA",
+                administrative_level="municipality",
+                parent=world.elm,
+                entered_by=EnteredBy.SCRIPT,
+            )
+            place_rows = len(await evidence.evidence_for(session, place.id))
+            await status_changes.verify_place(session, place, entered_by=EnteredBy.SCRIPT)
+            await session.commit()
+            return library, place, library_rows, place_rows
+
+    library, place, library_rows, place_rows = db.run(scenario)
+    assert (library_rows, place_rows) == (0, 0)
+    assert (library.status, library.entered_by) == (EntityStatus.VERIFIED, MANUAL)
+    assert (place.status, place.entered_by) == (EntityStatus.VERIFIED, EnteredBy.SCRIPT)
+
+
+def test_merging_a_parent_into_its_child_reparents_the_child(
+    db: Database, world: World, build: type[Build]
+):
+    async def scenario() -> tuple[Institution, Institution, Institution]:
+        async with db.session() as session:
+            board = await build.candidate_institution(session, world.oakville, "Library Board")
+            library = await graph.create_institution(
+                session,
+                name="Oakville Library",
+                institution_type="library",
+                place=world.oakville,
+                entered_by=AGENT,
+                parent=board,
+            )
+            branch = await graph.create_institution(
+                session,
+                name="Oakville Library Branch",
+                institution_type="library",
+                place=world.oakville,
+                entered_by=AGENT,
+                parent=board,
+            )
+            await status_changes.merge_entities(session, board, library, entered_by=MANUAL)
+            await session.commit()
+            return (
+                await session.get_one(Institution, board.id),
+                await session.get_one(Institution, library.id),
+                await session.get_one(Institution, branch.id),
+            )
+
+    board, library, branch = db.run(scenario)
+    # The survivor takes the duplicate's parent, the town, rather than hanging under itself.
+    assert library.parent_institution_id == world.town.id
+    assert branch.parent_institution_id == library.id
+    assert board.status is EntityStatus.REJECTED
+
+
+def test_merge_keeps_the_survivors_code_in_a_scheme(db: Database, world: World, build: type[Build]):
+    async def scenario() -> dict[str, tuple[str, IdentifierScheme]]:
+        async with db.session() as session:
+            kept = await build.candidate_institution(
+                session, world.oakville, "Oakville Public Library"
+            )
+            duplicate = await build.candidate_institution(
+                session, world.oakville, "Oakville Library"
+            )
+            session.add_all(
+                [
+                    Identifier(
+                        institution_id=kept.id, scheme=IdentifierScheme.STATCAN_SGC, value="1"
+                    ),
+                    Identifier(
+                        institution_id=duplicate.id, scheme=IdentifierScheme.STATCAN_SGC, value="2"
+                    ),
+                    Identifier(
+                        institution_id=duplicate.id, scheme=IdentifierScheme.FIPS, value="3"
+                    ),
+                ]
+            )
+            await session.flush()
+            await status_changes.merge_entities(session, duplicate, kept, entered_by=MANUAL)
+            await session.commit()
+            rows = await session.scalars(select(Identifier).order_by(Identifier.value))
+            return {
+                row.value: ("kept" if row.institution_id == kept.id else "duplicate", row.scheme)
+                for row in rows
+            }
+
+    assert db.run(scenario) == {
+        "1": ("kept", IdentifierScheme.STATCAN_SGC),
+        "2": ("duplicate", IdentifierScheme.STATCAN_SGC),
+        "3": ("kept", IdentifierScheme.FIPS),
+    }
+
+
+def test_rejecting_a_place_is_refused_while_anything_sits_under_it(
+    db: Database, world: World, build: type[Build]
+):
+    async def scenario() -> tuple[list[str], Place, Place, Place]:
+        async with db.session() as session:
+            with_child = await build.verified_place(session, "Pine", "municipality", world.elm)
+            await build.verified_place(session, "Pine Hamlet", "municipality", with_child)
+            with_body = await build.verified_place(session, "Birch", "municipality", world.elm)
+            await build.candidate_institution(session, with_body, "Birch Library")
+            empty = await build.verified_place(session, "Cedar", "municipality", world.elm)
+            messages = []
+            for place in (with_child, with_body):
+                with pytest.raises(ConflictError) as raised:
+                    await status_changes.reject_place(session, place, entered_by=MANUAL)
+                messages.append(str(raised.value))
+            assert await status_changes.reject_place(session, empty, entered_by=MANUAL) == []
+            await session.commit()
+            return messages, with_child, with_body, empty
+
+    messages, with_child, with_body, empty = db.run(scenario)
+    assert messages == ["places sit under 'Pine'", "institutions sit under 'Birch'"]
+    assert (with_child.status, with_body.status) == (EntityStatus.VERIFIED, EntityStatus.VERIFIED)
+    assert (empty.status, empty.entered_by) == (EntityStatus.REJECTED, MANUAL)
+
+
+def test_verifying_and_rejecting_a_source_records_who_did_it(
+    db: Database, world: World, build: type[Build]
+):
+    async def scenario() -> tuple[Source, Source]:
+        async with db.session() as session:
+            budget = await graph.ensure_webpage(session, "https://www.elmcounty.ca/budget")
+            tenders = await graph.ensure_webpage(session, "https://www.elmcounty.ca/tenders")
+            verified = await graph.create_source(
+                session, world.county, budget, source_type="budget", entered_by=AGENT
+            )
+            rejected = await graph.create_source(
+                session, world.county, tenders, source_type="tender", entered_by=AGENT
+            )
+            assert await status_changes.verify_source(session, verified, entered_by=AGENT) == []
+            assert await status_changes.reject_source(session, rejected, entered_by=MANUAL) == []
+            await session.commit()
+            return verified, rejected
+
+    verified, rejected = db.run(scenario)
+    assert (verified.status, verified.entered_by) == (EntityStatus.VERIFIED, AGENT)
+    assert (rejected.status, rejected.entered_by) == (EntityStatus.REJECTED, MANUAL)

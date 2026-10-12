@@ -11,6 +11,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.territories import places as territories
 
+pytestmark = [pytest.mark.lists, pytest.mark.parse]
+
 BY_TERRITORY = {"Yukon": 8, "Northwest Territories": 24, "Nunavut": 25}
 HOMEPAGES = {"Yukon": 8, "Northwest Territories": 11, "Nunavut": 18}
 DESIGNATED_AUTHORITIES = 9

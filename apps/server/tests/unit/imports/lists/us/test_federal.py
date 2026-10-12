@@ -10,6 +10,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import federal
 
+pytestmark = pytest.mark.lists
+
 ENTRIES = 276
 TYPED = {"department": 15, "agency": 261}
 KEPT_BY = {

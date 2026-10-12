@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 import yaml
-from sqlalchemy import select, text
+from sqlalchemy import func, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 
@@ -25,6 +25,7 @@ from public_atlas.modules.assignments.models import (
     AssignmentType,
     Run,
     RunStatus,
+    Usage,
 )
 from public_atlas.modules.evals import dataset, harness, scorer
 from public_atlas.modules.evals import service as evals
@@ -518,24 +519,34 @@ def test_progress_and_cost_lines(
     line = db.run(harness.progress, finishing)
     assert line.startswith("assignments: finished 2; open: none")
 
-    async def record(session: AsyncSession) -> None:
+    async def record(session: AsyncSession) -> str:
         rows = list(await session.scalars(select(Assignment)))
+        # On the other model, so the line is apart from the scripted sessions' own Luna lines.
         await assignments.record_usage(
             session,
             assignment_id=rows[0].id,
             kind=assignments.UsageKind.MODEL,
-            provider="gpt-6-luna",
+            provider="gpt-6.1-sol",
             purpose=rows[0].type.value,
             units=1_100_000,
             cached_units=500_000,
             output_units=100_000,
         )
+        return rows[0].type.value
 
-    in_session(record)
+    purpose = in_session(record)
     costs = in_session(lambda session: harness.cost_lines(session, world.run.id))
-    by_provider = {line.provider: line for line in costs}
-    # 500k uncached at $0.10/M, 500k cached at $0.01/M, 100k out at $0.50/M.
-    assert by_provider["gpt-6-luna"].cost == Decimal("0.105")
+    # 500k uncached at $2/M, 500k cached at $0.10/M, 100k out at $10/M.
+    assert [line for line in costs if line.provider == "gpt-6.1-sol"] == [
+        harness.CostLine(
+            purpose=purpose,
+            provider="gpt-6.1-sol",
+            calls=1,
+            units=1_100_000,
+            cached_units=500_000,
+            cost=Decimal("2.05"),
+        )
+    ]
     by_subject = in_session(
         lambda session: harness.cost_by_subject(
             session, world.run.id, {"fixture": [a.id for a in []]}
@@ -543,7 +554,7 @@ def test_progress_and_cost_lines(
     )
     assert by_subject == {"fixture": Decimal(0)}
     rendered = harness.render_costs(costs, by_subject)
-    assert "$  0.1050" in rendered
+    assert "$  2.0500" in rendered
     assert "total" in rendered
 
 
@@ -597,7 +608,10 @@ def test_an_eval_run_end_to_end_records_its_scores_and_cost(
     (card,) = first.cards
     assert card.slug == "fixture"
     assert card.tallies[FIND_INSTITUTIONS].buckets["not found"] == 1
-    assert first.cost == Decimal(0)  # the scripted model has no price
+    # The scripted model is priced as Luna: the run cost something, and the report's cost is the
+    # sum of its lines, checked below against the usage rows in the eval database.
+    assert first.cost == sum((line.cost for line in first.costs), Decimal(0))
+    assert first.cost != 0
     assert "== gates" in first.render()
     assert first.as_json()["eval_run_id"] == str(first.eval_run_id)
 
@@ -609,6 +623,7 @@ def test_an_eval_run_end_to_end_records_its_scores_and_cost(
         return eval_run, scores, await session.get_one(Run, first.run_id)
 
     eval_run, scores, run_row = in_session(recorded)
+    assert eval_run.cost == first.cost
     assert eval_run.finished_at is not None
     assert eval_run.dataset_version == dataset.version()
     assert eval_run.settings["subjects"] == ["fixture"]
@@ -617,7 +632,9 @@ def test_an_eval_run_end_to_end_records_its_scores_and_cost(
     assert run_row.is_eval
     assert run_row.status is RunStatus.STOPPED
 
-    async def in_eval_database() -> tuple[Run, dict[AssignmentType, set[AssignmentStatus]], int]:
+    async def in_eval_database() -> tuple[
+        Run, dict[AssignmentType, set[AssignmentStatus]], int, Decimal
+    ]:
         settings = harness.eval_settings(eval_resources.settings)
         async with (
             evals._eval_resources(eval_resources, settings) as res,  # noqa: SLF001
@@ -628,9 +645,11 @@ def test_an_eval_run_end_to_end_records_its_scores_and_cost(
             for row in await session.scalars(select(Assignment)):
                 found.setdefault(row.type, set()).add(row.status)
             domains = len(list(await session.scalars(select(Domain))))
-            return mirrored, found, domains
+            spent = await session.scalar(select(func.sum(Usage.cost)))
+            return mirrored, found, domains, Decimal(spent or 0)
 
-    mirrored, statuses, domains = db.run(in_eval_database)
+    mirrored, statuses, domains, spent = db.run(in_eval_database)
+    assert spent == first.cost
     assert mirrored.is_eval
     assert mirrored.status is RunStatus.STOPPED
     # The province's own search was seeded held and cancelled when the run stopped at the end;

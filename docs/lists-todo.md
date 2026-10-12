@@ -944,6 +944,15 @@ so that someone rebuilding from a fresh clone gets the same file.
   file of `us/transit`, kept in the loader's cache as `ntd_agency_information_2024.csv`; the
   module's instructions say how to export it.
 
+Every file, fetched or manual, also sits in one archive on the repository's `official-lists`
+GitHub release (`official-lists.tar.gz`, not a commit): `public-atlas lists pack` writes it
+from the cache, refusing while a file is missing or off its hash, and `lists fetch --seed`
+unpacks it. CI seeds its lists cache from it, because www12.statcan.gc.ca answers a script
+with a bot check and the manual files exist nowhere else, then runs `lists fetch` for whatever
+moved since; the hash pins keep a fetched file in the archive honest. A new export or a new
+pin means a new archive: `lists pack official-lists.tar.gz` and
+`gh release upload official-lists official-lists.tar.gz --clobber`.
+
 Two of these (PEI, Saskatchewan) are derived CSVs built from saved pages rather than files
 the site served. Their `instructions` say so and point at the raw captures; the loader's
 provenance for them is the derived file's hash plus the per-row `source_url` and

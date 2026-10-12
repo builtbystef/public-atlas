@@ -1110,8 +1110,14 @@ ONTARIO_CACHED = all(
 )
 
 
-@pytest.mark.skipif(not ONTARIO_CACHED, reason="the Ontario list's files are not cached")
-def test_loading_ontario_gives_the_pilots_places(db: Database, object_store: MemoryObjectStore):
+@pytest.mark.lists
+def test_loading_ontario_gives_the_pilots_places(
+    db: Database, object_store: MemoryObjectStore, *, require_lists: bool
+):
+    # Where the files must be there (CI), the load fetches what the cache lacks and fails if it
+    # cannot, instead of skipping.
+    if not ONTARIO_CACHED and not require_lists:
+        pytest.skip("the Ontario list's files are not cached")
     db.run(seed, db)
     cache_dir = Settings().lists_cache_dir
 

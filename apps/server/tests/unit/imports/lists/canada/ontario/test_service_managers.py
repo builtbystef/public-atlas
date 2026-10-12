@@ -11,7 +11,7 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import service_managers
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 ROWS = 425
 MANAGERS = 47
@@ -34,8 +34,8 @@ NAMESAKES = frozenset(
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(service_managers)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(service_managers)
 
 
 @pytest.fixture(scope="module")

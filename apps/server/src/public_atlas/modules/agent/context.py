@@ -9,7 +9,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from procrastinate import App
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.config import Settings
@@ -22,6 +22,8 @@ from public_atlas.modules.assignments.models import (
     AssignmentResult,
     AssignmentType,
     Run,
+    Usage,
+    UsageKind,
 )
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.rules import CountryRules
@@ -98,7 +100,8 @@ class SessionContext:
     # be saved with no page linking to it.
     search_hosts: set[str] = field(default_factory=set)
     ended: Ended | None = None
-    # Searches made this session; capped per assignment.
+    # Searches made over every session of the assignment, started from its search usage rows
+    # (`searches_made`) and counted up by `search_web`: the cap is per assignment.
     searches: int = 0
     # `confirm_domain` calls that failed on something the agent can put right.
     confirm_attempts: int = 0
@@ -220,8 +223,20 @@ async def build_context(
         allowed_domains=allowed,
         searcher=res.searcher,
         candidate=candidate,
+        searches=await searches_made(session, assignment.id),
         requests_since_finding=assignment.requests_since_finding,
     )
+
+
+async def searches_made(session: AsyncSession, assignment_id: uuid.UUID) -> int:
+    """How many searches the assignment has made over its sessions so far: `search_web` records
+    one usage row per request, before it asks the engine."""
+    count = await session.scalar(
+        select(func.count())
+        .select_from(Usage)
+        .where(Usage.assignment_id == assignment_id, Usage.kind == UsageKind.SEARCH)
+    )
+    return int(count or 0)
 
 
 async def _subject(

@@ -11,6 +11,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.pei import places as pei
 
+pytestmark = pytest.mark.lists
+
 # The census's 59 municipalities less the two dissolved since.
 MUNICIPALITIES = 57
 DISSOLVED = 2

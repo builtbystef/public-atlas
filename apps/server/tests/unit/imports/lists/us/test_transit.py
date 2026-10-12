@@ -10,6 +10,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import transit
 
+pytestmark = pytest.mark.lists
+
 ENTRIES = 1518
 LEFT_OUT = {
     "": 54,

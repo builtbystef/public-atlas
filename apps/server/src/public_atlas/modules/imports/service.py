@@ -14,6 +14,7 @@ apply changes nothing.
 
 import asyncio
 import logging
+import tarfile
 import uuid
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
@@ -235,6 +236,130 @@ def manifest(cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS) -
     lines.append(f"Manual files ({sum(1 for line in manual if not line.startswith(' '))})")
     lines.extend(manual or ["  none"])
     return "\n".join(lines)
+
+
+# --- The cache: `lists fetch` and `lists pack` ---
+
+
+@dataclass
+class FetchReport:
+    """What `lists fetch` found in the cache and put there, each file named `<list>/<name>` by
+    the first list that declares it. The cache is complete when nothing failed and no manual
+    file is missing."""
+
+    # Fetched files there with the right hash, and manual files there at all.
+    cached: list[str] = field(default_factory=list)
+    # Fetched files downloaded and checked now.
+    fetched: list[str] = field(default_factory=list)
+    # Fetched files that could not be downloaded or did not match their hash, with the reason.
+    failed: list[str] = field(default_factory=list)
+    # Manual files not in the cache, with where each goes; `lists manifest` has the steps.
+    missing: list[str] = field(default_factory=list)
+
+    @property
+    def complete(self) -> bool:
+        return not self.failed and not self.missing
+
+    def render(self) -> str:
+        lines = [f"{len(self.cached)} files cached, {len(self.fetched)} fetched"]
+        lines.extend(f"  fetched {name}" for name in self.fetched)
+        if self.failed:
+            lines.append(f"  failed: {len(self.failed)}")
+            lines.extend(f"    {line}" for line in self.failed)
+        if self.missing:
+            lines.append(
+                f"  manual files not in the cache: {len(self.missing)} "
+                "(`lists manifest` has the steps that obtain each)"
+            )
+            lines.extend(f"    {line}" for line in self.missing)
+        return "\n".join(lines)
+
+
+def _files_by_path(
+    cache_dir: Path, modules: Mapping[str, ModuleType]
+) -> dict[Path, tuple[str, files.ListFile]]:
+    """Every file the lists declare, once each by where it sits in the cache (several lists
+    read one census file), labelled by the first list that declares it."""
+    found: dict[Path, tuple[str, files.ListFile]] = {}
+    for name, module in modules.items():
+        for file in module.SOURCES:
+            found.setdefault(file.cache_path(cache_dir), (f"{name}/{file.name}", file))
+    return found
+
+
+def fetch_all(cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS) -> FetchReport:
+    """Every list's files into the cache: a fetched file is downloaded and hash-checked when
+    the cache lacks it, a manual file is reported when it is not there. One failed download
+    does not stop the rest."""
+    report = FetchReport()
+    for path, (label, file) in _files_by_path(cache_dir, modules).items():
+        if file.is_manual:
+            if path.exists():
+                report.cached.append(label)
+            else:
+                report.missing.append(f"{label}: put it at {path}")
+            continue
+        if files.cached(file, cache_dir) is not None:
+            report.cached.append(label)
+            continue
+        try:
+            files.fetch(file, cache_dir)
+        except files.ListFileError as exc:
+            report.failed.append(f"{label}: {exc}")
+        else:
+            report.fetched.append(label)
+    return report
+
+
+def pack(
+    cache_dir: Path, archive: Path, modules: Mapping[str, ModuleType] = lists.LISTS
+) -> list[str]:
+    """Every list's files, from the cache into a gzipped tar at `archive`, each under its
+    cache name, as the seed for a cache elsewhere (`unpack`): CI starts from it, since some
+    hosts serve a script a bot check instead of the file, and the manual files exist nowhere
+    else. Refused when a file is missing or a fetched file does not match its hash: the
+    archive stands for the whole set. The names packed."""
+    problems: list[str] = []
+    names: list[str] = []
+    for path, (label, file) in sorted(_files_by_path(cache_dir, modules).items()):
+        if not path.exists():
+            problems.append(f"{label}: not in the cache")
+        elif files.cached(file, cache_dir) is None:
+            problems.append(f"{label}: not the recorded hash")
+        else:
+            names.append(path.name)
+    if problems:
+        raise files.ListFileError(
+            f"{len(problems)} files cannot be packed, so the archive would be incomplete: "
+            + "; ".join(problems)
+        )
+    archive.parent.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive, "w:gz") as tar:
+        for name in names:
+            tar.add(cache_dir / name, arcname=name)
+    return names
+
+
+def unpack(
+    archive: Path, cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS
+) -> tuple[list[str], list[str]]:
+    """The files of an archive `pack` wrote into the cache, replacing what is there. Only a
+    plain file some list declares is taken, so an archive cannot write elsewhere; a member no
+    list declares (a list since removed, a pin since moved) is left out, and a fetched file is
+    still checked against its hash when it is read. The names unpacked and the names left
+    out."""
+    known = {path.name for path in _files_by_path(cache_dir, modules)}
+    unpacked: list[str] = []
+    ignored: list[str] = []
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive, "r:gz") as tar:
+        for member in tar.getmembers():
+            if member.isfile() and member.name in known:
+                tar.extract(member, cache_dir, filter="data")
+                unpacked.append(member.name)
+            else:
+                ignored.append(member.name)
+    return sorted(unpacked), sorted(ignored)
 
 
 @dataclass

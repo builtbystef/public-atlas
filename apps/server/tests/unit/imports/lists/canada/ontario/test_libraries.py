@@ -12,7 +12,7 @@ from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import libraries
 from public_atlas.modules.imports.lists.canada.ontario.communities import Location
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 PUBLIC_AND_UNION = 241
 COUNTY = 12
@@ -25,8 +25,8 @@ HOMEPAGES = BOARDS - 11
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(libraries)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(libraries)
 
 
 @pytest.fixture(scope="module")

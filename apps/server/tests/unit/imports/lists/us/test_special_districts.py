@@ -11,6 +11,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import governments, special_districts
 
+pytestmark = pytest.mark.lists
+
 ENTRIES = 39313
 INACTIVE = 242
 NO_ID = 36

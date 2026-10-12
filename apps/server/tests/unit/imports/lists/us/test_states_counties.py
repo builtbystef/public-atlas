@@ -10,6 +10,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.us import census, states_counties
 
+pytestmark = pytest.mark.lists
+
 STATES = 52
 # 3,032 active, 2 partially consolidated and 33 consolidated, less Honolulu, promoted.
 COUNTIES = 3066

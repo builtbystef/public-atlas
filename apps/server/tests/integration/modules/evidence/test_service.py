@@ -1,9 +1,11 @@
 """Snapshots sharing by hash, and the quote and link checks against a stored copy."""
 
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 
+from public_atlas.db.base import utcnow
 from public_atlas.modules.evidence import service
 from public_atlas.modules.evidence.models import EvidenceKind, Snapshot, TextStatus
 from public_atlas.modules.graph import service as graph
@@ -243,3 +245,60 @@ def test_the_latest_snapshot_is_the_newest_ready_one_of_the_assignment_asked_for
             )
 
     assert db.run(scenario) == (True, True, True)
+
+
+def test_a_hidden_quote_gets_its_context_from_the_html_and_a_pruned_quote_has_no_link(
+    db: Database, object_store: MemoryObjectStore, assignment: Assignment
+):
+    """A quote the rendered text missed (a footer hidden until scrolled to) is shown in the
+    text of the stored HTML; once the stored copy is gone, the quote is listed without a link
+    to it."""
+
+    async def scenario() -> tuple[service.QuoteContext, str | None, str | None]:
+        async with db.session() as session:
+            webpage = await graph.ensure_webpage(session, PAGE_URL)
+            snapshot, _ = await service.store_snapshot(
+                session,
+                object_store,
+                webpage,
+                HTML.encode(),
+                text=RENDERED,
+                media_type=service.HTML,
+                filename="page.html",
+                assignment_id=assignment.id,
+            )
+            domain = await graph.domain_of_host(session, "ontario.ca")
+            assert domain is not None
+            await service.add_evidence(
+                session,
+                entity_id=domain.id,
+                snapshot=snapshot,
+                kind=EvidenceKind.APPEARS_ON,
+                quote="© 2026 The Corporation of the Town of Whitby",
+                entered_by=EnteredBy.AGENT,
+            )
+            [row] = await service.evidence_for(session, domain.id)
+            _, context = await service.evidence_context(session, object_store, row.id)
+            [linked] = await service.evidence_details(
+                session, object_store, [domain.id], url_ttl=timedelta(minutes=5)
+            )
+            # The copy was pruned by hand (a retention sweep): the row stays, the bytes go.
+            snapshot.pruned_at = utcnow()
+            await session.flush()
+            [unlinked] = await service.evidence_details(
+                session, object_store, [domain.id], url_ttl=timedelta(minutes=5)
+            )
+            await session.commit()
+            return context, linked.snapshot_url, unlinked.snapshot_url
+
+    context, linked, unlinked = db.run(scenario)
+    assert context == service.QuoteContext(
+        found=True,
+        before="Town Hall Welcome to the Town of Whitby Budget 2026 ",
+        quote="© 2026 The Corporation of the Town of Whitby",
+        after="",
+        page=None,
+    )
+    assert linked is not None
+    assert linked.startswith("memory://snapshots/")
+    assert unlinked is None

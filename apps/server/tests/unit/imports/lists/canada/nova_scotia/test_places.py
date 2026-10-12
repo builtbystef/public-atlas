@@ -13,6 +13,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.nova_scotia import places as nova_scotia
 
+pytestmark = pytest.mark.lists
+
 MUNICIPALITIES = 49
 KINDS = {"Town": 25, "Municipal District": 11, "Municipal County": 9, "Regional Municipality": 4}
 COUNTY_MUNICIPALITIES = 9

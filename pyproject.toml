@@ -96,6 +96,7 @@ addopts = ["-ra", "--import-mode=importlib"]
 markers = [
   "browser: drives a real Chromium; skipped unless `playwright install chromium` ran",
   "parse: runs Docling; skipped unless the parse-cpu dependency group is installed",
+  "lists: reads an official list's files from the lists cache; skipped when they are not there and cannot be fetched, failed instead when PUBLIC_ATLAS_REQUIRE_LISTS=1 (CI, where the cache is warmed first)",
 ]
 # Unknown markers, unknown config keys, passing xfails and duplicate parametrize ids are errors.
 strict = true

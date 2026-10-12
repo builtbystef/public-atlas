@@ -18,7 +18,7 @@ from dataclasses import dataclass, replace
 
 from pydantic_ai import Agent, CallToolsNode, ModelRequestNode, UsageLimitExceeded
 from pydantic_ai.messages import ModelMessage, ModelResponse, ThinkingPart
-from pydantic_ai.usage import UsageLimits
+from pydantic_ai.usage import RequestUsage, RunUsage, UsageLimits
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.integrations.browser import create_browser
@@ -103,9 +103,11 @@ async def _run(res: Resources, assignment_id: uuid.UUID) -> str:
         assignment, run = claimed
         try:
             outcome = await run_session(res, assignment, run)
-        except UsageLimitExceeded as exc:
+        except UsageLimitExceeded:
+            # The session accounted for its calls before the exception reached here, so the
+            # row's spend is the summary; the library's own message is for the log.
             return await _finish(
-                res, assignment_id, AssignmentResult.OUT_OF_BUDGET, f"Budget exhausted: {exc}"
+                res, assignment_id, AssignmentResult.OUT_OF_BUDGET, budget_summary(assignment)
             )
         except SubjectMissingError as exc:
             return await _finish(res, assignment_id, AssignmentResult.FAILED, str(exc))
@@ -258,6 +260,7 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
     over_threshold = False
     messages: list[ModelMessage] = []
     pending: ModelMessage | None = None
+    dropped: list[ModelResponse] = []
     text_output = False
     try:
         async with browser:
@@ -283,9 +286,12 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
                         # Whatever ended the loop, a budget exception included, every request
                         # made is accounted for.
                         messages = [*agent_run.all_messages(), *([pending] if pending else [])]
+                        dropped = dropped_response(
+                            agent_run.usage, messages, model_name=descriptor.model.name
+                        )
                         text_output = agent_run.result is not None
             finally:
-                await account(res, assignment, messages, purpose=assignment.type.value)
+                await account(res, assignment, [*messages, *dropped], purpose=assignment.type.value)
                 await record_stall_count(res, assignment, ctx)
     finally:
         videos = (
@@ -334,6 +340,35 @@ async def stalled(
         fallback=STALL_FAILED.format(count=count),
     )
     return SessionOutcome(ended=Ended(AssignmentResult.COMPLETE, summary))
+
+
+def dropped_response(
+    run_usage: RunUsage, messages: Sequence[ModelMessage], *, model_name: str
+) -> list[ModelResponse]:
+    """The response the token limit cut off, if there is one, as a response with its usage and
+    no parts. Pydantic AI adds a response's tokens to the run's and then raises the limit,
+    before the response reaches the history: what the run's tokens have over the history's is
+    that response, made and billed like any other."""
+    seen = RunUsage()
+    for message in messages:
+        if isinstance(message, ModelResponse):
+            seen.incr(message.usage)
+    remainder = RequestUsage(
+        input_tokens=run_usage.input_tokens - seen.input_tokens,
+        cache_read_tokens=run_usage.cache_read_tokens - seen.cache_read_tokens,
+        output_tokens=run_usage.output_tokens - seen.output_tokens,
+    )
+    if remainder.input_tokens <= 0 and remainder.output_tokens <= 0:
+        return []
+    return [ModelResponse(parts=[], usage=remainder, model_name=model_name)]
+
+
+def budget_summary(assignment: Assignment) -> str:
+    """What a spent assignment ends with: its spend against its budget."""
+    return (
+        f"Budget exhausted: {assignment.requests_used} of {assignment.budget_requests} requests "
+        f"and {assignment.tokens_used} of {assignment.budget_tokens} tokens used"
+    )
 
 
 def remaining_budget(assignment: Assignment) -> UsageLimits:

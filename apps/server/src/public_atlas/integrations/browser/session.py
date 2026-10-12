@@ -1,15 +1,16 @@
 """One agent session's Chromium: launch, the route guard that enforces the policy on every
-request of every frame, tabs, popups and dialogs. Nothing starts until `ensure_page` is first
-awaited, and leaving the session closes whatever was started."""
+request of every frame and on every redirect, tabs, popups and dialogs. Nothing starts until
+`ensure_page` is first awaited, and leaving the session closes whatever was started."""
 
 from __future__ import annotations
 
 import asyncio
 import contextlib
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
+from urllib.parse import urljoin
 
 from playwright.async_api import Error as PlaywrightError
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
@@ -17,6 +18,7 @@ from playwright.async_api import async_playwright
 
 from public_atlas.integrations.browser.policy import (
     DATA_RESOURCE_TYPES,
+    MAX_REDIRECTS,
     USER_AGENT,
     BrowserPolicy,
     Request,
@@ -27,8 +29,16 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Coroutine
     from contextlib import AbstractAsyncContextManager
 
+    from playwright.async_api import (
+        APIResponse,
+        BrowserContext,
+        Dialog,
+        Page,
+        Playwright,
+        Route,
+        WebSocketRoute,
+    )
     from playwright.async_api import Browser as Chromium
-    from playwright.async_api import BrowserContext, Dialog, Page, Playwright, Route, WebSocketRoute
     from playwright.async_api import Request as PlaywrightRequest
 
 logger = logging.getLogger(__name__)
@@ -43,6 +53,14 @@ DEFAULT_NAVIGATION_TIMEOUT_MS = 60_000
 MAX_TABS = 8
 # What Chromium reports for a request a route aborted; the guard records the refusal itself.
 _ABORTED_FAILURE = "net::ERR_FAILED"
+# Requests the guard continues as they are instead of fetching: a stream never ends, and a
+# preflight or a beacon carries nothing a page reads. Their URL is checked like any other; a
+# redirect of one is followed by Chromium unchecked.
+_CONTINUED_RESOURCE_TYPES = frozenset({"eventsource", "preflight", "ping"})
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
+# After these a browser repeats anything but a GET or HEAD as a GET without a body.
+_METHOD_RESETTING_STATUSES = frozenset({301, 302, 303})
+TOO_MANY_REDIRECTS = f"more than {MAX_REDIRECTS} redirects"
 CHROMIUM_MISSING = (
     "Chromium is not installed. Run `playwright install chromium` (on a fresh Linux or CI image "
     "`playwright install --with-deps chromium`) and restart the worker."
@@ -59,6 +77,28 @@ class Failure:
 
     url: str
     reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class Redirect:
+    """A main-frame navigation of `page` that the server answered with a redirect, held back
+    from Chromium: the tool that navigated makes the hop itself, so it is asked about like any
+    navigation and the page ends at its real URL."""
+
+    page: Page
+    url: str
+    to: str
+
+
+def redirect_target(response: APIResponse) -> str | None:
+    """Where a redirect response sends the browser, resolved as the browser would, or None
+    when `response` is not one."""
+    if response.status not in _REDIRECT_STATUSES:
+        return None
+    location = response.headers.get("location")
+    if not location:
+        return None
+    return urljoin(response.url, location)
 
 
 def request_kind(request: PlaywrightRequest, *, top_level: bool) -> RequestKind:
@@ -100,6 +140,8 @@ class BrowserSession:
         # The last refused or failed request since `begin_operation`: Chromium's error page
         # names neither the destination nor the cause.
         self.last_failure: Failure | None = None
+        # A main-frame redirect the guard held back, for the tool to make.
+        self.redirect: Redirect | None = None
         self.launch_error: str | None = None
         self._driver_cm: AbstractAsyncContextManager[Playwright] | None = None
         self._driver: Playwright | None = None
@@ -114,6 +156,20 @@ class BrowserSession:
 
     def begin_operation(self) -> None:
         self.last_failure = None
+        self.redirect = None
+
+    def held_redirect(self, page: Page) -> Redirect | None:
+        """The redirect the guard held back from `page`'s last navigation, if any."""
+        if self.redirect is not None and self.redirect.page is page:
+            return self.redirect
+        return None
+
+    def take_redirect(self, page: Page) -> Redirect | None:
+        """The redirect held back for `page`, handed over once."""
+        redirect = self.held_redirect(page)
+        if redirect is not None:
+            self.redirect = None
+        return redirect
 
     # --- Launch ---
 
@@ -189,27 +245,85 @@ class BrowserSession:
 
     async def _route_guard(self, route: Route, request: PlaywrightRequest) -> None:
         """Abort what the policy refuses and pass the rest. Every request of every type and
-        frame reaches here before the browser moves."""
+        frame reaches here before the browser moves, and so does every redirect: Chromium
+        follows one without asking any route, so the guard fetches the response itself and
+        reads where it leads before the browser may go there."""
+        page: Page | None
         try:
             frame = request.frame
-            top_level = frame == frame.page.main_frame
+            page = frame.page
+            top_level = frame == page.main_frame
         except PlaywrightError:
             # The frame is already gone; a top-level navigation is the strictest reading.
+            page = None
             top_level = True
         kind = request_kind(request, top_level=top_level)
-        reason = await self.policy.decide(
-            Request(
-                url=request.url,
-                kind=kind,
-                resource_type=request.resource_type,
-                top_level=top_level and kind == "navigation",
-            )
+        asked = Request(
+            url=request.url,
+            kind=kind,
+            resource_type=request.resource_type,
+            top_level=top_level and kind == "navigation",
         )
-        if reason is None:
+        if (reason := await self.policy.decide(asked)) is not None:
+            await self._refuse(route, request.url, reason)
+            return
+        if request.resource_type in _CONTINUED_RESOURCE_TYPES:
             await route.continue_()
             return
-        self.last_failure = Failure(request.url, reason)
-        await route.abort()
+        try:
+            response = await self._fetch(route, request, asked, page)
+            if response is not None:
+                await route.fulfill(response=response)
+        except PlaywrightError as exc:
+            await self._refuse(route, request.url, str(exc).splitlines()[0])
+
+    async def _fetch(
+        self, route: Route, request: PlaywrightRequest, asked: Request, page: Page | None
+    ) -> APIResponse | None:
+        """The response Chromium gets, every redirect on the way checked like the request that
+        led to it. A refused hop aborts the request. An allowed main-frame hop is held for the
+        tool to make, since a page's URL and history come from the navigation Chromium makes
+        itself (a 204 commits nothing). Any other hop is followed here; a frame's document is
+        then sent on to where the chain ended, so its links resolve against its real URL. None
+        when the route is already answered."""
+        timeout = self._launch_timeout_ms
+        response = await route.fetch(max_redirects=0, timeout=timeout)
+        url = request.url
+        hops = 0
+        while (hop := redirect_target(response)) is not None:
+            if asked.top_level:
+                if page is not None:
+                    self.redirect = Redirect(page, request.url, hop)
+                await route.fulfill(status=204)
+                return None
+            if (reason := await self.policy.decide(replace(asked, url=hop))) is not None:
+                await self._refuse(route, hop, reason)
+                return None
+            hops += 1
+            if hops > MAX_REDIRECTS:
+                await self._refuse(route, hop, TOO_MANY_REDIRECTS)
+                return None
+            if response.status in _METHOD_RESETTING_STATUSES and request.method not in (
+                "GET",
+                "HEAD",
+            ):
+                response = await route.fetch(
+                    url=hop, method="GET", post_data="", max_redirects=0, timeout=timeout
+                )
+            else:
+                response = await route.fetch(url=hop, max_redirects=0, timeout=timeout)
+            url = hop
+        if asked.kind == "subframe" and url != request.url:
+            # Chromium follows this one unchecked, to a URL checked just above.
+            await route.fulfill(status=302, headers={"Location": url})
+            return None
+        return response
+
+    async def _refuse(self, route: Route, url: str, reason: str) -> None:
+        self.last_failure = Failure(url, reason)
+        # The page may have gone while the response was fetched.
+        with contextlib.suppress(PlaywrightError):
+            await route.abort()
 
     async def _websocket_guard(self, websocket: WebSocketRoute) -> None:
         """`context.route` never sees a WebSocket, so without this a page could talk to

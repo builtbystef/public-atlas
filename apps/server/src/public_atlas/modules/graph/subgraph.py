@@ -157,17 +157,25 @@ async def _root(session: AsyncSession, filters: GraphFilters) -> Place:
 
 async def _ancestors(session: AsyncSession, place: Place) -> list[Place]:
     """The places above one, from the top down. A hierarchy is a few levels deep, so this walks
-    up a step at a time."""
+    up a step at a time, and stops where a parent link comes back round to a place already
+    passed, so a cycle in the data cannot hold the walk."""
     chain: list[Place] = []
+    seen = {place.id}
     parent_id = place.parent_place_id
-    while parent_id is not None:
+    while parent_id is not None and parent_id not in seen:
         parent = await session.get(Place, parent_id)
         if parent is None:
             break
         chain.append(parent)
+        seen.add(parent.id)
         parent_id = parent.parent_place_id
     chain.reverse()
     return chain
+
+
+# How far down a place tree is walked. A hierarchy is a few levels deep; the cap is what stops
+# the walk when a parent link comes back round.
+MAX_DEPTH = 32
 
 
 def _place_tree(root_id: uuid.UUID) -> CTE:
@@ -179,7 +187,7 @@ def _place_tree(root_id: uuid.UUID) -> CTE:
     )
     child = aliased(Place)
     step = select(child.id, (tree.c.depth + 1).label("depth")).where(
-        child.parent_place_id == tree.c.id
+        child.parent_place_id == tree.c.id, tree.c.depth < MAX_DEPTH
     )
     return tree.union_all(step)
 

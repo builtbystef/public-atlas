@@ -11,6 +11,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.saskatchewan import places as saskatchewan
 
+pytestmark = pytest.mark.lists
+
 # The census's 775 municipalities less the 17 villages restructured since and the two parts of
 # cities loaded by Alberta and Manitoba, plus the one resort village the interim list codes.
 CENSUS_MUNICIPALITIES = 775

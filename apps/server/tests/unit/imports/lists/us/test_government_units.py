@@ -18,6 +18,8 @@ from public_atlas.modules.imports.lists.us import (
     states_counties,
 )
 
+pytestmark = pytest.mark.lists
+
 # Every loaded place the sheet or the registry adds to: 3,031 counties and 35,549
 # municipalities.
 ENTRIES = 38580

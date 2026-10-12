@@ -13,6 +13,8 @@ from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.alberta import places as alberta
 
+pytestmark = pytest.mark.lists
+
 # The census's 326 municipalities and 8 improvement districts, less the 6 dissolved since.
 MUNICIPALITIES = 328
 SPECIAL_AREAS = 3

@@ -19,7 +19,8 @@ HTML = "text/html"
 # `mentions_any` already requires the quote to name the entity.
 MIN_QUOTE_CHARS = 12
 _HREF_VALUE = r"""(?:"([^"]*)"|'([^']*)'|([^\s>]+))"""
-_HREF = re.compile(rf"href\s*=\s*{_HREF_VALUE}", re.IGNORECASE)
+# An `href` attribute inside a tag; the same letters in a page's text are not a link.
+_HREF = re.compile(rf"<\w[^>]*?\bhref\s*=\s*{_HREF_VALUE}", re.IGNORECASE | re.DOTALL)
 _ANCHOR = re.compile(
     rf"<a\b[^>]*?\bhref\s*=\s*{_HREF_VALUE}[^>]*>(.*?)</a>", re.IGNORECASE | re.DOTALL
 )
@@ -34,6 +35,9 @@ _TITLE_LABEL = re.compile(r"^\s*title:\s*", re.IGNORECASE)
 _UNREAD_ELEMENTS = re.compile(
     r"<(script|style|noscript|template|svg)\b.*?</\1\s*>", re.IGNORECASE | re.DOTALL
 )
+# Code and comments: an address inside one is not a link the page offers. The `<template>`
+# blocks the capture hook appends for a page's frames stay, since their links are the page's.
+_UNLINKED_ELEMENTS = re.compile(r"<(script|style)\b.*?</\1\s*>", re.IGNORECASE | re.DOTALL)
 _COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 PASSAGE_CONTEXT_WORDS = 3
 # A best match this unlike the quote is noise, not a hint.
@@ -47,14 +51,40 @@ class Found:
     page: int | None
 
 
-def _squash(text: str) -> str:
-    """Normalized text with no whitespace at all, so a block boundary the agent's view ran
-    together ("325 Farr DriveP.O. Box") or the renderer broke still matches."""
-    return normalize_text(text).replace(" ", "")
-
-
 def _contains(haystack: str, needle: str) -> bool:
-    return needle in normalize_text(haystack) or _squash(needle) in _squash(haystack)
+    """Whether `needle` is in the normalized text of `haystack`, word for word: a quote that
+    starts or ends inside a word of the page ("Town of Ajax" on a page that says "Town of
+    Ajaxville") is not on the page. Whitespace is then ignored on both sides, so a block
+    boundary the agent's view ran together ("325 Farr DriveP.O. Box") or the renderer broke
+    still matches, at word edges all the same."""
+    text = normalize_text(haystack)
+    return _found_at_word_edges(text, needle) or _found_at_word_edges(
+        text, needle.replace(" ", ""), squashed=True
+    )
+
+
+def _found_at_word_edges(text: str, needle: str, *, squashed: bool = False) -> bool:
+    if not needle:
+        return False
+    positions = [index for index, char in enumerate(text) if char != " "] if squashed else None
+    searched = "".join(text[index] for index in positions) if positions is not None else text
+    start = searched.find(needle)
+    while start >= 0:
+        end = start + len(needle) - 1
+        first, last = (start, end) if positions is None else (positions[start], positions[end])
+        if _starts_a_word(text, first, needle) and _ends_a_word(text, last, needle):
+            return True
+        start = searched.find(needle, start + 1)
+    return False
+
+
+def _starts_a_word(text: str, first: int, needle: str) -> bool:
+    """A quote that begins with a letter or a digit must begin where the page's word does."""
+    return not needle[0].isalnum() or first == 0 or not text[first - 1].isalnum()
+
+
+def _ends_a_word(text: str, last: int, needle: str) -> bool:
+    return not needle[-1].isalnum() or last == len(text) - 1 or not text[last + 1].isalnum()
 
 
 def find_quote(text: str, quote: str) -> Found | None:
@@ -123,11 +153,18 @@ def same_address(first: str, second: str) -> bool:
     return key(first) == key(second)
 
 
+def _linkable_html(page_html: str) -> str:
+    """The page's HTML without its scripts, styles and comments: where its links are."""
+    return _COMMENT.sub(" ", _UNLINKED_ELEMENTS.sub(" ", page_html))
+
+
 def link_in_html(page_html: str, page_url: str, target: str) -> bool:
+    """Whether the page links to `target`: an `href` in its markup, not one in a script, a
+    style or a comment, which a reader cannot follow."""
     wanted = normalize_url(target)
     return any(
         _resolves_to(next(g for g in match.groups() if g is not None), page_url, wanted)
-        for match in _HREF.finditer(page_html)
+        for match in _HREF.finditer(_linkable_html(page_html))
     )
 
 
@@ -148,7 +185,7 @@ def link_text(page_html: str, page_url: str, target: str) -> str | None:
     """The visible text of the first anchor to `target`, or None when no anchor with text links
     there (the link may still be in an `<area>` or a bare `href`; `link_in_html` says)."""
     wanted = normalize_url(target)
-    for match in _ANCHOR.finditer(page_html):
+    for match in _ANCHOR.finditer(_linkable_html(page_html)):
         *hrefs, inner = match.groups()
         if not _resolves_to(next(g for g in hrefs if g is not None), page_url, wanted):
             continue

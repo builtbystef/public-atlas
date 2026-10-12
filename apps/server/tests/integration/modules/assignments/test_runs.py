@@ -5,6 +5,7 @@ or queued; a spawn obeys the run's mode and filter and never doubles open work; 
 decision spawns into the run it belongs to."""
 
 import uuid
+from decimal import Decimal
 from typing import TYPE_CHECKING
 
 import pytest
@@ -19,6 +20,7 @@ from public_atlas.modules.assignments.models import (
     Run,
     RunMode,
     RunStatus,
+    UsageKind,
 )
 from public_atlas.modules.assignments.schemas import RunFilter
 from public_atlas.modules.assignments.service import Spawn
@@ -480,3 +482,115 @@ def test_a_decision_with_no_run_going_spawns_nothing(
     body = client.post(f"/review-items/{item_id}/approve", json={}).json()
     assert len(body["spawn"]) == 1
     assert body["assignment_ids"] == []
+
+
+# --- Money ---
+
+
+def spend(
+    db: Database, assignment: Assignment, *, searches: int = 0, output_tokens: int = 0
+) -> None:
+    """Priced usage on the assignment: `searches` Brave requests at $0.005 each and one Luna
+    call of a million uncached input tokens ($0.10) plus `output_tokens` at $0.50 per million."""
+
+    async def record() -> None:
+        async with db.session() as session:
+            for _ in range(searches):
+                await service.record_usage(
+                    session,
+                    assignment_id=assignment.id,
+                    kind=UsageKind.SEARCH,
+                    provider="brave",
+                    purpose="find_homepage",
+                    units=1,
+                )
+            await service.record_usage(
+                session,
+                assignment_id=assignment.id,
+                kind=UsageKind.MODEL,
+                provider="gpt-6-luna",
+                purpose=assignment.type.value,
+                units=1_000_000 + output_tokens,
+                output_units=output_tokens,
+            )
+            await session.commit()
+
+    db.run(record)
+
+
+def test_progress_sums_each_runs_cost_alone(
+    db: Database, world: World, build: type[Build], queue: InlineConnector
+):
+    """Two runs with usage keep their costs apart, a run with nothing spent reads zero, and
+    `by_result` has an entry only for assignments that have ended."""
+    assert queue.resources is not None
+    jobs = queue.resources.jobs
+
+    async def scenario() -> tuple[Run, Run, Assignment, Assignment]:
+        async with db.session() as session:
+            second = await service.create_run(
+                session, jobs, name="second", country_code="CA", mode=RunMode.STEP, seed=False
+            )
+            empty = await service.create_run(
+                session, jobs, name="empty", country_code="CA", mode=RunMode.STEP, seed=False
+            )
+            first_work = await build.open_assignment(
+                session, world.run, FIND_SOURCES, world.county.id, status=AssignmentStatus.RUNNING
+            )
+            second_work = await build.open_assignment(
+                session, second, FIND_HOMEPAGE, world.town.id, status=AssignmentStatus.RUNNING
+            )
+            service.lifecycle.finish(second_work, AssignmentResult.COMPLETE, summary="done")
+            await session.commit()
+            return second, empty, first_work, second_work
+
+    second, empty, first_work, second_work = db.run(scenario)
+    # $0.10 of Luna in the first run; two searches and $0.10 plus $0.05 of output in the second.
+    spend(db, first_work)
+    spend(db, second_work, searches=2, output_tokens=100_000)
+
+    async def read() -> dict[uuid.UUID, service.Progress]:
+        async with db.session() as session:
+            return await service.progress_many(session, [world.run.id, second.id, empty.id])
+
+    found = db.run(read)
+    assert found[world.run.id] == service.Progress(
+        by_status={AssignmentStatus.RUNNING: 1}, by_result={}, cost=Decimal("0.100000")
+    )
+    assert found[second.id] == service.Progress(
+        by_status={AssignmentStatus.FINISHED: 1},
+        by_result={AssignmentResult.COMPLETE: 1},
+        cost=Decimal("0.160000"),
+    )
+    assert found[empty.id] == service.Progress(by_status={}, by_result={}, cost=Decimal(0))
+
+
+def test_an_assignments_detail_carries_its_cost(
+    client: TestClient, db: Database, world: World, build: type[Build]
+):
+    """The detail's `cost` is the sum of the assignment's own usage rows, and the run's
+    progress sums every assignment of the run: the one priced here and a sibling with a search
+    of its own."""
+
+    async def scenario() -> tuple[Assignment, Assignment]:
+        async with db.session() as session:
+            priced = await build.open_assignment(
+                session, world.run, FIND_HOMEPAGE, world.town.id, status=AssignmentStatus.RUNNING
+            )
+            sibling = await build.open_assignment(
+                session, world.run, FIND_SOURCES, world.county.id, status=AssignmentStatus.RUNNING
+            )
+            await session.commit()
+            return priced, sibling
+
+    priced, sibling = db.run(scenario)
+    spend(db, priced, searches=1, output_tokens=100_000)
+    spend(db, sibling, searches=3)
+    detail = client.get(f"/assignments/{priced.id}").json()
+    # One search ($0.005), a million uncached input ($0.10) and 100k output ($0.05).
+    assert detail["cost"] == "0.155000"
+    assert client.get(f"/assignments/{sibling.id}").json()["cost"] == "0.115000"
+    progress = client.get(f"/runs/{world.run.id}").json()["progress"]
+    assert progress["cost"] == "0.270000"
+    listed = client.get("/runs").json()["items"]
+    assert [row["progress"]["cost"] for row in listed] == ["0.270000"]

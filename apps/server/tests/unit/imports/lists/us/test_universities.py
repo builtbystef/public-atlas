@@ -11,6 +11,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import universities
 
+pytestmark = pytest.mark.lists
+
 ENTRIES = 1738
 TYPED = {"university": 889, "college": 849}
 PLACED = {"county": 1647, "municipality": 65, "state": 26}

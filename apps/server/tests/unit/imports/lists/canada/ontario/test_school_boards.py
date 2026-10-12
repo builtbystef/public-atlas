@@ -11,7 +11,7 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.canada.ontario import school_boards
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 DISTRICT_BOARDS = 72
 # 13 rows, less the ministry's unit and Grandview's second address.
@@ -20,8 +20,8 @@ FRENCH = 13
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(school_boards)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(school_boards)
 
 
 @pytest.fixture(scope="module")

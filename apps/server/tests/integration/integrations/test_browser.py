@@ -155,6 +155,42 @@ def test_a_link_added_after_load_or_inside_a_frame_is_in_the_stored_copy(
     assert "Council 2026-09-30" not in html_text(page_html)
 
 
+def test_a_frame_reached_by_redirect_resolves_its_links_against_where_it_ended(
+    db: Database, object_store: MemoryObjectStore, site: FixtureSite, assignment: Assignment
+):
+    """The guard checks a frame's redirect chain itself, then sends Chromium to where it ended,
+    so the frame's document has its real URL and a relative link in it resolves against that,
+    not against the URL the page embedded."""
+    browser = make_browser(PageCapture(db.session, object_store, assignment_id=assignment.id))
+
+    async def drive() -> list[str]:
+        async with browser:
+            await browser.navigate(f"{site.allowed}/meetings-moved")
+            page = await browser.session.ensure_page()
+            return [frame.url for frame in page.frames[1:]]
+
+    frame_urls = db.run(drive)
+    assert frame_urls == [f"{site.allowed}/portal"]
+    assert site.requested.count("/portal-moved") == 1
+    # Once by the guard, to learn the chain ends there, and once by the frame for itself.
+    assert site.requested.count("/portal") == 2
+
+    async def stored() -> str:
+        async with db.session() as session:
+            snapshot = (
+                await session.scalars(
+                    select(Snapshot)
+                    .join(Webpage, Webpage.id == Snapshot.webpage_id)
+                    .where(Webpage.url == f"{site.allowed}/meetings-moved")
+                )
+            ).one()
+            return (await object_store.get(snapshot.bytes_key)).decode()
+
+    page_html = db.run(stored)
+    url = f"{site.allowed}/meetings-moved"
+    assert link_in_html(page_html, url, f"{site.allowed}/meeting?id=7")
+
+
 def test_a_redirect_is_recorded_against_the_url_the_browser_asked_for(
     db: Database, object_store: MemoryObjectStore, site: FixtureSite, assignment: Assignment
 ):
@@ -169,9 +205,11 @@ def test_a_redirect_is_recorded_against_the_url_the_browser_asked_for(
 
     out = db.run(drive)
     assert "Fixture Transit Commission" in out["moved"]
-    # Chromium follows the redirect itself; the check after the load bounces the page.
-    assert out["gone"].startswith("Error: navigate reached a domain not in allowed_domains")
-    assert "SECRET" not in out["gone"]
+    # The guard holds the hop back and the tool refuses it, so the page stays where it was.
+    assert out["gone"] == (
+        f"Error: navigate was redirected to {site.outside}/hospital: "
+        f"{policy_module.NOT_ALLOWED}. The browser is still at {site.allowed}/agency."
+    )
 
     async def check() -> tuple[dict[str, str | None], list[str]]:
         async with db.session() as session:
@@ -220,3 +258,69 @@ def test_the_other_tools_read_the_page_the_agent_is_on(
     screenshot = out["screenshot"]
     assert not isinstance(screenshot, Refusal)
     assert getattr(screenshot, "png", b"").startswith(b"\x89PNG")
+
+
+def test_a_redirect_off_the_allowlist_is_never_requested(
+    db: Database, object_store: MemoryObjectStore, site: FixtureSite, assignment: Assignment
+):
+    """Chromium follows a redirect without asking any route, so the guard reads each hop before
+    the browser may make it: the off-list host sees no request, whether the hop is the first or
+    the second, and whether a navigation, a click or a script's fetch led there. A hop that
+    stays on the allowlist is made, and the page ends at its real URL."""
+    capture = PageCapture(db.session, object_store, assignment_id=assignment.id)
+    browser = make_browser(capture)
+
+    async def drive() -> dict[str, str]:
+        out: dict[str, str] = {}
+        async with browser:
+            out["gone"] = str(await browser.navigate(f"{site.allowed}/gone"))
+            out["chain"] = str(await browser.navigate(f"{site.allowed}/chain"))
+            out["twice"] = str(await browser.navigate(f"{site.allowed}/moved-twice"))
+            out["leaky"] = str(await browser.navigate(f"{site.allowed}/leaky"))
+            out["api"] = str(await browser.wait_for(text="api: failed"))
+            out["click"] = str(await browser.click("#gone"))
+        return out
+
+    out = db.run(drive)
+    hop = f"{site.outside}/hospital"
+    refused = f"was redirected to {hop}: {policy_module.NOT_ALLOWED}. The browser is still at"
+    assert out["gone"] == f"Error: navigate {refused} about:blank."
+    assert out["chain"] == f"Error: navigate {refused} about:blank."
+    assert out["twice"].startswith(f"URL: {site.allowed}/agency\nTitle: Fixture Transit Commission")
+    assert out["api"].startswith("Found 'api: failed'.")
+    assert out["click"] == f"Error: click {refused} {site.allowed}/leaky."
+    assert "SECRET" not in "".join(out.values())
+    # The host off the allowlist was never asked for anything.
+    assert site.requested_outside == []
+    assert site.requested.count("/gone") == 3
+    assert site.requested.count("/api/old") == 1
+    assert "/api/secret" not in site.requested
+    assert "/hospital" not in site.requested
+    assert all(b"SECRET" not in data for data, _ in object_store.objects.values())
+
+    async def check() -> tuple[dict[str, str | None], list[str], list[str]]:
+        async with db.session() as session:
+            pages = await session.execute(select(Webpage.url, Webpage.redirects_to_url))
+            blocked = list(
+                await session.scalars(select(BlockedAttempt.url).order_by(BlockedAttempt.at))
+            )
+            stored = list(
+                await session.scalars(
+                    select(Webpage.url).join(Snapshot, Snapshot.webpage_id == Webpage.id)
+                )
+            )
+            return dict(pages.tuples().all()), blocked, sorted(stored)
+
+    pages, blocked, stored = db.run(check)
+    # Every URL asked for is on record as leading where it led; neither the refused hop nor the
+    # hop in the middle of a chain is a page of its own, since neither was opened.
+    assert pages == {
+        f"{site.allowed}/gone": hop,
+        f"{site.allowed}/chain": hop,
+        f"{site.allowed}/moved-twice": f"{site.allowed}/agency",
+        f"{site.allowed}/agency": None,
+        f"{site.allowed}/leaky": None,
+    }
+    assert blocked == [hop, hop, hop]
+    assert stored == [f"{site.allowed}/agency", f"{site.allowed}/leaky"]
+    assert capture.visited == [f"{site.allowed}/agency", f"{site.allowed}/leaky"]

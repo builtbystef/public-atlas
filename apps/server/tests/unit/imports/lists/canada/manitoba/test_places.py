@@ -13,6 +13,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.manitoba import places as manitoba
 
+pytestmark = [pytest.mark.lists, pytest.mark.parse]
+
 # The census's 138 municipalities, the two parts of Mountain as one.
 MUNICIPALITIES = 137
 DIRECTORY_ENTRIES = 137

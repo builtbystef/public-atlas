@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from public_atlas.cli import build_parser
@@ -32,6 +34,17 @@ def test_lists_manifest_is_a_command():
     assert (args.command, args.action) == ("lists", "manifest")
     with pytest.raises(SystemExit):
         build_parser().parse_args(["lists"])
+
+
+def test_lists_fetch_takes_a_seed_and_pack_takes_the_archive_to_write():
+    args = build_parser().parse_args(["lists", "fetch"])
+    assert (args.action, args.seed) == ("fetch", None)
+    args = build_parser().parse_args(["lists", "fetch", "--seed", "official-lists.tar.gz"])
+    assert args.seed == Path("official-lists.tar.gz")
+    args = build_parser().parse_args(["lists", "pack", "out/official-lists.tar.gz"])
+    assert (args.action, args.archive) == ("pack", Path("out/official-lists.tar.gz"))
+    with pytest.raises(SystemExit):
+        build_parser().parse_args(["lists", "pack"])
 
 
 def test_run_create_takes_a_filter_and_a_mode():

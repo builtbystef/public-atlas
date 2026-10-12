@@ -189,3 +189,30 @@ def test_pruning_drops_uncited_bytes_but_keeps_objects_another_snapshot_shares(
     assert mine.bytes_key in remaining
     assert theirs.text_key in remaining
     assert uncited.bytes_key not in remaining
+
+
+def test_a_blocked_redirect_is_on_record(
+    db: Database, object_store: MemoryObjectStore, assignment: Assignment
+):
+    """A page that forwards off the allowlist: the URL asked for is on record as leading to
+    the refused one, which has no row and no snapshot, so `domain_moved` can see the move."""
+    hook = capture.PageCapture(db.session, object_store, assignment_id=assignment.id)
+
+    async def scenario() -> tuple[dict[str, str | None], list[tuple[str, str]], int]:
+        await hook.blocked(
+            "https://evil.example/",
+            "domain not in allowed_domains",
+            action="navigate",
+            requested_url="https://www.toronto.ca/old",
+        )
+        async with db.session() as session:
+            pages = await session.execute(select(Webpage.url, Webpage.redirects_to_url))
+            attempts = await session.execute(select(BlockedAttempt.url, BlockedAttempt.reason))
+            snapshots = len((await session.scalars(select(Snapshot))).all())
+            return dict(pages.tuples().all()), [tuple(row) for row in attempts.all()], snapshots
+
+    pages, attempts, snapshots = db.run(scenario)
+    assert pages == {"https://www.toronto.ca/old": "https://evil.example/"}
+    assert attempts == [("https://evil.example/", "domain not in allowed_domains")]
+    assert snapshots == 0
+    assert (hook.visited, hook.blocked_urls) == ([], ["https://evil.example/"])

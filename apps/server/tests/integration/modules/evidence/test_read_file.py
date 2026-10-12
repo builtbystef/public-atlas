@@ -10,6 +10,7 @@ from sqlalchemy import select
 from public_atlas.integrations.browser import BrowserPolicy
 from public_atlas.modules.evidence import service
 from public_atlas.modules.evidence.models import BlockedAttempt, Snapshot, TextStatus
+from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph.models import Webpage
 
 if TYPE_CHECKING:
@@ -285,3 +286,60 @@ def test_a_bot_check_page_is_an_error_not_a_file(
 
     assert db.run(check) == ([(url, "bot check page (pardon our interruption)")], 0)
     assert parses(queue) == 0
+
+
+def test_a_failed_or_html_snapshot_is_never_reused(
+    db: Database,
+    site: FixtureSite,
+    assignment: Assignment,
+    another_assignment: Assignment,
+    queue: InlineConnector,
+):
+    """What another assignment fetched lately is reused only when it is a file with text: a
+    parse that failed is tried again, and a browser capture of a page is not a file."""
+    res = resources(queue)
+    legacy = f"{site.allowed}/legacy.doc"
+    failed = read(db, res, assignment, legacy)
+    assert failed == f"Error: {legacy} could not be parsed: legacy .doc files are not parsed"
+    assert site.requested.count("/legacy.doc") == 1
+    assert read(db, res, another_assignment, legacy) == failed
+    assert site.requested.count("/legacy.doc") == 2
+
+    page = f"{site.allowed}/agency"
+
+    async def capture_page() -> None:
+        async with db.session() as session:
+            webpage = await graph.ensure_webpage(session, page, assignment_id=assignment.id)
+            await service.store_snapshot(
+                session,
+                res.object_store,
+                webpage,
+                b"<html><body>Fixture Transit Commission</body></html>",
+                text="Fixture Transit Commission",
+                media_type=service.HTML,
+                filename="page.html",
+                assignment_id=assignment.id,
+            )
+            await session.commit()
+
+    db.run(capture_page)
+    assert site.requested.count("/agency") == 0
+    read(db, res, another_assignment, page)
+    assert site.requested.count("/agency") == 1
+
+    async def rows() -> list[tuple[str, TextStatus, bool]]:
+        async with db.session() as session:
+            found = await session.execute(
+                select(Webpage.url, Snapshot.text_status, Snapshot.assignment_id == assignment.id)
+                .join(Snapshot, Snapshot.webpage_id == Webpage.id)
+                .order_by(Webpage.url, Snapshot.id)
+            )
+            return [tuple(row) for row in found.all()]
+
+    # Each assignment has a row of its own for each: nothing was shared.
+    assert db.run(rows) == [
+        (page, TextStatus.READY, True),
+        (page, TextStatus.READY, False),
+        (legacy, TextStatus.FAILED, True),
+        (legacy, TextStatus.FAILED, False),
+    ]

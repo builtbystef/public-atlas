@@ -1,7 +1,10 @@
 """Creating and finding places and institutions, and the duplicate search: trigram similarity,
 one row per entity, at most five, and never a body of another designator."""
 
+from itertools import pairwise
 from typing import TYPE_CHECKING
+
+from sqlalchemy import func, select
 
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
@@ -158,3 +161,66 @@ def test_the_duplicate_search(db: Database, world: World, build: type[Build]):
         name for name, _ in out["plain"]
     }
     assert out["nothing"] == []
+
+
+def test_redirect_chains_stop_at_five_hops_and_at_a_loop(db: Database):
+    async def scenario() -> tuple[list[str], list[str], list[str]]:
+        async with db.session() as session:
+            hops = [f"https://www.elmwood.ca/{number}" for number in range(8)]
+            for start, target in pairwise(hops):
+                page = await graph.ensure_webpage(session, start)
+                page.redirects_to_url = target
+            for start, target in (
+                ("https://a.example/", "https://b.example/"),
+                ("https://b.example/", "https://a.example/"),
+            ):
+                page = await graph.ensure_webpage(session, start)
+                page.redirects_to_url = target
+            await session.flush()
+            return (
+                await graph.redirect_chain(session, hops[0]),
+                await graph.redirect_chain(session, "https://a.example/"),
+                await graph.redirect_chain(session, "https://www.elmwood.ca/none"),
+            )
+
+    long, loop, none = db.run(scenario)
+    assert long == [f"https://www.elmwood.ca/{number}" for number in range(1, 6)]
+    assert loop == ["https://b.example/", "https://a.example/"]
+    assert none == []
+
+
+def test_similar_places_respects_the_floor(db: Database, world: World, build: type[Build]):
+    """A name less like the one asked for than the floor is not offered, however few the
+    candidates. The scores are the database's own, so the fixture is checked against the
+    floor before the search is."""
+
+    async def scenario() -> tuple[float, float, list[str]]:
+        async with db.session() as session:
+            for name in ("Brockville", "Oakvale"):
+                await build.verified_place(session, name, "municipality", world.elm)
+            scores = [
+                await session.scalar(select(func.similarity(name, "Oakville")))
+                for name in ("Brockville", "Oakvale")
+            ]
+            found = await graph.similar_places(
+                session, "CA", "Oakville", rules=world.rules, levels=["municipality"]
+            )
+            return float(scores[0] or 0), float(scores[1] or 0), [m.entity.name for m in found]
+
+    below, above, found = db.run(scenario)
+    assert below < graph.SIMILARITY_FLOOR <= above
+    assert found == ["Oakville", "Oakvale"]
+
+
+def test_an_alias_the_owner_has_is_not_added_twice(db: Database, world: World, build: type[Build]):
+    async def scenario() -> tuple[bool, bool, list[str]]:
+        async with db.session() as session:
+            library = await build.candidate_institution(session, world.oakville, "Oakville Library")
+            added = await graph.add_alias(session, library, "OPL", language="en", entered_by=AGENT)
+            again = await graph.add_alias(
+                session, library, "  OPL ", language="fr", entered_by=EnteredBy.MANUAL
+            )
+            await session.commit()
+            return added, again, [alias.text for alias in await graph.names_of(session, library)]
+
+    assert db.run(scenario) == (True, False, ["Oakville Library", "OPL"])

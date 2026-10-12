@@ -11,6 +11,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.us import census, municipalities, states_counties
 
+pytestmark = pytest.mark.lists
+
 # 19,469 places of status A and the two of status B.
 PLACES = 19471
 # 16,147 subdivisions of status A and 17 of status B; the 29 of status C are merged.

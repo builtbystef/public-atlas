@@ -6,8 +6,9 @@ what it finishes spawns, and the pages nothing cites are pruned; a video is stor
 
 import shutil
 import uuid
+from decimal import Decimal
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from pydantic_ai.messages import (
@@ -21,11 +22,13 @@ from pydantic_ai.models.function import AgentInfo
 from pydantic_ai.usage import RequestUsage
 from sqlalchemy import select
 
+from public_atlas.integrations.browser import Browser, BrowserPolicy, CaptureHook, Request
+from public_atlas.integrations.browser import policy as policy_module
 from public_atlas.jobs.context import Attempt, current_attempt
 from public_atlas.modules.agent import runner, video
 from public_atlas.modules.agent.models import AgentRunEvent, EventKind
 from public_atlas.modules.assignments import service as assignments
-from public_atlas.modules.assignments.descriptors import descriptor_for
+from public_atlas.modules.assignments.descriptors import HANDOFF_MODEL, descriptor_for
 from public_atlas.modules.assignments.models import (
     Assignment,
     AssignmentResult,
@@ -39,18 +42,23 @@ from public_atlas.modules.evidence.models import EvidenceKind, Snapshot
 from public_atlas.modules.graph.models import EnteredBy
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
 
     from fastapi.testclient import TestClient
     from tests.integration.conftest import Database, InlineConnector
     from tests.integration.modules.conftest import Build, Script, World
 
+    from public_atlas.config import Settings
+    from public_atlas.integrations.ai import FixedModels
     from public_atlas.integrations.storage.memory import MemoryObjectStore
+    from public_atlas.modules.agent.context import SessionContext
     from public_atlas.resources import Resources
 
 FIND_SOURCES = AssignmentType.FIND_SOURCES
 FIND_INSTITUTIONS = AssignmentType.FIND_INSTITUTIONS
 WINDOW = descriptor_for(FIND_SOURCES).model.context_window
+# A small request: 220 tokens, none cached.
+SMALL = RequestUsage(input_tokens=200, output_tokens=20)
 
 
 @pytest.fixture
@@ -62,6 +70,7 @@ def make(db: Database, world: World, build: type[Build]) -> Callable[..., Assign
         subject_id: uuid.UUID | None = None,
         *,
         budget_requests: int = 10,
+        budget_tokens: int = 10_000_000,
     ) -> Assignment:
         async def create() -> Assignment:
             async with db.session() as session:
@@ -69,7 +78,7 @@ def make(db: Database, world: World, build: type[Build]) -> Callable[..., Assign
                     session, world.run, assignment_type, subject_id or world.county.id
                 )
                 row.budget_requests = budget_requests
-                row.budget_tokens = 10_000_000
+                row.budget_tokens = budget_tokens
                 await session.commit()
                 return row
 
@@ -120,12 +129,13 @@ def test_a_session_runs_the_tools_accounts_for_its_calls_and_finishes(
         assert "search" not in tools
         calls = count_calls(messages)
         if calls == 0:
-            return ModelResponse(parts=[ToolCallPart("status", {})])
+            return ModelResponse(parts=[ToolCallPart("status", {})], usage=SMALL)
         if calls == 1:
             returns = messages[-1].parts
             seen.append(str(getattr(returns[0], "content", "")))
             return ModelResponse(
-                parts=[ToolCallPart("finish", {"summary": "Done.", "types_not_found": ["castle"]})]
+                parts=[ToolCallPart("finish", {"summary": "Done.", "types_not_found": ["castle"]})],
+                usage=SMALL,
             )
         assert isinstance(messages[-1].parts[0], RetryPromptPart)
         # The checklist: every source type expected of the county is named as not found.
@@ -150,9 +160,8 @@ def test_a_session_runs_the_tools_accounts_for_its_calls_and_finishes(
         AssignmentResult.COMPLETE,
         "Found the budget page.",
     )
-    assert (row.sessions, row.requests_used) == (1, 3)
-    # The scripted model estimates tokens for the responses given none; the last is as set.
-    assert row.tokens_used >= 1050
+    # Three requests: two of 220 tokens and one of 1050.
+    assert (row.sessions, row.requests_used, row.tokens_used) == (1, 3, 1490)
     assert row.started_at is not None
     assert row.finished_at is not None
     assert row.handoff_note is None
@@ -169,9 +178,16 @@ def test_a_session_runs_the_tools_accounts_for_its_calls_and_finishes(
             )
 
     rows = db.run(usage)
-    assert [(u.provider, u.purpose) for u in rows] == [("scripted", "find_sources")] * 3
-    assert (rows[-1].units, rows[-1].cached_units) == (1050, 800)
-    assert sum(u.units for u in rows) == row.tokens_used
+    assert [(u.provider, u.purpose) for u in rows] == [("gpt-6-luna", "find_sources")] * 3
+    assert [(u.units, u.cached_units) for u in rows] == [(220, 0), (220, 0), (1050, 800)]
+    # Priced from the list as a real session's calls are: 200 uncached input at $0.10 per
+    # million and 20 output at $0.50 is $0.000030; 200 uncached, 800 cached at $0.01 and 50
+    # output is $0.000053.
+    assert [u.cost for u in rows] == [
+        Decimal("0.000030"),
+        Decimal("0.000030"),
+        Decimal("0.000053"),
+    ]
     events = events_of(assignment.id)
     assert [(e.kind, e.tool) for e in events] == [
         (EventKind.PROMPT, None),
@@ -284,8 +300,114 @@ def test_a_spent_budget_ends_the_assignment_before_any_request(
     row = reload(assignment.id)
     assert calls == 0
     assert (row.status, row.result) == (AssignmentStatus.FINISHED, AssignmentResult.OUT_OF_BUDGET)
-    assert row.summary is not None
-    assert row.summary.startswith("Budget exhausted")
+    assert row.summary == "Budget exhausted: 2 of 2 requests and 0 of 10000000 tokens used"
+
+
+def test_a_spent_token_budget_ends_the_assignment_out_of_budget(
+    db: Database,
+    scripted: Callable[[Script], Resources],
+    make: Callable[..., Assignment],
+    reload: Callable[[uuid.UUID], Assignment],
+):
+    """The token budget binds like the request budget: with requests left but the tokens spent,
+    no request is made; and a session whose calls cross the token limit ends the same way, with
+    every call that was made accounted for, the one that crossed the limit included."""
+    calls = 0
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        nonlocal calls
+        calls += 1
+        return ModelResponse(
+            parts=[ToolCallPart("status", {})],
+            usage=RequestUsage(input_tokens=600, output_tokens=10),
+        )
+
+    res = scripted(script)
+    spent = make(budget_tokens=1000)
+
+    async def spend_the_tokens() -> None:
+        async with db.session() as session:
+            row = await session.get_one(Assignment, spent.id)
+            row.tokens_used = 1000
+            await session.commit()
+
+    db.run(spend_the_tokens)
+    assert db.run(runner.run_assignment, res, spent.id) == "out_of_budget"
+    row = reload(spent.id)
+    assert calls == 0
+    assert (row.status, row.result, row.requests_used, row.tokens_used) == (
+        AssignmentStatus.FINISHED,
+        AssignmentResult.OUT_OF_BUDGET,
+        0,
+        1000,
+    )
+    assert row.summary == "Budget exhausted: 0 of 10 requests and 1000 of 1000 tokens used"
+
+    # 610 tokens fit under 1000; the second call takes the session to 1220 and over.
+    crossing = make(budget_tokens=1000)
+    assert db.run(runner.run_assignment, res, crossing.id) == "out_of_budget"
+    row = reload(crossing.id)
+    assert calls == 2
+    assert (row.status, row.result, row.requests_used, row.tokens_used) == (
+        AssignmentStatus.FINISHED,
+        AssignmentResult.OUT_OF_BUDGET,
+        2,
+        1220,
+    )
+    assert row.summary == "Budget exhausted: 2 of 10 requests and 1220 of 1000 tokens used"
+
+    async def usage() -> list[Usage]:
+        async with db.session() as session:
+            return list(
+                await session.scalars(
+                    select(Usage).where(Usage.assignment_id == crossing.id).order_by(Usage.at)
+                )
+            )
+
+    # Both calls, the one the limit cut off included: 600 uncached input at $0.10 per million
+    # and 10 output at $0.50 is $0.000065 each.
+    assert [(u.provider, u.units, u.cost) for u in db.run(usage)] == [
+        ("gpt-6-luna", 610, Decimal("0.000065")),
+        ("gpt-6-luna", 610, Decimal("0.000065")),
+    ]
+
+
+def test_handoff_notes_are_written_by_the_cheap_model(
+    db: Database,
+    world: World,
+    scripted: Callable[[Script], Resources],
+    make: Callable[..., Assignment],
+    reload: Callable[[uuid.UUID], Assignment],
+    prompt_of: Callable[[list[ModelMessage]], str],
+):
+    """A session runs on its type's model; the note it hands off with is asked of the handoff
+    model, which reasons less; the next session is back on the type's model."""
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        prompt = prompt_of(messages)
+        if prompt.startswith("Your context is nearly full"):
+            return ModelResponse(parts=[TextPart("Halfway through the budget page.")])
+        if "Handoff note from the previous session" in prompt:
+            not_found = world.rules.expected_source_types(world.county.institution_type)
+            return ModelResponse(
+                parts=[ToolCallPart("finish", {"summary": "Done.", "types_not_found": not_found})]
+            )
+        return ModelResponse(
+            parts=[ToolCallPart("status", {})],
+            usage=RequestUsage(input_tokens=WINDOW // 2 + 1, output_tokens=10),
+        )
+
+    res = scripted(script)
+    assignment = make()
+    assert db.run(runner.run_assignment, res, assignment.id) == "complete"
+    assert reload(assignment.id).handoff_note == "Halfway through the budget page."
+    session_model = descriptor_for(FIND_SOURCES).model
+    assert session_model != HANDOFF_MODEL
+    assert cast("FixedModels", res.models).choices == [
+        session_model,
+        HANDOFF_MODEL,
+        session_model,
+    ]
 
 
 def test_a_budget_exhausted_mid_session_ends_the_assignment_out_of_budget(
@@ -302,8 +424,9 @@ def test_a_budget_exhausted_mid_session_ends_the_assignment_out_of_budget(
     assert db.run(runner.run_assignment, res, assignment.id) == "out_of_budget"
     row = reload(assignment.id)
     assert (row.result, row.requests_used, row.sessions) == (AssignmentResult.OUT_OF_BUDGET, 3, 1)
-    assert row.summary is not None
-    assert row.summary.startswith("Budget exhausted")
+    assert row.summary == (
+        f"Budget exhausted: 3 of 3 requests and {row.tokens_used} of 10000000 tokens used"
+    )
 
 
 def test_a_failed_job_ends_the_assignment_failed_on_the_last_attempt_only(
@@ -626,3 +749,52 @@ def test_a_stalled_assignment_is_told_once_then_ended_complete_across_sessions(
         "left to open." in str(noticed[0].content)
     )
     assert "41 moves without a finding" in str(noticed[1].content)
+
+
+def test_a_session_keeps_private_addresses_blocked(
+    db: Database,
+    world: World,
+    scripted: Callable[[Script], Resources],
+    make: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+    monkeypatch: pytest.MonkeyPatch,
+):
+    """The production wiring, in both places a policy is built: the browser a session gets and
+    the policy `read_file` fetches under when no browser was started. The settings' switch that
+    lifts the block exists for a fixture server only, and it is off."""
+    built: list[BrowserPolicy] = []
+    create_browser = runner.create_browser
+
+    def recording(
+        settings: Settings,
+        allowed_domains: Sequence[str],
+        hook: CaptureHook | None,
+        *,
+        allow_private: bool = False,
+        video_dir: Path | None = None,
+    ) -> Browser:
+        browser = create_browser(
+            settings, allowed_domains, hook, allow_private=allow_private, video_dir=video_dir
+        )
+        built.append(browser.policy)
+        return browser
+
+    monkeypatch.setattr(runner, "create_browser", recording)
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        not_found = world.rules.expected_source_types(world.county.institution_type)
+        return ModelResponse(
+            parts=[
+                ToolCallPart("finish", {"summary": "Nothing here.", "types_not_found": not_found})
+            ]
+        )
+
+    res = scripted(script)
+    assert res.settings.browser_allow_private_addresses is False
+    assert db.run(runner.run_assignment, res, make().id) == "complete"
+    metadata = Request(url="http://169.254.169.254/latest/meta-data/", kind="navigation")
+    assert [policy.block_private_addresses for policy in built] == [True]
+    assert built[0].refuse(metadata) == policy_module.PRIVATE_ADDRESS
+    without_browser = context(make()).file_policy()
+    assert without_browser.block_private_addresses is True
+    assert without_browser.refuse(metadata) == policy_module.PRIVATE_ADDRESS

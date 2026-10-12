@@ -12,7 +12,7 @@ from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.canada.ontario import fippa_bodies
 from public_atlas.shared.text import name_key
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 HOSPITALS = 144
 COLLEGES = 24
@@ -23,8 +23,8 @@ HOMEPAGES = HOSPITALS + COLLEGES + UNIVERSITIES - 3
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(fippa_bodies)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(fippa_bodies)
 
 
 @pytest.fixture(scope="module")

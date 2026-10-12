@@ -10,6 +10,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.newfoundland import places as newfoundland
 
+pytestmark = pytest.mark.lists
+
 MUNICIPALITIES = 277
 CITIES = 3
 INUIT_COMMUNITY_GOVERNMENTS = 5

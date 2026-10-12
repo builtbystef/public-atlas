@@ -13,6 +13,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.new_brunswick import places as new_brunswick
 
+pytestmark = [pytest.mark.lists, pytest.mark.parse]
+
 LOCAL_GOVERNMENTS = 77
 TYPED = {"C": 8, "TV": 30, "VL": 21, "RCR": 17, "MRM": 1}
 RURAL_DISTRICTS = 12

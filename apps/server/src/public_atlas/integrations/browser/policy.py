@@ -1,7 +1,8 @@
 """Where the browser may go, decided in one place: the allowlist with subdomains, private and
-link-local addresses (a hostname is resolved first), `robots.txt`, the pacing shared by every
-session in the process, and the resource types never fetched. The browser's route guard, its
-tools and the plain HTTP fetches of `read_file` and `robots.txt` all ask this object."""
+link-local addresses (a hostname is resolved first), `robots.txt` (its rules and its
+`Crawl-delay`), the pacing shared by every session in the process, and the resource types never
+fetched. The browser's route guard, its tools and the plain HTTP fetches of `read_file` and
+`robots.txt` all ask this object."""
 
 import asyncio
 import ipaddress
@@ -52,6 +53,10 @@ NOT_ALLOWED = "domain not in allowed_domains"
 ROBOTS_DISALLOWED = "disallowed by robots.txt"
 
 ROBOTS_TIMEOUT = 10.0
+# The longest `Crawl-delay` a host's `robots.txt` can set between its page loads. A site asking
+# for more would hold a session for the rest of its budget; a minute is already a crawl, not a
+# visit.
+MAX_CRAWL_DELAY = 60.0
 # Seconds a host that answered 429 rests when it gave no usable `Retry-After`.
 THROTTLE_BACKOFF = 120.0
 # Hops `get_within_policy` follows before giving up; each hop is checked like the first.
@@ -301,9 +306,18 @@ class BrowserPolicy:
         # consecutive slots rather than the same one.
         now = time.monotonic()
         slot = max(now, _next_slot.get(netloc, 0.0))
-        _next_slot[netloc] = slot + self.min_interval
+        _next_slot[netloc] = slot + max(self.min_interval, self._crawl_delay(netloc))
         if slot > now:
             await asyncio.sleep(slot - now)
+
+    def _crawl_delay(self, netloc: str) -> float:
+        """The `Crawl-delay` the host's `robots.txt` sets for this client, capped at
+        `MAX_CRAWL_DELAY`; zero when it sets none or `robots.txt` is not respected."""
+        parser = self._robots.get(netloc)
+        if parser is None:
+            return 0.0
+        delay = parser.crawl_delay(USER_AGENT_TOKEN)
+        return 0.0 if delay is None else min(float(delay), MAX_CRAWL_DELAY)
 
     async def throttled(self, url: str, retry_after: str | None) -> str:
         """Rest the host for `Retry-After` seconds when it gave a usable one, else

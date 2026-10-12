@@ -12,6 +12,8 @@ from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.british_columbia import places as bc
 
+pytestmark = pytest.mark.lists
+
 # The 28 regional districts less the Northern Rockies, whose division holds only the regional
 # municipality that replaced it.
 REGIONS = 27

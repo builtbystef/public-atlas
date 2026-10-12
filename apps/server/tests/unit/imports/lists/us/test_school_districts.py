@@ -11,6 +11,8 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.us import school_districts
 
+pytestmark = pytest.mark.lists
+
 ENTRIES = 18229
 SERVICE_AGENCIES = "education_service_agency: Service agency"
 CHARTERS = "school_board: Independent charter district"

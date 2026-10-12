@@ -10,7 +10,7 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.canada import federal
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 ROWS = 332
 ENTRIES = 277
@@ -50,8 +50,8 @@ SHARED_ABBREVIATIONS = ["HC"]
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(federal)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(federal)
 
 
 @pytest.fixture(scope="module")

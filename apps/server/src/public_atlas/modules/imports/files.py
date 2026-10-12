@@ -239,23 +239,32 @@ class OpenedFile:
 # --- Fetching ---
 
 
+def cached(file: ListFile, cache_dir: Path) -> bytes | None:
+    """The file's bytes from the cache: a manual file as it is, a fetched file when its hash is
+    the recorded one. None when the cache does not have it."""
+    path = file.cache_path(cache_dir)
+    if not path.exists():
+        return None
+    data = path.read_bytes()
+    if file.is_manual or content_hash(data) == file.sha256:
+        return data
+    logger.warning("%s does not match %s's hash; fetching again", path, file.name)
+    return None
+
+
 def fetch(file: ListFile, cache_dir: Path) -> bytes:
     """The file's bytes. A fetched file comes from the cache when it is there with the right
     hash, else it is downloaded, checked and cached. A manual file is only ever read from the
     cache: when it is not there, the error says how to get it and where to put it."""
+    data = cached(file, cache_dir)
+    if data is not None:
+        return data
     path = file.cache_path(cache_dir)
     if file.is_manual:
-        if not path.exists():
-            raise ListFileError(
-                f"{file.name}: the file is obtained by hand and is not in the cache. "
-                f"Put it at {path}. {file.instructions.strip()}"
-            )
-        return path.read_bytes()
-    if path.exists():
-        data = path.read_bytes()
-        if content_hash(data) == file.sha256:
-            return data
-        logger.warning("%s does not match %s's hash; fetching again", path, file.name)
+        raise ListFileError(
+            f"{file.name}: the file is obtained by hand and is not in the cache. "
+            f"Put it at {path}. {file.instructions.strip()}"
+        )
     logger.info("fetching %s", file.url)
     try:
         response = httpx.get(file.url, follow_redirects=True, timeout=DOWNLOAD_TIMEOUT)

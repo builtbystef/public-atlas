@@ -1,16 +1,13 @@
-"""What the Ontario lists' rule tests share: the country's rules, the cached files of a list
-(skipped when they are not cached and cannot be fetched), and the names of the places the
-places list loads, which the other lists attach their bodies to."""
+"""What the Ontario lists' rule tests share: the country's rules and the names of the places
+the places list loads, which the other lists attach their bodies to. The files of a list come
+from the fixtures every list's tests share."""
 
 from collections.abc import Callable
-from types import ModuleType
 
 import pytest
 
-from public_atlas.config import Settings
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.seeds import canada
-from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import Citation, Code, PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
 
@@ -20,18 +17,10 @@ def rules() -> countries.CountryRules:
     return countries.rules_from_seed(canada.SEED)
 
 
-def open_sources(module: ModuleType) -> dict[str, files.OpenedFile]:
-    cache_dir = Settings().lists_cache_dir
-    try:
-        return {source.name: files.open_file(source, cache_dir) for source in module.SOURCES}
-    except files.ListFileError as exc:
-        pytest.skip(f"the list's files are not cached and could not be fetched: {exc}")
-
-
 @pytest.fixture(scope="package")
-def places(rules: countries.CountryRules) -> list[PlaceEntry]:
+def places(rules: countries.CountryRules, sources_of) -> list[PlaceEntry]:
     """What `canada/ontario/places` loads."""
-    return ontario_places.entries(open_sources(ontario_places), rules)
+    return ontario_places.entries(sources_of(ontario_places), rules)
 
 
 @pytest.fixture(scope="package")

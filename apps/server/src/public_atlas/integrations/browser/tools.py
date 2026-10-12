@@ -21,6 +21,7 @@ from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from public_atlas.integrations.browser.base import CaptureHook, FrameLinks, SettledPage
 from public_atlas.integrations.browser.policy import (
     BLANK_PAGE,
+    MAX_REDIRECTS,
     USER_AGENT,
     BrowserPolicy,
     Request,
@@ -30,6 +31,7 @@ from public_atlas.integrations.browser.session import (
     DEFAULT_ACTION_TIMEOUT_MS,
     DEFAULT_NAVIGATION_TIMEOUT_MS,
     MAX_TABS,
+    TOO_MANY_REDIRECTS,
     BrowserSession,
     BrowserUnavailableError,
 )
@@ -38,7 +40,7 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable
     from pathlib import Path
 
-    from playwright.async_api import Page
+    from playwright.async_api import Page, Response
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +80,9 @@ _FRAME_LINKS = """(max) => Array.from(document.links).slice(0, max).map(
 _ERROR_PAGE_SCHEME = "chrome-error://"
 # What Playwright says when a navigation turns out to be a file: the context refuses downloads.
 _DOWNLOAD_STARTED = "Download is starting"
+# What Playwright says when a navigation commits nothing, as one the route guard answered with
+# a 204 to hold its redirect back for `_settle` to make.
+_NAVIGATION_ABORTED = "net::ERR_ABORTED"
 # Screenshots bypass the token budget, and 5 MB is the strictest per-image limit among model
 # providers.
 _MAX_SCREENSHOT_BYTES = 5_000_000
@@ -352,11 +357,86 @@ class Browser:
         await page.goto(BLANK_PAGE, timeout=timeout_ms)
         return self._refusal(f"{action} reached a {reason}: {blocked}")
 
+    def _redirect_held(self, page: Page, exc: PlaywrightError) -> bool:
+        """Whether a navigation failed only because the route guard held its redirect back."""
+        return _NAVIGATION_ABORTED in str(exc) and self.session.held_redirect(page) is not None
+
+    async def _history_moved(self, page: Page, move: Awaitable[Response | None]) -> bool:
+        """Whether a history move found an entry to go to. The entry's page may answer with a
+        redirect the guard holds back; that counts as moved, and `_settle` makes the hop."""
+        try:
+            return await move is not None
+        except PlaywrightError as exc:
+            if not self._redirect_held(page, exc):
+                raise
+            return True
+
+    def _file_refusal(self, url: str) -> Refusal:
+        return self._refusal(
+            f"{url} is a file download (a PDF or other document), not a web page. Open it with "
+            "read_file."
+        )
+
+    async def _throttled(self, page: Page, response: Response | None) -> Refusal | None:
+        """A 429 is an error to the agent, not the block page's text as if it were the page;
+        the policy decides how long the host rests."""
+        if response is None or response.status != HTTP_TOO_MANY_REQUESTS:
+            return None
+        reason = await self.policy.throttled(page.url, response.headers.get("retry-after"))
+        if self._hook is not None:
+            await self._hook.blocked(page.url, reason, action="navigate")
+        return self._refusal(reason)
+
+    async def _follow_redirects(
+        self, page: Page, action: str, deadlines: _Deadlines, requested_url: str | None
+    ) -> Refusal | None:
+        """Make the redirect hops the route guard held back from Chromium, each one asked about
+        like a navigation of its own, so a hop off the allowed sites is never requested. A
+        refused hop leaves the page where it was."""
+        hops = 0
+        while (redirect := self.session.take_redirect(page)) is not None:
+            hops += 1
+            requested = requested_url or redirect.url
+            reason = (
+                TOO_MANY_REDIRECTS
+                if hops > MAX_REDIRECTS
+                else await self.policy.decide(Request(url=redirect.to, kind="navigation"))
+            )
+            if reason is not None:
+                if self._hook is not None:
+                    await self._hook.blocked(
+                        redirect.to, reason, action=action, requested_url=requested
+                    )
+                return self._refusal(
+                    f"{action} was redirected to {redirect.to}: {reason}. The browser is still "
+                    f"at {page.url}."
+                )
+            try:
+                response = await page.goto(redirect.to, timeout=deadlines.navigation)
+            except PlaywrightError as exc:
+                if _DOWNLOAD_STARTED in str(exc):
+                    return self._file_refusal(redirect.to)
+                if not self._redirect_held(page, exc):
+                    raise
+                response = None
+            if (refusal := await self._throttled(page, response)) is not None:
+                return refusal
+        return None
+
     async def _settle(
         self, page: Page, action: str, deadlines: _Deadlines, *, requested_url: str | None = None
     ) -> Refusal | None:
-        """Let the navigation finish, re-check where it landed, and hand the page to the hook:
-        every settled page is captured and every bounce logged."""
+        """Let the navigation finish, making any redirect the guard held back, re-check where
+        it landed, and hand the page to the hook: every settled page is captured and every
+        bounce logged."""
+        if requested_url is None and (held := self.session.held_redirect(page)) is not None:
+            # A click or a history move that was redirected: the URL it asked for is what the
+            # landing page is recorded against, as it is for `navigate`.
+            requested_url = held.url
+        if (
+            refusal := await self._follow_redirects(page, action, deadlines, requested_url)
+        ) is not None:
+            return refusal
         await page.wait_for_load_state("domcontentloaded", timeout=deadlines.navigation)
         landed = page.url
         if landed.startswith(_ERROR_PAGE_SCHEME):
@@ -433,19 +513,13 @@ class Browser:
             try:
                 response = await page.goto(url, timeout=deadlines.navigation)
             except PlaywrightError as exc:
-                if _DOWNLOAD_STARTED not in str(exc):
+                if _DOWNLOAD_STARTED in str(exc):
+                    return self._file_refusal(url)
+                if not self._redirect_held(page, exc):
                     raise
-                return self._refusal(
-                    f"{url} is a file download (a PDF or other document), not a web page. Open "
-                    "it with read_file."
-                )
-            # A 429 is an error to the agent, not the block page's text as if it were the page;
-            # the policy decides how long the host rests.
-            if response is not None and response.status == HTTP_TOO_MANY_REQUESTS:
-                reason = await self.policy.throttled(page.url, response.headers.get("retry-after"))
-                if self._hook is not None:
-                    await self._hook.blocked(page.url, reason, action="navigate")
-                return self._refusal(reason)
+                response = None
+            if (refusal := await self._throttled(page, response)) is not None:
+                return refusal
             if refusal := await self._settle(page, "navigate", deadlines, requested_url=url):
                 return refusal
             # Everything past the load runs on the navigation budget.
@@ -717,7 +791,7 @@ class Browser:
         """
 
         async def body(page: Page, deadlines: _Deadlines) -> ToolResult:
-            if await page.go_back(timeout=deadlines.navigation) is None:
+            if not await self._history_moved(page, page.go_back(timeout=deadlines.navigation)):
                 return self._text("No previous page in browser history.")
             if (refusal := await self._settle(page, "go_back", deadlines)) is not None:
                 return refusal
@@ -734,7 +808,7 @@ class Browser:
         """
 
         async def body(page: Page, deadlines: _Deadlines) -> ToolResult:
-            if await page.go_forward(timeout=deadlines.navigation) is None:
+            if not await self._history_moved(page, page.go_forward(timeout=deadlines.navigation)):
                 return self._text("No next page in browser history.")
             if (refusal := await self._settle(page, "go_forward", deadlines)) is not None:
                 return refusal

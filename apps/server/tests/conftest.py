@@ -1,9 +1,10 @@
 """The settings every test builds on, and the skips for tests whose tools are absent. Nothing
-here touches the environment: the configured server (environment or `.env`) is read once, and
-the tests get a copy pointed at the test database, with the in-memory parser and no search
-engine."""
+here touches the environment: the configured server (environment or `.env`) is read once, the
+tests get a copy pointed at the test database, with the in-memory parser and no search engine,
+and one switch of the suite's own is read beside it."""
 
 import importlib.util
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -39,6 +40,19 @@ def _has_chromium() -> bool:
 
 
 HAS_CHROMIUM = _has_chromium()
+
+# The tests marked `lists` read an official list's files from the lists cache and skip when the
+# files are not there and cannot be fetched. CI restores the cache and runs `lists fetch` before
+# the suite, then sets this so such a skip is a failure: a list test that never ran would
+# otherwise count as green. Read from the environment, not `Settings`: it is the suite's, not
+# the server's.
+REQUIRE_LISTS = os.environ.get("PUBLIC_ATLAS_REQUIRE_LISTS") == "1"
+
+
+@pytest.fixture(scope="session")
+def require_lists() -> bool:
+    """Whether a `lists` test whose files cannot be had fails instead of skipping."""
+    return REQUIRE_LISTS
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

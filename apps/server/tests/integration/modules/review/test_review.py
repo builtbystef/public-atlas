@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 
 from public_atlas.modules.assignments.models import AssignmentType
+from public_atlas.modules.assignments.service import Spawn
 from public_atlas.modules.evidence import service as evidence
 from public_atlas.modules.evidence.models import EvidenceKind
 from public_atlas.modules.graph import service as graph
@@ -22,7 +23,7 @@ from public_atlas.modules.graph.models import (
     Institution,
 )
 from public_atlas.modules.review import service as review
-from public_atlas.modules.review.models import ReviewItem
+from public_atlas.modules.review.models import ReviewItem, ReviewStatus
 
 if TYPE_CHECKING:
     from fastapi.testclient import TestClient
@@ -766,3 +767,159 @@ def test_reading_an_item_shows_the_entity_and_its_quotes_with_links_to_the_store
     assert quote["page_url"] == "https://www.elmcounty.ca/libraries"
     assert quote["snapshot_url"].startswith("memory://snapshots/")
     assert client.get(f"/review-items/{uuid.uuid7()}").status_code == 404
+
+
+def test_merging_closes_every_open_item_on_the_duplicate(
+    db: Database, world: World, build: type[Build]
+):
+    """Two raises that raced past the one-open-item rule both close as merged and remember
+    where the entity went; an item decided earlier is left as it was."""
+
+    async def scenario() -> tuple[uuid.UUID, list[tuple[ReviewStatus, str | None, str | None]]]:
+        async with db.session() as session:
+            kept = await build.candidate_institution(
+                session, world.oakville, "Oakville Public Library"
+            )
+            duplicate = await build.candidate_institution(
+                session, world.oakville, "Oakville Library"
+            )
+            decided = ReviewItem(
+                entity_id=duplicate.id,
+                rule=review.Rule.AGENT,
+                question={"reasons": ["decided earlier"]},
+                status=ReviewStatus.REJECTED,
+            )
+            session.add(decided)
+            first = await review.raise_review(
+                session,
+                duplicate,
+                rule=review.Rule.DUPLICATE,
+                reason="possible duplicate",
+                question={"duplicate_of": [str(kept.id)]},
+            )
+            raced = ReviewItem(
+                entity_id=duplicate.id,
+                rule=review.Rule.AGENT,
+                question={"reasons": ["a branch?"]},
+            )
+            session.add(raced)
+            await session.flush()
+            await review.merge(session, first, into_id=kept.id, note="the same library")
+            await session.commit()
+            rows = await session.scalars(
+                select(ReviewItem)
+                .where(ReviewItem.entity_id == duplicate.id)
+                .order_by(ReviewItem.id)
+            )
+            return kept.id, [
+                (row.status, row.note, row.question.get("merged_into_id")) for row in rows
+            ]
+
+    kept_id, items = db.run(scenario)
+    assert items == [
+        (ReviewStatus.REJECTED, None, None),
+        (ReviewStatus.MERGED, "the same library", str(kept_id)),
+        (ReviewStatus.MERGED, "the same library", str(kept_id)),
+    ]
+
+
+def test_a_kind_is_decided_for_the_items_the_reviewer_saw(
+    db: Database, world: World, build: type[Build]
+):
+    bodies = _raise_kinds(db, world, build)
+    kind = "type_level:library@region"
+
+    async def scenario() -> tuple[
+        uuid.UUID, list[uuid.UUID], list[tuple[ReviewStatus, uuid.UUID]], list[Spawn]
+    ]:
+        async with db.session() as session:
+            first = (
+                await session.scalars(
+                    select(ReviewItem).where(ReviewItem.kind == kind).order_by(ReviewItem.id)
+                )
+            ).first()
+            assert first is not None
+            decision = await review.decide_kind(
+                session, kind, approved=True, note="a county library", item_ids=[first.id]
+            )
+            await session.commit()
+            rows = [
+                (row.status, row.entity_id)
+                for row in await session.scalars(
+                    select(ReviewItem).where(ReviewItem.kind == kind).order_by(ReviewItem.id)
+                )
+            ]
+            return first.id, [item.id for item in decision.items], rows, decision.spawn
+
+    first_id, decided, rows, spawn = db.run(scenario)
+    elm, there = bodies["Elm Public Library"], bodies["There Public Library"]
+    assert decided == [first_id]
+    assert rows == [(ReviewStatus.APPROVED, elm), (ReviewStatus.OPEN, there)]
+    assert spawn == [Spawn(AssignmentType.FIND_HOMEPAGE, elm)]
+
+    async def statuses() -> tuple[EntityStatus, EntityStatus]:
+        async with db.session() as session:
+            return (
+                (await session.get_one(Institution, elm)).status,
+                (await session.get_one(Institution, there)).status,
+            )
+
+    assert db.run(statuses) == (EntityStatus.VERIFIED, EntityStatus.NEEDS_REVIEW)
+
+
+def test_a_second_kind_does_not_overwrite_the_first(db: Database, world: World, build: type[Build]):
+    async def scenario() -> ReviewItem:
+        async with db.session() as session:
+            housing = await build.candidate_institution(
+                session, world.elm, "Elm Housing", "other", suggested_type="Housing Corporation"
+            )
+            first = await review.raise_review(
+                session,
+                housing,
+                rule=review.Rule.TYPE_LEVEL,
+                reason="a body under a region",
+                question={"institution_type": "other", "level": "region"},
+            )
+            second = await review.raise_review(
+                session,
+                housing,
+                rule=review.Rule.NEW_TYPE,
+                reason="no type fits",
+                question={"suggested_type": "Housing Corporation", "level": "region"},
+            )
+            assert second.id == first.id
+            await session.commit()
+            return first
+
+    item = db.run(scenario)
+    assert (item.rule, item.kind) == (review.Rule.TYPE_LEVEL, "type_level:other@region")
+    assert item.question == {
+        "reasons": ["a body under a region", "no type fits"],
+        "institution_type": "other",
+        "level": "region",
+        "suggested_type": "Housing Corporation",
+    }
+
+
+def test_a_reviewers_approval_verifies_an_entity_with_no_evidence(
+    db: Database, world: World, build: type[Build]
+):
+    """What the rules cannot settle goes to a person, whose decision is the warrant: approval
+    verifies the body with no quote on record."""
+
+    async def scenario() -> tuple[int, Institution]:
+        async with db.session() as session:
+            club = await build.candidate_institution(
+                session, world.oakville, "Oakville Curling Club"
+            )
+            item = await review.raise_review(
+                session, club, rule=review.Rule.AGENT, reason="is a club public?"
+            )
+            rows = len(await evidence.evidence_for(session, club.id))
+            await review.approve(session, item, note="a municipal club")
+            await session.commit()
+            return rows, club
+
+    rows, club = db.run(scenario)
+    assert rows == 0
+    assert (club.status, club.entered_by) == (EntityStatus.VERIFIED, EnteredBy.MANUAL)

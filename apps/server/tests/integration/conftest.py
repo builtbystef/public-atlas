@@ -265,10 +265,13 @@ class _Handler(BaseHTTPRequestHandler):
     pages: ClassVar[dict[str, tuple[str, bytes]]] = {}
     # Every path asked for, so a test can check what the browser did not fetch.
     requested: ClassVar[list[str]] = []
+    # The same with the host each was asked of: `127.0.0.1:<port>` or `localhost:<port>`.
+    requests: ClassVar[list[tuple[str, str]]] = []
 
     def do_GET(self) -> None:
         path = self.path.split("?", 1)[0]
         self.requested.append(path)
+        self.requests.append((self.headers.get("Host", ""), path))
         if path not in self.pages:
             self.send_response(404)
             self.end_headers()
@@ -305,7 +308,9 @@ class FixtureSite:
         self.httpd = ThreadingHTTPServer(("127.0.0.1", 0), _Handler)
         _Handler.pages = pages
         _Handler.requested = []
+        _Handler.requests = []
         self.requested = _Handler.requested
+        self.requests = _Handler.requests
         self.port = self.httpd.server_address[1]
         self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
 
@@ -316,6 +321,11 @@ class FixtureSite:
     @property
     def outside(self) -> str:
         return f"http://localhost:{self.port}"
+
+    @property
+    def requested_outside(self) -> list[str]:
+        """The paths asked of the host the allowlist does not name."""
+        return [path for host, path in self.requests if host == f"localhost:{self.port}"]
 
     def __enter__(self) -> Self:
         self.thread.start()
@@ -349,8 +359,20 @@ a.textContent = "Meetings portal"; document.body.appendChild(a); }, 300);</scrip
 </body></html>"""
 PORTAL_HTML = b"""<!doctype html><html><body>
 <a href="meeting?id=7">Council 2026-09-30</a></body></html>"""
+# The same portal embedded by a URL that redirects to it: its links must still resolve against
+# the portal's own URL.
+MEETINGS_MOVED_HTML = b"""<!doctype html><html><head><title>Fixture Meetings</title></head>
+<body><h1>Council meetings</h1><iframe src="/portal-moved"></iframe></body></html>"""
 HOSPITAL_HTML = b"""<!doctype html><html><head><title>Fixture Hospital</title></head>
 <body><h1>Fixture Hospital</h1><p>SECRET: this text must never reach the agent.</p></body></html>"""
+# A page whose link and whose script's fetch both lead, by redirect, off the allowlist.
+LEAKY_HTML = b"""<!doctype html><html><head><title>Fixture Leaky</title></head>
+<body><h1>Leaky page</h1><p><a id="gone" href="/gone">Old hospital page</a></p>
+<p id="api">api: pending</p>
+<script>fetch("/api/old").then((r) => r.text()).then((t) => {
+  document.getElementById("api").textContent = "api: " + t;
+}).catch(() => { document.getElementById("api").textContent = "api: failed"; });</script>
+</body></html>"""
 
 
 @pytest.fixture
@@ -361,6 +383,8 @@ def site() -> Iterator[FixtureSite]:
         "/hospital": ("text/html; charset=utf-8", HOSPITAL_HTML),
         "/meetings": ("text/html; charset=utf-8", MEETINGS_HTML),
         "/portal": ("text/html; charset=utf-8", PORTAL_HTML),
+        "/meetings-moved": ("text/html; charset=utf-8", MEETINGS_MOVED_HTML),
+        "/portal-moved": (REDIRECT, b"/portal"),
         "/budget.pdf": ("application/pdf", b"%PDF-1.4 Operating budget 2026\fCapital plan page"),
         "/notes.txt": ("text/plain", b"Council notes: tenders close Friday."),
         "/legacy.doc": ("application/msword", b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1 old"),
@@ -371,6 +395,13 @@ def site() -> Iterator[FixtureSite]:
         "/leak.pdf": (REDIRECT, b"http://localhost:{port}/hospital"),
         "/moved": (REDIRECT, b"/agency"),
         "/gone": (REDIRECT, b"http://localhost:{port}/hospital"),
+        # Two hops: one that stays on the allowlist, one that leaves it on the second hop.
+        "/moved-twice": (REDIRECT, b"/moved"),
+        "/chain": (REDIRECT, b"/gone"),
+        # A page whose script fetches an API that redirects off the allowlist.
+        "/leaky": ("text/html; charset=utf-8", LEAKY_HTML),
+        "/api/old": (REDIRECT, b"http://localhost:{port}/api/secret"),
+        "/api/secret": ("application/json", b'{"secret": "SECRET"}'),
         "/logo.png": ("image/png", b"\x89PNG not really"),
         "/busy": (THROTTLED, THROTTLE_HTML),
         # A file whose site answers a bot check with status 200 instead of the bytes.
@@ -381,4 +412,5 @@ def site() -> Iterator[FixtureSite]:
         _Handler.pages["/"] = ("text/html; charset=utf-8", INDEX_HTML.replace(b"{port}", port))
         _Handler.pages["/leak.pdf"] = (REDIRECT, b"http://localhost:" + port + b"/hospital")
         _Handler.pages["/gone"] = (REDIRECT, b"http://localhost:" + port + b"/hospital")
+        _Handler.pages["/api/old"] = (REDIRECT, b"http://localhost:" + port + b"/api/secret")
         yield running

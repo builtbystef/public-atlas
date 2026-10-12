@@ -494,6 +494,74 @@ def test_an_assignment_gets_five_searches_on_domains_or_the_whole_web(
     )
 
 
+def test_searches_are_capped_across_sessions_of_an_assignment(
+    db: Database,
+    world: World,
+    make_assignment: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+):
+    """The five searches are the assignment's, not each session's: a new session starts
+    counting from what the earlier ones spent, read back from the usage rows."""
+    assignment = make_assignment(FIND_HOMEPAGE, world.town.id)
+    searcher = MemorySearcher([])
+    first = replace(context(assignment), searcher=searcher)
+    assert first.searches == 0
+    for query in ("Oakville", "Town of Oakville", "Oakville council"):
+        assert db.run(findings.search_web, first, query, []).note is None
+    # The next session, built from the database as every session is.
+    second = replace(context(assignment), searcher=searcher)
+    assert second.searches == 3
+    assert db.run(findings.search_web, second, "Oakville town hall", []).note is None
+    assert db.run(findings.search_web, second, "Oakville official", ["elmcounty.ca"]).note is None
+    capped = db.run(findings.search_web, second, "Oakville", [])
+    assert str(capped) == (
+        "Error: this assignment has made its 5 searches. Browse the allowed domains' own pages "
+        "and search boxes instead, or save what you have."
+    )
+    assert searcher.queries == [
+        "Oakville",
+        "Town of Oakville",
+        "Oakville council",
+        "Oakville town hall",
+        "Oakville official site:elmcounty.ca",
+    ]
+    # Another assignment starts from nothing.
+    other = replace(context(make_assignment(FIND_HOMEPAGE, world.county.id)), searcher=searcher)
+    assert other.searches == 0
+
+
+def test_search_takes_at_most_three_domains(
+    db: Database,
+    world: World,
+    make_assignment: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+):
+    """One domain is a bare `site:` filter, several are joined with OR, a fourth is dropped,
+    and a domain given twice or in another case is one domain. A result on the dropped domain
+    is not returned and its site does not open."""
+    searcher = MemorySearcher(
+        [
+            SearchResult("https://www.a.example/oakville", "A", "..."),
+            SearchResult("https://d.example/oakville", "D", "..."),
+        ]
+    )
+    ctx = replace(context(make_assignment(FIND_HOMEPAGE, world.town.id)), searcher=searcher)
+    ctx.allowed_domains.extend(["a.example", "b.example", "c.example", "d.example"])
+    one = db.run(findings.search_web, ctx, "Oakville", ["elmcounty.ca"])
+    assert str(one) == "No results on those domains."
+    four = db.run(
+        findings.search_web, ctx, "Oakville", ["a.example", "b.example", "c.example", "d.example"]
+    )
+    assert [r.url for r in four.results] == ["https://www.a.example/oakville"]
+    db.run(findings.search_web, ctx, "  Oakville   town ", ["ElmCounty.ca", " elmcounty.ca"])
+    assert searcher.queries == [
+        "Oakville site:elmcounty.ca",
+        "Oakville (site:a.example OR site:b.example OR site:c.example)",
+        "Oakville town site:elmcounty.ca",
+    ]
+    assert ctx.search_hosts == {"a.example"}
+
+
 # --- read_file ---
 
 

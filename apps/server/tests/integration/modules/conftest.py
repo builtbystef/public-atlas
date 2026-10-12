@@ -25,6 +25,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.integrations.ai import FixedModels
+from public_atlas.modules.assignments.descriptors import LUNA
 from public_atlas.modules.assignments.models import (
     Assignment,
     AssignmentStatus,
@@ -290,13 +291,14 @@ def finishing(summary: str = "Nothing more to find.") -> Script:
 @pytest.fixture
 def scripted(queue: InlineConnector) -> Callable[[Script], Resources]:
     """Install `script` as the model every session runs on, for the inline jobs too, and return
-    the resources to run an assignment with directly."""
+    the resources to run an assignment with directly. The double is named for the model it
+    stands in for, so its usage is priced from the list as a real session's is."""
 
     def install(script: Script) -> Resources:
         assert queue.resources is not None
         queue.resources = replace(
             queue.resources,
-            models=FixedModels(FunctionModel(script, model_name="scripted")),
+            models=FixedModels(FunctionModel(script, model_name=LUNA)),
         )
         return queue.resources
 

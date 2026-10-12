@@ -2,6 +2,7 @@
 and sources and the domains those sit on, as nodes and edges; its filters; an expansion from one
 place or one institution; and the cap that cuts a big picture down to places and governments."""
 
+import asyncio
 import uuid
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -10,7 +11,12 @@ import pytest
 
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes, subgraph
-from public_atlas.modules.graph.models import DomainKind, EnteredBy, InstitutionServedPlace
+from public_atlas.modules.graph.models import (
+    DomainKind,
+    EnteredBy,
+    InstitutionServedPlace,
+    Place,
+)
 
 if TYPE_CHECKING:
     from fastapi.testclient import TestClient
@@ -261,3 +267,22 @@ def test_a_big_picture_is_cut_down_to_places_and_governments(
     body = client.get("/graph", params={"place_id": str(picture.milton)}).json()
     assert body["truncated"] is False
     assert labels(body) == {"Milton", "Town of Milton"}
+
+
+def test_ancestors_stop_at_a_cycle(db: Database, world: World, build: type[Build]):
+    """A parent link that comes back round (bad data, a merge gone wrong) must not hold the
+    walk up the hierarchy: the places above stop where the loop closes."""
+
+    async def scenario() -> list[str]:
+        async with db.session() as session:
+            pine = await build.verified_place(session, "Pine", "municipality", world.elm)
+            hamlet = await build.verified_place(session, "Pine Hamlet", "municipality", pine)
+            elm = await session.get_one(Place, world.elm.id)
+            elm.parent_place_id = hamlet.id
+            await session.flush()
+            picture = await asyncio.wait_for(
+                subgraph.subgraph(session, subgraph.GraphFilters(place_id=hamlet.id)), timeout=10
+            )
+            return [ancestor.label for ancestor in picture.ancestors]
+
+    assert db.run(scenario) == ["Elm", "Pine"]

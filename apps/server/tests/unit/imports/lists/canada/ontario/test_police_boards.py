@@ -11,7 +11,7 @@ from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import police_boards
 from public_atlas.modules.imports.lists.canada.ontario.communities import Location
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 BOARDS = 43
 LEGACY = 2
@@ -20,8 +20,8 @@ REGIONAL = {"Durham", "Halton", "Niagara", "Peel", "Waterloo", "York"}
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(police_boards)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(police_boards)
 
 
 @pytest.fixture(scope="module")

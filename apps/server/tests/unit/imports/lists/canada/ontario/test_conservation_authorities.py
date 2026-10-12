@@ -10,7 +10,7 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import conservation_authorities
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 AUTHORITIES = 36
 # Authorities whose common name is not their legal name, punctuation aside.
@@ -18,8 +18,8 @@ COMMON_NAMES = 13
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(conservation_authorities)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(conservation_authorities)
 
 
 @pytest.fixture(scope="module")

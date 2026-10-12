@@ -61,6 +61,9 @@ logger = logging.getLogger(__name__)
 
 # The statuses a claim can still be decided from.
 OPEN = (EntityStatus.CANDIDATE, EntityStatus.NEEDS_REVIEW)
+# The statuses in which a claim stands on its domain: open, or verified and so the
+# institution's homepage.
+LIVE = (*OPEN, EntityStatus.VERIFIED)
 SUPERSEDED = "another homepage of the institution was verified"
 INSTITUTION_REJECTED = "the institution was rejected"
 MERGED = "the institution was merged into another"
@@ -89,20 +92,27 @@ def previewing() -> Iterator[list[StatusChange]]:
         _previewed.reset(token)
 
 
-def _set_status(entity: Entity, status: EntityStatus, entered_by: EnteredBy) -> bool:
+def _set_status(entity: Entity, status: EntityStatus, entered_by: EnteredBy | None) -> bool:
     """The one assignment to an entity's status. Whether it changed; a repeat is no change, so
-    a decision made twice sets nothing in motion twice."""
+    a decision made twice sets nothing in motion twice. `entered_by` is who decided; None when
+    nothing was decided (an entity sent to review), which leaves the last decider on record."""
     if entity.status is status:
         return False
+    if entered_by is not None:
+        entity.entered_by = entered_by
     previewed = _previewed.get()
     if previewed is None:
         logger.info(
-            "%s %s: %s -> %s by %s", entity.kind, entity.id, entity.status, status, entered_by
+            "%s %s: %s -> %s by %s",
+            entity.kind,
+            entity.id,
+            entity.status,
+            status,
+            entity.entered_by,
         )
     else:
         previewed.append(StatusChange(entity, entity.status, status))
     entity.status = status
-    entity.entered_by = entered_by
     return True
 
 
@@ -124,11 +134,13 @@ async def verify_domain(
 async def reject_domain(
     session: AsyncSession, domain: Domain, *, entered_by: EnteredBy, reason: str
 ) -> list[Spawn]:
-    """A dead site, or one that is nobody's. Every open homepage claim on it is rejected with
-    the reason, and each institution that claimed one looks again (spec section 7.3)."""
+    """A dead site, or one that is nobody's. Every homepage claim on it that is open or
+    verified is rejected with the reason, the verified one's institution loses its link, and
+    each institution that claimed one looks again (spec section 7.3). A verified claim on a
+    rejected domain cannot stand: the domain was the warrant for it."""
     _set_status(domain, EntityStatus.REJECTED, entered_by)
     spawns: list[Spawn] = []
-    for homepage in await _open_homepages_on(session, domain):
+    for homepage in await _homepages_on(session, domain, LIVE):
         institution = await session.get_one(Institution, homepage.institution_id)
         spawns.extend(
             await reject_homepage(session, homepage, entered_by=entered_by, reason=reason)
@@ -139,14 +151,16 @@ async def reject_domain(
     return _distinct(spawns)
 
 
-async def _open_homepages_on(session: AsyncSession, domain: Domain) -> list[Homepage]:
-    """The homepage claims on the domain's pages still waiting for a decision. A page captured
-    before the domain had a row is found by its host."""
+async def _homepages_on(
+    session: AsyncSession, domain: Domain, statuses: Sequence[EntityStatus]
+) -> list[Homepage]:
+    """The homepage claims on the domain's pages in any of `statuses`. A page captured before
+    the domain had a row is found by its host."""
     rows = await session.scalars(
         select(Homepage)
         .join(Webpage, Webpage.id == Homepage.webpage_id)
         .where(
-            Homepage.status.in_(OPEN),
+            Homepage.status.in_(statuses),
             or_(
                 Webpage.domain_id == domain.id,
                 Webpage.url.like(f"http%://{domain.name}/%"),
@@ -204,7 +218,7 @@ async def _reject_superseded_domain(
         domain is None
         or domain.domain_kind is not DomainKind.OFFICIAL
         or domain.status is not EntityStatus.CANDIDATE
-        or await _open_homepages_on(session, domain)
+        or await _homepages_on(session, domain, OPEN)
     ):
         return
     await reject_domain(
@@ -345,10 +359,11 @@ async def reject_source(
 async def send_to_review(session: AsyncSession, entity: Entity) -> bool:
     """Raising a review item sets a candidate to `needs_review` (spec section 6.5). A verified
     or rejected entity keeps its status while the question is open: the item is the record.
-    Whether the status changed; `entered_by` stays, since nothing was decided."""
+    Whether the status changed; `entered_by` stays, since nothing was decided. The change goes
+    through the one door like every other, so it is logged and a preview sees it."""
     if entity.status is not EntityStatus.CANDIDATE:
         return False
-    entity.status = EntityStatus.NEEDS_REVIEW
+    _set_status(entity, EntityStatus.NEEDS_REVIEW, None)
     await session.flush()
     return True
 

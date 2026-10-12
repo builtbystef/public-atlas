@@ -14,7 +14,7 @@ from public_atlas.modules.imports.entries import Code, InstitutionEntry, PlaceEn
 from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.quebec import places as quebec_places
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 # Every MRC: the 81 the census counts as divisions and the six loaded from the directory alone.
 REGIONS = 87
@@ -49,8 +49,8 @@ SIBLING_NAMESAKES = 9
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(quebec_places)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(quebec_places)
 
 
 @pytest.fixture(scope="module")

@@ -12,7 +12,7 @@ from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry, S
 from public_atlas.modules.imports.lists.canada.ontario import health_units
 from public_atlas.modules.imports.lists.canada.ontario.communities import Location
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 UNITS = 29
 DEPARTMENTS = 11
@@ -37,8 +37,8 @@ NAMESAKES = frozenset(
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(health_units)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(health_units)
 
 
 @pytest.fixture(scope="module")

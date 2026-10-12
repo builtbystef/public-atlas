@@ -11,7 +11,7 @@ from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.canada.ontario import agencies
 
-from .conftest import open_sources
+pytestmark = pytest.mark.lists
 
 MINISTRIES = 25
 CROWN_CORPORATIONS = 32
@@ -21,8 +21,8 @@ HOMEPAGES = 119
 
 
 @pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    return open_sources(agencies)
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(agencies)
 
 
 @pytest.fixture(scope="module")
