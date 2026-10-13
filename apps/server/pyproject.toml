@@ -43,7 +43,7 @@ dev = [
 # image, `parse-cu130` for a dev machine with an NVIDIA GPU (CUDA 13 driver), which also takes
 # the GPU ONNX Runtime and so names rapidocr directly. A plain `uv sync` drops the group again;
 # keep the flag on every resync. torch and torchvision are listed so the sources below apply.
-parse-cpu = ["docling[rapidocr]>=2.129,<3", "torch>=2.14,<3", "torchvision>=0.29,<1"]
+parse-cpu = ["docling[rapidocr]>=2.132.0,<3", "torch>=2.14,<3", "torchvision>=0.29,<1"]
 parse-cu130 = [
   "docling[onnxruntime]>=2.129,<3",
   "rapidocr>=3.9.1,<4",
