@@ -26,6 +26,10 @@ updates:
         patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
       dev-dependencies:
         dependency-type: development
+      # Everything else that is not a major bump, in one PR a week.
+      minor-and-patch:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
 
   - package-ecosystem: uv
     directory: /
@@ -43,3 +47,6 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
