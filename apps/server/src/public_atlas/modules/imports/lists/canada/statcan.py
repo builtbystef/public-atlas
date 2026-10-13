@@ -242,7 +242,7 @@ UPPER_TIER_TYPES: dict[str, dict[str, str]] = {
 DISTRICT_TYPES: dict[str, frozenset[str]] = {"35": frozenset({"DIS"})}
 # Division types that are only census units: no place, and their municipalities sit under the
 # province. Quebec's twelve `TÉ` divisions are cities with no MRC above them; its five `CDR`
-# divisions hold municipalities whose real MRC the directory names (research section 2.1).
+# divisions hold municipalities whose real MRC the directory names.
 CENSUS_ONLY_TYPES: dict[str, frozenset[str]] = {
     "10": frozenset({"CDR"}),
     "11": frozenset({"CTY"}),
@@ -349,7 +349,7 @@ MUNICIPAL_TYPES: dict[str, dict[str, str]] = {
 # Subdivision types that are not governments, with what they are. Indian reserves and
 # settlements are land, not governments: First Nations come from Indigenous Services Canada's
 # profiles, a later module. Alberta's improvement districts and special areas are administered
-# by the province; its module decides whether to load them (lists-todo session 8).
+# by the province; its module decides whether to load them.
 DROPPED_TYPES: dict[str, dict[str, str]] = {
     "10": {"SNO": "subdivision of unorganized", "IRI": "Indian reserve"},
     "11": {"FD": "fire district", "IRI": "Indian reserve"},

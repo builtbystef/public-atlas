@@ -13,9 +13,9 @@ import type {
 } from "@public-atlas/api-client";
 
 /**
- * What the console calls each value of the API's enums. The words are the
- * glossary's; the type names a country defines (`school_board`) have no
- * label here and go through `humanize`.
+ * What the console calls each value of the API's enums. The type names a
+ * country defines (`school_board`) have no label here and go through
+ * `humanize`.
  */
 
 export const assignmentTypes = [

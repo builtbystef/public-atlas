@@ -1,9 +1,8 @@
 """FastAPI dependencies that read the resources the lifespan put on `request.state`.
 
 Every route reads one database: the main one, or, when the request carries `X-Database: eval`,
-the eval database an eval run built its graph in (spec section 10). The console sends the
-header for every request while its switch is on the eval database, so each of its pages shows
-either graph."""
+the eval database an eval run built its graph in. The console sends the header for every request
+while its switch is on the eval database, so each of its pages shows either graph."""
 
 from collections.abc import AsyncIterator
 from typing import Annotated, Literal

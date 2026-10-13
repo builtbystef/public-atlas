@@ -45,8 +45,8 @@ department of, else to the city of its address. The rules:
 - The website is the row's, cleaned (`governments.website`); a few lack a scheme.
 
 The file is obtained by hand: the open data platform's CSV export is the same rows in a
-different order from one request to the next, so no hash can be pinned (lists-todo, "Sources
-to fetch by hand"). The module's instructions say how to export it and where it goes.
+different order from one request to the next, so no hash can be pinned. The module's instructions
+say how to export it and where it goes.
 """
 
 import logging

@@ -1,6 +1,6 @@
-"""The one place an assignment changes status (spec section 12.2). `status` is the lifecycle,
-`result` says how a finished one ended; the two are never mixed. One function per move the
-runs and the runner make, each going through the same check of the allowed moves."""
+"""The one place an assignment changes status. `status` is the lifecycle, `result` says how a
+finished one ended; the two are never mixed. One function per move the runs and the runner make,
+each going through the same check of the allowed moves."""
 
 from public_atlas.db.base import utcnow
 from public_atlas.modules.assignments.models import (

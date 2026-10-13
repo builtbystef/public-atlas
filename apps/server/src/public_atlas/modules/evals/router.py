@@ -1,5 +1,5 @@
-"""The evals API (spec section 11, page 6): eval runs over time with their scores and cost. Read
-only: a run is started from the command line."""
+"""The evals API: eval runs over time with their scores and cost. Read only: a run is started from
+the command line."""
 
 import uuid
 from typing import Annotated

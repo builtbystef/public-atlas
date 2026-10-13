@@ -1,6 +1,6 @@
-"""The pure text checks behind every finding (spec section 6.2): whether a quote appears word
-for word in a stored text, whether a page links to a URL, and whether a passage names an
-entity. No database. The text normalization and the mojibake repair live in `shared.text`."""
+"""The pure text checks behind every finding: whether a quote appears word for word in a stored
+text, whether a page links to a URL, and whether a passage names an entity. No database. The text
+normalization and the mojibake repair live in `shared.text`."""
 
 import difflib
 import html
@@ -202,6 +202,6 @@ def link_text(page_html: str, page_url: str, target: str) -> str | None:
 
 def mentions_any(text: str, names: Iterable[str], *, key: Callable[[str], str] = name_key) -> bool:
     """Whether `text` contains one of `names` under `key`: the country's `Naming.key`, which
-    knows what "&" stands for in its languages. The name-in-quote check of spec section 6.2."""
+    knows what "&" stands for in its languages. The name-in-quote check."""
     haystack = key(text)
     return any(key(name) in haystack for name in names if name.strip())

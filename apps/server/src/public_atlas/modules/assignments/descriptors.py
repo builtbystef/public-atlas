@@ -1,6 +1,6 @@
-"""One descriptor per assignment type (spec sections 7.2, 7.4 and 8.4): what kind of entity it
-works on, the tools it gets, which of them end it, its goal, the checklist it must account for,
-its budget and its model. Product data: edit here, not in `Settings`."""
+"""One descriptor per assignment type: what kind of entity it works on, the tools it gets, which of
+them end it, its goal, the checklist it must account for, its budget and its model. Product data:
+edit here, not in `Settings`."""
 
 from dataclasses import dataclass
 from enum import StrEnum
@@ -48,7 +48,7 @@ class Descriptor:
 
     type: AssignmentType
     subject_kind: EntityKind
-    # By name, as the agent module's adapter registers them (spec section 8.1).
+    # By name, as the agent module's adapter registers them.
     tools: tuple[str, ...]
     finishing_tools: tuple[str, ...]
     # As the briefing states it.
@@ -77,9 +77,9 @@ DOWNLOAD_FIRST = (
     "the counts disagree (a file can lag the page). "
 )
 
-# What gets a row (eval dataset README, "Scope"): a body with buying power of its own. The
-# first eval run saved eighteen arenas and community centres from one city's agencies page and
-# filled a village of 579 people's checklist with a provincial contractor and an old health unit.
+# What gets a row: a body with buying power of its own. The first eval run saved eighteen arenas and
+# community centres from one city's agencies page and filled a village of 579 people's checklist
+# with a provincial contractor and an old health unit.
 BUYING_POWER = (
     "What counts as an institution: a body gets a row only when it buys on its own account, "
     "which shows as its own procurement page, its own budget, or its own board that approves "

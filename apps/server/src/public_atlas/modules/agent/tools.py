@@ -1,6 +1,6 @@
-"""The one adapter between the findings and Pydantic AI (spec section 8.1): the browser's tools
-and the findings are registered by the names the descriptor lists, and every typed result is
-rendered to text (or an image) at this edge. There is no wrapper layer."""
+"""The one adapter between the findings and Pydantic AI: the browser's tools and the findings are
+registered by the names the descriptor lists, and every typed result is rendered to text (or an
+image) at this edge. There is no wrapper layer."""
 
 import logging
 from collections.abc import Awaitable, Callable

@@ -45,8 +45,8 @@ class Resources:
     engine: AsyncEngine
     # Tests swap in a factory whose sessions join one transaction.
     session_factory: Callable[[], AsyncSession]
-    # Sessions on the eval database (spec section 10), for the console to read the graph an eval
-    # run built; None when the eval database is the main one. Connects on first use.
+    # Sessions on the eval database, for the console to read the graph an eval run built; None when
+    # the eval database is the main one. Connects on first use.
     eval_session_factory: Callable[[], AsyncSession] | None
     object_store: ObjectStore
     # The job queue: `defer` queues through it and the worker serves it.

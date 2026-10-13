@@ -1,5 +1,5 @@
-"""The shapes of places and institutions as the console reads them (spec section 11, page 3):
-a table row, and a detail with aliases, parent, homepage, sources by type and every quote."""
+"""The shapes of places and institutions as the console reads them: a table row, and a detail with
+aliases, parent, homepage, sources by type and every quote."""
 
 import uuid
 from datetime import datetime

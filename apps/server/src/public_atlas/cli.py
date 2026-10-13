@@ -369,9 +369,7 @@ def build_parser() -> argparse.ArgumentParser:
     pack.add_argument("archive", type=Path, help="the .tar.gz to write")
     lists_command.set_defaults(run=run_lists)
 
-    run_command = commands.add_parser(
-        "run", help="start, pause, resume, stop or advance a run (spec section 7.1)"
-    )
+    run_command = commands.add_parser("run", help="start, pause, resume, stop or advance a run")
     actions = run_command.add_subparsers(dest="action", required=True)
     create = actions.add_parser(
         "create",
@@ -444,9 +442,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def add_eval_command(commands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """`public-atlas eval validate|evidence|score|run`."""
-    eval_command = commands.add_parser(
-        "eval", help="the evals (spec section 10): validate the dataset, score, run"
-    )
+    eval_command = commands.add_parser("eval", help="the evals: validate the dataset, score, run")
     eval_actions = eval_command.add_subparsers(dest="action", required=True)
 
     def chooses_files(sub: argparse.ArgumentParser) -> None:

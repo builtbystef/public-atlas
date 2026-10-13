@@ -1,7 +1,7 @@
-"""The graph API (spec section 11, page 3): institutions as a table with search and filters,
-one institution with its aliases, parent, homepage, sources by type and every quote linked to
-its stored copy; and the places a filter or a picker needs. Reads only: the graph is written by
-the loader, the agent's findings and the reviewer's decisions."""
+"""The graph API: institutions as a table with search and filters, one institution with its aliases,
+parent, homepage, sources by type and every quote linked to its stored copy; and the places a filter
+or a picker needs. Reads only: the graph is written by the loader, the agent's findings and the
+reviewer's decisions."""
 
 import uuid
 from typing import Annotated

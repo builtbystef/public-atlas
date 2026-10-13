@@ -11,8 +11,8 @@ export is a manual file (`CONTACTS.instructions`): the "Find a municipal officia
 on visualizations.alberta.ca sits behind a captcha and exports its table only by hand, one row
 per local authority with its name, kind and website. The province's *Municipal Codes* PDF
 (open.alberta.ca) is the official list of the same bodies by kind, but the parser renders each
-of its tables as one line per page (table structure is off, spec section 8.3), so no line can
-cite one municipality and it is not a source yet; the export carries the kind. The rules:
+of its tables as one line per page (table structure is off), so no line can cite one municipality
+and it is not a source yet; the export carries the kind. The rules:
 
 - A city, town, village, summer village, municipal district or specialized municipality is
   matched to the export's row by name and kind. The government's name is the export's legal

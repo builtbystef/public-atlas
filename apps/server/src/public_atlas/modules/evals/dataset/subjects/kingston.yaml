@@ -947,7 +947,7 @@ out_of_scope:
   - name: Water and Wastewater Municipal Services Corporation (proposed)
     reason: Endorsed in principle by Council in June 2026 but not yet established; revisit when it exists (it would be a public_utility row).
   - name: 1425447 Ontario Limited
-    reason: Holding company that owns Utilities Kingston; no operations or procurement of its own (spec §4 subsidiary rule).
+    reason: Holding company that owns Utilities Kingston; no operations or procurement of its own.
   - name: Limestone District School Board
     url: https://www.limestone.on.ca/
     reason: School board; province-level type.

@@ -147,7 +147,7 @@ class ListFile:
     shared_host: bool = False
     # PDF lists whose records are a table's rows (a directory): the parser reconstructs the
     # tables, so each row is a line of its own and a record is cited by its line. Off, a table
-    # is one cell per page (spec section 8.3), which suits the agent's reading and not a list.
+    # is one cell per page, which suits the agent's reading and not a list.
     tables: bool = False
 
     def __post_init__(self) -> None:

@@ -340,8 +340,7 @@ def _score_traps(tally: Tally, graph: Graph, expected: SubjectFile, match: Subje
 def _score_parents(
     tally: Tally, graph: Graph, expected: SubjectFile, match: SubjectMatch, refs: Refs
 ) -> None:
-    """The parent links (spec section 9), from `parent_institution_id`: judged only where the
-    file labels one."""
+    """The parent links, from `parent_institution_id`: judged only where the file labels one."""
     for inst in expected.institutions:
         if inst.parent is None:
             continue

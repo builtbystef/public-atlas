@@ -855,7 +855,7 @@ out_of_scope:
 notes: >-
   Hydro holding structure: Town -> OEC (90%, Enbridge 10%) -> Oakville Hydro Electricity
   Distribution Inc. The LDC is the public_utility row and OEC is out of scope. Neither publishes
-  procurement (rechecked 2026-10-01 for the open question now in docs/todo.md; rule 6 keeps OEC out), so
+  procurement (rechecked 2026-10-01; rule 6 keeps OEC out), so
   all four utility source types are absent. Transit and fire are Town departments
   with no procurement or budget pages of their own; their absent entries carry covered_by:
   town-of-oakville, as do the library's (its bids run through the Town's bids&tenders and its

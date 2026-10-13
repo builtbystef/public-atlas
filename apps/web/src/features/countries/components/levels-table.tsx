@@ -28,7 +28,7 @@ import { FormDialog } from "@/components/shared/form-dialog";
 
 /**
  * The hierarchy of places, rank by rank, each with the type its government
- * has and the types of body expected under it (spec section 4.4).
+ * has and the types of body expected under it.
  */
 export function LevelsTable({
   countryCode,

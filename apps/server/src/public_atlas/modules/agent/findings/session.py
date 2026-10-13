@@ -1,5 +1,5 @@
 """The tools a session uses on its own assignment rather than to save findings: `status` reports
-progress, `request_review` hands an entity to a human, and `finish` ends it (spec section 7.2)."""
+progress, `request_review` hands an entity to a human, and `finish` ends it."""
 
 import uuid
 from collections.abc import Iterable

@@ -1,6 +1,6 @@
-"""The country tables: seeding them (spec section 5.1), reading them as a `CountryRules` object
-at the start of each assignment or load, and editing them from the console with every array
-validated against the type tables (spec section 4.4).
+"""The country tables: seeding them, reading them as a `CountryRules` object at the start of each
+assignment or load, and editing them from the console with every array validated against the type
+tables.
 
 Seeding adds what is missing and never deletes or rewrites, so an edit made in the console
 survives a reseed.

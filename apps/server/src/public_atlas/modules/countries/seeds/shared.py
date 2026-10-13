@@ -145,10 +145,10 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
             "center); it runs no regular schools of its own"
         ),
     },
-    # Bodies of a municipality or region that buy on their own account (eval dataset README,
-    # "Scope"). Business improvement areas, council committees, tribunals and paramedic services
-    # have no type: they buy through the municipality. Nor do the bodies `municipal_corporation`
-    # excludes (a facility's board, a funded non-profit, a holding company, and so on).
+    # Bodies of a municipality or region that buy on their own account. Business improvement areas,
+    # council committees, tribunals and paramedic services have no type: they buy through the
+    # municipality. Nor do the bodies `municipal_corporation` excludes (a facility's board, a funded
+    # non-profit, a holding company, and so on).
     {
         "name": "transit_agency",
         "description": (

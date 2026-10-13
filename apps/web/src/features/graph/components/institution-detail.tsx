@@ -24,9 +24,9 @@ import { paths } from "@/lib/routes";
 import { EvidenceList } from "./evidence-list";
 
 /**
- * One institution as the graph holds it (spec section 4): its names and
- * codes, where it sits, its homepage with the domain's trust, its sources by
- * type, and the quote behind every one of those claims.
+ * One institution as the graph holds it: its names and codes, where it sits,
+ * its homepage with the domain's trust, its sources by type, and the quote
+ * behind every one of those claims.
  */
 export function InstitutionDetail({
   institution,

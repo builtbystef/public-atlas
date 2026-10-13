@@ -1,5 +1,5 @@
-"""The review API (spec section 11, page 4): the open items with their snapshot and quotes,
-and the decisions. Each decision commits with what it set in motion."""
+"""The review API: the open items with their snapshot and quotes, and the decisions. Each decision
+commits with what it set in motion."""
 
 import uuid
 from collections.abc import Sequence
@@ -50,9 +50,9 @@ async def _spawned(
     items: Sequence[service.ReviewItem],
     spawn: Sequence[Spawn],
 ) -> list[uuid.UUID]:
-    """The work a decision asked for, as assignments of the run it belongs to (spec section
-    7.3): the run of the assignment that raised the first item, else the newest run of the
-    country still going. With no such run the work waits for the next run to seed itself."""
+    """The work a decision asked for, as assignments of the run it belongs to: the run of the
+    assignment that raised the first item, else the newest run of the country still going. With no
+    such run the work waits for the next run to seed itself."""
     if not spawn or not items:
         return []
     first = items[0]

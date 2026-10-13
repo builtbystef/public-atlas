@@ -1,5 +1,5 @@
-"""The evals module's door: an eval run end to end (spec section 10), scoring a database against
-the dataset, recording the result, and reading eval runs back.
+"""The evals module's door: an eval run end to end, scoring a database against the dataset,
+recording the result, and reading eval runs back.
 
 An eval run is a run with `is_eval`, recorded in the main database and mirrored, with the same
 id, in the eval database where its assignments live. The runner prepares the eval database,
@@ -279,12 +279,11 @@ async def run_eval(  # noqa: PLR0913, PLR0915 - the steps of a run, in order
     report: Report = logger.info,
     poll_seconds: float = harness.POLL_SECONDS,
 ) -> EvalReport:
-    """One eval run over the dataset files `files` (spec section 10). `resources` is the main
-    database's: the eval run and its scores are recorded there. `types` bounds the run: the
-    assignment types it works, as its filter. `keep` leaves the eval database as it is instead
-    of resetting it. With `serve` off the work is queued and left to workers of the eval
-    database. `lists` are the official lists the country is loaded with, `DEFAULT_LISTS` for the
-    files' country unless given."""
+    """One eval run over the dataset files `files`. `resources` is the main database's: the eval run
+    and its scores are recorded there. `types` bounds the run: the assignment types it works, as its
+    filter. `keep` leaves the eval database as it is instead of resetting it. With `serve` off the
+    work is queued and left to workers of the eval database. `lists` are the official lists the
+    country is loaded with, `DEFAULT_LISTS` for the files' country unless given."""
     subjects, place_lists = load_dataset(files)
     country_code, seed, lists = _country_setup(subjects, place_lists, lists)
     queues = tuple(queues) if queues is not None else harness.default_queues()

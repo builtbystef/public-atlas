@@ -1,7 +1,7 @@
-"""`save_homepage` and the domain decisions of a `find_homepage` session (spec sections 6.3, 6.4
-and 7.2): a homepage on a trusted domain or a platform is verified from its own text, a link to
-a new domain makes a candidate, and `confirm_domain`, `reject_domain` and `domain_moved` run
-every check and set the follow-up work in motion."""
+"""`save_homepage` and the domain decisions of a `find_homepage` session: a homepage on a trusted
+domain or a platform is verified from its own text, a link to a new domain makes a candidate, and
+`confirm_domain`, `reject_domain` and `domain_moved` run every check and set the follow-up work in
+motion."""
 
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -325,7 +325,7 @@ def test_a_homepage_on_a_platform_needs_a_trusted_link_and_its_own_text(
     call: Callable[..., Any],
 ):
     """The same rule on a platform, with one more: a trusted page must link to it. Verified,
-    the homepage carries its trusted path (spec section 6.4)."""
+    the homepage carries its trusted path."""
     portal = "https://elm.bidsandtenders.ca/library/home"
     capture(
         "https://www.elmcounty.ca/portals",
@@ -550,7 +550,7 @@ def test_a_claim_no_trusted_page_links_to_is_confirmed_by_a_human(
 ):
     """The quotes are checked and kept, but with no trusted link behind the claim the
     confirmation goes to a human; the agent and the checks agree, so the assignment ends
-    `complete` (spec section 7.2)."""
+    `complete`."""
     claim = claimed(world.town, found_on=False)
     ctx = context(make_assignment(FIND_HOMEPAGE, world.town.id))
     capture.page(OAKVILLE, "Welcome to the Town of Oakville", ctx.assignment_id)
@@ -873,8 +873,8 @@ def test_a_trusted_link_to_any_page_on_the_domain_vouches_for_the_root_claim(
     in_session,
 ):
     """The county's site links to a deep page on the utility's domain, and the agent claims the
-    root page it found there. The link to the deep page is the trusted link for the domain
-    (spec section 6.3), so the root page is verified without a human."""
+    root page it found there. The link to the deep page is the trusted link for the domain, so the
+    root page is verified without a human."""
     deep = "https://www.oakvillehydro.ca/rates/residential"
     root = "https://www.oakvillehydro.ca/"
     _, snapshot = capture(

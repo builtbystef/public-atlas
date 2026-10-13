@@ -1,4 +1,4 @@
-"""Stored copies of pages and the quotes taken from them (spec section 4.3)."""
+"""Stored copies of pages and the quotes taken from them."""
 
 import uuid
 from datetime import datetime

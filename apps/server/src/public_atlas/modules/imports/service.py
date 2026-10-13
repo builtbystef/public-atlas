@@ -1,10 +1,10 @@
-"""The shared list loader (spec section 5.2), which never changes when a list is added. It
-opens the module's files (fetched and hash-checked, or collected by hand, from the cache), stores
-each as a snapshot and an `official_lists` row, asks the module for its entries, and writes what
-the database lacks: a place matched by its code, then by its name under the same parent, with its
-government, identifiers, metrics, aliases, candidate homepage and an evidence row quoting the
-list's line for each fact; an institution matched by its codes, then by its name at its place,
-with its identifiers, served places and candidate homepage.
+"""The shared list loader, which never changes when a list is added. It opens the module's files
+(fetched and hash-checked, or collected by hand, from the cache), stores each as a snapshot and an
+`official_lists` row, asks the module for its entries, and writes what the database lacks: a place
+matched by its code, then by its name under the same parent, with its government, identifiers,
+metrics, aliases, candidate homepage and an evidence row quoting the list's line for each fact; an
+institution matched by its codes, then by its name at its place, with its identifiers, served places
+and candidate homepage.
 
 Every run writes in the session and reports what it changed; the caller commits an apply and
 rolls a dry run back, so a dry run's diff is exactly what an apply would do. A second apply
@@ -396,9 +396,8 @@ class Loader:
     async def store_sources(self, sources: Iterable[files.ListFile]) -> None:
         """Each file as a snapshot on a webpage of its own domain, and its `official_lists` row
         with the hash of the file as given, fetched or by hand. A list's domain is trusted from
-        the start (spec section 6.1): the publisher's own host. A shared host (`shared_host`)
-        is a platform instead, fetchable and never trusted; one trusted earlier as a list's
-        domain is made a platform."""
+        the start: the publisher's own host. A shared host (`shared_host`) is a platform instead,
+        fetchable and never trusted; one trusted earlier as a list's domain is made a platform."""
         for file in sources:
             opened = self.files[file.name]
             domain, created = await graph.ensure_domain(
@@ -847,8 +846,8 @@ class Loader:
     async def _homepage(self, institution: Institution, url: str, citation: Citation) -> None:
         """The list's link as a candidate homepage of the institution, on a candidate domain when
         the domain is new, with the list's line as the evidence that links to it. The loader
-        has no run to spawn into: the `find_homepage` this asks for (spec section 7.3) is
-        created when a run covering the place seeds itself (`assignments.service.seed_run`)."""
+        has no run to spawn into: the `find_homepage` this asks for is created when a run
+        covering the place seeds itself (`assignments.service.seed_run`)."""
         normalized = graph.normalize_url(url)
         webpage = await graph.webpage_by_url(self.session, normalized)
         if webpage is None:

@@ -1,8 +1,8 @@
 /**
  * The console reads one of two databases: the live graph, or the separate
- * database the eval harness fills (spec section 10). The choice is a cookie
- * that both API clients turn into the API's `X-Database` header, so every
- * page works against either without a second deployment.
+ * database the eval harness fills. The choice is a cookie that both API clients
+ * turn into the API's `X-Database` header, so every page works against either
+ * without a second deployment.
  */
 
 export const DATABASE_COOKIE = "db";

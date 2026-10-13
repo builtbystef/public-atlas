@@ -1,8 +1,7 @@
-"""Runs (spec section 7.1) and spawning (section 7.3): a run seeds itself with the work due for
-its filter, held in step mode and queued in auto mode; releasing queues held work a few at a
-time; a paused run's job is put back and its assignment stays queued; stop cancels what is held
-or queued; a spawn obeys the run's mode and filter and never doubles open work; and a reviewer's
-decision spawns into the run it belongs to."""
+"""Runs and spawning: a run seeds itself with the work due for its filter, held in step mode and
+queued in auto mode; releasing queues held work a few at a time; a paused run's job is put back and
+its assignment stays queued; stop cancels what is held or queued; a spawn obeys the run's mode and
+filter and never doubles open work; and a reviewer's decision spawns into the run it belongs to."""
 
 import uuid
 from decimal import Decimal

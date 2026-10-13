@@ -1,5 +1,5 @@
 """`save_institution`: the duplicate rules, the type and level checks, the body no listed type
-fits, and the parent and buyer the page names (spec sections 6.5 and 9)."""
+fits, and the parent and buyer the page names."""
 
 import uuid
 from dataclasses import dataclass

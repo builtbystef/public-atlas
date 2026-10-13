@@ -1,4 +1,4 @@
-"""The loader's record of the files it read (spec section 5.2)."""
+"""The loader's record of the files it read."""
 
 import uuid
 from datetime import datetime

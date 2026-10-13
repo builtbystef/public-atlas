@@ -73,10 +73,10 @@ jobs:
 
       # The official lists' files, for the tests marked `lists`. Cached by the pins and manual
       # steps the list modules declare (what `lists manifest` prints). On a miss the cache is
-      # seeded from the archive on the `official-lists` release (`lists pack` writes it; see
-      # docs/lists-todo.md), because some hosts answer a script with a bot check instead of the
-      # file and the manual files exist nowhere else; `lists fetch` then downloads what moved
-      # since and fails the job if a file is still missing.
+      # seeded from the archive on the `official-lists` release (`lists pack` writes it),
+      # because some hosts answer a script with a bot check instead of the file and the manual
+      # files exist nowhere else; `lists fetch` then downloads what moved since and fails the job
+      # if a file is still missing.
       - id: lists-manifest
         run: echo "hash=$(uv run public-atlas lists manifest | sha256sum | cut -c1-16)" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

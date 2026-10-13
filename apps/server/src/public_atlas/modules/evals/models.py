@@ -1,5 +1,5 @@
-"""Eval runs and their scores (spec section 10). They live in the main database so history
-survives a reset of the eval database."""
+"""Eval runs and their scores. They live in the main database so history survives a reset of the
+eval database."""
 
 import uuid
 from datetime import datetime

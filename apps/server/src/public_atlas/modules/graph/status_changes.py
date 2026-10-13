@@ -1,8 +1,8 @@
-"""One door per state change (spec section 6.6). A domain verified, a domain rejected, a
-homepage verified, an institution verified, an institution rejected, an entity sent to review,
-two entities merged: each sets the status in one place, records who did it in `entered_by`, and
-returns what the assignments module should spawn (spec section 7.3). The rules, the reviewer, the
-list loader and the country seed all call these functions and nothing else changes a status.
+"""One door per state change. A domain verified, a domain rejected, a homepage verified, an
+institution verified, an institution rejected, an entity sent to review, two entities merged: each
+sets the status in one place, records who did it in `entered_by`, and returns what the assignments
+module should spawn. The rules, the reviewer, the list loader and the country seed all call these
+functions and nothing else changes a status.
 
 Every function here flushes and leaves the commit to the caller, so a decision and what it sets
 in motion land together or not at all."""
@@ -123,10 +123,10 @@ def _set_status(entity: Entity, status: EntityStatus, entered_by: EnteredBy | No
 async def verify_domain(
     session: AsyncSession, domain: Domain, *, entered_by: EnteredBy
 ) -> list[Spawn]:
-    """Verifying an official domain trusts it (spec section 6.1): its pages now verify what they
-    name. Verifying a platform only records that a person confirmed it is one; a platform is
-    never trusted (`graph.is_trusted`). Nothing is spawned: the homepage verified on the new
-    domain is what spawns work."""
+    """Verifying an official domain trusts it: its pages now verify what they name. Verifying a
+    platform only records that a person confirmed it is one; a platform is never trusted
+    (`graph.is_trusted`). Nothing is spawned: the homepage verified on the new domain is what spawns
+    work."""
     _set_status(domain, EntityStatus.VERIFIED, entered_by)
     await session.flush()
     return []
@@ -137,8 +137,8 @@ async def reject_domain(
 ) -> list[Spawn]:
     """A dead site, or one that is nobody's. Every homepage claim on it that is open or
     verified is rejected with the reason, the verified one's institution loses its link, and
-    each institution that claimed one looks again (spec section 7.3). A verified claim on a
-    rejected domain cannot stand: the domain was the warrant for it."""
+    each institution that claimed one looks again. A verified claim on a rejected domain cannot
+    stand: the domain was the warrant for it."""
     _set_status(domain, EntityStatus.REJECTED, entered_by)
     spawns: list[Spawn] = []
     for homepage in await _homepages_on(session, domain, LIVE):
@@ -182,8 +182,8 @@ async def verify_homepage(
     """The claim holds: the page is on a trusted domain, or on a platform a rule or a reviewer
     vouched for, and no other institution owns it. The institution's `homepage_id` is set, its
     other open claims are rejected as superseded, and the institution's sources are looked for;
-    a government's place gets its institutions looked for too (spec section 7.3). On a platform
-    the homepage's `trusted_path` is set (spec section 6.4)."""
+    a government's place gets its institutions looked for too. On a platform the homepage's
+    `trusted_path` is set."""
     institution = await session.get_one(Institution, homepage.institution_id)
     if homepage.status is EntityStatus.VERIFIED and institution.homepage_id == homepage.id:
         return []
@@ -360,10 +360,10 @@ async def reject_source(
 
 
 async def send_to_review(session: AsyncSession, entity: Entity) -> bool:
-    """Raising a review item sets a candidate to `needs_review` (spec section 6.5). A verified
-    or rejected entity keeps its status while the question is open: the item is the record.
-    Whether the status changed; `entered_by` stays, since nothing was decided. The change goes
-    through the one door like every other, so it is logged and a preview sees it."""
+    """Raising a review item sets a candidate to `needs_review`. A verified or rejected entity keeps
+    its status while the question is open: the item is the record. Whether the status changed;
+    `entered_by` stays, since nothing was decided. The change goes through the one door like every
+    other, so it is logged and a preview sees it."""
     if entity.status is not EntityStatus.CANDIDATE:
         return False
     _set_status(entity, EntityStatus.NEEDS_REVIEW, None)

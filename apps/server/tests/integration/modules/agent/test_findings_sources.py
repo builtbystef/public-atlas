@@ -1,6 +1,6 @@
-"""`save_source` (spec sections 6.1 and 6.4): verified on trusted pages, checked on platforms
-through the trusted page that links there, verified under a platform homepage's trusted path,
-and reviewed when the chain is not trusted."""
+"""`save_source`: verified on trusted pages, checked on platforms through the trusted page that
+links there, verified under a platform homepage's trusted path, and reviewed when the chain is not
+trusted."""
 
 import uuid
 from typing import TYPE_CHECKING, Any
@@ -246,7 +246,7 @@ def test_a_page_under_a_platform_homepages_trusted_path_is_verified(
     in_session,
 ):
     """The town's verified homepage is on a platform: the pages under its path vouch for the
-    town as a trusted domain's would (spec section 6.4), and the rest of the platform does not."""
+    town as a trusted domain's would, and the rest of the platform does not."""
     home = "https://elm.bidsandtenders.ca/oakville/home"
 
     async def verified_on_platform(session) -> Homepage:

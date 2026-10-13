@@ -1,8 +1,8 @@
-"""The runner driven by a scripted model (spec section 7.4): a session runs the tools and ends
-with the finishing tool; its calls are accounted for and written as events; a full window hands
-off and the next session carries on; the budget ends an assignment `out_of_budget`; a job that
-fails on its last attempt ends it `failed`; twenty sessions requeue it; a stopped run cancels it;
-what it finishes spawns, and the pages nothing cites are pruned; a video is stored and noted."""
+"""The runner driven by a scripted model: a session runs the tools and ends with the finishing tool;
+its calls are accounted for and written as events; a full window hands off and the next session
+carries on; the budget ends an assignment `out_of_budget`; a job that fails on its last attempt ends
+it `failed`; twenty sessions requeue it; a stopped run cancels it; what it finishes spawns, and the
+pages nothing cites are pruned; a video is stored and noted."""
 
 import shutil
 import uuid

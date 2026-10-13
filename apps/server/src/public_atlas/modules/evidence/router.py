@@ -1,5 +1,5 @@
 """The evidence API: one quote in the context of the stored page it was taken from, for the
-console to show a quote highlighted where the rules found it (spec section 11, page 4)."""
+console to show a quote highlighted where the rules found it."""
 
 import uuid
 

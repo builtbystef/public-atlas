@@ -1,6 +1,5 @@
-"""The records a list module returns (spec section 5.2). They exist only while the loader runs:
-the loader turns each into rows, with a citation per fact becoming an evidence row that quotes
-the list's own line."""
+"""The records a list module returns. They exist only while the loader runs: the loader turns each
+into rows, with a citation per fact becoming an evidence row that quotes the list's own line."""
 
 from decimal import Decimal
 from typing import Literal, Self

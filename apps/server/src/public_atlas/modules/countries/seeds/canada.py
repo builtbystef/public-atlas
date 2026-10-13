@@ -36,10 +36,9 @@ SETTINGS: dict[str, Any] = {
             ["United Counties", "Comtés unis"],
             ["Region", "Région"],
             ["District"],
-            # The other provinces' and territories' kinds of municipality (lists-research
-            # section 2.1). Each is a kind of its own so that a composed name's core is the
-            # place ("Rural Municipality of Morris" and "Town of Morris" are two places;
-            # "Municipality of the County of Kings" is Kings).
+            # The other provinces' and territories' kinds of municipality. Each is a kind of its own
+            # so that a composed name's core is the place ("Rural Municipality of Morris" and "Town
+            # of Morris" are two places; "Municipality of the County of Kings" is Kings).
             ["Rural Municipality"],
             ["Resort Municipality"],
             ["Resort Village"],
@@ -186,7 +185,7 @@ PLATFORMS: list[str] = [
 # Government of Ontario and the allowlist takes subdomains, so the one entry covers the Public
 # Appointments Secretariat (pas.gov.on.ca), INFO-GO and the ministries' legacy sites.
 # Agency domains such as supplyontario.ca stay out: find_homepage verifies them like any other
-# candidate. The other governments' domains are from lists-research section 2.3.
+# candidate.
 PLACES: list[dict[str, Any]] = [
     {
         "name": "Canada",

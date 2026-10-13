@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# The tools, in the order the spec lists them (section 8.1); the adapter registers these names.
+# The tools, by the names the adapter registers.
 TOOLS = (
     "navigate",
     "snapshot",

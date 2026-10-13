@@ -163,7 +163,7 @@ class NamePatternCheck(BaseModel):
     misses: list[NamePatternMiss]
 
 
-# --- Seeds (spec section 5.1) ---
+# --- Seeds ---
 
 
 class SharedSeed(BaseModel):

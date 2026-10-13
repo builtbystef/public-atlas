@@ -1,7 +1,7 @@
-"""`save_homepage`: an institution's homepage, and what its domain's state makes of the claim
-(spec sections 6.1 and 7.2). On a trusted domain or a platform the page itself is read and
-quoted before it is verified; on a new domain the claim becomes a candidate, which a
-`find_homepage` session opens and decides with the domain tools."""
+"""`save_homepage`: an institution's homepage, and what its domain's state makes of the claim. On a
+trusted domain or a platform the page itself is read and quoted before it is verified; on a new
+domain the claim becomes a candidate, which a `find_homepage` session opens and decides with the
+domain tools."""
 
 import uuid
 from dataclasses import dataclass
@@ -268,8 +268,8 @@ async def _verify_from_own_text(  # noqa: PLR0913, PLR0917
     page_quote: str | None,
 ) -> SavedHomepage:
     """On a decided domain the page vouches for itself: the agent opened it, judged it the
-    institution's own and quoted it. A platform page needs a trusted page linking to it as well
-    (spec section 6.4); without one a human decides."""
+    institution's own and quoted it. A platform page needs a trusted page linking to it as well;
+    without one a human decides."""
     what = "trusted" if graph.is_trusted(domain) else "a platform"
     if page_quote is None:
         return SavedHomepage(

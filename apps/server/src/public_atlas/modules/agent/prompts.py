@@ -1,6 +1,6 @@
-"""The standing text every session of an assignment type is given (spec section 8): what the
-tools are for, how to quote, and the country's levels, types and descriptions, read from the
-country tables through `CountryRules`. The goal of each type is on its descriptor."""
+"""The standing text every session of an assignment type is given: what the tools are for, how to
+quote, and the country's levels, types and descriptions, read from the country tables through
+`CountryRules`. The goal of each type is on its descriptor."""
 
 from public_atlas.modules.agent.context import SessionContext
 

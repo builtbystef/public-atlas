@@ -29,9 +29,8 @@ placed under the department that heads its portfolio. The rules:
   portfolio). A head and a body of a portfolio with no head (Parliament's entities, the five
   rows with no portfolio) sit under the Government of Canada, the loader's default.
 - The website is the row's, cleaned: a bare host gets its scheme, and the one row that lists
-  two sites keeps the first. A domain is trusted the spec's way, by a `find_homepage`
-  assignment, never by this list; the inventory's own line is the trusted link that
-  assignment needs.
+  two sites keeps the first. A domain is trusted the usual way, by a `find_homepage` assignment,
+  never by this list; the inventory's own line is the trusted link that assignment needs.
 
 The file is the open dataset's resource `7c131a87-7784-4208-8e5c-043451240d95` on dataset
 `a35cf382-690c-4221-a971-cf0fd189a46f`, modified 2026-10-04; a new release is one hash swap.

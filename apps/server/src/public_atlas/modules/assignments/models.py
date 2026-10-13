@@ -1,4 +1,4 @@
-"""Work (spec section 4.5): runs, the assignments inside them, and what each one spent."""
+"""Work: runs, the assignments inside them, and what each one spent."""
 
 import uuid
 from datetime import datetime

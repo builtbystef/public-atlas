@@ -1,5 +1,5 @@
 """The evidence module's door: storing a copy of a page or file with its text, the quotes taken
-from it, and the checks a quote or link must pass against a stored copy (spec section 6.2).
+from it, and the checks a quote or link must pass against a stored copy.
 
 Bytes and text are keyed by content hash in the object store, so identical bytes fetched twice,
 by whoever and from whatever URL, share one copy of each; a snapshot row is one fetch. A

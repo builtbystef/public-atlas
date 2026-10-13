@@ -1,4 +1,4 @@
-"""Everything the agent saw, said and did, in order (spec section 4.5)."""
+"""Everything the agent saw, said and did, in order."""
 
 import uuid
 from datetime import datetime

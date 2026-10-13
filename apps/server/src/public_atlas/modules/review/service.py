@@ -1,9 +1,8 @@
-"""The review queue (spec section 6.5): raising a question about one entity, and the decisions
-a reviewer makes. Raising an item sets the entity to `needs_review`; approving, rejecting and
-merging run the same `status_changes` functions the rules run, so nothing bypasses them. Items
-that ask one shared question carry a `kind`: the queue lists them as one row and they are decided
-together; the type questions among them settle themselves when the country tables come to answer
-them.
+"""The review queue: raising a question about one entity, and the decisions a reviewer makes.
+Raising an item sets the entity to `needs_review`; approving, rejecting and merging run the same
+`status_changes` functions the rules run, so nothing bypasses them. Items that ask one shared
+question carry a `kind`: the queue lists them as one row and they are decided together; the type
+questions among them settle themselves when the country tables come to answer them.
 
 The question is a JSON document the reviewer sees: `reasons`, one per time the rule fired, and
 the facts the rule wants decided (`institution_type` and `level`, `suggested_type`, the
@@ -75,7 +74,7 @@ class Rule(StrEnum):
     NAME_PATTERN = "name_pattern"
     # A save the duplicate search left the agent unsure about.
     DUPLICATE = "duplicate"
-    # The domain checks of spec section 6.3 failed in a way the agent cannot fix.
+    # The domain checks failed in a way the agent cannot fix.
     DOMAIN_CHECKS = "domain_checks"
     # A candidate homepage redirected somewhere the rules cannot follow.
     DOMAIN_MOVED = "domain_moved"

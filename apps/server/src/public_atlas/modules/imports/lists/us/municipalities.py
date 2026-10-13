@@ -9,7 +9,7 @@ exception class. The files and their readers are shared with the states and coun
 (`us/census.py`).
 
 Which rows are governments is their functional status (A, B or C; `census.ACTIVE`). The
-exception classes of lists-research section 1.3, as rules:
+exception classes, as rules:
 
 1. Independent cities (class C7, 41: thirty-eight in Virginia, Baltimore, St. Louis and Carson
    City) are places whose county row is a filler the counties list drops, so the city sits under

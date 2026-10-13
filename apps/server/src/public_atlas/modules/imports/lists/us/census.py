@@ -5,11 +5,11 @@ its 2025 population; the 2020 ANSI code files, the only ones that carry each uni
 (`CLASSFP`); the 2026 Gazetteer's county file and the Puerto Rico estimates, since SUB-EST2025
 leaves Puerto Rico out; and the readers that turn them into units.
 
-What is a government is the functional status (lists-research section 1.1): `A` (active), `B`
-(active, partially consolidated) and `C` (active, consolidated with another government) are
-governments; `F` (fictitious filler), `G` (subordinate), `I` (inactive), `N` (nonfunctioning
-legal entity) and `S` (statistical) are not. A `C` unit's government is the other unit's: a
-county consolidated with its city, a Connecticut town consolidated with the city of its name.
+What is a government is the functional status: `A` (active), `B` (active, partially consolidated)
+and `C` (active, consolidated with another government) are governments; `F` (fictitious filler), `G`
+(subordinate), `I` (inactive), `N` (nonfunctioning legal entity) and `S` (statistical) are not. A
+`C` unit's government is the other unit's: a county consolidated with its city, a Connecticut town
+consolidated with the city of its name.
 
 The census writes a unit's kind after its name in lower case ("Springfield city", "Canton
 charter township", "Cyr plantation"); the legal name puts the designator first ("City of

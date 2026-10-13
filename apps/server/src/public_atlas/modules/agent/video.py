@@ -1,5 +1,5 @@
-"""The videos a session's browser recorded (spec section 8.2): stored through the storage port
-under the assignment and session, then the recording directory is removed."""
+"""The videos a session's browser recorded: stored through the storage port under the assignment and
+session, then the recording directory is removed."""
 
 import asyncio
 import logging

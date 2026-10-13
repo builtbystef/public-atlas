@@ -20,9 +20,9 @@ RUNNING = AssignmentStatus.RUNNING
 FINISHED = AssignmentStatus.FINISHED
 CANCELLED = AssignmentStatus.CANCELLED
 STATUSES = [HELD, QUEUED, RUNNING, FINISHED, CANCELLED]
-# The moves of spec section 12.2, written out: a held assignment is released or cancelled, a
-# queued one is picked up or cancelled, a running one is put back, finished or cancelled, and
-# a finished or cancelled one goes nowhere.
+# The allowed moves, written out: a held assignment is released or cancelled, a queued one is picked
+# up or cancelled, a running one is put back, finished or cancelled, and a finished or cancelled one
+# goes nowhere.
 ALLOWED = {
     (HELD, QUEUED),
     (HELD, CANCELLED),

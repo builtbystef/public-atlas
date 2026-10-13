@@ -1,6 +1,6 @@
-"""Scoring a database against the eval dataset (spec section 10). `load_graph` reads what the
-scorer needs in a few queries; everything after it is pure, so the match rules are tested
-without a database and a live database and an eval database are scored the same way."""
+"""Scoring a database against the eval dataset. `load_graph` reads what the scorer needs in a few
+queries; everything after it is pure, so the match rules are tested without a database and a live
+database and an eval database are scored the same way."""
 
 from public_atlas.modules.evals.scorer.graph import (
     AssignmentRow,

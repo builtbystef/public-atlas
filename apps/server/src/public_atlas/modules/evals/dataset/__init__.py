@@ -1,8 +1,7 @@
-"""The eval dataset (spec section 10): ten hand-labelled Ontario subjects, a list of 25 Ontario
-governments and three United States subjects, as YAML files beside this module, with their
-schema, validator and evidence check. `README.md` holds the labelling rules. Each file names its
-country; an eval run works one country's files. The quick set, five Ontario subjects chosen for
-coverage over size, is the default; `--all` works every file."""
+"""The eval dataset: ten hand-labelled Ontario subjects, a list of 25 Ontario governments and three
+United States subjects, as YAML files beside this module, with their schema, validator and evidence
+check. Each file names its country; an eval run works one country's files. The quick set, five
+Ontario subjects chosen for coverage over size, is the default; `--all` works every file."""
 
 import hashlib
 from pathlib import Path

@@ -70,9 +70,9 @@ function RowMembers({ row }: { row: ReviewRow }) {
 }
 
 /**
- * The decisions of spec section 6.5: approve, reject or merge one item, and
- * approve or reject every item of a row that asks one question for several.
- * Each opens a dialog for the note; render `dialog` once near the list.
+ * The review decisions: approve, reject or merge one item, and approve or
+ * reject every item of a row that asks one question for several. Each opens a
+ * dialog for the note; render `dialog` once near the list.
  */
 export function useReviewActions(): {
   approve: (item: DecisionTarget) => void;

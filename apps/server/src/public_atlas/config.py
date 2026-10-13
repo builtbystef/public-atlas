@@ -130,9 +130,9 @@ class Settings(BaseSettings):
     paused_run_delay: timedelta = timedelta(seconds=30)
 
     # --- Evals ---
-    # The database an eval run builds its graph in (spec section 10): on the same server as
-    # `database_url`, created and reset by `public-atlas eval run`. Never the main database or the
-    # tests' one. The scores and the cost go to the main database.
+    # The database an eval run builds its graph in: on the same server as `database_url`, created
+    # and reset by `public-atlas eval run`. Never the main database or the tests' one. The scores
+    # and the cost go to the main database.
     eval_database_name: str = Field("public_atlas_evals", min_length=1)
     # The recorded videos of an assignment are deleted this many days after it finished; its
     # events say so. The events themselves go after `events_keep_days`. Findings, usage and the
@@ -157,7 +157,7 @@ class Settings(BaseSettings):
         return self.database_name != self.eval_database_name
 
     def eval_settings(self) -> Settings:
-        """The same settings on the eval database (spec section 10)."""
+        """The same settings on the eval database."""
         url = make_url(str(self.database_url)).set(database=self.eval_database_name)
         return self.model_copy(
             update={"database_url": PostgresDsn(url.render_as_string(hide_password=False))}

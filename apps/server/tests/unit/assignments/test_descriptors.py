@@ -1,5 +1,5 @@
 """One descriptor per assignment type, each whole: a subject kind, the tools with the finishing
-ones among them, a goal, a checklist, a budget and a model (spec sections 7.2, 7.4 and 8.4)."""
+ones among them, a goal, a checklist, a budget and a model."""
 
 from public_atlas.integrations.browser import TOOLS as BROWSING
 from public_atlas.modules.assignments.descriptors import (
@@ -10,7 +10,7 @@ from public_atlas.modules.assignments.descriptors import (
 from public_atlas.modules.assignments.models import AssignmentType
 from public_atlas.modules.graph.models import EntityKind
 
-# The findings of spec section 8.1, by name.
+# The findings, by name.
 FINDINGS = {
     "read_file",
     "search",
@@ -36,7 +36,7 @@ def test_every_type_has_a_whole_descriptor():
         assert set(descriptor.finishing_tools) <= set(descriptor.tools)
 
 
-def test_subjects_tools_and_checklists_follow_the_spec():
+def test_subjects_tools_and_checklists_per_type():
     homepage = descriptor_for(AssignmentType.FIND_HOMEPAGE)
     institutions = descriptor_for(AssignmentType.FIND_INSTITUTIONS)
     sources = descriptor_for(AssignmentType.FIND_SOURCES)

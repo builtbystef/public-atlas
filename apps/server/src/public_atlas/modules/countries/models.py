@@ -1,6 +1,6 @@
-"""The five country tables (spec section 4.4). Levels are per country, types are global, and a
-country's use of a type is per country. The type tables use the type's name as the primary key,
-so rows elsewhere read as words and a rename cascades."""
+"""The five country tables. Levels are per country, types are global, and a country's use of a type
+is per country. The type tables use the type's name as the primary key, so rows elsewhere read as
+words and a rename cascades."""
 
 from typing import Any
 

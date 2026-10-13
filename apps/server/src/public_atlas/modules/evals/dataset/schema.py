@@ -84,8 +84,8 @@ class Name(Strict):
 
 
 class Parent(Strict):
-    """The body an institution sits under, as a page says it (spec section 9): scored from
-    `parent_institution_id`. `label` is the page's own words ("agency of", "wholly owned by")."""
+    """The body an institution sits under, as a page says it: scored from `parent_institution_id`.
+    `label` is the page's own words ("agency of", "wholly owned by")."""
 
     institution: Ref
     label: str

@@ -1,7 +1,7 @@
-"""What a decision would do, shown before it is made (spec section 6.5): the decision runs as
-it would, through the same functions, while its status changes are collected; the work it asks
-for is checked against the run it would start in; then the session is rolled back, so nothing
-is kept. A preview cannot drift from the decision, since it is the decision."""
+"""What a decision would do, shown before it is made: the decision runs as it would, through the
+same functions, while its status changes are collected; the work it asks for is checked against the
+run it would start in; then the session is rolled back, so nothing is kept. A preview cannot drift
+from the decision, since it is the decision."""
 
 import uuid
 from collections.abc import Awaitable, Callable

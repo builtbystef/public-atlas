@@ -706,7 +706,7 @@ def test_rejecting_a_domain_with_a_verified_homepage_on_it(
 ):
     """A rejected domain is dead or nobody's, so a homepage verified on it cannot stand: the
     claim is rejected with the reason, the institution loses its link and looks again, like
-    every open claim on the domain (spec section 7.3)."""
+    every open claim on the domain."""
 
     async def scenario() -> tuple[Domain, Homepage, Homepage, Institution, list[Spawn]]:
         async with db.session() as session:

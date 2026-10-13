@@ -1,6 +1,6 @@
 """The eval dataset as shipped: every file reads under its schema, passes the cross-reference
-checks against its country's seed, and holds the ten Ontario subjects and 25 governments of
-spec section 10 and the three United States subjects."""
+checks against its country's seed, and holds the ten Ontario subjects, the 25 governments and the
+three United States subjects."""
 
 import pytest
 

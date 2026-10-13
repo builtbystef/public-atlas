@@ -1,7 +1,7 @@
-"""The graph as a picture (docs/graph-view.md): the places under a root, the institutions in
-them, their homepages and sources and the domains those sit on, as nodes, and the foreign keys
-between them as edges. Reads only, in a handful of queries: one per kind, each selecting from
-the one before as a subquery, so a region never costs a round trip per row."""
+"""The graph as a picture: the places under a root, the institutions in them, their homepages and
+sources and the domains those sit on, as nodes, and the foreign keys between them as edges. Reads
+only, in a handful of queries: one per kind, each selecting from the one before as a subquery, so a
+region never costs a round trip per row."""
 
 import uuid
 from collections.abc import Iterable

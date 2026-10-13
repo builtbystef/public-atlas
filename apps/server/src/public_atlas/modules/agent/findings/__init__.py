@@ -1,7 +1,7 @@
-"""The findings: the typed functions the agent calls through the adapter in `tools.py` (spec
-section 8.1). Each takes the run context and returns a typed result rendered to text at the
-edge, or raises `FindingError` with what the model should do instead. Beside each tool is the
-function that does the work on a session, which the tests call directly."""
+"""The findings: the typed functions the agent calls through the adapter in `tools.py`. Each takes
+the run context and returns a typed result rendered to text at the edge, or raises `FindingError`
+with what the model should do instead. Beside each tool is the function that does the work on a
+session, which the tests call directly."""
 
 from public_atlas.modules.agent.findings.domains import (
     MAX_CONFIRM_ATTEMPTS,

@@ -1,7 +1,7 @@
-"""`save_source`: the trust rules for a page that carries procurement signals (spec sections
-6.1 and 6.4). A page on a trusted domain is verified from its quote; a page under a platform
-homepage's trusted path likewise; a page elsewhere on a platform needs a trusted page linking
-to it and must name the institution, or a human decides."""
+"""`save_source`: the trust rules for a page that carries procurement signals. A page on a trusted
+domain is verified from its quote; a page under a platform homepage's trusted path likewise; a page
+elsewhere on a platform needs a trusted page linking to it and must name the institution, or a human
+decides."""
 
 import uuid
 from dataclasses import dataclass
@@ -211,7 +211,7 @@ async def _trust(  # noqa: PLR0911 - one return per rule
 ) -> Trust:
     """A source on a trusted domain is verified; so is one under the institution's own
     platform homepage (its trusted path); one elsewhere on a platform is verified when a
-    trusted page links to it and it names the institution (spec section 6.4)."""
+    trusted page links to it and it names the institution."""
     if page.trusted:
         return Trust(verified=True)
     if not page.platform:
@@ -268,8 +268,8 @@ async def _trust(  # noqa: PLR0911 - one return per rule
 
 
 async def _under_trusted_path(session: AsyncSession, institution: Institution, url: str) -> bool:
-    """Whether `url` sits under the institution's verified platform homepage (spec section
-    6.4): those pages vouch for this one institution as a trusted domain's would."""
+    """Whether `url` sits under the institution's verified platform homepage: those pages vouch for
+    this one institution as a trusted domain's would."""
     if institution.homepage_id is None:
         return False
     homepage = await session.get_one(Homepage, institution.homepage_id)

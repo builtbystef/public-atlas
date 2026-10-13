@@ -45,8 +45,8 @@ const assignmentTypeOptions = assignmentTypes.map((value) => ({
 
 /**
  * Starts a run: a name, a country, a mode, and the filter that says which
- * subjects and assignment types it covers (spec section 7.1). The levels
- * and institution types come from the chosen country's tables.
+ * subjects and assignment types it covers. The levels and institution types
+ * come from the chosen country's tables.
  */
 export function RunForm({ countries }: { countries: CountrySettingsInput[] }) {
   const router = useRouter();

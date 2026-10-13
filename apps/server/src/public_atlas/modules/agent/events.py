@@ -1,5 +1,5 @@
-"""`agent_run_events` (spec section 4.5): everything the agent saw, said and did in one session,
-written as rows from the session's message list when it ends."""
+"""`agent_run_events`: everything the agent saw, said and did in one session, written as rows from
+the session's message list when it ends."""
 
 import uuid
 from collections.abc import Sequence

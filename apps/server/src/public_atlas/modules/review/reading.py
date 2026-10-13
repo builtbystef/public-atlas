@@ -1,7 +1,7 @@
-"""A review item as its page shows it (spec section 11, page 4): the item, its entity and every
-entity its question names, each summarised alike so a duplicate can be set beside its match;
-the evidence; the assignment that raised it; the other open items that ask the same question;
-the assignments started since the decision; and the next open item to look at. Reads only."""
+"""A review item as its page shows it: the item, its entity and every entity its question names,
+each summarised alike so a duplicate can be set beside its match; the evidence; the assignment that
+raised it; the other open items that ask the same question; the assignments started since the
+decision; and the next open item to look at. Reads only."""
 
 import uuid
 from collections.abc import Iterable

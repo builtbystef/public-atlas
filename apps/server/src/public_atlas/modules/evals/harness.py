@@ -1,9 +1,9 @@
-"""The eval harness (spec section 10): the eval database, a database of its own on the configured
-server, reset and migrated; the country seeded through the real seed and loader with every
-assignment held; each subject's place, government, trusted domains and homepage seeded as the
-loader would have made them, and its discovery queued; the queues served in this process with a
-parse worker in a process of its own; and the cost of what ran. The seed is only what the loader
-would have made had the subject been an anchor; the agent finds the rest."""
+"""The eval harness: the eval database, a database of its own on the configured server, reset and
+migrated; the country seeded through the real seed and loader with every assignment held; each
+subject's place, government, trusted domains and homepage seeded as the loader would have made them,
+and its discovery queued; the queues served in this process with a parse worker in a process of its
+own; and the cost of what ran. The seed is only what the loader would have made had the subject been
+an anchor; the agent finds the rest."""
 
 import asyncio
 import importlib.util
@@ -88,7 +88,7 @@ type Report = Callable[[str], None]
 
 
 def eval_settings(settings: Settings) -> Settings:
-    """The same settings on the eval database (spec section 10)."""
+    """The same settings on the eval database."""
     return settings.eval_settings()
 
 
@@ -226,10 +226,9 @@ async def seed_subject(  # noqa: PLR0913
 ) -> Seeded:
     """Seed one subject file into `run`'s database and queue its discovery: `find_sources` for
     the government or ministry and, for a place subject, `find_institutions` for the place, as
-    a verified homepage would have spawned them (spec section 7.3), within the run's filter.
-    A ministry's bodies are an official list's to load, not the agent's to find (spec section
-    5.2), so an institution subject queues no discovery. Flushed, not committed. Seeding again
-    changes nothing."""
+    a verified homepage would have spawned them, within the run's filter. A ministry's bodies are an
+    official list's to load, not the agent's to find, so an institution subject queues no discovery.
+    Flushed, not committed. Seeding again changes nothing."""
     subject = expected.subject
     government = expected.institution(subject.institution)
     if government is None:

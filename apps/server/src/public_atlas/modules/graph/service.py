@@ -1,7 +1,7 @@
 """The graph's door for other modules: URLs and domain names in one spelling, the domain and
 webpage rows a URL needs, creating and finding places and institutions, the aliases they go by,
 and the duplicate search behind `save_institution`. Every entity is created a candidate; the
-status moves only in `status_changes.py`, the graph's other door (spec section 6.6).
+status moves only in `status_changes.py`, the graph's other door.
 
 The duplicate search takes the country's rules for its naming forms. It imports them from
 `countries.rules`, below `countries.service`, which seeds anchors through this module: the two
@@ -167,9 +167,9 @@ def candidate_domain_name(host: str) -> str:
 
 
 def trusted_path_of(url: str) -> str:
-    """The URL prefix a verified homepage on a platform vouches for (spec section 6.4): the
-    homepage's own path as a section, with a page-like last segment dropped and no query. A
-    platform's root is refused: it is nobody's homepage."""
+    """The URL prefix a verified homepage on a platform vouches for: the homepage's own path as a
+    section, with a page-like last segment dropped and no query. A platform's root is refused: it is
+    nobody's homepage."""
     parts = urlsplit(normalize_url(url))
     segments = [segment for segment in parts.path.split("/") if segment]
     if not segments:

@@ -49,7 +49,7 @@ class InstitutionRow:
     status: str
     # The verified homepage, once one is; the claims are in `Graph.homepages`.
     homepage_url: str | None
-    # The body it sits under (spec section 9).
+    # The body it sits under.
     parent_id: uuid.UUID | None
     names: tuple[str, ...]
 

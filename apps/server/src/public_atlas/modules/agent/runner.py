@@ -1,9 +1,9 @@
-"""Runs an assignment as fresh sessions until it ends (spec section 7.4). The budget is shared
-across the sessions; a session that passes half the model's context window hands off with a
-note; one job runs at most twenty sessions, then requeues itself; a job that fails on its last
-attempt finishes the assignment `failed`. A session ends in one of four ways, collapsed into
-one signal: a finishing tool set `ended`, the budget ran out (an exception), the window filled
-(a handoff), or the assignment stalled.
+"""Runs an assignment as fresh sessions until it ends. The budget is shared across the sessions; a
+session that passes half the model's context window hands off with a note; one job runs at most
+twenty sessions, then requeues itself; a job that fails on its last attempt finishes the assignment
+`failed`. A session ends in one of four ways, collapsed into one signal: a finishing tool set
+`ended`, the budget ran out (an exception), the window filled (a handoff), or the assignment
+stalled.
 
 The stall rule: a discovery assignment that keeps making requests without saving a finding is
 first told so in a tool result (`STALL_WARNING_REQUESTS` in `context.py`) and then, at
@@ -163,8 +163,8 @@ async def _claim(res: Resources, assignment_id: uuid.UUID) -> tuple[Assignment, 
 
 async def _put_back(res: Resources, session: AsyncSession, assignment: Assignment) -> None:
     """The run is paused: the job goes back with a short delay and the assignment stays
-    `queued` (spec section 7.1). One that was mid-way (its run paused between sessions) is
-    queued again first; it resumes from its handoff note."""
+    `queued`. One that was mid-way (its run paused between sessions) is queued again first; it
+    resumes from its handoff note."""
     if assignment.status is AssignmentStatus.RUNNING:
         lifecycle.queue(assignment)
     await assignments.queue_job(session, res.jobs, assignment, delay=res.settings.paused_run_delay)
@@ -175,7 +175,7 @@ async def _finish(
     res: Resources, assignment_id: uuid.UUID, result: AssignmentResult, summary: str | None
 ) -> str:
     """End the assignment with `result`, create the work its finish asks for (nothing after
-    `failed`), and drop the stored copies of the pages nothing cites (spec section 8.2)."""
+    `failed`), and drop the stored copies of the pages nothing cites."""
     async with res.session() as session:
         row = await session.get_one(Assignment, assignment_id)
         lifecycle.finish(row, result, summary=summary)

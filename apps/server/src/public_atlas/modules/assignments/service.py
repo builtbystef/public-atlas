@@ -1,5 +1,5 @@
-"""The assignments module's door: runs (spec section 7.1), the assignments inside them and how
-they are spawned (section 7.3), their budgets, and what each call cost.
+"""The assignments module's door: runs, the assignments inside them and how they are spawned, their
+budgets, and what each call cost.
 
 A run is how a person controls work. Creating one seeds it with the work due for the subjects
 its filter names: `find_homepage` for an institution without a verified homepage, `find_sources`
@@ -104,8 +104,8 @@ _unpriced: set[str] = set()
 
 @dataclass(frozen=True, slots=True)
 class Spawn:
-    """Work a status change asks for (spec section 7.3): one assignment type on one subject. The
-    backend inserts it and queues or holds it by the run's mode; the status change only says."""
+    """Work a status change asks for: one assignment type on one subject. The backend inserts it and
+    queues or holds it by the run's mode; the status change only says."""
 
     type: AssignmentType
     subject_id: uuid.UUID
@@ -209,9 +209,9 @@ async def _subjects_in_scope(
 
 
 async def due_work(session: AsyncSession, subject: Place | Institution) -> list[Spawn]:
-    """What the subject is owed now (spec section 7.3): `find_institutions` for a place whose
-    government has a verified homepage; `find_sources` for an institution with one;
-    `find_homepage` for an institution without, unless a reviewer is deciding a claim of its."""
+    """What the subject is owed now: `find_institutions` for a place whose government has a verified
+    homepage; `find_sources` for an institution with one; `find_homepage` for an institution
+    without, unless a reviewer is deciding a claim of its."""
     if subject.status is EntityStatus.REJECTED:
         return []
     if isinstance(subject, Place):
@@ -573,11 +573,11 @@ async def queue_spawns(
 async def spawn_on_finish(
     session: AsyncSession, jobs: App, assignment: Assignment
 ) -> list[Assignment]:
-    """What a finished assignment sets in motion (spec section 7.3): `find_homepage` for every
-    institution it saved that has no verified homepage and no decision pending. Spec section
-    7.3 names `find_institutions`; the other two types may save a body they meet, and that body
-    is owed the same. The subject of a `find_homepage` is never its own follow-up: one that
-    ended `no_homepage` is settled by its review item. Nothing after a `failed` one."""
+    """What a finished assignment sets in motion: `find_homepage` for every institution it saved
+    that has no verified homepage and no decision pending. Mostly a `find_institutions` saves them;
+    the other two types may save a body they meet, and that body is owed the same. The subject of a
+    `find_homepage` is never its own follow-up: one that ended `no_homepage` is settled by its
+    review item. Nothing after a `failed` one."""
     if assignment.result is AssignmentResult.FAILED:
         return []
     run = await session.get_one(Run, assignment.run_id)

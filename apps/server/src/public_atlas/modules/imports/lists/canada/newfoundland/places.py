@@ -7,9 +7,8 @@ only a census unit.
 The census population table gives every unit's code, names and population and the geographic
 attribute file says what each unit is (`canada/statcan.py`, shared with every province). The
 province's *Directory of Towns, Inuit Community Governments and Cities* is a PDF whose table
-the parser renders as one line per page (table structure is off, spec section 8.3), so no row
-can cite its own municipality and the directory is not a source yet; it names no websites. The
-rules:
+the parser renders as one line per page (table structure is off), so no row can cite its own
+municipality and the directory is not a source yet; it names no websites. The rules:
 
 - A city (`CY`) or a town (`T`) is a municipality named as the census names it. The
   government's name is composed from the type: "City of St. John's", "Town of Gander". The

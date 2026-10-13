@@ -1,7 +1,7 @@
-"""What a session is told (spec section 8): the briefing with the subject and its ids, the
-places a body may be saved under, the checklist of types still to account for, where to look,
-the homepages claimed before, the pages already visited and the last handoff note. Never the old
-transcript. The standing instructions are in `prompts.py`."""
+"""What a session is told: the briefing with the subject and its ids, the places a body may be saved
+under, the checklist of types still to account for, where to look, the homepages claimed before, the
+pages already visited and the last handoff note. Never the old transcript. The standing instructions
+are in `prompts.py`."""
 
 import uuid
 from collections import Counter

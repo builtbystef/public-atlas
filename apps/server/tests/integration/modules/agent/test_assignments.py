@@ -1,8 +1,8 @@
 """Each assignment type run end to end by a scripted model through the runner, reaching every
-end state of spec section 7.2 that a finding decides: `find_homepage` on its three paths
-(trusted domain, new domain, search) and ending `complete`, `needs_review` and `no_homepage`;
-`find_institutions` ending `complete` and `complete_with_gaps`; `find_sources` ending
-`complete`. The budget, failure, requeue and cancellation endings are in the runner tests."""
+end state that a finding decides: `find_homepage` on its three paths (trusted domain, new domain,
+search) and ending `complete`, `needs_review` and `no_homepage`; `find_institutions` ending
+`complete` and `complete_with_gaps`; `find_sources` ending `complete`. The budget, failure, requeue
+and cancellation endings are in the runner tests."""
 
 import uuid
 from dataclasses import replace

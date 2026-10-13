@@ -1,4 +1,4 @@
-"""Questions a human must answer about one entity (spec section 6.5)."""
+"""Questions a human must answer about one entity."""
 
 import uuid
 from datetime import datetime

@@ -2302,9 +2302,9 @@ export interface components {
         };
         /**
          * RunFilter
-         * @description What a run works on (spec section 7.1). An empty list is no restriction. The levels and
-         *     types bound the subjects a run seeds itself with and every assignment it spawns; the subject
-         *     ids name the places and institutions it starts from, and spawned work descends from them.
+         * @description What a run works on. An empty list is no restriction. The levels and types bound the subjects
+         *     a run seeds itself with and every assignment it spawns; the subject ids name the places and
+         *     institutions it starts from, and spawned work descends from them.
          */
         RunFilter: {
             /**

@@ -562,8 +562,8 @@ out_of_scope:
       does not: its pages are the "Organics, Recycling, & Garbage" section of simcoe.ca with no
       name, brand or site of its own, and "Solid Waste Management" appears only as a department
       label (CAO page, Council Highlights). It is not separately constituted. The old URL
-      /residents/organics-and-garbage/ still serves the same page. Open question in
-      docs/todo.md (open decisions); judgement call for review.
+      /residents/organics-and-garbage/ still serves the same page. Open question;
+      judgement call for review.
   - name: Economic Development Office / Tourism Simcoe County / Immigration Simcoe
     url: https://edo.simcoe.ca/
     reason: >-

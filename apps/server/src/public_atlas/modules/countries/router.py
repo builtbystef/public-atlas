@@ -1,6 +1,6 @@
-"""The countries API (spec section 11, page 5): the five country tables, read and edited with
-validation of every array against the type tables. A `PUT` creates or changes the row its path
-names; a body naming another row renames it where the keys cascade."""
+"""The countries API: the five country tables, read and edited with validation of every array
+against the type tables. A `PUT` creates or changes the row its path names; a body naming another
+row renames it where the keys cascade."""
 
 from fastapi import APIRouter, status
 
@@ -27,7 +27,7 @@ router = APIRouter(tags=["countries"])
 
 async def _settle(session: SessionDep, resources: ResourcesDep, country_code: str) -> None:
     """Approve the open type items the edit answers, and create the work each approval asks
-    for in the run its question came from (spec section 7.3)."""
+    for in the run its question came from."""
     for decision in await review.settle_type_items(session, country_code):
         run = await assignments.run_for_decision(
             session,

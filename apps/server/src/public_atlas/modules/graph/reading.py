@@ -1,6 +1,6 @@
-"""The graph as the console reads it (spec section 11, page 3): a page of institutions with
-search and filters, one institution with everything attached to it, and the places a filter or
-a picker needs. Reads only; the writes are in `service.py` and `status_changes.py`."""
+"""The graph as the console reads it: a page of institutions with search and filters, one
+institution with everything attached to it, and the places a filter or a picker needs. Reads only;
+the writes are in `service.py` and `status_changes.py`."""
 
 import uuid
 from dataclasses import dataclass

@@ -41,8 +41,8 @@ SERVED_PLACES = {
     "Communauté métropolitaine de Québec": 28,
     "Administration régionale Kativik": 15,
 }
-# Municipal names two places go by, each told apart by its code: the research's 32, less the
-# two Plessisvilles that merged and the Sainte-Jeanne-d'Arc the directory has renamed.
+# Municipal names two places go by, each told apart by its code: 32 in all, less the two
+# Plessisvilles that merged and the Sainte-Jeanne-d'Arc the directory has renamed.
 NAMESAKES = 30
 
 

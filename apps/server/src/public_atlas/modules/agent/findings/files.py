@@ -1,5 +1,5 @@
-"""`read_file` and `search`: documents on allowed domains, and web search within or beyond them
-(spec section 8.1). Search belongs to `find_homepage` alone and is billed per request."""
+"""`read_file` and `search`: documents on allowed domains, and web search within or beyond them.
+Search belongs to `find_homepage` alone and is billed per request."""
 
 from dataclasses import dataclass
 

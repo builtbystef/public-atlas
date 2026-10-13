@@ -2,13 +2,13 @@
 types expected at each, the types it uses, its platforms, and its anchors: the federal
 government and the government of each state, the District of Columbia and Puerto Rico.
 
-The levels follow the Census Bureau's units (lists-research section 1.1): a state is a
-`provincial_government`, a county equivalent (county, parish, borough) a `regional_government`,
-and a municipality (an incorporated place, or a town or township in the twenty states where
-those are governments) a `municipal_government`. School and special districts are bodies under
-a county or a municipality, not places. Each anchor's domains were checked on 2026-10-09 against
-the "State or territory" rows of the .gov registry (`current-full.csv`): every one is
-registered to that state's government or its technology office.
+The levels follow the Census Bureau's units: a state is a `provincial_government`, a county
+equivalent (county, parish, borough) a `regional_government`, and a municipality (an incorporated
+place, or a town or township in the twenty states where those are governments) a
+`municipal_government`. School and special districts are bodies under a county or a municipality,
+not places. Each anchor's domains were checked on 2026-10-09 against the "State or territory" rows
+of the .gov registry (`current-full.csv`): every one is registered to that state's government or its
+technology office.
 """
 
 from typing import Any
@@ -147,7 +147,7 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
 ]
 
 # Domains the agent may fetch (subdomains included) but never trusts: a page on one becomes a
-# source only when a trusted page links to it (lists-research section 1.7).
+# source only when a trusted page links to it.
 PLATFORMS: list[str] = [
     # Procurement portals.
     "bidnetdirect.com",
@@ -193,7 +193,7 @@ PLATFORMS: list[str] = [
 
 # Each state with its government's name and main domains. The names are the census's, so the
 # places list finds its state; the government is "State of X" except for the four
-# commonwealths, the District and Puerto Rico (lists-research section 1.1).
+# commonwealths, the District and Puerto Rico.
 STATES: list[tuple[str, str, list[str]]] = [
     ("Alabama", "State of Alabama", ["alabama.gov", "al.gov"]),
     ("Alaska", "State of Alaska", ["alaska.gov", "ak.gov"]),
@@ -255,7 +255,7 @@ STATES: list[tuple[str, str, list[str]]] = [
 
 # The anchors: places whose government and domains were verified by hand. usa.gov is the
 # federal government's portal; the federal departments and agencies come with their own domains
-# from the Federal Register list (lists-todo session 6).
+# from the Federal Register list.
 PLACES: list[dict[str, Any]] = [
     {
         "name": "United States",

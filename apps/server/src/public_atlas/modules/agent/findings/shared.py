@@ -148,7 +148,7 @@ async def matched_quote(
     ctx: SessionContext, session: AsyncSession, page: Page, quote: str
 ) -> evidence.QuoteMatch:
     """Where `quote` is in the stored copy of `page`, or a refusal with the page's closest
-    wording (spec section 6.2)."""
+    wording."""
     quote = quote.strip()
     if len(quote) < evidence.MIN_QUOTE_CHARS:
         raise FindingError(
@@ -177,7 +177,7 @@ def require_name(name: str, what: str) -> str:
 
 
 def quote_names(quote: str, names: Iterable[str | None], what: str, *, naming: Naming) -> None:
-    """A phrase proves an entity only if the entity is named in it (spec section 6.2)."""
+    """A phrase proves an entity only if the entity is named in it."""
     wanted = [name for name in names if name]
     if not evidence.mentions_any(quote, wanted, key=naming.key):
         raise FindingError(
@@ -322,8 +322,8 @@ def resolve_decision(
 async def spawn(
     ctx: SessionContext, session: AsyncSession, spawns: Sequence[Spawn]
 ) -> list[Assignment]:
-    """Turn what a status change asked for into assignments of this run, as the backend does
-    (spec section 7.3). The agent never asks for work itself."""
+    """Turn what a status change asked for into assignments of this run, as the backend does. The
+    agent never asks for work itself."""
     if not spawns:
         return []
     run = await session.get_one(Run, ctx.run.id)

@@ -1,7 +1,7 @@
 """The capture hook: stores every page the browser settles on and logs every refused attempt,
-from the plain values the browser hands over (spec section 8.2). It never touches the browser.
-When an assignment finishes, `prune_unreferenced` drops the stored bytes of the snapshots
-nothing cites; the rows stay with their hash and metadata."""
+from the plain values the browser hands over. It never touches the browser. When an assignment
+finishes, `prune_unreferenced` drops the stored bytes of the snapshots nothing cites; the rows stay
+with their hash and metadata."""
 
 import html
 import logging

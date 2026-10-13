@@ -1,8 +1,7 @@
 """What one session knows: the assignment and its run, the type's descriptor, the country's
 rules, the subject, the browser allowlist, and, in a `find_homepage` session, the candidate it
-is deciding on. Built from the database at the start of every session and never carried over
-(spec principle 1). The finishing tools set `ended`; the runner stops the session when it sees
-it."""
+is deciding on. Built from the database at the start of every session and never carried over. The
+finishing tools set `ended`; the runner stops the session when it sees it."""
 
 import uuid
 from collections.abc import Callable
@@ -66,7 +65,7 @@ class Ended:
 @dataclass(frozen=True, slots=True)
 class Candidate:
     """The homepage claim a `find_homepage` session is deciding on, with its domain: the one
-    domain outside the trusted set the session may open (spec section 6.1, step 4)."""
+    domain outside the trusted set the session may open."""
 
     domain_id: uuid.UUID
     domain_name: str
@@ -89,9 +88,8 @@ class SessionContext:
     subject: Place | Institution
     # The subject's place: the place itself, or the institution's.
     place: Place
-    # The browser allowlist, read live by the policy (spec section 8.2): every trusted domain and
-    # every platform, plus a `find_homepage` session's candidate domain and the sites its
-    # searches return.
+    # The browser allowlist, read live by the policy: every trusted domain and every platform, plus
+    # a `find_homepage` session's candidate domain and the sites its searches return.
     allowed_domains: list[str]
     searcher: Searcher | None = None
     capture: evidence.PageCapture | None = None
@@ -258,7 +256,7 @@ async def _subject(
 
 
 async def allowed_domains(session: AsyncSession) -> list[str]:
-    """Every trusted domain and every platform (spec section 8.2)."""
+    """Every trusted domain and every platform."""
     rows = await session.scalars(
         select(Domain.name)
         .where(

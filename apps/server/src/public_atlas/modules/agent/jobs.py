@@ -1,7 +1,6 @@
-"""The daily purges (spec section 8.2): the videos of assignments finished more than
-`video_keep_days` ago go from storage and their events say so; the events of assignments
-finished more than `events_keep_days` ago go altogether. Findings, usage and the summary are
-never purged."""
+"""The daily purges: the videos of assignments finished more than `video_keep_days` ago go from
+storage and their events say so; the events of assignments finished more than `events_keep_days` ago
+go altogether. Findings, usage and the summary are never purged."""
 
 import logging
 from datetime import timedelta

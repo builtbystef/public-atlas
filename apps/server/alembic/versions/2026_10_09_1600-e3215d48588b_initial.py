@@ -1,7 +1,7 @@
 """initial
 
 The job queue's tables (Procrastinate's own schema), then the graph, its evidence, the country
-tables and the work (spec section 4).
+tables and the work.
 
 The migrations of 2026-10-06 to 2026-10-09 were squashed into this one on 2026-10-09, before the
 first real data. A database stamped with one of those revisions has this schema once it was at

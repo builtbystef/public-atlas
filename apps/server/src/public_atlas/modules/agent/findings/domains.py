@@ -1,6 +1,6 @@
-"""The domain decisions of a `find_homepage` session (spec sections 6.3 and 7.2): `confirm_domain`
-runs every check before the candidate domain is trusted, `reject_domain` closes a dead or
-unrelated site, and `domain_moved` follows a recorded redirect to another domain."""
+"""The domain decisions of a `find_homepage` session: `confirm_domain` runs every check before the
+candidate domain is trusted, `reject_domain` closes a dead or unrelated site, and `domain_moved`
+follows a recorded redirect to another domain."""
 
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -178,10 +178,10 @@ async def confirm_candidate(  # noqa: C901, PLR0912, PLR0915 - one pass over eve
     *,
     name_used: str | None = None,
 ) -> Decided:
-    """The agent says the candidate domain is the institution's. When every check of spec
-    section 6.3 passes the domain is trusted, the homepage verified and the follow-up work
-    spawned; a fixable failure is sent back; a claim no trusted page links to goes to a human
-    with the quotes, as does one the checks refuse for good."""
+    """The agent says the candidate domain is the institution's. When every domain check passes the
+    domain is trusted, the homepage verified and the follow-up work spawned; a fixable failure is
+    sent back; a claim no trusted page links to goes to a human with the quotes, as does one the
+    checks refuse for good."""
     _, subject = await _subject(ctx, session)
     domain, homepage, institution, webpage = (
         subject.domain,
@@ -267,8 +267,8 @@ async def confirm_candidate(  # noqa: C901, PLR0912, PLR0915 - one pass over eve
         )
         # The claim waits with its domain, so no new search is spawned meanwhile.
         await status_changes.send_to_review(session, homepage)
-        # Only the missing trusted link: the agent and the checks agree, a reviewer approves
-        # (spec section 7.2). Anything else is a disagreement.
+        # Only the missing trusted link: the agent and the checks agree, a reviewer approves.
+        # Anything else is a disagreement.
         result = (
             AssignmentResult.COMPLETE
             if not fatal and not fixable
@@ -355,8 +355,8 @@ async def _trusted_link(
     domain and the agent claims the root page, so the deep link vouches for the domain. A link
     to another domain is taken only when there is no better; the caller checks the redirect. The
     claim's own evidence is read first, the page it was found on before the rest, such as the
-    official list the loader read (a register is trusted from the start, spec section 6.1). The
-    linking page's domain must be trusted now, not just then."""
+    official list the loader read (a register is trusted from the start). The linking page's domain
+    must be trusted now, not just then."""
     rows = await session.execute(
         select(Evidence, Snapshot, Homepage, Webpage)
         .join(Snapshot, Snapshot.id == Evidence.snapshot_id)
@@ -389,10 +389,10 @@ async def _trusted_link(
 async def _linking_failures(
     ctx: SessionContext, session: AsyncSession, homepage: Homepage, webpage: Webpage, domain: Domain
 ) -> list[str]:
-    """Why no trusted page vouches for the candidate homepage, as one failure or none (spec
-    section 6.3). The link is checked in the copy the evidence cites. A trusted link to any
-    page on the candidate domain for this institution counts; a link to a URL on another domain
-    counts when the redirect from it to the candidate is on record."""
+    """Why no trusted page vouches for the candidate homepage, as one failure or none. The link is
+    checked in the copy the evidence cites. A trusted link to any page on the candidate domain for
+    this institution counts; a link to a URL on another domain counts when the redirect from it to
+    the candidate is on record."""
     link = await _trusted_link(session, homepage, domain)
     if link is None:
         if homepage.found_on_webpage_id is None:
@@ -436,10 +436,9 @@ async def reject_candidate(
     ctx: SessionContext, session: AsyncSession, reason: str, *, another_body: bool = False
 ) -> Decided:
     """The agent says the candidate domain is not the institution's. The domain is rejected
-    and every institution that claimed a homepage on it looks again (spec section 7.3); this
-    session keeps looking itself. With `another_body` the site is official but someone else's:
-    only this institution's claim is withdrawn, and the domain stays a candidate for its real
-    owner."""
+    and every institution that claimed a homepage on it looks again; this session keeps looking
+    itself. With `another_body` the site is official but someone else's: only this institution's
+    claim is withdrawn, and the domain stays a candidate for its real owner."""
     _, subject = await _subject(ctx, session)
     reason = " ".join(reason.split()) or "rejected by the agent"
     if another_body:
@@ -475,7 +474,7 @@ async def candidate_moved(ctx: SessionContext, session: AsyncSession, url: str) 
     """The agent says the candidate homepage redirects to `url` on another domain. The browser
     must have the redirect on record; the agent's word is not enough. The landing page becomes
     the institution's candidate homepage, vouched for by the same trusted link, and the domain
-    that only redirected is rejected (spec section 6.3)."""
+    that only redirected is rejected."""
     _, subject = await _subject(ctx, session)
     domain, homepage, institution, webpage = (
         subject.domain,

@@ -1,6 +1,6 @@
-"""The runs and assignments API (spec section 11, pages 1 and 2): start a run with a filter and
-a mode, pause, resume and stop it, release held assignments, and read a run's progress and
-cost; list assignments with filters and read one with its events, spend and result."""
+"""The runs and assignments API: start a run with a filter and a mode, pause, resume and stop it,
+release held assignments, and read a run's progress and cost; list assignments with filters and read
+one with its events, spend and result."""
 
 import uuid
 from collections.abc import Sequence

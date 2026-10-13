@@ -1,6 +1,6 @@
-"""The graph (spec sections 4.1 to 4.3): one `entities` parent that holds what every verifiable
-thing shares, five tables that extend it with joined-table inheritance, the attachments of
-places and institutions, and the webpages the browser visited."""
+"""The graph: one `entities` parent that holds what every verifiable thing shares, five tables that
+extend it with joined-table inheritance, the attachments of places and institutions, and the
+webpages the browser visited."""
 
 import uuid
 from datetime import datetime
@@ -208,7 +208,7 @@ class Homepage(Entity):
     # Why the claim was rejected, for the briefing and the reviewer.
     rejected_reason: Mapped[str | None] = mapped_column(Text)
     # Set when a verified homepage sits on a platform: the URL prefix whose pages vouch for this
-    # institution (spec section 6.4).
+    # institution.
     trusted_path: Mapped[str | None] = mapped_column(Text)
 
     # The target of an institution's homepage foreign key.

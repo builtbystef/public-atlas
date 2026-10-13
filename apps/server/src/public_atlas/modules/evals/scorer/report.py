@@ -49,9 +49,8 @@ def totals(cards: Iterable[Scorecard]) -> dict[AssignmentType, Tally]:
 
 @dataclass(frozen=True, slots=True)
 class Gate:
-    """A target of the pilot (spec section 1.2) the dataset can judge: a recall floor on one
-    measure, over some of its groups or all of them, on the subject files, the place lists or
-    both."""
+    """A target of the pilot the dataset can judge: a recall floor on one measure, over some of its
+    groups or all of them, on the subject files, the place lists or both."""
 
     name: str
     measure: AssignmentType
