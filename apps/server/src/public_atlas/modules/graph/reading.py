@@ -79,7 +79,7 @@ class InstitutionRow:
     place_population: int | None
 
 
-def descendant_place_ids(place_id: uuid.UUID) -> Select[tuple[uuid.UUID]]:
+def descendant_place_ids(place_id: uuid.UUID) -> Select[uuid.UUID]:
     """The place and every place under it, as a subquery."""
     tree = select(Place.id).where(Place.id == place_id).cte("place_tree", recursive=True)
     child = aliased(Place)
@@ -123,7 +123,7 @@ _homepage = aliased(Homepage, flat=True)
 _domain = aliased(Domain, flat=True)
 
 
-def _institutions_matching(filters: InstitutionFilters) -> Select[tuple[Institution, Place]]:
+def _institutions_matching(filters: InstitutionFilters) -> Select[Institution, Place]:
     """The institutions `filters` admit, with their places."""
     query = select(Institution, _place).join(_place, _place.id == Institution.place_id)
     if filters.q:
@@ -203,7 +203,7 @@ async def list_institutions(  # noqa: PLR0913
             homepage_url=url,
             place_population=_whole(population),
         )
-        for institution, place, url, population in rows.tuples()
+        for institution, place, url, population in rows
     ]
 
 
@@ -285,7 +285,7 @@ async def homepage_rows(session: AsyncSession, institution: Institution) -> list
     )
     return [
         HomepageRow(homepage=homepage, url=url, found_on_url=linked_from, domain=domain)
-        for homepage, url, linked_from, domain in rows.tuples()
+        for homepage, url, linked_from, domain in rows
     ]
 
 
@@ -297,7 +297,7 @@ async def source_rows(session: AsyncSession, institution: Institution) -> list[t
         .where(Source.institution_id == institution.id)
         .order_by(Source.source_type, Webpage.url)
     )
-    return list(rows.tuples())
+    return list(rows)
 
 
 # --- Places ---
@@ -345,9 +345,7 @@ async def list_places(  # noqa: PLR0913
         .offset(offset)
     )
     total = await session.scalar(select(func.count()).select_from(query.subquery()))
-    places = [
-        PlaceRow(place=place, population=_whole(population)) for place, population in rows.tuples()
-    ]
+    places = [PlaceRow(place=place, population=_whole(population)) for place, population in rows]
     return places, int(total or 0)
 
 
@@ -367,7 +365,7 @@ def _place_ordering(
             return [first.nulls_last(), *_directed(name, order)]
 
 
-def _places_matching(filters: PlaceFilters) -> Select[tuple[Place]]:
+def _places_matching(filters: PlaceFilters) -> Select[Place]:
     """The places `filters` admit, rejected ones aside."""
     query = select(Place).where(Place.status != EntityStatus.REJECTED)
     if filters.q:

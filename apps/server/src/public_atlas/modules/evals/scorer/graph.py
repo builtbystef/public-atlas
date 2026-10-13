@@ -134,13 +134,11 @@ async def load_graph(session: AsyncSession) -> Graph:
     """The whole database as the scorer reads it, in a few queries."""
     graph = Graph()
     names: dict[uuid.UUID, list[str]] = {}
-    for place_id, institution_id, text in (
-        await session.execute(
-            select(Alias.place_id, Alias.institution_id, Alias.text).order_by(
-                Alias.is_acronym, Alias.text
-            )
+    for place_id, institution_id, text in await session.execute(
+        select(Alias.place_id, Alias.institution_id, Alias.text).order_by(
+            Alias.is_acronym, Alias.text
         )
-    ).tuples():
+    ):
         owner = place_id if place_id is not None else institution_id
         if owner is not None:
             names.setdefault(owner, []).append(text)
@@ -152,9 +150,7 @@ async def load_graph(session: AsyncSession) -> Graph:
                     Identifier.place_id.is_not(None),
                 )
             )
-        )
-        .tuples()
-        .all()
+        ).all()
     )
     for place in await session.scalars(select(Place)):
         graph.places[place.id] = PlaceRow(

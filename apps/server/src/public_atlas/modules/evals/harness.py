@@ -675,7 +675,7 @@ async def progress(resources: Resources) -> str:
         )
     by_status: dict[str, int] = {}
     open_types: dict[str, int] = {}
-    for type_, status, count in rows.tuples():
+    for type_, status, count in rows:
         by_status[status] = by_status.get(status, 0) + count
         if status in (AssignmentStatus.QUEUED, AssignmentStatus.RUNNING):
             open_types[type_] = open_types.get(type_, 0) + count
@@ -724,7 +724,7 @@ async def cost_lines(session: AsyncSession, run_id: uuid.UUID) -> list[CostLine]
             cached_units=int(cached or 0),
             cost=Decimal(cost or 0),
         )
-        for purpose, provider, calls, units, cached, cost in rows.tuples()
+        for purpose, provider, calls, units, cached, cost in rows
     ]
 
 
@@ -740,9 +740,7 @@ async def cost_by_subject(
                     Assignment.run_id == run_id
                 )
             )
-        )
-        .tuples()
-        .all()
+        ).all()
     )
     children: dict[uuid.UUID | None, list[uuid.UUID]] = {}
     for child, parent in parents.items():
@@ -755,9 +753,7 @@ async def cost_by_subject(
                 .where(Assignment.run_id == run_id)
                 .group_by(Usage.assignment_id)
             )
-        )
-        .tuples()
-        .all()
+        ).all()
     )
     costs: dict[str, Decimal] = {}
     for slug, started in roots.items():

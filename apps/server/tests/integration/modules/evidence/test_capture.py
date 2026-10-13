@@ -209,7 +209,7 @@ def test_a_blocked_redirect_is_on_record(
             pages = await session.execute(select(Webpage.url, Webpage.redirects_to_url))
             attempts = await session.execute(select(BlockedAttempt.url, BlockedAttempt.reason))
             snapshots = len((await session.scalars(select(Snapshot))).all())
-            return dict(pages.tuples().all()), [tuple(row) for row in attempts.all()], snapshots
+            return dict(pages.all()), [tuple(row) for row in attempts.all()], snapshots
 
     pages, attempts, snapshots = db.run(scenario)
     assert pages == {"https://www.toronto.ca/old": "https://evil.example/"}

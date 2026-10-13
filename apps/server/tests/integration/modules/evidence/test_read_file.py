@@ -187,7 +187,7 @@ def test_a_redirect_is_checked_hop_by_hop_and_stored_under_the_url_that_answered
                     .where(Snapshot.assignment_id == assignment.id)
                 )
             )
-            return dict(pages.tuples().all()), blocked, snapshots
+            return dict(pages.all()), blocked, snapshots
 
     pages, blocked, snapshots = db.run(check)
     assert pages[f"{site.allowed}/old-budget.pdf"] == f"{site.allowed}/budget.pdf"

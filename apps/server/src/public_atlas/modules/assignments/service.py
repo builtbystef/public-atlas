@@ -359,14 +359,14 @@ async def progress_many(
         .where(Assignment.run_id.in_(ids))
         .group_by(Assignment.run_id, Assignment.status)
     )
-    for run_id, status, count in by_status.tuples():
+    for run_id, status, count in by_status:
         found[run_id].by_status[AssignmentStatus(status)] = count
     by_result = await session.execute(
         select(Assignment.run_id, Assignment.result, func.count())
         .where(Assignment.run_id.in_(ids), Assignment.result.is_not(None))
         .group_by(Assignment.run_id, Assignment.result)
     )
-    for run_id, result, count in by_result.tuples():
+    for run_id, result, count in by_result:
         found[run_id].by_result[AssignmentResult(result)] = count
     costs = await session.execute(
         select(Assignment.run_id, func.coalesce(func.sum(Usage.cost), 0))
@@ -374,7 +374,7 @@ async def progress_many(
         .where(Assignment.run_id.in_(ids))
         .group_by(Assignment.run_id)
     )
-    for run_id, cost in costs.tuples():
+    for run_id, cost in costs:
         found[run_id].cost = Decimal(cost or 0)
     return found
 
@@ -718,7 +718,7 @@ def _assignments_matching(
     result: AssignmentResult | None,
     assignment_type: AssignmentType | None,
     subject_id: uuid.UUID | None,
-) -> Select[tuple[Assignment]]:
+) -> Select[Assignment]:
     """The assignments matching every filter given."""
     query = select(Assignment)
     if run_id is not None:

@@ -499,7 +499,7 @@ async def _summaries(
         .group_by(EvalScore.eval_run_id, EvalScore.assignment_type)
     )
     found: dict[uuid.UUID, dict[AssignmentType, TypeSummary]] = {}
-    for row in rows.tuples():
+    for row in rows:
         eval_run_id, assignment_type, subjects, recall, precision, hits, misses, wrong = row
         found.setdefault(eval_run_id, {})[AssignmentType(assignment_type)] = TypeSummary(
             subjects=int(subjects),

@@ -289,9 +289,7 @@ def _facts() -> _Facts:
     )
 
 
-def _matching[T: tuple[Any, ...]](
-    query: Select[T], facts: _Facts, filters: RowFilters
-) -> Select[T]:
+def _matching[*Ts](query: Select[*Ts], facts: _Facts, filters: RowFilters) -> Select[*Ts]:
     """`query` over the joined items, narrowed by every filter but `affects`, which is a count."""
     query = query.select_from(facts.joined)
     if filters.status is not None:

@@ -347,18 +347,16 @@ async def check_name_pattern(
             error=f"not a regular expression: {exc}", total=0, matching=0, misses=[]
         )
     place = aliased(Place, flat=True)
-    rows = (
-        await session.execute(
-            select(Institution.id, Institution.name)
-            .join(place, place.id == Institution.place_id)
-            .where(
-                place.country_code == country_code,
-                Institution.institution_type == institution_type,
-                Institution.status != EntityStatus.REJECTED,
-            )
-            .order_by(Institution.name, Institution.id)
+    rows = await session.execute(
+        select(Institution.id, Institution.name)
+        .join(place, place.id == Institution.place_id)
+        .where(
+            place.country_code == country_code,
+            Institution.institution_type == institution_type,
+            Institution.status != EntityStatus.REJECTED,
         )
-    ).tuples()
+        .order_by(Institution.name, Institution.id)
+    )
     misses: list[NamePatternMiss] = []
     total = 0
     for institution_id, name in rows:
