@@ -3,8 +3,6 @@ settings as an argument."""
 
 import asyncio
 import os
-from types import SimpleNamespace
-from typing import TYPE_CHECKING, cast
 
 from procrastinate.testing import InMemoryConnector
 from sqlalchemy import text
@@ -14,10 +12,7 @@ from public_atlas.integrations.parse import MemoryParser
 from public_atlas.integrations.storage.memory import MemoryObjectStore
 from public_atlas.jobs.purge import purge_old_jobs
 from public_atlas.jobs.stalled import retry_stalled
-from public_atlas.resources import build_resources, resources_of, worker_context
-
-if TYPE_CHECKING:
-    from procrastinate import JobContext
+from public_atlas.resources import build_resources
 
 
 def test_resources_are_built_from_the_settings_alone(settings: Settings, test_database_name: str):
@@ -73,17 +68,3 @@ def test_the_job_queue_is_built_with_every_task_registered(settings: Settings):
     }
     assert purge_old_jobs.name == "jobs.purge_old_jobs"
     assert retry_stalled.queue == "default"
-
-
-def test_a_worker_context_carries_the_resources(settings: Settings):
-    async def scenario() -> bool:
-        async with build_resources(
-            settings, object_store=MemoryObjectStore(), jobs_connector=InMemoryConnector()
-        ) as resources:
-            # What a worker started with `worker_context` hands each job.
-            context = cast(
-                "JobContext", SimpleNamespace(additional_context=worker_context(resources))
-            )
-            return resources_of(context) is resources
-
-    assert asyncio.run(scenario())

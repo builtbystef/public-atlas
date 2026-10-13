@@ -1,5 +1,6 @@
-"""The special districts list: `entries()` on the cached workbook keeps every rule, the counts
-per type and per place level are pinned, and a few districts show the rules a count cannot."""
+"""The special districts list: the counts per type and per place level are pinned, every
+district carries the workbook's unit id, and a few districts show the rules a count cannot.
+What every list's entries must satisfy is checked by the contract test beside the lists."""
 
 from collections import Counter
 
@@ -38,8 +39,8 @@ PLACED = {"county": 38403, "municipality": 749, "state": 161}
 
 
 @pytest.fixture(scope="module")
-def opened(special_districts_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return special_districts_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(special_districts)
 
 
 @pytest.fixture(scope="module")
@@ -68,13 +69,7 @@ def by_id(entries: list[InstitutionEntry]) -> dict[str, InstitutionEntry]:
     return {entry.codes[0].value: entry for entry in entries if entry.codes}
 
 
-def test_the_counts(
-    entries: list[InstitutionEntry],
-    notes: special_districts.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
-):
-    assert len(special_districts.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[InstitutionEntry], notes: special_districts.Notes):
     assert len(entries) == ENTRIES
     assert dict(notes.typed) == TYPED
     assert Counter(entry.institution_type for entry in entries) == TYPED
@@ -93,25 +88,19 @@ def test_the_counts(
     assert notes.overridden == len(special_districts.OVERRIDES) == 1
 
 
-def test_every_entry_cites_the_line_that_names_it_and_sits_at_a_place(
+def test_every_district_carries_the_workbooks_unit_id_from_its_line(
     entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     workbook = opened[governments.GOVT_UNITS.name]
     for entry in entries:
         citation = entry.citations["institution"]
-        assert citation.source == governments.GOVT_UNITS.name
-        line = " ".join(workbook.line(citation.line).split())
-        assert entry.name.upper() in line.upper()
-
-        assert (entry.institution_type == "other") == (entry.suggested_type is not None)
+        line = workbook.line(citation.line)
         for code in entry.codes:
             assert code.scheme is IdentifierScheme.CENSUS_GID
             assert code.value in line
-        assert entry.place_level in PLACED
-        assert (entry.place_parent is None) == (entry.place_level == "state")
+        assert (entry.place_parent is None) == (entry.place_level == "state"), entry.name
         if entry.homepage is not None:
             assert entry.citations["homepage"] == citation
-            assert entry.homepage.startswith(("http://", "https://"))
 
 
 def test_the_districts_that_show_the_rules(by_id: dict[str, InstitutionEntry]):
@@ -152,26 +141,36 @@ def test_the_districts_that_show_the_rules(by_id: dict[str, InstitutionEntry]):
 
 
 def test_a_district_in_a_county_that_is_no_place_sits_under_its_city_or_state(
-    entries: list[InstitutionEntry],
+    entries: list[InstitutionEntry], by_id: dict[str, InstitutionEntry]
 ):
     """Connecticut's planning regions and Massachusetts' abolished counties are no places: a
     district there sits under the town of its address when one is loaded, else the state;
-    Virginia's independent cities are the places of their districts."""
-    connecticut = [entry for entry in entries if entry.place_parent == "Connecticut"]
-    assert connecticut
-    assert {entry.place_level for entry in connecticut} == {"municipality"}
+    Rhode Island's and Alaska's districts likewise; Virginia's independent cities are the
+    places of their districts."""
     under_state = [entry for entry in entries if entry.place_level == "state"]
-    assert Counter(entry.place for entry in under_state).most_common(3)[0][0] in {
-        "Connecticut",
-        "Massachusetts",
-        "Alaska",
-        "District of Columbia",
-        "Rhode Island",
+    assert Counter(entry.place for entry in under_state) == {
+        "Connecticut": 81,
+        "Massachusetts": 43,
+        "Rhode Island": 34,
+        "Alaska": 2,
+        "District of Columbia": 1,
     }
+    connecticut = [entry for entry in entries if entry.place_parent == "Connecticut"]
+    assert len(connecticut) == 350
+    assert {entry.place_level for entry in connecticut} == {"municipality"}
+    salmon_brook = by_id["07400202300000"]
+    assert (salmon_brook.name, salmon_brook.place, salmon_brook.place_level) == (
+        "Salmon Brook District",
+        "Granby",
+        "municipality",
+    )
     virginia_cities = [
         entry
         for entry in entries
         if entry.place_parent == "Virginia" and entry.place_level == "municipality"
     ]
-    assert any(entry.place == "Richmond" for entry in virginia_cities)
-    assert all(entry.place_level == "county" for entry in entries if entry.place == "Cook County")
+    assert len(virginia_cities) == 50
+    assert Counter(entry.place for entry in virginia_cities)["Richmond"] == 4
+    assert Counter(entry.place_level for entry in entries if entry.place == "Cook County") == {
+        "county": 238
+    }

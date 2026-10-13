@@ -1,8 +1,9 @@
-"""The health units list: `entries()` on the saved page keeps every rule, the count is pinned,
-and the hand-written table names loaded places at the levels Reg. 553 means."""
+"""The health units list: the count is pinned, every unit is named by its row with the legal
+name as an alias and sits where the hand-written table says, and the table names loaded places
+at the levels Reg. 553 means. What every list's entries must satisfy is checked by the
+contract test beside the lists."""
 
 from collections.abc import Callable
-from urllib.parse import urlsplit
 
 import pytest
 
@@ -63,29 +64,20 @@ def test_the_counts(entries: list[InstitutionEntry]):
     assert len(departments) == DEPARTMENTS
 
 
-def test_every_unit_cites_its_row_and_sits_at_one_loaded_place(
-    entries: list[InstitutionEntry],
-    opened: dict[str, files.OpenedFile],
-    find_places: Callable[[str, str | None, str | None], list[PlaceEntry]],
+def test_every_unit_is_named_by_its_row_and_sits_where_the_table_says(
+    entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     page = opened[health_units.PAGE.name]
     for entry in entries:
         citation = entry.citations["institution"]
-        assert citation.source == health_units.PAGE.name
         assert page.line(citation.line).startswith(entry.name)
         assert entry.parent_institution is None
-        found = find_places(entry.place, entry.place_level, entry.place_parent)
-        assert len(found) == 1, (entry.name, entry.place)
         fields = health_units.OVERRIDES[entry.name]
         assert entry.place_level is not None
         if "place" in fields:
             assert fields["place"] == Location(entry.place, entry.place_level, entry.place_parent)
         else:
             assert entry.place_level == "municipality"
-        assert entry.homepage is not None
-        parts = urlsplit(entry.homepage)
-        assert parts.scheme in ("http", "https")
-        assert parts.netloc in page.line(entry.citations["homepage"].line).lower(), entry.name
         legal = str(fields["legal_name"])
         assert legal.endswith("Health Unit")
         if legal != entry.name:
@@ -106,8 +98,6 @@ def test_the_served_places_are_loaded_at_the_levels_the_regulation_means(
         assert served, entry.name
         for where in served:
             assert isinstance(where, Location)
-            found = find_places(where.place, where.level, where.parent)
-            assert len(found) == 1, (entry.name, where)
             if len(find_places(where.place, None, None)) > 1:
                 ambiguous.add(where.place)
         assert entry.served_places == tuple(

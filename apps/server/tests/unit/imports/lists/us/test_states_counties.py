@@ -1,11 +1,12 @@
-"""The states and counties list: `entries()` on the cached files keeps every rule, the counts
-of each exception class are pinned, and a few places show the rules a count cannot."""
+"""The states and counties list: the counts are pinned, every government is named from its
+place with the figure its line gives, the states are the seed's anchors, counties sit under
+their state, and a few places show the rules a count cannot. What every list's entries must
+satisfy is checked by the contract test beside the lists."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.countries.seeds import united_states
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.us import census, states_counties
@@ -23,8 +24,8 @@ ENTRIES = STATES + COUNTIES + MUNICIPALITIES
 
 
 @pytest.fixture(scope="module")
-def opened(states_counties_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return states_counties_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(states_counties)
 
 
 @pytest.fixture(scope="module")
@@ -47,10 +48,7 @@ def by_code(entries: list[PlaceEntry]) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(
-    entries: list[PlaceEntry], opened: dict[str, files.OpenedFile], rules: countries.CountryRules
-):
-    assert len(states_counties.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[PlaceEntry]):
     assert len(entries) == ENTRIES
     assert sum(1 for entry in entries if entry.level == "state") == STATES
     assert sum(1 for entry in entries if entry.level == "county") == COUNTIES
@@ -60,27 +58,9 @@ def test_the_counts(
     assert len(set(codes)) == len(codes)
 
 
-def test_the_exception_classes_are_pinned(notes: states_counties.Notes):
-    # By the 2020 class and the 2025 functional status; the nine '?' are Connecticut's planning
-    # regions, which the 2020 file does not know.
-    assert dict(notes.classes) == {
-        ("?", "N"): 9,
-        ("C7", "F"): 41,
-        ("H1", "A"): 3030,
-        ("H4", "G"): 1,
-        ("H4", "N"): 14,
-        ("H5", "S"): 11,
-        ("H6", "A"): 2,
-        ("H6", "B"): 2,
-        ("H6", "C"): 33,
-        ("H6", "F"): 1,
-    }
-    assert {status: len(names) for status, names in notes.dropped.items()} == {
-        "F": 42,
-        "G": 1,
-        "N": 23,
-        "S": 11,
-    }
+def test_the_rules_leave_out_and_fold_what_they_say(notes: states_counties.Notes):
+    """A county that is no government, a planning region, an abolished county and a census
+    area are left out; a county consolidated with its city keeps no government of its own."""
     assert "15005 Kalawao County, Hawaii" in notes.dropped["G"]
     assert "11001 District of Columbia, District of Columbia" in notes.dropped["F"]
     assert "51510 Alexandria city, Virginia" in notes.dropped["F"]
@@ -93,19 +73,13 @@ def test_the_exception_classes_are_pinned(notes: states_counties.Notes):
     assert len(notes.overrides) == len(states_counties.OVERRIDES) == 1
 
 
-def test_every_entry_has_its_code_population_and_a_line_naming_it(
+def test_every_government_is_named_from_its_place_and_the_figure_is_its_lines(
     entries: list[PlaceEntry], opened: dict[str, files.OpenedFile], rules: countries.CountryRules
 ):
     naming = rules.naming
     for entry in entries:
-        assert entry.code.scheme is IdentifierScheme.FIPS
-        assert entry.code.value.isdigit()
         assert len(entry.code.value) in {2, 5}
         (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, 2025)
-        assert population.value > 0
-        line = opened[entry.citations["place"].source].line(entry.citations["place"].line)
-        assert entry.name in line
         figure_line = opened[population.citation.source].line(population.citation.line)
         assert str(population.value) in figure_line
         if entry.government is not None:

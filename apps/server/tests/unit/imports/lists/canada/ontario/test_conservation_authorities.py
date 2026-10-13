@@ -1,13 +1,12 @@
-"""The conservation authorities list: `entries()` on the cached layer and directory keeps every
-rule, the count is pinned, and every authority sits at one loaded place."""
-
-from collections.abc import Callable
+"""The conservation authorities list: the count is pinned, every authority is the layer's
+legal name at a municipality, and a few rows show the rules a count cannot. What every list's
+entries must satisfy is checked by the contract test beside the lists."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.imports import files
-from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
+from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.canada.ontario import conservation_authorities
 
 pytestmark = pytest.mark.lists
@@ -52,10 +51,8 @@ def test_the_counts(entries: list[InstitutionEntry], opened: dict[str, files.Ope
     assert len(set(names)) == len(names)
 
 
-def test_every_entry_cites_the_line_that_names_it_and_sits_at_one_loaded_place(
-    entries: list[InstitutionEntry],
-    opened: dict[str, files.OpenedFile],
-    find_places: Callable[[str, str | None, str | None], list[PlaceEntry]],
+def test_every_authority_is_the_layers_legal_name_at_a_municipality(
+    entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     layer = opened[conservation_authorities.LAYER.name]
     for entry in entries:
@@ -68,8 +65,6 @@ def test_every_entry_cites_the_line_that_names_it_and_sits_at_one_loaded_place(
         assert entry.parent_institution is None
         assert entry.served_places == ()
         assert entry.place_level == "municipality"
-        found = find_places(entry.place, entry.place_level, entry.place_parent)
-        assert len(found) == 1, (entry.name, entry.place)
 
 
 def test_the_rows_that_show_the_rules(by_name: dict[str, InstitutionEntry]):
@@ -98,8 +93,11 @@ def test_the_rows_that_show_the_rules(by_name: dict[str, InstitutionEntry]):
 
 
 def test_the_overrides_apply(by_name: dict[str, InstitutionEntry]):
+    """An override's place is the entry's; the directory's wording of a name is read as the
+    layer's legal name."""
     assert by_name["Long Point Region Conservation Authority"].place == "Tillsonburg"
-    for name in conservation_authorities.OVERRIDES:
-        assert name in by_name
-    for legal in conservation_authorities.DIRECTORY_NAMES.values():
+    for name, fields in conservation_authorities.OVERRIDES.items():
+        assert by_name[name].place == fields["place"]
+    for wording, legal in conservation_authorities.DIRECTORY_NAMES.items():
         assert legal in by_name
+        assert wording not in by_name

@@ -1,5 +1,7 @@
-"""The federal list: `entries()` on the cached files keeps every rule, the counts are pinned,
-and a few bodies show the rules a count cannot."""
+"""The federal list: the counts are pinned, every body is read from the record under its
+official name, parents are loaded before their children, and a few bodies show the rules a
+count cannot. What every list's entries must satisfy is checked by the contract test beside
+the lists."""
 
 from collections import Counter
 
@@ -30,8 +32,8 @@ SHARED_SHORT_NAMES = ["FS", "LOC", "OFR"]
 
 
 @pytest.fixture(scope="module")
-def opened(federal_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return federal_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(federal)
 
 
 @pytest.fixture(scope="module")
@@ -56,13 +58,7 @@ def by_name(entries: list[InstitutionEntry]) -> dict[str, InstitutionEntry]:
     return {entry.name: entry for entry in entries}
 
 
-def test_the_counts(
-    entries: list[InstitutionEntry],
-    notes: federal.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
-):
-    assert len(federal.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[InstitutionEntry], notes: federal.Notes):
     assert len(entries) == ENTRIES
     assert dict(notes.typed) == TYPED
     assert Counter(entry.institution_type for entry in entries) == TYPED
@@ -84,23 +80,20 @@ def test_the_counts(
     assert len(set(names)) == len(names)
 
 
-def test_every_entry_cites_the_record_that_names_it_and_sits_under_the_country(
+def test_a_body_the_list_names_otherwise_is_read_from_the_record_under_its_official_name(
     entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     records = opened[federal.AGENCIES.name]
     for entry in entries:
         citation = entry.citations["institution"]
-        assert citation.source == federal.AGENCIES.name
         line = records.line(citation.line)
         listed = next(
             (alias.text for alias in entry.aliases if alias.text in federal.OFFICIAL_NAMES), None
         )
         assert (listed or entry.name) in line
-        assert (entry.place, entry.place_level) == (federal.PLACE, federal.PLACE_LEVEL)
         assert entry.codes == ()
         if entry.homepage is not None:
             assert entry.citations["homepage"] == citation
-            assert entry.homepage.startswith(("http://", "https://"))
 
 
 def test_parents_are_loaded_before_their_children(

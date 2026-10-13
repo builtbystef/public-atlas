@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { z } from "zod";
 import { expect, test } from "vite-plus/test";
 
@@ -61,8 +63,36 @@ test("query params drop undefined values but keep empty and false ones", () => {
   expect(queryParams({})).toEqual({});
 });
 
-test("page constants agree with the API's limits", () => {
-  expect(ALL_ROWS).toEqual({ limit: 500, offset: 0 });
-  expect(PICKER_ROWS.limit).toBeLessThanOrEqual(ALL_ROWS.limit);
-  expect(listPage(1).limit).toBeLessThanOrEqual(ALL_ROWS.limit);
+/** The largest `limit` every list of the API accepts, out of the schema the client is built from. */
+function apiPageLimit(): number {
+  const schema = JSON.parse(
+    readFileSync(new URL("../../../../packages/api-client/openapi.json", import.meta.url), "utf8"),
+  ) as {
+    paths: Record<
+      string,
+      Record<string, { parameters?: { name: string; in: string; schema: { maximum?: number } }[] }>
+    >;
+  };
+  const limits = new Set<number>();
+  for (const operations of Object.values(schema.paths)) {
+    for (const operation of Object.values(operations)) {
+      for (const parameter of operation.parameters ?? []) {
+        if (parameter.in === "query" && parameter.name === "limit") {
+          limits.add(parameter.schema.maximum ?? Number.NaN);
+        }
+      }
+    }
+  }
+  const [limit, ...others] = limits;
+  expect(limit).toBeTypeOf("number");
+  expect(others).toEqual([]);
+  return limit!;
+}
+
+test("the largest page asked for is the largest page the API serves", () => {
+  const limit = apiPageLimit();
+  expect(ALL_ROWS).toEqual({ limit, offset: 0 });
+  expect(PICKER_ROWS).toEqual({ limit: 20, offset: 0 });
+  expect(listPage(1).limit).toBe(50);
+  expect(listPage(1).limit).toBeLessThanOrEqual(limit);
 });

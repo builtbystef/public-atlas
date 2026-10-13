@@ -1,8 +1,6 @@
 """Plain HTTP fetches under the policy: `robots.txt` and `read_file` follow redirects one checked
 hop at a time, as the browser's route guard does."""
 
-import asyncio
-
 import httpx
 import pytest
 
@@ -14,6 +12,8 @@ from public_atlas.integrations.browser import (
     get_within_policy,
 )
 from public_atlas.integrations.browser import policy as policy_module
+
+pytestmark = pytest.mark.anyio
 
 ROBOTS = b"User-agent: PublicAtlas\nDisallow: /private\n"
 
@@ -31,11 +31,7 @@ def policy_for(*domains: str, http: httpx.AsyncClient | None = None) -> BrowserP
     )
 
 
-def test_a_redirect_is_followed_only_where_the_policy_allows():
-    asyncio.run(_redirects_within_the_policy())
-
-
-async def _redirects_within_the_policy() -> None:
+async def test_a_redirect_is_followed_only_where_the_policy_allows():
     policy = policy_for("ontario.ca")
     transport = site(
         {
@@ -72,11 +68,7 @@ async def _redirects_within_the_policy() -> None:
             )
 
 
-def test_robots_follows_a_redirect_within_the_policy_and_not_beyond_it():
-    asyncio.run(_robots_within_the_policy())
-
-
-async def _robots_within_the_policy() -> None:
+async def test_robots_follows_a_redirect_within_the_policy_and_not_beyond_it():
     transport = site(
         {
             "https://ontario.ca/robots.txt": httpx.Response(
@@ -104,7 +96,7 @@ async def _robots_within_the_policy() -> None:
         assert await policy.decide(Request("https://ontario.ca/private", "data")) is None
 
 
-def test_a_malformed_redirect_is_a_refused_hop_not_a_crash():
+async def test_a_malformed_redirect_is_a_refused_hop_not_a_crash():
     """httpx raises `InvalidURL`, not an `HTTPError`, for a hop built from a bad `Location`; a
     town's site sent one, and it took the session down with it."""
     policy = policy_for("ontario.ca")
@@ -114,13 +106,10 @@ def test_a_malformed_redirect_is_a_refused_hop_not_a_crash():
             return httpx.Response(302, headers={"location": "https://ontario.ca/b"})
         raise httpx.InvalidURL("For absolute URLs, path must be empty or begin with '/'")
 
-    async def fetch() -> None:
-        async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
-            with pytest.raises(RedirectRefused) as refused:
-                await get_within_policy(
-                    client, policy, client.build_request("GET", "https://ontario.ca/a"), kind="data"
-                )
-            assert refused.value.url == "https://ontario.ca/b"
-            assert refused.value.reason.startswith("malformed redirect")
-
-    asyncio.run(fetch())
+    async with httpx.AsyncClient(transport=httpx.MockTransport(handle)) as client:
+        with pytest.raises(RedirectRefused) as refused:
+            await get_within_policy(
+                client, policy, client.build_request("GET", "https://ontario.ca/a"), kind="data"
+            )
+        assert refused.value.url == "https://ontario.ca/b"
+        assert refused.value.reason.startswith("malformed redirect")

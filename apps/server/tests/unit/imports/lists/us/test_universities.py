@@ -1,5 +1,6 @@
-"""The universities list: `entries()` on the cached files keeps every rule, the counts per
-type and per place level are pinned, and a few campuses show the rules a count cannot."""
+"""The universities list: the counts per type and per place level are pinned, every campus
+carries its IPEDS id from its line, and a few campuses show the rules a count cannot. What
+every list's entries must satisfy is checked by the contract test beside the lists."""
 
 from collections import Counter
 
@@ -28,8 +29,8 @@ STATES = 52
 
 
 @pytest.fixture(scope="module")
-def opened(universities_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return universities_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(universities)
 
 
 @pytest.fixture(scope="module")
@@ -56,13 +57,7 @@ def by_name(entries: list[InstitutionEntry]) -> dict[str, InstitutionEntry]:
     return {entry.name: entry for entry in entries}
 
 
-def test_the_counts(
-    entries: list[InstitutionEntry],
-    notes: universities.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
-):
-    assert len(universities.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[InstitutionEntry], notes: universities.Notes):
     assert len(entries) == ENTRIES
     assert dict(notes.typed) == TYPED
     assert Counter(entry.institution_type for entry in entries) == TYPED
@@ -84,26 +79,20 @@ def test_the_counts(
     assert len(states) == STATES
 
 
-def test_every_entry_cites_the_row_that_names_it_and_sits_at_a_place(
+def test_every_campus_carries_its_ipeds_id_from_its_line(
     entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     directory = opened[universities.DIRECTORY.name]
     for entry in entries:
         citation = entry.citations["institution"]
-        assert citation.source == universities.DIRECTORY.name
-        # The directory writes a few names with two spaces inside ("Clayton  State").
-        line = " ".join(directory.line(citation.line).split())
-        assert entry.name in line
         (code,) = entry.codes
         assert code.scheme is IdentifierScheme.IPEDS
-        assert line.startswith(code.value)
-        assert entry.place_level in PLACED
-        assert (entry.place_parent is None) == (entry.place_level == "state")
+        assert directory.line(citation.line).startswith(code.value)
+        assert (entry.place_parent is None) == (entry.place_level == "state"), entry.name
         for alias in entry.aliases:
             assert len(alias.text) <= universities.ALIAS_LENGTH
         if entry.homepage is not None:
             assert entry.citations["homepage"] == citation
-            assert entry.homepage.startswith(("http://", "https://"))
 
 
 def test_the_campuses_that_show_the_rules(by_name: dict[str, InstitutionEntry]):

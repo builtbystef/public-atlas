@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typegen": "next typegen"
+    "typegen": "next typegen",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@base-ui/react": "catalog:",
@@ -31,12 +32,17 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@playwright/test": "catalog:",
     "@tailwindcss/postcss": "catalog:",
     "@tanstack/react-query-devtools": "catalog:",
+    "@testing-library/dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@testing-library/user-event": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "babel-plugin-react-compiler": "^1.0.0",
+    "jsdom": "catalog:",
     "postcss": "catalog:",
     "shadcn": "catalog:",
     "tailwindcss": "catalog:",

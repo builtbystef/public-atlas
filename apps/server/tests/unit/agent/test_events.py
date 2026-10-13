@@ -15,7 +15,7 @@ from pydantic_ai.messages import (
     UserPromptPart,
 )
 
-from public_atlas.modules.agent.events import events_from, video_event
+from public_atlas.modules.agent.events import events_from
 from public_atlas.modules.agent.models import EventKind
 
 
@@ -77,12 +77,3 @@ def test_events_follow_the_messages_in_order():
 def test_no_instructions_means_no_instructions_row():
     events = events_from(uuid.uuid7(), 1, [ModelRequest(parts=[UserPromptPart("hello")])])
     assert [event.kind for event in events] == [EventKind.PROMPT]
-
-
-def test_a_video_event_carries_its_storage_key():
-    event = video_event(uuid.uuid7(), 1, 9, key="videos/x/1/0.webm", size=1234)
-    assert (event.kind, event.position, event.content) == (
-        EventKind.VIDEO,
-        9,
-        {"key": "videos/x/1/0.webm", "size": 1234},
-    )

@@ -299,16 +299,6 @@ def run_worker(args: argparse.Namespace) -> None:
     asyncio.run(jobs_worker.run(Settings(), queues))
 
 
-def _queues(value: str) -> list[Queue]:
-    names = [name.strip() for name in value.split(",")]
-    unknown = [name for name in names if name not in QUEUES]
-    if unknown:
-        raise argparse.ArgumentTypeError(
-            f"unknown queue: {', '.join(unknown)} (expected {', '.join(QUEUES)})"
-        )
-    return [name for name in QUEUES if name in names]
-
-
 # --- The parser ---
 
 
@@ -427,7 +417,7 @@ def build_parser() -> argparse.ArgumentParser:
     worker = commands.add_parser("worker", help="run queued jobs, as public-atlas-worker does")
     worker.add_argument(
         "--queues",
-        type=_queues,
+        type=jobs_worker.queues_argument,
         metavar="NAME[,NAME...]",
         help=f"serve only these queues, out of {', '.join(QUEUES)} (default: every queue)",
     )
@@ -502,7 +492,7 @@ def add_eval_command(commands: argparse._SubParsersAction[argparse.ArgumentParse
     )
     running.add_argument(
         "--queues",
-        type=_queues,
+        type=jobs_worker.queues_argument,
         metavar="NAME[,NAME...]",
         help=f"queues to serve in this process, out of {', '.join(QUEUES)} "
         f"(default: {', '.join(evals.default_queues())})",

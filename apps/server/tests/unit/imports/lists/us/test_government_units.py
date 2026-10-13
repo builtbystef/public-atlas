@@ -1,6 +1,7 @@
-"""The government units list: `entries()` on the cached files keeps every rule, the counts of
-rows matched, dropped and corrected are pinned, the share of governments given a candidate
-homepage is pinned per level, and a few governments show the rules a count cannot."""
+"""The government units list: the counts of governments and homepages are pinned per level,
+every entry is a loaded place again with what the sheet adds, and a few governments show the
+rules a count cannot. What every list's entries must satisfy is checked by the contract test
+beside the lists."""
 
 from collections import Counter
 
@@ -23,25 +24,9 @@ pytestmark = pytest.mark.lists
 # Every loaded place the sheet or the registry adds to: 3,031 counties and 35,549
 # municipalities.
 ENTRIES = 38580
-MATCHED = {
-    ("county", "code"): 3031,
-    ("municipal", "code"): 19424,
-    ("municipal", "name"): 3,
-    ("municipal", "override"): 5,
-    ("township", "code"): 16095,
-    ("township", "name"): 1,
-}
-INACTIVE = 96
-# Active rows whose unit the 2025 estimates no longer carry.
-NO_UNIT = 80
-LEGAL_NAMES = 3707
-REGISTRY = {
-    "matched": 9463,
-    "naming no government": 1539,
-    "naming no loaded government": 574,
-    "naming several governments": 270,
-}
 GOVERNMENTS = {"county": 3031, "municipality": 35549}
+# Governments the sheet has no row for and the registry a domain: a homepage, no unit id.
+REGISTRY_ONLY = 22
 HOMEPAGES = {
     ("county", governments.GOVT_UNITS.name): 2225,
     ("county", government_units.DOTGOV.name): 313,
@@ -51,8 +36,8 @@ HOMEPAGES = {
 
 
 @pytest.fixture(scope="module")
-def opened(government_units_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return government_units_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(government_units)
 
 
 @pytest.fixture(scope="module")
@@ -85,29 +70,17 @@ def loaded(opened: dict[str, files.OpenedFile]) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in [*counties, *places]}
 
 
-def test_the_counts(
-    entries: list[PlaceEntry],
-    notes: government_units.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
-):
-    assert len(government_units.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[PlaceEntry], notes: government_units.Notes):
     assert len(entries) == ENTRIES
-    assert dict(notes.matched) == MATCHED
-    assert notes.inactive == INACTIVE
-    assert len(notes.no_unit) == NO_UNIT
     assert "1150000 CITY OF WASHINGTON DC, DC" in notes.left_out[0]
     assert notes.no_government == ["13101 COUNTY OF ECHOLS, GA"]
     assert len(notes.overrides) == len(government_units.OVERRIDES) == 5
-    assert notes.legal_names == LEGAL_NAMES
-    assert dict(notes.registry) == REGISTRY
     assert dict(notes.governments) == GOVERNMENTS
     assert Counter(entry.level for entry in entries) == GOVERNMENTS
     assert dict(notes.homepages) == HOMEPAGES
-    codes = [entry.code.value for entry in entries]
-    assert len(set(codes)) == len(codes)
+    # Every row of the sheet matched gives its unit id; a registry match alone gives none.
     ids = [entry.codes[0].value for entry in entries if entry.codes]
-    assert len(ids) == sum(MATCHED.values()) - 1
+    assert len(ids) == sum(GOVERNMENTS.values()) - REGISTRY_ONLY
     assert len(set(ids)) == len(ids)
 
 

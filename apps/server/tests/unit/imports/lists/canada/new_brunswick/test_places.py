@@ -1,13 +1,14 @@
-"""The New Brunswick places list: `entries()` on the cached files keeps every rule, the counts
-are pinned, and a few places show the rules a count cannot. The contacts list is a PDF: the
-first run parses it with Docling and keeps the pages beside the cache."""
+"""The New Brunswick places list: the counts are pinned, every local government is coded by
+the post-reform interim list and named by the contacts list, and a few places show the rules a
+count cannot. What every list's entries must satisfy is checked by the contract test beside
+the lists. The contacts list is a PDF: the first run parses it with Docling and keeps the pages
+beside the cache."""
 
 from collections import Counter
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
@@ -42,9 +43,8 @@ def by_code(entries) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(entries, built, opened, rules):
+def test_the_counts(entries, built, opened):
     notes = built[1]
-    assert len(new_brunswick.entries(opened, rules)) == len(entries)
     assert len(entries) == LOCAL_GOVERNMENTS
     changes = statcan.read_changes(
         opened[statcan.INTERIM_CHANGES.name], new_brunswick.NEW_BRUNSWICK
@@ -61,30 +61,24 @@ def test_the_counts(entries, built, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_local_government_has_a_post_reform_code_and_no_population(
+def test_every_local_government_has_a_post_reform_code_and_the_contacts_lists_name(
     entries, opened, rules: countries.CountryRules
 ):
+    """The code is the interim list's for the reformed body, there is no figure yet, and the
+    government names the place as the contacts list writes it (`PDF_NAMES` where the PDF
+    spells it otherwise)."""
     naming = rules.naming
-    interim = opened[statcan.INTERIM_CHANGES.name]
     contacts = opened[new_brunswick.CONTACTS.name]
     for entry in entries:
-        assert (entry.level, entry.parent) == ("municipality", new_brunswick.PROVINCE)
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert new_brunswick.REFORMED.match(entry.code.value)
+        assert new_brunswick.REFORMED.match(entry.code.value), entry.code
         assert entry.figures == ()
-        line = interim.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert entry.government is not None
+        assert entry.government is not None, entry.name
         core = naming.core(entry.government)
-        # "Town of X" governs "X"; the layer may drop a period the census writes (Fort St James).
         assert core in (naming.core(entry.name), naming.key(entry.name)) or core in naming.forms(
             entry.name
         ), entry.name
         row = contacts.line(entry.citations["government"].line)
         assert entry.name in row or new_brunswick.PDF_NAMES.get(entry.name, "") in row
-        if entry.homepage is not None:
-            host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-            assert host.lower() in row.lower(), entry.name
 
 
 def test_the_places_that_show_the_rules(by_code):

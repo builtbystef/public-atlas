@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import httpx2 as httpx
 import pytest
-from botocore.exceptions import EndpointConnectionError
+from botocore.exceptions import ClientError, EndpointConnectionError
 
 from public_atlas.config import Settings
 from public_atlas.integrations.storage import (
@@ -26,9 +26,15 @@ pytestmark = pytest.mark.anyio
 TTL = timedelta(minutes=5)
 
 
+def local_settings(bucket: str = "public-atlas") -> Settings:
+    """The settings as the code defaults them, which name the object storage `compose.yaml`
+    runs: the developer's `.env` is not read, so the tests see the code, not the machine."""
+    return Settings(_env_file=None, storage_bucket=bucket)
+
+
 @asynccontextmanager
 async def open_s3() -> AsyncIterator[S3ObjectStore]:
-    store = create_object_store(Settings())
+    store = create_object_store(local_settings())
     assert isinstance(store, S3ObjectStore)
     async with store:
         try:
@@ -144,13 +150,21 @@ def test_content_disposition_has_an_ascii_fallback_and_a_utf8_form():
 
 
 def test_s3_is_the_default_provider():
-    store = create_object_store(Settings())
+    store = create_object_store(local_settings())
     assert isinstance(store, S3ObjectStore)
     assert store.bucket == "public-atlas"
 
 
-async def test_ping_answers_when_the_store_is_reachable(store: ObjectStore):
-    await store.ping()
+async def test_ping_answers_when_the_bucket_is_there_and_raises_when_it_is_not(s3: S3ObjectStore):
+    """What `/health/storage` asks: the service answers and the bucket exists. A missing
+    bucket is the service's error, which the health check turns into a 503."""
+    await s3.ping()
+    missing = create_object_store(local_settings(bucket=f"missing-{uuid.uuid7()}"))
+
+    assert isinstance(missing, S3ObjectStore)
+    async with missing:
+        with pytest.raises(ClientError, match=r"HeadBucket operation: (Not Found|NoSuchBucket)"):
+            await missing.ping()
 
 
 async def test_memory_urls_carry_the_expiry_in_whole_seconds():

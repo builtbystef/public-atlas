@@ -6,7 +6,7 @@ import type {
 } from "@public-atlas/api-client";
 import { expect, test } from "vite-plus/test";
 
-import { describeEffects } from "./effects";
+import { describeEffects, spawnSummary } from "./effects";
 
 const ref = (label: string, entity_kind: EntityKind = "institution") => ({
   id: label,
@@ -79,4 +79,85 @@ test("the entity a merge folds away reads as merged", () => {
       into: "Oakville Public Library",
     }).changes,
   ).toEqual(["Oak Library is merged into Oakville Public Library"]);
+});
+
+test("work the run's filter or a stopped run keeps out is listed as held, with its reason", () => {
+  expect(
+    describeEffects(
+      preview({
+        spawn: [
+          planned("find_homepage", "Elm Library", "out_of_scope"),
+          planned("find_sources", "Elm Library", "run_stopped"),
+          planned("find_sources", "Oak Library", "run_stopped"),
+          planned("find_homepage", "Oak Library"),
+        ],
+      }),
+    ),
+  ).toEqual({
+    changes: [],
+    starts: ["Find homepage for Oak Library"],
+    held: [
+      "Find homepage for Elm Library is outside the run's filter, so it won't start",
+      "Find sources for Elm Library won't start, since the run is stopped",
+      "Find sources for Oak Library won't start, since the run is stopped",
+    ],
+  });
+});
+
+test("rejections, reviews and reverted candidates each read in their own words", () => {
+  expect(
+    describeEffects(
+      preview({
+        changes: [
+          change("Elm Library", "rejected"),
+          change("elm.ca", "needs_review", "domain"),
+          change("Oak Library", "candidate"),
+        ],
+      }),
+    ).changes,
+  ).toEqual([
+    "Elm Library is rejected",
+    "elm.ca goes to review",
+    "Oak Library becomes a candidate again",
+  ]);
+});
+
+test("more than three of one kind read as a count only when verified or rejected", () => {
+  const names = ["A", "B", "C", "D"];
+  expect(
+    describeEffects(
+      preview({
+        changes: [
+          ...names.map((name) => change(name, "rejected")),
+          ...names.map((name) => change(`${name}.ca`, "verified", "domain")),
+          ...names.map((name) => change(`${name}-review`, "needs_review")),
+        ],
+      }),
+    ).changes,
+  ).toEqual([
+    "4 institutions are rejected",
+    "4 domains become trusted",
+    "A-review goes to review",
+    "B-review goes to review",
+    "C-review goes to review",
+    "D-review goes to review",
+  ]);
+});
+
+test("exactly three of a kind are still named", () => {
+  expect(
+    describeEffects(preview({ changes: ["A", "B", "C"].map((name) => change(name, "verified")) }))
+      .changes,
+  ).toEqual(["A becomes verified", "B becomes verified", "C becomes verified"]);
+});
+
+test("the work a decision started is counted by type for its toast", () => {
+  expect(
+    spawnSummary([
+      { type: "find_sources", subject_id: "a" },
+      { type: "find_homepage", subject_id: "b" },
+      { type: "find_sources", subject_id: "c" },
+    ]),
+  ).toBe("2 Find sources, 1 Find homepage");
+  expect(spawnSummary([])).toBe("");
 });

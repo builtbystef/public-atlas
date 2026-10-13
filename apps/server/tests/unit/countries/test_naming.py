@@ -31,9 +31,12 @@ def test_designators_find_the_place_name(naming: Naming):
 
 
 def test_a_two_word_designator_is_one_designator(naming: Naming):
-    assert naming.designators_in("Elmwood, Regional Municipality of") == naming.designators_in(
-        "Municipalité régionale de Elmwood"
-    )
+    """ "Regional Municipality" is the eighth group of the seed's designators, in either
+    language, and not the "Municipality" group it contains; "Ville" is a city or a town."""
+    regional_municipality = 7
+    assert naming.designators_in("Elmwood, Regional Municipality of") == {regional_municipality}
+    assert naming.designators_in("Municipalité régionale de Elmwood") == {regional_municipality}
+    assert naming.designators_in("Elmwood, Ville de") == {0, 1}
 
 
 def test_designators_tell_two_bodies_apart(naming: Naming):

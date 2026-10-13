@@ -15,7 +15,9 @@ def test_chunks_are_numbered_and_pages_are_marked():
     assert isinstance(two, FileText)
     assert "chunk 2 of 2)" in str(two)
     assert "next chunk" not in str(two)
-    assert "[page 2]" in one.body + two.body
+    # Chunks are slices of the labelled text, so the second page's label ends the first.
+    assert two.body == "second page"
+    assert one.body + two.body == "[page 1]\nfirst page\n\n[page 2]\nsecond page"
     none = files.chunk_of("https://x/f.pdf", "application/pdf", text, chunk=3, size=30)
     assert isinstance(none, FileRefusal)
     assert str(none).startswith("Error: https://x/f.pdf has 2 chunk(s)")

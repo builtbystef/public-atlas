@@ -79,7 +79,16 @@ def test_a_step_run_seeds_itself_with_the_work_due_and_holds_it(
         *((FIND_HOMEPAGE, government) for government in world.anchor_government_ids),
     }
     assert {row.status for row in rows} == {AssignmentStatus.HELD}
-    assert all(row.run_id == run.id and row.budget_requests > 0 for row in rows)
+    assert {row.run_id for row in rows} == {run.id}
+    # Each row carries its type's budget (descriptors.py).
+    budgets = {
+        FIND_HOMEPAGE: (60, 4_000_000),
+        FIND_INSTITUTIONS: (250, 20_000_000),
+        FIND_SOURCES: (120, 10_000_000),
+    }
+    assert [(row.budget_requests, row.budget_tokens) for row in rows] == [
+        budgets[row.type] for row in rows
+    ]
     assert not any(job["task_name"] == service.RUN_ASSIGNMENT_TASK for job in queue.jobs.values())
     _, again = db.run(create, db, queue)
     assert again == []
@@ -240,16 +249,27 @@ def test_a_paused_run_puts_the_job_back_and_the_assignment_stays_queued(
 def test_stop_cancels_held_and_queued_work_and_refuses_more(
     db: Database, world: World, queue: InlineConnector
 ):
+    """Of the seeded work one row is queued (as a release leaves it) and one is running (as a
+    worker leaves it): stop cancels the held and the queued rows, the running one is the
+    runner's to cancel after its session, and nothing more is released or spawned."""
     run, rows = db.run(create, db, queue)
+    by_work = {(row.type, row.subject_id): row for row in rows}
+    queued = by_work[(FIND_SOURCES, world.county.id)]
+    running = by_work[(FIND_INSTITUTIONS, world.elm.id)]
 
     async def stop() -> tuple[list[Assignment], list[Assignment], list[Assignment]]:
         assert queue.resources is not None
         async with db.session() as session:
+            service.lifecycle.queue(await session.get_one(Assignment, queued.id))
+            started = await session.get_one(Assignment, running.id)
+            service.lifecycle.queue(started)
+            service.lifecycle.start(started)
+            await session.commit()
             run_row = await service.get_run(session, run.id)
             cancelled = await service.stop_run(session, run_row)
-            with pytest.raises(ConflictError, match="stopped"):
+            with pytest.raises(ConflictError, match="the run is stopped already"):
                 await service.stop_run(session, run_row)
-            with pytest.raises(ConflictError, match="stopped"):
+            with pytest.raises(ConflictError, match="the run is stopped"):
                 await service.release(session, queue.resources.jobs, run_row)
             spawned = await service.spawn(
                 session, queue.resources.jobs, run_row, [Spawn(FIND_HOMEPAGE, world.town.id)]
@@ -258,9 +278,13 @@ def test_stop_cancels_held_and_queued_work_and_refuses_more(
             return cancelled, spawned, await service.list_assignments(session, run_id=run.id)
 
     cancelled, spawned, after = db.run(stop)
-    assert len(cancelled) == len(rows) == 3 + 14
+    assert len(rows) == 3 + 14
+    assert {row.id for row in cancelled} == {row.id for row in rows} - {running.id}
     assert spawned == []
-    assert {row.status for row in after} == {AssignmentStatus.CANCELLED}
+    assert {row.id: row.status for row in after} == {
+        **{row.id: AssignmentStatus.CANCELLED for row in rows},
+        running.id: AssignmentStatus.RUNNING,
+    }
 
 
 def test_a_spawn_obeys_the_mode_and_the_filter_and_never_doubles_open_work(
@@ -465,22 +489,64 @@ def test_a_reviewers_decision_spawns_into_the_run_it_belongs_to(
     )
 
 
-def test_a_decision_with_no_run_going_spawns_nothing(
-    client: TestClient, db: Database, world: World, build: type[Build]
+def test_a_decision_whose_run_is_stopped_spawns_into_the_newest_live_run_or_nowhere(
+    client: TestClient, db: Database, world: World, build: type[Build], queue: InlineConnector
 ):
-    async def raise_it() -> uuid.UUID:
+    """The item was raised by an assignment of the world's run, which is stopped since: the
+    work goes into the newest run of the country still going; with that one stopped too the
+    decision spawns nothing and the work waits for the next run to seed itself."""
+    assert queue.resources is not None
+    jobs = queue.resources.jobs
+
+    async def raise_in_a_stopped_run(name: str) -> uuid.UUID:
         async with db.session() as session:
-            await service.stop_run(session, await session.get_one(Run, world.run.id))
-            archive = await build.candidate_institution(session, world.oakville, "Oakville Archive")
-            item = await review.raise_review(
-                session, archive, rule=review.Rule.AGENT, reason="unsure"
+            raised_by = await build.open_assignment(
+                session, world.run, FIND_INSTITUTIONS, world.oakville.id
             )
+            body = await build.candidate_institution(session, world.oakville, name)
+            item = await review.raise_review(
+                session,
+                body,
+                rule=review.Rule.AGENT,
+                reason="is this a public body?",
+                assignment_id=raised_by.id,
+            )
+            run_row = await session.get_one(Run, world.run.id)
+            if run_row.status is not RunStatus.STOPPED:
+                await service.stop_run(session, run_row)
             await session.commit()
             return item.id
 
-    item_id = db.run(raise_it)
+    async def a_newer_run() -> Run:
+        async with db.session() as session:
+            newer = await service.create_run(
+                session, jobs, name="newer", country_code="CA", mode=RunMode.STEP, seed=False
+            )
+            await session.commit()
+            return newer
+
+    item_id = db.run(raise_in_a_stopped_run, "Oakville Archive")
+    newer = db.run(a_newer_run)
     body = client.post(f"/review-items/{item_id}/approve", json={}).json()
-    assert len(body["spawn"]) == 1
+    assert [row["type"] for row in body["spawn"]] == ["find_homepage"]
+    assert len(body["assignment_ids"]) == 1
+
+    async def read(assignment_id: str) -> Assignment:
+        async with db.session() as session:
+            return await session.get_one(Assignment, uuid.UUID(assignment_id))
+
+    spawned = db.run(read, body["assignment_ids"][0])
+    assert (spawned.run_id, spawned.status) == (newer.id, AssignmentStatus.HELD)
+
+    async def stop_the_newer_run() -> None:
+        async with db.session() as session:
+            await service.stop_run(session, await session.get_one(Run, newer.id))
+            await session.commit()
+
+    db.run(stop_the_newer_run)
+    item_id = db.run(raise_in_a_stopped_run, "Oakville Museum")
+    body = client.post(f"/review-items/{item_id}/approve", json={}).json()
+    assert [row["type"] for row in body["spawn"]] == ["find_homepage"]
     assert body["assignment_ids"] == []
 
 

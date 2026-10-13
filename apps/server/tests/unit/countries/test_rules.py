@@ -4,7 +4,7 @@ shapes; here, from the seed."""
 import pytest
 
 from public_atlas.modules.countries import service
-from public_atlas.modules.countries.seeds import canada, shared
+from public_atlas.modules.countries.seeds import canada
 
 
 @pytest.fixture(scope="module")
@@ -39,7 +39,16 @@ def test_checklists(rules: service.CountryRules):
         "budget",
         "board_meeting",
     ]
-    assert rules.expected_source_types("hospital") == shared.CAMPUS_SOURCES
+    # A campus body: no budget of its own to find, but a plan and news.
+    assert rules.expected_source_types("hospital") == [
+        "procurement",
+        "tender",
+        "capital_plan",
+        "board_meeting",
+        "strategic_plan",
+        "news",
+    ]
+
     # A type the country does not use expects nothing.
     assert rules.expected_source_types("zoo") == []
     assert rules.institution_types["hospital"] == "A public hospital or hospital network"

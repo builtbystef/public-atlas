@@ -1,5 +1,7 @@
-"""The service managers list: `entries()` on the cached list keeps every rule, the counts are
-pinned, every board sits at its district and every served place is a loaded municipality."""
+"""The service managers list: the counts are pinned, a municipal manager is a loaded
+government, every board sits at its district and serves municipalities named whole, and a few
+rows show the rules a count cannot. What every list's entries must satisfy is checked by the
+contract test beside the lists."""
 
 from collections.abc import Callable
 from urllib.parse import urlsplit
@@ -79,7 +81,7 @@ def test_a_municipal_service_manager_is_a_loaded_government(
         assert find_places(manager.name, None, None), manager.name
 
 
-def test_every_board_cites_its_row_sits_at_its_district_and_serves_loaded_places(
+def test_every_board_sits_at_its_district_and_serves_municipalities_named_whole(
     entries: list[InstitutionEntry],
     opened: dict[str, files.OpenedFile],
     find_places: Callable[[str, str | None, str | None], list[PlaceEntry]],
@@ -109,10 +111,6 @@ def test_every_board_cites_its_row_sits_at_its_district_and_serves_loaded_places
             assert "&" not in served.name
             if len(find_places(served.name, None, None)) > 1:
                 ambiguous.add(served.name)
-            assert len(find_places(served.name, served.level, served.parent)) == 1, (
-                entry.name,
-                served.name,
-            )
     assert ambiguous == NAMESAKES
 
 

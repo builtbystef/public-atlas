@@ -1,5 +1,7 @@
-"""The school districts list: `entries()` on the cached files keeps every rule, the counts per
-agency type and per place level are pinned, and a few agencies show the rules a count cannot."""
+"""The school districts list: the counts per agency type and per place level are pinned,
+every agency carries its NCES id from its line and serves the town of its county, and a few
+agencies show the rules a count cannot. What every list's entries must satisfy is checked by
+the contract test beside the lists."""
 
 from collections import Counter
 
@@ -44,8 +46,8 @@ WEBSITES = 16107
 
 
 @pytest.fixture(scope="module")
-def opened(school_districts_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return school_districts_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(school_districts)
 
 
 @pytest.fixture(scope="module")
@@ -72,13 +74,7 @@ def by_id(entries: list[InstitutionEntry]) -> dict[str, InstitutionEntry]:
     return {entry.codes[0].value: entry for entry in entries}
 
 
-def test_the_counts(
-    entries: list[InstitutionEntry],
-    notes: school_districts.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
-):
-    assert len(school_districts.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[InstitutionEntry], notes: school_districts.Notes):
     assert len(entries) == ENTRIES
     assert dict(notes.typed) == TYPED
     assert dict(notes.left_out) == LEFT_OUT
@@ -100,22 +96,17 @@ def test_the_counts(
     }
 
 
-def test_every_entry_cites_the_line_that_names_it_and_sits_at_a_place(
+def test_every_agency_carries_its_nces_id_from_its_line_and_serves_the_town_of_its_county(
     entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     directory = opened[school_districts.DIRECTORY.name]
     for entry in entries:
         citation = entry.citations["institution"]
-        assert citation.source == school_districts.DIRECTORY.name
         line = " ".join(directory.line(citation.line).split())
-        assert entry.name in line
-
         (code,) = entry.codes
         assert code.scheme is IdentifierScheme.NCES
         assert line.startswith(f"{code.value} | ")
-        assert entry.suggested_type is None
-        assert entry.place_level in PLACED
-        assert (entry.place_parent is None) == (entry.place_level == "state")
+        assert (entry.place_parent is None) == (entry.place_level == "state"), entry.name
         for served in entry.served_places:
             assert entry.place_level == "county"
             assert (served.level, served.parent) == ("municipality", entry.place)

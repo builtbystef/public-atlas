@@ -1,5 +1,7 @@
-"""The provincial agencies list: `entries()` on the cached spreadsheet keeps every rule, the
-counts are pinned, and every agency sits under a ministry the list also gives."""
+"""The provincial agencies list: the counts are pinned, every ministry is named as one and
+every agency's row names its ministry in French and English, and a few rows show the rules a
+count cannot. What every list's entries must satisfy is checked by the contract test beside
+the lists."""
 
 import re
 from urllib.parse import urlsplit
@@ -67,30 +69,24 @@ def test_every_ministry_is_named_as_one_and_sits_under_ontario(entries: list[Ins
         assert french.text.startswith(("Ministère", "Ministére", "ministère", "Secrétariat"))
 
 
-def test_every_agency_cites_its_row_and_sits_under_a_listed_ministry(
+def test_every_agencys_row_names_its_ministry_and_its_french_name(
     entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     sheet = opened[agencies.AGENCIES.name]
-    ministries = {entry.name for entry in _of_type(entries, "ministry")}
     for entry in entries:
         if entry.institution_type == "ministry":
             continue
-        assert entry.place == "Ontario"
-        assert entry.parent_institution in ministries, entry.name
         citation = entry.citations["institution"]
-        assert citation.source == agencies.AGENCIES.name
         line = sheet.line(citation.line)
-        assert entry.name in line
+        assert entry.parent_institution is not None, entry.name
         assert (
             entry.parent_institution.removeprefix("Ministry of the ").removeprefix("Ministry of ")
             in line
         )
         assert any(alias.language == "fr" for alias in entry.aliases), entry.name
         if entry.homepage is not None:
-            parts = urlsplit(entry.homepage)
-            assert parts.scheme in ("http", "https")
-            assert parts.netloc in line.lower()
-            assert "pas.gov.on.ca" not in parts.netloc
+            # The directory's own page is no homepage.
+            assert "pas.gov.on.ca" not in urlsplit(entry.homepage).netloc
             assert entry.citations["homepage"] == citation
 
 

@@ -1,6 +1,7 @@
 import type {
   DecisionPreviewOutput,
   PlannedOutput,
+  SpawnOutput,
   StatusChangeOutput,
 } from "@public-atlas/api-client";
 
@@ -76,6 +77,13 @@ const HELD_BECAUSE: Record<NonNullable<PlannedOutput["skipped"]>, string> = {
   no_run: "waits for the next run of the country, since none is going",
   run_stopped: "won't start, since the run is stopped",
 };
+
+/** "2 Find sources, 1 Find homepage": the work a decision started, for its toast. */
+export function spawnSummary(spawn: readonly SpawnOutput[]): string {
+  const counts = new Map<SpawnOutput["type"], number>();
+  for (const one of spawn) counts.set(one.type, (counts.get(one.type) ?? 0) + 1);
+  return [...counts.entries()].map(([type, n]) => `${n} ${assignmentTypeLabels[type]}`).join(", ");
+}
 
 /**
  * What a preview says, as sentences: the status changes, the work that

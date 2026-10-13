@@ -14,21 +14,28 @@ from public_atlas.shared import logs, telemetry
 logger = logging.getLogger(__name__)
 
 
+def queues_argument(value: str) -> list[Queue]:
+    """A `--queues` value, `NAME[,NAME...]`, as the queues it names in `QUEUES` order; a name
+    that is not a queue is an argument error. Shared with the CLI's `worker` command."""
+    names = [name.strip() for name in value.split(",")]
+    if unknown := [name for name in names if name not in QUEUES]:
+        raise argparse.ArgumentTypeError(
+            f"unknown queue: {', '.join(unknown)} (expected {', '.join(QUEUES)})"
+        )
+    return [name for name in QUEUES if name in names]
+
+
 def parse_args(argv: Sequence[str] | None = None) -> list[Queue]:
     """The queues to serve, in `QUEUES` order; every one by default."""
     parser = argparse.ArgumentParser(prog="public-atlas-worker", description="Run queued jobs.")
     parser.add_argument(
         "--queues",
+        type=queues_argument,
         metavar="NAME[,NAME...]",
         help=f"serve only these queues, out of {', '.join(QUEUES)} (default: every queue)",
     )
     args = parser.parse_args(argv)
-    if args.queues is None:
-        return list(QUEUES)
-    names = [name.strip() for name in args.queues.split(",")]
-    if unknown := [name for name in names if name not in QUEUES]:
-        parser.error(f"unknown queue: {', '.join(unknown)} (expected {', '.join(QUEUES)})")
-    return [name for name in QUEUES if name in names]
+    return args.queues or list(QUEUES)
 
 
 def concurrency_for(queues: list[Queue], configured: int) -> int:

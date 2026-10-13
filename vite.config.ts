@@ -36,7 +36,8 @@ export default defineConfig({
     ],
     overrides: [
       {
-        files: ["**/*.test.ts", "**/*.spec.ts"],
+        // The Playwright smoke's *.spec.ts files are not Vitest's.
+        files: ["**/*.test.ts", "**/*.test.tsx"],
         plugins: ["vitest"],
       },
     ],
@@ -59,6 +60,8 @@ export default defineConfig({
       // renderers crash on, and the browser tests then find their tab closed. The suite
       // reads a database and starts a browser, so a cache would not be right anyway.
       "test:py": { command: "uv run pytest", cache: false },
+      // The console smoke (apps/web/e2e): a browser and a database too, so uncached likewise.
+      "test:e2e": { command: "pnpm --filter @public-atlas/web run test:e2e", cache: false },
     },
   },
 });

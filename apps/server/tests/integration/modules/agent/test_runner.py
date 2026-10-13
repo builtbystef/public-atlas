@@ -273,6 +273,46 @@ def test_a_full_window_hands_off_and_the_next_session_finishes(
     assert sorted(db.run(purposes)) == ["find_sources", "find_sources", "handoff"]
 
 
+def test_a_window_exactly_half_full_does_not_hand_off(
+    db: Database,
+    world: World,
+    scripted: Callable[[Script], Resources],
+    make: Callable[..., Assignment],
+    reload: Callable[[uuid.UUID], Assignment],
+):
+    """The handoff comes when a response's tokens exceed half the window: a response of exactly
+    half carries on in the same session, and the finish that follows ends it in one."""
+    prompts: list[str] = []
+
+    def script(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        prompts.append(str(messages[-1].parts[0]))
+        if len(prompts) == 1:
+            return ModelResponse(
+                parts=[ToolCallPart("status", {})],
+                usage=RequestUsage(input_tokens=WINDOW // 2 - 10, output_tokens=10),
+            )
+        not_found = world.rules.expected_source_types(world.county.institution_type)
+        return ModelResponse(
+            parts=[
+                ToolCallPart("finish", {"summary": "Done in one.", "types_not_found": not_found})
+            ]
+        )
+
+    res = scripted(script)
+    assignment = make()
+    assert db.run(runner.run_assignment, res, assignment.id) == "complete"
+    row = reload(assignment.id)
+    assert (row.status, row.result, row.sessions, row.requests_used, row.handoff_note) == (
+        AssignmentStatus.FINISHED,
+        AssignmentResult.COMPLETE,
+        1,
+        2,
+        None,
+    )
+    assert row.summary == "Done in one."
+    assert not any("nearly full" in prompt for prompt in prompts)
+
+
 def test_a_spent_budget_ends_the_assignment_before_any_request(
     db: Database,
     scripted: Callable[[Script], Resources],

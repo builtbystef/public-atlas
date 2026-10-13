@@ -4,12 +4,15 @@ import { expect, test } from "vite-plus/test";
 import { parseEvalRunSearch } from "./schemas";
 import {
   byBucket,
+  change,
   entriesByKind,
   floorsByType,
   groupStats,
   isBelowTarget,
+  lowestRecall,
   newLines,
   recallChange,
+  scoreCounts,
   sortRows,
   splitUrls,
   subjectRows,
@@ -149,4 +152,83 @@ test("the page's search keeps what it knows and drops the rest", () => {
     }),
   ).toEqual({ compare: "none", sort: "find_sources", below: "1", subject: "ottawa" });
   expect(parseEvalRunSearch({ compare: "not-a-uuid" })).toEqual({});
+});
+
+test("the first gate on a type sets its floor", () => {
+  const gate = (name: string, floor: number) => ({
+    name,
+    assignment_type: "find_sources" as const,
+    what: "",
+    floor,
+    hits: null,
+    misses: null,
+    recall: null,
+    verdict: null,
+  });
+  expect(floorsByType([gate("sources", 0.9), gate("sources-strict", 0.95)])).toEqual({
+    find_sources: 0.9,
+  });
+  expect(floorsByType([])).toEqual({});
+});
+
+test("a subject judged on no recall has no lowest recall and sorts last", () => {
+  const [unjudged, judged] = subjectRows([
+    score("unjudged", "find_sources", null),
+    score("judged", "find_sources", 0.4),
+    score("judged", "find_homepage", 0.9),
+  ]);
+  expect(lowestRecall(unjudged!)).toBeNull();
+  expect(lowestRecall(judged!)).toBe(0.4);
+  expect(isBelowTarget(unjudged!, { find_sources: 0.9 })).toBe(false);
+  expect(sortRows([judged!, unjudged!], "lowest").map((row) => row.subject)).toEqual([
+    "judged",
+    "unjudged",
+  ]);
+});
+
+test("a change needs both numbers, and the subject's change is its worst one", () => {
+  expect(change(0.5, 0.75)).toBe(-0.25);
+  expect(change(null, 0.75)).toBeNull();
+  expect(change(0.5, undefined)).toBeNull();
+  const [row] = subjectRows(
+    [score("s", "find_sources", 0.9), score("s", "find_homepage", 0.5)],
+    [score("s", "find_sources", 0.6), score("s", "find_homepage", 0.9)],
+  );
+  expect(recallChange(row!)).toBe(-0.4);
+  expect(recallChange(subjectRows([score("t", "find_sources", 0.9)])[0]!)).toBeNull();
+});
+
+test("a score's counts tell hits kept from hits never recorded", () => {
+  expect(
+    scoreCounts(
+      score("s", "find_sources", 0.5, {
+        hits: [entry("hit", "1")],
+        misses: [entry("miss", "2"), entry("wrong", "3")],
+        false_positives: [entry("wrong", "3")],
+      }),
+    ),
+  ).toEqual({ hits: 1, misses: 2, falsePositives: 1 });
+  expect(scoreCounts(score("s", "find_sources", 0.5, { hits: null }))).toEqual({
+    hits: null,
+    misses: 0,
+    falsePositives: 0,
+  });
+});
+
+test("a subject is below target only on a type that has a gate", () => {
+  const floors = floorsByType([
+    {
+      name: "homepages",
+      assignment_type: "find_homepage",
+      what: "",
+      floor: 0.9,
+      hits: null,
+      misses: null,
+      recall: null,
+      verdict: null,
+    },
+  ]);
+  const [row] = subjectRows([score("s", "find_sources", 0.1), score("s", "find_homepage", 0.9)]);
+  // Sources have no gate; the homepage recall sits exactly on its floor.
+  expect(isBelowTarget(row!, floors)).toBe(false);
 });

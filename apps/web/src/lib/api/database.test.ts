@@ -14,6 +14,6 @@ test("the database cookie is read out of document.cookie", () => {
   expect(readDatabaseCookie("db=nonsense")).toBe("main");
 });
 
-test("the cookie string names the database", () => {
-  expect(databaseCookie("eval")).toMatch(/^db=eval; path=\/;/);
+test("the cookie string names the database for a year, site-wide", () => {
+  expect(databaseCookie("eval")).toBe("db=eval; path=/; max-age=31536000; samesite=lax");
 });

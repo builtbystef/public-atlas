@@ -17,6 +17,8 @@ next-env.d.ts
 # Test output
 coverage/
 .coverage
+test-results/
+playwright-report/
 
 # Tool caches
 .cache/

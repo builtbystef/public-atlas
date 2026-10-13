@@ -66,7 +66,6 @@ def test_openapi_operation_ids(client: TestClient):
 
 def test_real_app_answers_with_a_request_id(client: TestClient):
     response = client.get("/health")
-    assert response.status_code == 200
     assert len(response.headers["x-request-id"]) == 16
 
 

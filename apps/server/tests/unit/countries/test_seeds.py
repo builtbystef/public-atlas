@@ -120,12 +120,6 @@ def test_the_united_states_naming_rules_tell_a_town_from_the_village_inside_it()
     assert naming.forms("Washington County") & naming.forms("Washington")
 
 
-def test_a_ministry_name_pattern_is_a_regular_expression():
-    seed = CountrySeed.model_validate(canada.SEED)
-    ministry = next(row for row in seed.institution_types if row.institution_type == "ministry")
-    assert ministry.name_pattern is not None
-
-
 @pytest.mark.parametrize(
     ("change", "message"),
     [

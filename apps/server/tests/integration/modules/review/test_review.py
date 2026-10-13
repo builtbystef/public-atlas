@@ -504,7 +504,7 @@ def test_the_queue_lists_the_items_of_a_kind_as_one_row(
     queue = partial(_queue, client)
 
     # One row per kind, the largest first and the newest of equal size first.
-    assert queue() == [
+    everything = [
         (
             "new_type:housing_corporation",
             2,
@@ -524,6 +524,7 @@ def test_the_queue_lists_the_items_of_a_kind_as_one_row(
             {"suggested_type": "port authority", "level": "region"},
         ),
     ]
+    assert queue() == everything
     # A filter narrows a kind to the items it admits.
     assert queue(q="elm") == [
         (
@@ -541,12 +542,15 @@ def test_the_queue_lists_the_items_of_a_kind_as_one_row(
     ]
     assert [row[0] for row in queue(q="port AUTHORITY")] == ["new_type:port_authority"]
     assert [row[0] for row in queue(affects="one")] == ["new_type:port_authority"]
-    assert len(queue(affects="several")) == 2
+    assert [row[0] for row in queue(affects="several")] == [
+        "new_type:housing_corporation",
+        "type_level:library@region",
+    ]
     assert [row[0] for row in queue(rule="new_type", sort="raised_at", order="asc")] == [
         "new_type:housing_corporation",
         "new_type:port_authority",
     ]
-    assert len(queue(country_code="CA", entity_kind="institution")) == 3
+    assert queue(country_code="CA", entity_kind="institution") == everything
     assert queue(country_code="US") == queue(entity_kind="domain") == []
 
     # A reviewer decides the items the queue showed them, and only open items of the kind.

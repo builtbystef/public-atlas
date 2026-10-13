@@ -1,13 +1,13 @@
-"""The Alberta places list: `entries()` on the cached files keeps every rule, the counts are
-pinned, and a few places and bodies show the rules a count cannot. The export is a manual
-file: without it in the cache the tests are skipped."""
+"""The Alberta places list: the counts are pinned, the governments are the export's legal
+names, and a few places and bodies show the rules a count cannot. What every list's entries
+must satisfy is checked by the contract test beside the lists. The export is a manual file:
+without it in the cache the tests are skipped."""
 
-from collections.abc import Callable, Sequence
+from typing import Any
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
@@ -29,8 +29,6 @@ COMMISSIONS = {
     "other": 4,
 }
 EXPORT_DROPPED = {"Local Government Association": 9, "Metis Settlement": 8}
-# The Town of Taber and the Municipal District of Taber.
-SIBLING_NAMESAKES = 1
 
 
 @pytest.fixture(scope="module")
@@ -58,9 +56,13 @@ def by_code(places) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in places}
 
 
-def test_the_counts(built, places, institutions, opened, rules):
+@pytest.fixture(scope="module")
+def loaded(loaded_places_of) -> Any:
+    return loaded_places_of("CA", ("canada/alberta/places",))
+
+
+def test_the_counts(built, places, institutions):
     notes = built[1]
-    assert len(alberta.entries(opened, rules)) == len(built[0])
     assert len(places) == MUNICIPALITIES + SPECIAL_AREAS
     assert sum(1 for entry in places if entry.government is None) == SPECIAL_AREAS
     assert sum(1 for entry in places if entry.homepage) == HOMEPAGES
@@ -75,32 +77,22 @@ def test_the_counts(built, places, institutions, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_place_has_its_code_population_and_the_exports_legal_name(
+def test_every_government_is_the_exports_legal_name_of_its_place(
     places, opened, rules: countries.CountryRules
 ):
+    """A special area has no government. Every other place's government is the export's legal
+    name, or the kind and the export's bare name (Alberta Beach), and is keyed as the place
+    is."""
     naming = rules.naming
-    census = opened[statcan.POPULATION.name]
     export = opened[alberta.CONTACTS.name]
     for entry in places:
-        assert (entry.level, entry.parent) == ("municipality", alberta.PROVINCE)
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert entry.code.value.startswith(alberta.PROVINCE_CODE)
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, statcan.CENSUS_YEAR)
-        line = census.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert entry.name in line
         if entry.government is None:
             assert entry.name.startswith("Special Area")
             continue
         row = export.line(entry.citations["government"].line)
-        # The export's legal name, or the kind and the export's bare name (Alberta Beach).
         assert entry.government in row or entry.government.endswith(f" of {row.split(' | ')[0]}")
         assert alberta.key(entry.government) == alberta.key(entry.name), entry.name
         assert naming.key(entry.name).split(" no ")[0].split(" ")[0] in naming.key(entry.government)
-        if entry.homepage is not None:
-            host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-            assert host.lower() in row.lower(), entry.name
 
 
 def test_the_places_that_show_the_rules(by_code):
@@ -150,8 +142,7 @@ def test_the_special_areas_board_and_the_commissions(institutions, places):
     assert len(names) == len(commissions)
 
 
-def test_a_town_and_the_municipal_district_of_its_name_are_two_places(
-    places, sibling_namesakes: Callable[[Sequence[PlaceEntry]], int]
-):
-    with_government = [entry for entry in places if entry.government is not None]
-    assert sibling_namesakes(with_government) == SIBLING_NAMESAKES
+def test_a_town_and_the_municipal_district_of_its_name_are_two_places(loaded: Any) -> None:
+    assert loaded.told_apart == [
+        ("Taber", "Municipal District of Taber", "Taber", "Town of Taber"),
+    ]

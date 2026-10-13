@@ -1,44 +1,35 @@
-"""What the Ontario lists' rule tests share: the country's rules and the names of the places
-the places list loads, which the other lists attach their bodies to. The files of a list come
-from the fixtures every list's tests share."""
+"""What the Ontario lists' rule tests share: the places the places list loads, which the other
+lists attach their bodies to, and the lookup that finds a place as the loader does. The
+country's rules and the files of a list come from the fixtures every list's tests share."""
 
 from collections.abc import Callable
+from typing import Any
 
 import pytest
 
-from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import canada
-from public_atlas.modules.imports.entries import Citation, Code, PlaceEntry
+from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
 
-
-@pytest.fixture(scope="package")
-def rules() -> countries.CountryRules:
-    return countries.rules_from_seed(canada.SEED)
+ONTARIO = ("canada/ontario/places",)
 
 
 @pytest.fixture(scope="package")
-def places(rules: countries.CountryRules, sources_of) -> list[PlaceEntry]:
+def places(entries_of) -> list[PlaceEntry]:
     """What `canada/ontario/places` loads."""
-    return ontario_places.entries(sources_of(ontario_places), rules)
+    return [entry for entry in entries_of(ONTARIO[0]) if isinstance(entry, PlaceEntry)]
 
 
 @pytest.fixture(scope="package")
-def place_names(places: list[PlaceEntry]) -> frozenset[str]:
-    """The names of the loaded places and the province."""
-    return frozenset({ontario_places.PROVINCE, *(entry.name for entry in places)})
+def loaded(loaded_places_of) -> Any:
+    """The seed's anchors and the places list's places, as the loader finds them."""
+    return loaded_places_of("CA", ONTARIO)
 
 
 @pytest.fixture(scope="package")
-def is_loaded_place(
-    place_names: frozenset[str], rules: countries.CountryRules
-) -> Callable[[str], bool]:
-    """Whether a name is a loaded place's, compared as the loader compares names: "Sault Ste
-    Marie" is "Sault Ste. Marie"."""
-    forms: set[str] = set()
-    for name in place_names:
-        forms |= rules.naming.forms(name)
-    return lambda name: bool(rules.naming.forms(name) & forms)
+def find_places(loaded: Any) -> Callable[[str, str | None, str | None], list[PlaceEntry]]:
+    """The loaded places that go by a name, as the loader finds them for an institution: at the
+    level when one is given, under the parent when one is given, the province included."""
+    return loaded.find
 
 
 @pytest.fixture(scope="package")
@@ -49,38 +40,3 @@ def municipality_names(places: list[PlaceEntry]) -> frozenset[str]:
 @pytest.fixture(scope="package")
 def region_names(places: list[PlaceEntry]) -> frozenset[str]:
     return frozenset(entry.name for entry in places if entry.level == ontario_places.REGION)
-
-
-@pytest.fixture(scope="package")
-def find_places(
-    places: list[PlaceEntry], rules: countries.CountryRules
-) -> Callable[[str, str | None, str | None], list[PlaceEntry]]:
-    """The loaded places that go by a name, as the loader finds them for an institution: at the
-    level when one is given, under the parent when one is given, the province included."""
-    province = PlaceEntry(
-        name=ontario_places.PROVINCE,
-        level="province_territory",
-        parent="Canada",
-        code=Code(scheme="statcan_sgc", value=ontario_places.PROVINCE_CODE),
-        citations={"place": Citation(source="seed", line=1)},
-    )
-    loaded = [province, *places]
-    forms_of = {entry.name: rules.naming.forms(entry.name) for entry in loaded}
-
-    def find(name: str, level: str | None, parent: str | None) -> list[PlaceEntry]:
-        forms = rules.naming.forms(name)
-        found = [
-            entry
-            for entry in loaded
-            if forms & forms_of[entry.name] and (level is None or entry.level == level)
-        ]
-        if parent is not None and len(found) > 1:
-            wanted = rules.naming.forms(parent)
-            found = [
-                entry
-                for entry in found
-                if entry.parent is not None and rules.naming.forms(entry.parent) & wanted
-            ]
-        return found
-
-    return find

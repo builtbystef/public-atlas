@@ -10,7 +10,7 @@ import pytest
 from sqlalchemy import select
 
 from public_atlas.modules.agent import findings
-from public_atlas.modules.agent.findings import MAX_CONFIRM_ATTEMPTS, Quote
+from public_atlas.modules.agent.findings import Quote
 from public_atlas.modules.assignments import lifecycle
 from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.assignments.models import Assignment, AssignmentResult, AssignmentType
@@ -290,7 +290,7 @@ def test_a_claim_from_an_untrusted_page_has_no_linking_page_on_record(
     _, claims = homepage_of(db, milton.institution_id)
     assert [(c.status, c.found_on_webpage_id) for c in claims] == [(EntityStatus.CANDIDATE, None)]
     # A trusted page's link found later is recorded on the same claim.
-    capture(
+    milton_page, _ = capture(
         "https://www.elmcounty.ca/milton",
         '<p><a href="https://www.milton.ca/">Town of Milton</a> website</p>',
         "Town of Milton website",
@@ -306,7 +306,9 @@ def test_a_claim_from_an_untrusted_page_has_no_linking_page_on_record(
     )
     assert "No trusted page links to it" not in str(trusted)
     _, claims = homepage_of(db, milton.institution_id)
-    assert [c.found_on_webpage_id is not None for c in claims] == [True]
+    assert [(c.status, c.found_on_webpage_id) for c in claims] == [
+        (EntityStatus.CANDIDATE, milton_page.id)
+    ]
 
 
 def test_a_homepage_on_a_platform_needs_a_trusted_link_and_its_own_text(
@@ -509,7 +511,7 @@ def test_confirm_domain_sends_a_fixable_failure_back_then_the_domain_to_review(
         )
     assert "has not been opened" in str(second.value)
     assert f"Pages opened on www.oakville.ca: {OAKVILLE}" in str(second.value)
-    assert ctx.confirm_attempts == MAX_CONFIRM_ATTEMPTS - 1
+    assert ctx.confirm_attempts == 2
     outcome = call(
         ctx,
         findings.confirm_candidate,
@@ -755,7 +757,7 @@ def test_domain_moved_to_a_trusted_domain_verifies_the_homepage_there(
 ):
     """The listed address is dead but the domain's bare home page forwards to a page on the
     county's trusted site; that redirect counts as the site moving, and the page is verified."""
-    ctx, _ = finding
+    ctx, claim = finding
 
     async def redirected(session) -> None:
         await evidence.record_redirect(
@@ -773,8 +775,14 @@ def test_domain_moved_to_a_trusted_domain_verifies_the_homepage_there(
     assert ctx.ended is not None
     assert ctx.ended.result is AssignmentResult.COMPLETE
     institution, claims = homepage_of(db, world.town.id)
+    # The oakville.ca claim is rejected for the redirect; the page it leads to is the verified
+    # homepage, and the only other claim.
     assert institution.homepage_id is not None
-    assert sorted(c.status.value for c in claims) == ["rejected", "verified"]
+    assert institution.homepage_id != claim.id
+    assert {c.id: (c.status, c.rejected_reason) for c in claims} == {
+        claim.id: (EntityStatus.REJECTED, "redirects to https://www.elmcounty.ca/oakville"),
+        institution.homepage_id: (EntityStatus.VERIFIED, None),
+    }
     assert spawned_for(db, world.oakville.id) == [(FIND_INSTITUTIONS, "held")]
 
 

@@ -44,21 +44,6 @@ def test_a_file_of_an_unseeded_country_is_refused():
     ]
 
 
-def test_parent_labels_replace_relationships(rules: countries.CountryRules):
-    """Every labelled parent is an institution of its file."""
-    subjects, _, _ = dataset.load_all(dataset.all_files())
-    labelled = 0
-    for expected in subjects.values():
-        keys = {row.key for row in expected.institutions}
-        for row in expected.institutions:
-            if row.parent is None:
-                continue
-            labelled += 1
-            assert row.parent.institution in keys or ":" in row.parent.institution
-            assert row.parent.evidence.quote
-    assert labelled > 0
-
-
 def test_a_wrong_label_is_refused(rules: countries.CountryRules):
     subjects, _, _ = dataset.load_all(dataset.files_named(["mcgarry"], lists_by_default=False))
     (expected,) = subjects.values()

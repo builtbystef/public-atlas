@@ -1,5 +1,8 @@
 """The parser port on its in-memory implementation."""
 
+import subprocess
+import sys
+
 import pytest
 
 from public_atlas.config import Settings
@@ -51,9 +54,25 @@ def test_the_memory_parser_fails_on_bytes_that_are_not_text():
         MemoryParser().parse(b"\xff\xfe", "scan.pdf")
 
 
-def test_the_settings_choose_the_parser_without_loading_docling():
-    """Every process builds its resources; only the parse worker has Docling installed."""
+def test_the_settings_choose_the_parser_and_its_limits():
     parser = create_parser(Settings(parse_provider="docling"))
     assert isinstance(parser, DoclingParser)
     assert (parser.timeout, parser.page_batch, parser.max_pages) == (180.0, 10, 500)
     assert isinstance(create_parser(Settings(parse_provider="memory")), MemoryParser)
+
+
+def test_choosing_the_docling_parser_does_not_import_docling():
+    """Every process builds its resources, and only the parse worker has Docling installed: the
+    import is deferred to the first parse. Checked in a process of its own, where nothing else
+    could have imported it first."""
+    probe = (
+        "import sys\n"
+        "from public_atlas.config import Settings\n"
+        "from public_atlas.integrations.parse import create_parser\n"
+        "create_parser(Settings(_env_file=None, parse_provider='docling'))\n"
+        "print(sorted(name for name in sys.modules if name.split('.')[0] == 'docling'))\n"
+    )
+    result = subprocess.run(  # noqa: S603 - our own interpreter on our own code
+        [sys.executable, "-I", "-c", probe], capture_output=True, text=True, check=True
+    )
+    assert result.stdout == "[]\n"

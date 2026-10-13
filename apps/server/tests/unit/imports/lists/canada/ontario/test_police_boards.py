@@ -1,13 +1,12 @@
-"""The police boards list: `entries()` on the cached PAS pages keeps every rule, the counts
-are pinned, and the table names loaded places at the levels the boards sit at."""
-
-from collections.abc import Callable
+"""The police boards list: the counts are pinned, every board is read from its agency page
+with its place and served places said whole, and a few boards show the rules a count cannot.
+What every list's entries must satisfy is checked by the contract test beside the lists."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
 from public_atlas.modules.imports import files
-from public_atlas.modules.imports.entries import InstitutionEntry, PlaceEntry
+from public_atlas.modules.imports.entries import InstitutionEntry
 from public_atlas.modules.imports.lists.canada.ontario import police_boards
 from public_atlas.modules.imports.lists.canada.ontario.communities import Location
 
@@ -51,10 +50,8 @@ def test_the_counts(entries: list[InstitutionEntry], opened: dict[str, files.Ope
     assert {entry.place for entry in entries if entry.place_level == "region"} == REGIONAL
 
 
-def test_every_board_cites_its_page_and_sits_at_one_loaded_place(
-    entries: list[InstitutionEntry],
-    opened: dict[str, files.OpenedFile],
-    find_places: Callable[[str, str | None, str | None], list[PlaceEntry]],
+def test_every_board_is_read_from_its_agency_page_with_its_places_said_whole(
+    entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     for entry in entries:
         assert entry.institution_type == "police_service"
@@ -63,22 +60,15 @@ def test_every_board_cites_its_page_and_sits_at_one_loaded_place(
         assert entry.homepage is None
         citation = entry.citations["institution"]
         page = opened[citation.source]
-        heading = page.line(citation.line)
-        assert heading.startswith(police_boards.PREFIX)
-        words = entry.name.removesuffix(" Police Service Board").removesuffix(" Regional")
-        assert words.lower() in heading.lower(), (entry.name, heading)
+        assert page.line(citation.line).startswith(police_boards.PREFIX)
         assert page.lines[page.lines.index("Background") + 1].startswith(police_boards.ACT)
         # Every place with its level and parent: other provinces load namesakes.
         assert entry.place_level is not None
         assert entry.place_parent is not None
-        found = find_places(entry.place, entry.place_level, entry.place_parent)
-        assert len(found) == 1, (entry.name, entry.place)
-        assert found[0].parent == entry.place_parent
         assert entry.served_places
         for served in entry.served_places:
             assert served.level is not None
             assert served.parent is not None
-            assert len(find_places(served.name, served.level, served.parent)) == 1, served
 
 
 def test_the_boards_that_show_the_rules(by_id: dict[str, InstitutionEntry]):

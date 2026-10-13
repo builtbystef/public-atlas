@@ -1,11 +1,12 @@
-"""The territories' places list: `entries()` on the cached files keeps every rule, the counts
-are pinned, and a few places show the rules a count cannot. The directories are manual files:
-without every one in the cache the tests are skipped."""
+"""The territories' places list: the counts are pinned, every government is named by its
+territory's directory or composed from the census type, and a few places show the rules a
+count cannot. What every list's entries must satisfy is checked by the contract test beside
+the lists. The directories are manual files: without every one in the cache the tests are
+skipped."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
@@ -41,10 +42,9 @@ def by_code(entries) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(entries, built, opened, rules):
+def test_the_counts(entries, built):
     notes = built[1]
     assert len(territories.SOURCES) == SOURCES
-    assert len(territories.entries(opened, rules)) == len(entries)
     by_territory = dict.fromkeys(BY_TERRITORY, 0)
     homepages = dict.fromkeys(BY_TERRITORY, 0)
     for entry in entries:
@@ -59,33 +59,20 @@ def test_the_counts(entries, built, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_municipality_has_its_code_population_and_a_government_from_its_directory(
+def test_every_government_is_named_by_its_directory_or_composed_from_the_census(
     entries, opened, rules: countries.CountryRules
 ):
+    """A page that never names the body gets a government composed from the census type, cited
+    at the page's heading, which is the community's name. Outside the Northwest Territories,
+    whose charter communities go by their own names, the government names the place."""
     naming = rules.naming
-    census = opened[statcan.POPULATION.name]
     for entry in entries:
-        assert entry.level == "municipality"
         assert entry.parent_level == statcan.PROVINCE_LEVEL
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, statcan.CENSUS_YEAR)
-        line = census.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
-        assert entry.government is not None
+        assert entry.government is not None, entry.name
         cited = opened[entry.citations["government"].source].line(
             entry.citations["government"].line
         )
-        # A page that never names the body gets a government composed from the census type,
-        # cited at the page's heading, which is the community's name.
         assert entry.government in cited or entry.government.endswith(f" of {cited}")
-        if entry.homepage is not None:
-            site = opened[entry.citations["homepage"].source].line(entry.citations["homepage"].line)
-            host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-            assert host.lower().removeprefix("www.") in site.lower().replace(
-                "https//", "https://"
-            ) or ("ebsite" in site), entry.name
         if entry.parent != "Northwest Territories":
             assert naming.key(entry.name) in naming.key(entry.government), entry.name
 

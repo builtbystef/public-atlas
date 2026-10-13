@@ -95,13 +95,46 @@ def test_status_lists_what_the_assignment_saved_and_opened(
         "institution 'Elm Conservation Authority' (conservation_authority, verified) "
         f"id={saved.institution_id}" in text
     )
-    assert TOWNS_URL in text
     assert (
-        "Types still to account for: "
-        + ", ".join(t for t in REGIONAL_TYPES if t != "conservation_authority")
-        in text
+        "Types still to account for: housing_authority, municipal_corporation, police_service, "
+        "public_health_unit, public_utility, transit_agency.\n"
+        f"Pages opened in this assignment:\n- {TOWNS_URL}\n"
+        "Budget left: 50 requests, 1000000 tokens."
+    ) in text
+    assert "Candidate to decide" not in text
+    assert "Handoff note" not in text
+
+
+def test_status_names_the_candidate_to_decide_and_the_handoff_note(
+    db: Database,
+    world: World,
+    claimed: Callable[..., Homepage],
+    make_assignment: Callable[..., Assignment],
+    context: Callable[[Assignment], SessionContext],
+    call: Callable[..., Any],
+):
+    """A `find_homepage` session with a candidate is reminded what to decide and how, and a
+    session after a handoff is given the note the one before it left."""
+    claimed(world.town)
+    assignment = make_assignment(FIND_HOMEPAGE, world.town.id)
+
+    async def handed_off() -> None:
+        async with db.session() as session:
+            row = await session.get_one(Assignment, assignment.id)
+            row.handoff_note = "Was checking the contact page."
+            await session.commit()
+
+    db.run(handed_off)
+    ctx = context(assignment)
+    text = str(call(ctx, findings.status_of))
+    assert text == (
+        "Saved in this assignment:\n- nothing yet\n"
+        "Pages opened in this assignment:\n- none\n"
+        "Candidate to decide: https://www.oakville.ca/ on the candidate domain oakville.ca "
+        "(confirm_domain, reject_domain or domain_moved).\n"
+        "Budget left: 50 requests, 1000000 tokens.\n"
+        "Handoff note from the previous session: Was checking the contact page."
     )
-    assert "Budget left: 50 requests" in text
 
 
 def test_a_discovery_finish_accounts_for_every_expected_type(

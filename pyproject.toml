@@ -24,6 +24,8 @@ line-length = 100
 # Agent tooling is excluded here as well as in .gitignore, so a committed copy never fails the
 # checks. docs holds prose and example snippets.
 extend-exclude = [".agents", ".claude", "docs"]
+# The pre-commit hook names its files, which would override the exclusions above.
+force-exclude = true
 # Lets isort classify imports of workspace members as first-party.
 src = [".", "apps/*/src", "packages/*/src", "tools/*/src"]
 

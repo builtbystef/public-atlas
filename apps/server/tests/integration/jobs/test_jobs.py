@@ -1,6 +1,7 @@
+import importlib
 import logging
 import pkgutil
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,15 +12,32 @@ from sqlalchemy import text
 import public_atlas
 from public_atlas.config import Settings
 from public_atlas.db.base import utcnow
-from public_atlas.jobs import TASK_MODULES, conninfo, create_app
+from public_atlas.jobs import TASK_MODULES, conninfo, create_app, registry
 from public_atlas.jobs.purge import purge_old_jobs
 from public_atlas.jobs.stalled import retry_stalled
-from public_atlas.jobs.tasks import ABANDONED, RETRY_ON_ERROR, AnyTask, defer
+from public_atlas.jobs.tasks import RETRY_ON_ERROR, AnyTask, defer, retries_left, task
+from public_atlas.resources import Resources
 
 if TYPE_CHECKING:
     from tests.integration.conftest import Database, InlineConnector
 
-    from public_atlas.resources import Resources
+# What the abandoned hook of `flaky` was handed, per test.
+SETTLED: list[dict[str, object]] = []
+
+
+async def settle(res: Resources, **kwargs: object) -> None:
+    SETTLED.append(kwargs)
+
+
+@task("tests.flaky", retry=RETRY_ON_ERROR, abandoned=settle)
+async def flaky(res: Resources, snapshot_id: str | None = None) -> None:
+    """A job that fails on a flaky peer, as the assignment runner does: five tries, and a
+    hook to settle what it left when a worker dies on the last."""
+
+
+@task("tests.forever", retry=RetryStrategy())
+async def forever(res: Resources) -> None:
+    """A job retried for good."""
 
 
 async def run_now(db: Database, queue: InlineConnector, task: AnyTask) -> int:
@@ -51,11 +69,36 @@ def test_every_jobs_module_in_the_tree_is_registered():
     assert "public_atlas.modules.evidence.jobs" in listed
 
 
-def test_the_platform_tasks_carry_their_retry_and_queue():
-    assert isinstance(RETRY_ON_ERROR, RetryStrategy)
-    assert RETRY_ON_ERROR.max_attempts == 5
-    assert purge_old_jobs.queue == "default"
-    assert retry_stalled.queue == "default"
+def test_every_task_is_on_its_queue():
+    """The assignment runner on the `assignment` queue, the parser on `parse`, everything else
+    on `default`: a worker serving one queue gets those jobs and no other."""
+    for module in TASK_MODULES:
+        importlib.import_module(module)
+    ours = {
+        name: registered.queue
+        for name, registered in registry.tasks.items()
+        if not name.startswith(("builtin:", "tests."))
+    }
+    assert ours == {
+        "agent.purge_events": "default",
+        "agent.purge_videos": "default",
+        "assignments.run_assignment": "assignment",
+        "evidence.parse_snapshot": "parse",
+        "jobs.purge_old_jobs": "default",
+        "jobs.retry_stalled": "default",
+    }
+
+
+def test_a_job_knows_whether_a_failure_would_be_retried():
+    """Five tries for a job that fails on a flaky peer: after four, one more; after five, none.
+    A strategy with no cap retries for good; a task with no strategy, or none registered,
+    is never retried."""
+    assert retries_left(flaky, 0)
+    assert retries_left(flaky, 4)
+    assert not retries_left(flaky, 5)
+    assert retries_left(forever, 100)
+    assert not retries_left(purge_old_jobs, 0)
+    assert not retries_left(None, 0)
 
 
 def test_a_job_is_queued_in_the_transaction_of_the_rows_it_is_about(
@@ -89,49 +132,60 @@ def test_a_job_is_queued_in_the_transaction_of_the_rows_it_is_about(
     assert rows == [committed]
 
 
-def stalled_job(job_id: int, task_name: str, worker_id: int, attempts: int) -> dict[str, object]:
-    return {
+def job_row(
+    queue: InlineConnector,
+    job_id: int,
+    *,
+    status: str,
+    worker_id: int | None,
+    attempts: int,
+    at: datetime,
+    args: dict[str, object] | None = None,
+) -> None:
+    """A job as the queue's table holds one, with the event that put it in `status` at `at`."""
+    queue.jobs[job_id] = {
         "id": job_id,
-        "status": "doing",
-        "task_name": task_name,
+        "status": status,
+        "task_name": "tests.flaky",
         "priority": 0,
         "lock": None,
         "queueing_lock": None,
-        "args": {},
+        "args": args or {},
         "scheduled_at": None,
         "queue_name": "default",
         "attempts": attempts,
         "worker_id": worker_id,
         "abort_requested": False,
     }
+    queue.events[job_id] = [{"type": "started" if status == "doing" else status, "at": at}]
 
 
 def test_retry_stalled_requeues_the_jobs_of_a_dead_worker_and_fails_those_out_of_retries(
-    db: Database, queue: InlineConnector, monkeypatch: pytest.MonkeyPatch
+    db: Database, queue: InlineConnector
 ):
-    """A job left running by a worker whose heartbeat stopped goes back to the queue when its
-    task has retries left (and, here, is run at once by the same worker); one out of retries
-    is failed and its task's `abandoned` hook settles what it left; one held by a live worker
-    is left alone."""
-    settled: list[dict[str, object]] = []
-
-    async def settle(res: Resources, **kwargs: object) -> None:
-        settled.append(kwargs)
-
-    monkeypatch.setitem(ABANDONED, "tests.abandoned", settle)
+    """A worker is dead when its heartbeat is over 30 seconds old. A job it left running goes
+    back to the queue when its task has retries left (four of five attempts made; here, run at
+    once by the same worker); one out of retries (five of five) is failed and its task's
+    `abandoned` hook settles what it left; one held by a worker heard from 29 seconds ago is
+    left alone."""
+    SETTLED.clear()
     dead, live = 1, 2
-    long_ago = utcnow() - timedelta(minutes=5)
-    queue.workers = {dead: long_ago, live: utcnow()}
-    queue.jobs[10] = stalled_job(10, "jobs.retry_stalled", dead, attempts=0)
-    queue.jobs[11] = stalled_job(11, "jobs.retry_stalled", live, attempts=0)
-    queue.jobs[12] = stalled_job(12, "tests.abandoned", dead, attempts=3)
-    queue.jobs[12]["args"] = {"snapshot_id": "abc", "trace": {}}
-    for job_id in (10, 11, 12):
-        queue.events[job_id] = [{"type": "started", "at": long_ago}]
-    # `retry_stalled` itself retries on error, so the dead worker's run of it is requeued.
-    monkeypatch.setattr(retry_stalled, "retry_strategy", RETRY_ON_ERROR)
+    now = utcnow()
+    queue.workers = {dead: now - timedelta(seconds=31), live: now - timedelta(seconds=29)}
+    started = now - timedelta(minutes=5)
+    job_row(queue, 10, status="doing", worker_id=dead, attempts=4, at=started)
+    job_row(queue, 11, status="doing", worker_id=live, attempts=4, at=started)
+    job_row(
+        queue,
+        12,
+        status="doing",
+        worker_id=dead,
+        attempts=5,
+        at=started,
+        args={"snapshot_id": "abc", "trace": {}},
+    )
 
-    assert db.run(run_now, db, queue, retry_stalled) > 0
+    db.run(run_now, db, queue, retry_stalled)
     assert [e["type"] for e in queue.events[10]] == [
         "started",
         "scheduled",
@@ -140,31 +194,27 @@ def test_retry_stalled_requeues_the_jobs_of_a_dead_worker_and_fails_those_out_of
         "succeeded",
     ]
     assert queue.jobs[10]["status"] == "succeeded"
-    assert queue.jobs[11]["status"] == "doing"
-    assert queue.jobs[12]["status"] == "failed"
-    assert settled == [{"snapshot_id": "abc"}]
+    assert (queue.jobs[11]["status"], [e["type"] for e in queue.events[11]]) == (
+        "doing",
+        ["started"],
+    )
+    assert (queue.jobs[12]["status"], [e["type"] for e in queue.events[12]]) == (
+        "failed",
+        ["started", "failed"],
+    )
+    assert SETTLED == [{"snapshot_id": "abc"}]
 
 
 def test_the_purge_task_runs_with_the_worker_resources_and_drops_old_failed_jobs(
     db: Database, queue: InlineConnector, caplog: pytest.LogCaptureFixture
 ):
-    failed_long_ago = {
-        "id": 10,
-        "status": "failed",
-        "task_name": "jobs.retry_stalled",
-        "priority": 0,
-        "lock": None,
-        "queueing_lock": None,
-        "args": {},
-        "scheduled_at": None,
-        "queue_name": "default",
-        "attempts": 5,
-        "worker_id": None,
-        "abort_requested": False,
-    }
-    queue.jobs[10] = failed_long_ago
-    queue.events[10] = [{"type": "failed", "at": utcnow() - timedelta(days=30)}]
+    """A job that failed for good is kept seven days for inspection: one that failed eight
+    days ago goes, one that failed six days ago stays."""
+    now = utcnow()
+    job_row(queue, 10, status="failed", worker_id=None, attempts=5, at=now - timedelta(days=8))
+    job_row(queue, 11, status="failed", worker_id=None, attempts=5, at=now - timedelta(days=6))
     with caplog.at_level(logging.INFO, logger="public_atlas.jobs.purge"):
         db.run(run_now, db, queue, purge_old_jobs)
     assert "Purged failed jobs older than 7 days" in caplog.text
     assert 10 not in queue.jobs
+    assert queue.jobs[11]["status"] == "failed"

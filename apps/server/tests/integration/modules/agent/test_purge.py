@@ -113,11 +113,8 @@ def test_videos_then_events_are_purged_by_age_and_nothing_else_is(
     video_row = next(event for event in old_events if event.kind is EventKind.VIDEO)
     assert set(video_row.content) == {"purged_at", "size"}
     assert len(old_events) == 2
-    assert all(
-        event.content.get("key")
-        for event in db.run(rows, recent_id)
-        if event.kind is EventKind.VIDEO
-    )
+    recent_video = next(event for event in db.run(rows, recent_id) if event.kind is EventKind.VIDEO)
+    assert recent_video.content == {"key": recent_key, "size": 4}
 
     async def age_the_recent_one() -> None:
         async with db.session() as session:

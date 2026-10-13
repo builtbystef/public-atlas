@@ -1,5 +1,7 @@
-"""The federal list: `entries()` on the cached inventory keeps every rule, the counts are
-pinned, and a few bodies show the rules a count cannot."""
+"""The federal list: the counts are pinned, every body is an active row of the inventory, the
+heads of the portfolios are loaded before the bodies under them, and a few bodies show the
+rules a count cannot. What every list's entries must satisfy is checked by the contract test
+beside the lists."""
 
 from collections import Counter
 
@@ -77,13 +79,9 @@ def by_name(entries: list[InstitutionEntry]) -> dict[str, InstitutionEntry]:
 
 
 def test_the_counts(
-    entries: list[InstitutionEntry],
-    notes: federal.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
+    entries: list[InstitutionEntry], notes: federal.Notes, opened: dict[str, files.OpenedFile]
 ):
     assert len(federal.read_organizations(opened[federal.INVENTORY.name])) == ROWS
-    assert len(federal.entries(opened, rules)) == ENTRIES
     assert len(entries) == ENTRIES
     assert dict(notes.typed) == TYPED
     assert Counter(entry.institution_type for entry in entries) == TYPED
@@ -103,22 +101,16 @@ def test_the_counts(
     assert len(set(texts)) == len(texts)
 
 
-def test_every_entry_cites_the_row_that_names_it_and_sits_under_canada(
+def test_every_body_is_an_active_row_with_its_website_on_it(
     entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
 ):
     inventory = opened[federal.INVENTORY.name]
     for entry in entries:
         citation = entry.citations["institution"]
-        assert citation.source == federal.INVENTORY.name
-        line = inventory.line(citation.line)
-        assert entry.name in line
-        assert " | a | " in line
-        assert (entry.place, entry.place_level) == (federal.PLACE, federal.PLACE_LEVEL)
+        assert " | a | " in inventory.line(citation.line), entry.name
         assert entry.codes == ()
-        assert (entry.suggested_type is not None) == (entry.institution_type == federal.OTHER)
         if entry.homepage is not None:
             assert entry.citations["homepage"] == citation
-            assert entry.homepage.startswith(("http://", "https://"))
 
 
 def test_the_heads_of_the_portfolios_are_loaded_before_the_bodies_under_them(

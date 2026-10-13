@@ -1,8 +1,6 @@
-"""The school boards list: `entries()` on the cached contact list keeps every rule and the
-counts are pinned."""
-
-from collections.abc import Callable
-from urllib.parse import urlsplit
+"""The school boards list: the counts are pinned, every board's homepage is on its row and an
+authority's kind is its alias, and a few rows show the rules a count cannot. What every list's
+entries must satisfy is checked by the contract test beside the lists."""
 
 import pytest
 
@@ -47,24 +45,13 @@ def test_the_counts(entries: list[InstitutionEntry]):
     assert len(set(names)) == len(names)
 
 
-def test_every_entry_cites_its_row_and_sits_in_a_loaded_place(
+def test_every_board_has_its_homepage_on_its_row_and_an_authority_its_kind(
     entries: list[InstitutionEntry],
-    opened: dict[str, files.OpenedFile],
-    is_loaded_place: Callable[[str], bool],
 ):
-    contacts = opened[school_boards.CONTACTS.name]
     for entry in entries:
         assert entry.institution_type == "school_board"
-        citation = entry.citations["institution"]
-        assert citation.source == school_boards.CONTACTS.name
-        line = contacts.line(citation.line)
-        assert entry.name in line
-        assert is_loaded_place(entry.place), (entry.name, entry.place)
-        assert entry.homepage is not None
-        parts = urlsplit(entry.homepage)
-        assert parts.scheme in ("http", "https")
-        assert parts.netloc in line.lower()
-        assert entry.citations["homepage"] == citation
+        assert entry.homepage is not None, entry.name
+        assert entry.citations["homepage"] == entry.citations["institution"]
         assert len(entry.aliases) <= 1
         if entry.aliases:
             assert entry.aliases[0].text in school_boards.AUTHORITY_KINDS.values()

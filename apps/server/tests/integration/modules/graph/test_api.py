@@ -12,7 +12,6 @@ from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
     EnteredBy,
-    Institution,
     InstitutionServedPlace,
     Metric,
     MetricName,
@@ -114,6 +113,17 @@ def test_listing_institutions_with_search_filters_and_sorting(
     paged = client.get("/institutions", params={"limit": 1, "offset": 1}).json()
     assert (paged["total"], len(paged["items"]), paged["offset"]) == (17, 1, 1)
     assert client.get("/institutions", params={"status": "rejected"}).json()["items"] == []
+
+    async def reject_one() -> uuid.UUID:
+        async with db.session() as session:
+            archive = await build.candidate_institution(session, world.oakville, "Oakville Archive")
+            await status_changes.reject_institution(session, archive, entered_by=EnteredBy.MANUAL)
+            await session.commit()
+            return archive.id
+
+    archive_id = db.run(reject_one)
+    rejected = client.get("/institutions", params={"status": "rejected"}).json()
+    assert [row["id"] for row in rejected["items"]] == [str(archive_id)]
 
 
 def test_reading_an_institution_with_everything_attached(
@@ -243,27 +253,6 @@ def test_institutions_filter_and_sort_by_their_places_population(
     assert [row["name"] for row in large["items"]] == ["Government of Ontario"]
     town = client.get(f"/institutions/{world.town.id}").json()
     assert town["place_population"] == 213_759
-
-
-def test_a_rejected_institution_is_listed_by_status(
-    client: TestClient, db: Database, world: World, build: type[Build]
-):
-    async def reject_one() -> uuid.UUID:
-        async with db.session() as session:
-            archive = await build.candidate_institution(session, world.oakville, "Oakville Archive")
-            await status_changes.reject_institution(session, archive, entered_by=EnteredBy.MANUAL)
-            await session.commit()
-            return archive.id
-
-    archive_id = db.run(reject_one)
-    rejected = client.get("/institutions", params={"status": "rejected"}).json()
-    assert [row["id"] for row in rejected["items"]] == [str(archive_id)]
-
-    async def check() -> Institution:
-        async with db.session() as session:
-            return await session.get_one(Institution, archive_id)
-
-    assert db.run(check).status.value == "rejected"
 
 
 def test_a_quote_is_read_in_the_context_of_its_page(

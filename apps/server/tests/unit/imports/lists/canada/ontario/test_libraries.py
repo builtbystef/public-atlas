@@ -1,5 +1,6 @@
-"""The libraries list: `entries()` on the cached statistics keeps every rule, the counts are
-pinned, and every board sits at one loaded place."""
+"""The libraries list: the counts are pinned, every board is named as a public library from
+its row, the types place the boards, and the hand tables name loaded places. What every list's
+entries must satisfy is checked by the contract test beside the lists."""
 
 from collections.abc import Callable
 from urllib.parse import urlsplit
@@ -60,31 +61,19 @@ def test_the_counts(entries: list[InstitutionEntry], opened: dict[str, files.Ope
     assert names == sorted(names, key=libraries.name_key)
 
 
-def test_every_entry_cites_its_row_and_sits_at_one_loaded_place(
+def test_every_board_is_named_as_a_public_library_from_its_row(
     entries: list[InstitutionEntry],
-    opened: dict[str, files.OpenedFile],
-    find_places: Callable[[str, str | None, str | None], list[PlaceEntry]],
 ) -> None:
-    statistics = opened[libraries.STATISTICS.name]
     for entry in entries:
-        citation = entry.citations["institution"]
-        assert citation.source == libraries.STATISTICS.name
-        line = statistics.line(citation.line)
-        shorthand = entry.aliases[0].text if entry.aliases else entry.name
-        assert shorthand in line.replace(" - ", "-"), entry.name
         assert entry.name.endswith("Public Library"), entry.name
         assert " & " not in entry.name
+        # The file's shorthand, when it is not the name itself.
         assert len(entry.aliases) <= 1
         assert entry.parent_institution is None
         assert entry.served_places == ()
-        found = find_places(entry.place, entry.place_level, entry.place_parent)
-        assert len(found) == 1, (entry.name, entry.place, entry.place_level)
         if entry.homepage is not None:
-            parts = urlsplit(entry.homepage)
-            assert parts.scheme in ("http", "https")
-            assert parts.netloc in line.lower(), entry.name
-            assert "facebook" not in parts.netloc
-            assert entry.citations["homepage"] == citation
+            assert "facebook" not in urlsplit(entry.homepage).netloc
+            assert entry.citations["homepage"] == entry.citations["institution"]
 
 
 def _shorthand(entry: InstitutionEntry) -> str:

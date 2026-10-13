@@ -1,16 +1,15 @@
-"""The Manitoba places list: `entries()` on the cached files keeps every rule, the counts are
-pinned, and a few places show the rules a count cannot. The directory is a PDF: the first run
-parses it with Docling and keeps the pages beside the cache."""
+"""The Manitoba places list: the counts are pinned, the governments come from the directory's
+headings, and a few places show the rules a count cannot. What every list's entries must
+satisfy is checked by the contract test beside the lists. The directory is a PDF: the first
+run parses it with Docling and keeps the pages beside the cache."""
 
-from collections.abc import Callable, Sequence
+from typing import Any
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
-from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.manitoba import places as manitoba
 
 pytestmark = [pytest.mark.lists, pytest.mark.parse]
@@ -20,9 +19,6 @@ MUNICIPALITIES = 137
 DIRECTORY_ENTRIES = 137
 HOMEPAGES = 130
 DROPPED = {"IRI": 88, "NO": 10, "S-É": 3}
-# The rural municipality beside the town of Lac du Bonnet, Morris and Ste. Anne, and beside the
-# city of Dauphin, Portage la Prairie and Thompson.
-SIBLING_NAMESAKES = 6
 
 
 @pytest.fixture(scope="module")
@@ -45,9 +41,13 @@ def by_code(entries) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(entries, built, opened, rules):
+@pytest.fixture(scope="module")
+def loaded(loaded_places_of) -> Any:
+    return loaded_places_of("CA", ("canada/manitoba/places",))
+
+
+def test_the_counts(entries, built, opened):
     notes = built[1]
-    assert len(manitoba.entries(opened, rules)) == len(entries)
     assert len(entries) == MUNICIPALITIES
     assert len(manitoba.read_entries(opened[manitoba.DIRECTORY.name])) == DIRECTORY_ENTRIES
     assert sum(1 for entry in entries if entry.homepage) == HOMEPAGES
@@ -60,34 +60,23 @@ def test_the_counts(entries, built, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_municipality_has_its_code_population_and_a_government_from_the_directory(
+def test_every_government_comes_from_the_directorys_heading_for_its_place(
     entries, opened, rules: countries.CountryRules
 ):
+    """The government is cited at the directory heading that names the place, and names the
+    place itself; a website is cited at the "Website" line under that heading."""
     naming = rules.naming
-    census = opened[statcan.POPULATION.name]
     directory = opened[manitoba.DIRECTORY.name]
     for entry in entries:
-        assert (entry.level, entry.parent) == ("municipality", manitoba.PROVINCE)
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert entry.code.value.startswith(manitoba.PROVINCE_CODE)
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, statcan.CENSUS_YEAR)
-        line = census.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
-        assert entry.government is not None
+        assert entry.government is not None, entry.name
         core = naming.core(entry.government)
-        # "Town of X" governs "X"; the layer may drop a period the census writes (Fort St James).
         assert core in (naming.core(entry.name), naming.key(entry.name)) or core in naming.forms(
             entry.name
         ), entry.name
         heading = directory.line(entry.citations["government"].line)
         assert manitoba.key(entry.name) in manitoba.key(heading), entry.name
         if entry.homepage is not None:
-            site = directory.line(entry.citations["homepage"].line)
-            assert "ebsite" in site
-            host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-            assert host.lower().removeprefix("www.") in site.lower(), entry.name
+            assert "ebsite" in directory.line(entry.citations["homepage"].line), entry.name
 
 
 def test_the_places_that_show_the_rules(by_code, built):
@@ -113,9 +102,18 @@ def test_the_places_that_show_the_rules(by_code, built):
     assert built[1].merged == ["4620032 Mountain (South) -> 4620055"]
 
 
-def test_the_rural_municipality_and_the_town_of_one_name_are_two_places(
-    entries, sibling_namesakes: Callable[[Sequence[PlaceEntry]], int]
-):
-    morris = sorted(entry.government for entry in entries if entry.name == "Morris")
-    assert morris == ["Rural Municipality of Morris", "Town of Morris"]
-    assert sibling_namesakes(entries) == SIBLING_NAMESAKES
+def test_the_rural_municipality_and_the_town_of_one_name_are_two_places(loaded: Any) -> None:
+    """The rural municipality beside the town of Lac du Bonnet, Morris and Ste. Anne, and
+    beside the city of Dauphin, Portage la Prairie and Thompson."""
+    assert [(pair.name, pair.government, pair.other_government) for pair in loaded.told_apart] == [
+        ("Dauphin", "Rural Municipality of Dauphin", "City of Dauphin"),
+        ("Lac du Bonnet", "Rural Municipality of Lac du Bonnet", "Town of Lac du Bonnet"),
+        ("Morris", "Rural Municipality of Morris", "Town of Morris"),
+        (
+            "Portage la Prairie",
+            "Rural Municipality of Portage la Prairie",
+            "City of Portage la Prairie",
+        ),
+        ("Ste. Anne", "Rural Municipality of Ste. Anne", "Town of Ste. Anne"),
+        ("Thompson", "Rural Municipality of Thompson", "City of Thompson"),
+    ]

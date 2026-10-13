@@ -98,13 +98,12 @@ def test_run_control_takes_a_run_id_and_release_its_choices():
         build_parser().parse_args(["run", "release", run_id, "--type", "find_castles"])
 
 
-def test_worker_takes_the_queues_to_serve(capsys):
-    args = build_parser().parse_args(["worker", "--queues", "parse,assignment"])
-    assert args.queues == ["assignment", "parse"]
+def test_worker_takes_the_queues_to_serve():
+    """The same `--queues` as `public-atlas-worker` takes (tests/unit/test_worker.py has the
+    parsing); none named means every queue, decided when the worker runs."""
+    args = build_parser().parse_args(["worker", "--queues", "parse"])
+    assert (args.command, args.queues) == ("worker", ["parse"])
     assert build_parser().parse_args(["worker"]).queues is None
-    with pytest.raises(SystemExit):
-        build_parser().parse_args(["worker", "--queues", "mail"])
-    assert "unknown queue: mail" in capsys.readouterr().err
 
 
 def test_eval_commands_take_their_choices(tmp_path):

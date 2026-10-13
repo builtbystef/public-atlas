@@ -8,6 +8,8 @@ import {
   reviewFilters,
 } from "./schemas";
 
+const TYPE_NAME_MESSAGE = "Lowercase letters, digits and underscores, starting with a letter";
+
 test("the queue reads its filters from the URL", () => {
   expect(
     parseReviewSearch({
@@ -45,6 +47,10 @@ test("the queue asks for open items unless the URL says otherwise", () => {
 });
 
 test("a decision's note and type become the API's body", () => {
+  expect(decisionSchema.parse({ note: "", institution_type: "" })).toEqual({
+    note: null,
+    institution_type: null,
+  });
   expect(decisionSchema.parse({ note: " ", institution_type: "" })).toEqual({
     note: null,
     institution_type: null,
@@ -53,13 +59,23 @@ test("a decision's note and type become the API's body", () => {
     note: "ok",
     institution_type: "school_board",
   });
-  expect(decisionSchema.safeParse({ note: "", institution_type: "School Board" }).success).toBe(
-    false,
-  );
+  const spaced = decisionSchema.safeParse({ note: "", institution_type: "School Board" });
+  expect(spaced.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["institution_type"], TYPE_NAME_MESSAGE],
+  ]);
 });
 
-test("a merge needs a target", () => {
-  expect(mergeSchema.safeParse({ into_id: "", note: "" }).success).toBe(false);
+test("a merge needs a target that is an id, and its note may be empty", () => {
+  const target = "0199e8b0-0000-7000-8000-000000000001";
+  expect(mergeSchema.parse({ into_id: target, note: "" })).toEqual({ into_id: target, note: null });
+  const blank = mergeSchema.safeParse({ into_id: "", note: "" });
+  expect(blank.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["into_id"], "Choose what to merge into"],
+  ]);
+  const notAnId = mergeSchema.safeParse({ into_id: "oakville", note: "" });
+  expect(notAnId.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["into_id"], "Choose what to merge into"],
+  ]);
 });
 
 test("the type a kind is about", () => {

@@ -8,13 +8,12 @@ from collections.abc import Callable, Sequence
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import canada
 from public_atlas.modules.imports.entries import PlaceEntry
 
 
 @pytest.fixture(scope="package")
-def rules() -> countries.CountryRules:
-    return countries.rules_from_seed(canada.SEED)
+def rules(rules_for) -> countries.CountryRules:
+    return rules_for("CA")
 
 
 @pytest.fixture(scope="package")

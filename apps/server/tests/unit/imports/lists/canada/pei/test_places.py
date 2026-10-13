@@ -1,14 +1,13 @@
-"""The Prince Edward Island places list: `entries()` on the cached files keeps every rule, the
-counts are pinned, and a few places show the rules a count cannot. The directory is a manual
-file: without it in the cache the tests are skipped."""
+"""The Prince Edward Island places list: the counts are pinned, the governments and websites
+come from the directory's row, and a few places show the rules a count cannot. What every
+list's entries must satisfy is checked by the contract test beside the lists. The directory is
+a manual file: without it in the cache the tests are skipped."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
-from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.pei import places as pei
 
 pytestmark = pytest.mark.lists
@@ -41,9 +40,8 @@ def by_code(entries) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(entries, built, opened, rules):
+def test_the_counts(entries, built):
     notes = built[1]
-    assert len(pei.entries(opened, rules)) == len(entries)
     assert len(entries) == MUNICIPALITIES
     assert sum(1 for entry in entries if entry.homepage) == HOMEPAGES
     assert dict(notes.dropped) == DROPPED
@@ -53,32 +51,19 @@ def test_the_counts(entries, built, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_municipality_has_its_code_population_and_a_government_from_the_directory(
-    entries, opened, rules: countries.CountryRules
+def test_every_government_and_website_come_from_one_directory_row(
+    entries, rules: countries.CountryRules
 ):
     naming = rules.naming
-    census = opened[statcan.POPULATION.name]
-    directory = opened[pei.DIRECTORY.name]
     for entry in entries:
-        assert (entry.level, entry.parent) == ("municipality", pei.PROVINCE)
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert entry.code.value.startswith(pei.PROVINCE_CODE)
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, statcan.CENSUS_YEAR)
-        line = census.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
-        assert entry.government is not None
+        assert entry.government is not None, entry.name
         core = naming.core(entry.government)
-        # "Town of X" governs "X"; the layer may drop a period the census writes (Fort St James).
         assert core in (naming.core(entry.name), naming.key(entry.name)) or core in naming.forms(
             entry.name
         ), entry.name
-        row = directory.line(entry.citations["government"].line)
+        assert entry.citations["government"].source == pei.DIRECTORY.name
         if entry.homepage is not None:
             assert entry.citations["homepage"] == entry.citations["government"]
-            host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-            assert host.lower() in row.lower()
 
 
 def test_the_places_that_show_the_rules(by_code, built):

@@ -4,7 +4,10 @@ renderer per format."""
 import io
 import json
 import re
+import threading
 import zipfile
+from collections.abc import Iterator
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
@@ -291,13 +294,80 @@ def test_the_cache_is_read_when_the_hash_matches(tmp_path: Path):
     assert files.open_file(tiny, tmp_path).rows[0]["name"] == "Elmwood"
 
 
-def test_a_stale_cache_is_fetched_again_and_a_failed_fetch_is_an_error(tmp_path: Path):
+@pytest.fixture
+def served() -> Iterator[tuple[str, list[str]]]:
+    """A site serving `tiny.csv` and `other.csv`, by its base URL, with the paths it was asked
+    for."""
+    requested: list[str] = []
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:
+            requested.append(self.path)
+            data = {"/tiny.csv": CSV, "/other.csv": CSV + b"Pine,3503,a village\n"}.get(self.path)
+            if data is None:
+                self.send_error(404)
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/csv")
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+
+        def log_message(self, format: str, *args: object) -> None:  # noqa: A002, ARG002 - the base signature
+            return
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{httpd.server_address[1]}", requested
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+
+
+def test_a_stale_cache_is_fetched_again_and_the_fetched_file_replaces_it(
+    tmp_path: Path, served: tuple[str, list[str]]
+):
+    base, requested = served
+    tiny = source(CSV, url=f"{base}/tiny.csv")
+    path = tiny.cache_path(tmp_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"stale")
+    assert files.fetch(tiny, tmp_path) == CSV
+    assert requested == ["/tiny.csv"]
+    assert path.read_bytes() == CSV
+    # Now cached with the right hash: read without a request.
+    assert files.fetch(tiny, tmp_path) == CSV
+    assert requested == ["/tiny.csv"]
+
+
+def test_a_download_whose_hash_differs_is_refused_and_not_cached(
+    tmp_path: Path, served: tuple[str, list[str]]
+):
+    base, requested = served
+    # A new release at the URL: the recorded hash is the old file's.
+    tiny = source(CSV, url=f"{base}/other.csv")
+    with pytest.raises(ListFileError, match=r"sha256 .* not the recorded") as caught:
+        files.fetch(tiny, tmp_path)
+    assert "needs its hash recorded in the list module" in str(caught.value)
+    assert requested == ["/other.csv"]
+    assert not list(tmp_path.iterdir())
+    # The stale copy, when there is one, is left as it was.
+    path = tiny.cache_path(tmp_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"stale")
+    with pytest.raises(ListFileError, match="not the recorded"):
+        files.fetch(tiny, tmp_path)
+    assert path.read_bytes() == b"stale"
+
+
+def test_a_failed_fetch_is_an_error(tmp_path: Path):
     # Nothing listens on this port, so the fetch fails at once.
     unreachable = source(CSV, url="http://127.0.0.1:9/tiny.csv")
-    unreachable.cache_path(tmp_path).parent.mkdir(parents=True, exist_ok=True)
-    unreachable.cache_path(tmp_path).write_bytes(b"stale")
-    with pytest.raises(ListFileError, match="cannot fetch"):
+    with pytest.raises(ListFileError, match=r"cannot fetch http://127\.0\.0\.1:9/tiny\.csv"):
         files.fetch(unreachable, tmp_path)
+    assert not list(tmp_path.iterdir())
 
 
 def test_a_fetched_file_pins_a_hash_and_a_manual_one_does_not():

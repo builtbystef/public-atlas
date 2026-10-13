@@ -1,6 +1,6 @@
 import { expect, test } from "vite-plus/test";
 
-import { parseRunSearch, releaseSchema, runSchema } from "./schemas";
+import { releaseSchema, runSchema } from "./schemas";
 
 test("the run form becomes the API's run input", () => {
   const run = runSchema.parse({
@@ -27,7 +27,7 @@ test("the run form becomes the API's run input", () => {
   });
 });
 
-test("a run needs a name and a country", () => {
+test("a run needs a name, a country and subjects that are ids", () => {
   const result = runSchema.safeParse({
     name: "",
     country_code: "",
@@ -36,20 +36,32 @@ test("a run needs a name and a country", () => {
     administrative_levels: [],
     institution_types: [],
     assignment_types: [],
-    subject_ids: [],
+    subject_ids: ["oakville"],
   });
-  expect(result.success).toBe(false);
-  expect(result.error?.issues.map((issue) => issue.path[0])).toEqual(["name", "country_code"]);
+  expect(result.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["name"], "Name is required"],
+    [["country_code"], "Choose a country"],
+    [["subject_ids", 0], "Invalid UUID"],
+  ]);
 });
 
-test("the release dialog takes a count and an optional type", () => {
+test("the release dialog takes a count between one and the API's page and an optional type", () => {
   expect(releaseSchema.parse({ limit: "3", assignment_type: "" })).toEqual({
     limit: 3,
     assignment_type: "",
   });
-  expect(releaseSchema.safeParse({ limit: "0", assignment_type: "" }).success).toBe(false);
-});
-
-test("the runs list is paged", () => {
-  expect(parseRunSearch({ page: "2" })).toEqual({ page: 2 });
+  expect(releaseSchema.parse({ limit: "500", assignment_type: "find_sources" })).toEqual({
+    limit: 500,
+    assignment_type: "find_sources",
+  });
+  const tooFew = releaseSchema.safeParse({ limit: "0", assignment_type: "" });
+  expect(tooFew.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["limit"], "Release at least one"],
+  ]);
+  const tooMany = releaseSchema.safeParse({ limit: "501", assignment_type: "" });
+  expect(tooMany.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["limit"], "At most 500 at once"],
+  ]);
+  const unknownType = releaseSchema.safeParse({ limit: "1", assignment_type: "find_castles" });
+  expect(unknownType.error?.issues.map((issue) => issue.path)).toEqual([["assignment_type"]]);
 });

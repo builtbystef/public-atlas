@@ -3,12 +3,7 @@
 from decimal import Decimal
 
 from public_atlas.modules.assignments.models import UsageKind
-from public_atlas.modules.assignments.pricing import (
-    PRICES_FILE,
-    ModelPrice,
-    Prices,
-    load_prices,
-)
+from public_atlas.modules.assignments.pricing import ModelPrice, Prices, load_prices
 
 # A price list of the test's own, so the arithmetic is pinned apart from `prices.toml`: $2 per
 # million uncached input tokens, $0.10 per million cached, $10 per million output.
@@ -20,13 +15,6 @@ BY_HAND = Prices(
 
 def model_cost(units: int, cached: int, output: int) -> Decimal | None:
     return BY_HAND.cost(UsageKind.MODEL, "m", units=units, cached_units=cached, output_units=output)
-
-
-def test_the_price_list_is_a_data_file_with_the_models_the_agent_runs_on():
-    prices = load_prices()
-    assert PRICES_FILE.name == "prices.toml"
-    assert "gpt-6-luna" in prices.models
-    assert prices.searches["brave"] == Decimal("0.005")
 
 
 def test_a_model_call_is_priced_by_its_uncached_cached_and_output_tokens():

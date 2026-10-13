@@ -2,10 +2,13 @@
 who did it, keeps the links the tables enforce, and says what to spawn."""
 
 import logging
+import re
+import uuid
 from typing import TYPE_CHECKING, Any
 
 import pytest
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from public_atlas.modules.assignments.models import Assignment, AssignmentStatus, AssignmentType
 from public_atlas.modules.assignments.service import Spawn
@@ -71,7 +74,9 @@ def test_an_entity_starts_a_candidate_and_only_an_official_domain_is_trusted(
 def test_verifying_a_homepage_links_it_supersedes_other_claims_and_spawns(
     db: Database, world: World, build: type[Build]
 ):
-    async def scenario() -> tuple[Homepage, Homepage, Institution, list[Spawn], list[Spawn]]:
+    async def scenario() -> tuple[
+        Homepage, Homepage, Institution, Institution, list[Spawn], list[Spawn]
+    ]:
         async with db.session() as session:
             town = await session.get_one(Institution, world.town.id)
             first = await build.claim(session, town, "https://www.elmcounty.ca/oakville/")
@@ -82,9 +87,9 @@ def test_verifying_a_homepage_links_it_supersedes_other_claims_and_spawns(
             page = await build.claim(session, library, "https://www.elmcounty.ca/library/")
             library_spawn = await status_changes.verify_homepage(session, page, entered_by=AGENT)
             await session.commit()
-            return first, second, town, spawn, library_spawn
+            return first, second, town, library, spawn, library_spawn
 
-    first, second, town, spawn, library_spawn = db.run(scenario)
+    first, second, town, library, spawn, library_spawn = db.run(scenario)
     assert (first.status, first.entered_by, first.trusted_path) == (
         EntityStatus.VERIFIED,
         AGENT,
@@ -100,21 +105,18 @@ def test_verifying_a_homepage_links_it_supersedes_other_claims_and_spawns(
         Spawn(AssignmentType.FIND_SOURCES, town.id),
         Spawn(AssignmentType.FIND_INSTITUTIONS, world.oakville.id),
     ]
-    assert len(library_spawn) == 1
-    assert library_spawn[0].type is AssignmentType.FIND_SOURCES
+    assert library_spawn == [Spawn(AssignmentType.FIND_SOURCES, library.id)]
 
 
 def test_a_homepage_is_refused_off_a_trusted_domain_or_when_the_page_is_taken(
     db: Database, world: World, build: type[Build]
 ):
-    async def scenario() -> list[str]:
-        refused: list[str] = []
+    async def scenario() -> tuple[list[tuple[EntityStatus, str | None]], bool]:
         async with db.session() as session:
             town = await session.get_one(Institution, world.town.id)
             untrusted = await build.claim(session, town, "https://www.oakville.example/")
             with pytest.raises(UnprocessableError, match="not trusted"):
                 await status_changes.verify_homepage(session, untrusted, entered_by=AGENT)
-            refused.append(untrusted.status)
             taken = await build.claim(session, town, "https://www.elmcounty.ca/")
             with pytest.raises(ConflictError, match="verified homepage of 'County of Elm'"):
                 await status_changes.verify_homepage(session, taken, entered_by=AGENT)
@@ -124,9 +126,21 @@ def test_a_homepage_is_refused_off_a_trusted_domain_or_when_the_page_is_taken(
             with pytest.raises(ConflictError, match="has a verified homepage already"):
                 await status_changes.verify_homepage(session, another, entered_by=AGENT)
             await session.commit()
-        return refused
+            refused = [
+                (claim.status, claim.rejected_reason) for claim in (untrusted, taken, another)
+            ]
+            return refused, town.homepage_id == first.id
 
-    assert db.run(scenario) == [EntityStatus.CANDIDATE]
+    # A refused claim is left a candidate until a homepage is verified, which supersedes the
+    # claims before it; the one made after stays a candidate; the town keeps the verified one.
+    assert db.run(scenario) == (
+        [
+            (EntityStatus.REJECTED, status_changes.SUPERSEDED),
+            (EntityStatus.REJECTED, status_changes.SUPERSEDED),
+            (EntityStatus.CANDIDATE, None),
+        ],
+        True,
+    )
 
 
 def test_a_homepage_on_a_platform_gets_a_trusted_path(
@@ -189,7 +203,7 @@ def test_rejecting_a_domain_rejects_its_claims_and_sends_the_claimants_looking_a
 
 
 def test_verifying_and_rejecting_an_institution(db: Database, world: World, build: type[Build]):
-    async def scenario() -> tuple[list[Spawn], list[Spawn], Institution, Homepage]:
+    async def scenario() -> tuple[list[Spawn], list[Spawn], Institution, Institution, Homepage]:
         async with db.session() as session:
             library = await build.candidate_institution(session, world.oakville, "Oakville Library")
             spawn = await status_changes.verify_institution(session, library, entered_by=AGENT)
@@ -203,10 +217,10 @@ def test_verifying_and_rejecting_an_institution(db: Database, world: World, buil
             with pytest.raises(ConflictError, match="government"):
                 await status_changes.reject_institution(session, town, entered_by=MANUAL)
             await session.commit()
-            return spawn, none, archive, archive_claim
+            return spawn, none, library, archive, archive_claim
 
-    spawn, none, archive, archive_claim = db.run(scenario)
-    assert [s.type for s in spawn] == [AssignmentType.FIND_HOMEPAGE]
+    spawn, none, library, archive, archive_claim = db.run(scenario)
+    assert spawn == [Spawn(AssignmentType.FIND_HOMEPAGE, library.id)]
     assert none == []
     assert (archive.status, archive.entered_by) == (EntityStatus.REJECTED, MANUAL)
     assert (archive_claim.status, archive_claim.rejected_reason) == (
@@ -417,42 +431,133 @@ def test_merging_institutions_moves_what_the_survivor_lacks_and_keeps_its_own(  
 def test_merge_conflicts_are_found_before_anything_moves(
     db: Database, world: World, build: type[Build]
 ):
-    async def scenario() -> tuple[list[str], Institution]:
+    async def attachments(session: AsyncSession, institution: Institution) -> dict[str, Any]:
+        """Everything hanging off an institution, as a merge would move it."""
+        await session.refresh(institution)
+        return {
+            "status": institution.status,
+            "homepage_id": institution.homepage_id,
+            "aliases": sorted(
+                await session.scalars(
+                    select(Alias.text).where(Alias.institution_id == institution.id)
+                )
+            ),
+            "homepages": sorted(
+                await session.scalars(
+                    select(Homepage.webpage_id).where(Homepage.institution_id == institution.id)
+                )
+            ),
+            "sources": sorted(
+                await session.scalars(
+                    select(Source.webpage_id).where(Source.institution_id == institution.id)
+                )
+            ),
+            "served": sorted(
+                await session.scalars(
+                    select(InstitutionServedPlace.place_id).where(
+                        InstitutionServedPlace.institution_id == institution.id
+                    )
+                )
+            ),
+            "identifiers": sorted(
+                await session.scalars(
+                    select(Identifier.value).where(Identifier.institution_id == institution.id)
+                )
+            ),
+            "metrics": sorted(
+                await session.scalars(
+                    select(Metric.year).where(Metric.institution_id == institution.id)
+                )
+            ),
+            "evidence": sorted(
+                await session.scalars(
+                    select(Evidence.quote).where(Evidence.entity_id == institution.id)
+                )
+            ),
+            "children": sorted(
+                await session.scalars(
+                    select(Institution.name).where(
+                        Institution.parent_institution_id == institution.id
+                    )
+                )
+            ),
+        }
+
+    async def scenario() -> tuple[dict[str, Any], dict[str, Any], dict[str, uuid.UUID]]:
         async with db.session() as session:
             one = await build.candidate_institution(session, world.oakville, "Oakville Library")
             two = await build.candidate_institution(
                 session, world.oakville, "Oakville Public Library"
             )
             await graph.add_alias(session, one, "The library", language="en", entered_by=AGENT)
-            for institution, url in ((one, "/library/"), (two, "/opl/")):
+            session.add_all(
+                [
+                    Identifier(
+                        institution_id=one.id, scheme=IdentifierScheme.STATCAN_SGC, value="9"
+                    ),
+                    Metric(institution_id=one.id, name=MetricName.POPULATION, year=2021, value=5),
+                    InstitutionServedPlace(institution_id=one.id, place_id=world.elm.id),
+                ]
+            )
+            tenders = await graph.ensure_webpage(session, "https://www.elmcounty.ca/library/bids")
+            await graph.create_source(session, one, tenders, source_type="tender", entered_by=AGENT)
+            await graph.create_institution(
+                session,
+                name="Friends of the Library",
+                institution_type="other",
+                place=world.oakville,
+                entered_by=AGENT,
+                parent=one,
+            )
+            ids = {"tenders": tenders.id}
+            for name, institution, url in (("one", one, "/library/"), ("two", two, "/opl/")):
                 homepage = await build.claim(session, institution, f"https://www.elmcounty.ca{url}")
                 await status_changes.verify_homepage(session, homepage, entered_by=AGENT)
+                ids[f"{name}_homepage"] = homepage.id
+                ids[f"{name}_page"] = homepage.webpage_id
             rejected = await build.candidate_institution(session, world.oakville, "Gone")
             await status_changes.reject_institution(session, rejected, entered_by=AGENT)
-            messages = []
-            cases = [
-                (one, two),
-                (one, one),
-                (one, rejected),
-                (one, world.oakville),
-            ]
-            for duplicate, into in cases:
-                with pytest.raises(ConflictError) as raised:
-                    await status_changes.merge_entities(session, duplicate, into, entered_by=MANUAL)
-                messages.append(str(raised.value))
             await session.commit()
-            aliases = list(
-                await session.scalars(select(Alias.text).where(Alias.institution_id == two.id))
-            )
-            assert aliases == ["Oakville Public Library"]
-            return messages, await session.get_one(Institution, one.id)
+            before = (await attachments(session, one), await attachments(session, two))
+            cases = [
+                (one, two, "both institutions have a verified homepage; reject one first"),
+                (one, one, "an entity cannot be merged into itself"),
+                (one, rejected, "'Gone' is rejected; merge into a live entity"),
+                (one, world.oakville, "a place and an institution cannot be merged"),
+            ]
+            for duplicate, into, message in cases:
+                with pytest.raises(ConflictError, match=re.escape(message)):
+                    await status_changes.merge_entities(session, duplicate, into, entered_by=MANUAL)
+            await session.commit()
+            after = (await attachments(session, one), await attachments(session, two))
+            assert after == before
+            return before[0], before[1], ids
 
-    messages, one = db.run(scenario)
-    assert "both institutions have a verified homepage" in messages[0]
-    assert "into itself" in messages[1]
-    assert "rejected" in messages[2]
-    assert "place and an institution" in messages[3]
-    assert one.status is EntityStatus.CANDIDATE
+    one, two, ids = db.run(scenario)
+    assert one == {
+        "status": EntityStatus.CANDIDATE,
+        "homepage_id": ids["one_homepage"],
+        "aliases": ["Oakville Library", "The library"],
+        "homepages": [ids["one_page"]],
+        "sources": [ids["tenders"]],
+        "served": [world.elm.id],
+        "identifiers": ["9"],
+        "metrics": [2021],
+        "evidence": [],
+        "children": ["Friends of the Library"],
+    }
+    assert two == {
+        "status": EntityStatus.CANDIDATE,
+        "homepage_id": ids["two_homepage"],
+        "aliases": ["Oakville Public Library"],
+        "homepages": [ids["two_page"]],
+        "sources": [],
+        "served": [],
+        "identifiers": [],
+        "metrics": [],
+        "evidence": [],
+        "children": [],
+    }
 
 
 def test_merging_a_government_sets_the_place_link(db: Database, world: World, build: type[Build]):

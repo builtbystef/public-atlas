@@ -181,8 +181,11 @@ def test_find_homepage_on_a_new_domain_confirms_it_and_ends_complete(
     )
     outcome, row = run(db, res, assignment)
     assert (outcome, row.result) == ("complete", AssignmentResult.COMPLETE)
-    assert row.summary is not None
-    assert row.summary.startswith("Verified oakville.ca")
+    assert row.summary == (
+        "Verified oakville.ca as an official domain of 'Town of Oakville'; "
+        "https://www.oakville.ca/ is its homepage. Queued: find_sources (held), "
+        "find_institutions (held)."
+    )
 
     async def check() -> tuple[uuid.UUID | None, EntityStatus]:
         async with db.session() as session:
@@ -216,18 +219,30 @@ def test_find_homepage_ends_needs_review_when_the_checks_disagree(
     res = scripted(steps(wrong, wrong, wrong))
     outcome, row = run(db, res, assignment)
     assert (outcome, row.result) == ("needs_review", AssignmentResult.NEEDS_REVIEW)
-    assert row.summary is not None
-    assert row.summary.startswith("confirm_domain checks failed")
 
-    async def check() -> tuple[EntityStatus, EntityStatus]:
+    async def check() -> tuple[EntityStatus, EntityStatus, ReviewItem]:
         async with db.session() as session:
             domain = await graph.domain_by_name(session, "oakville.ca")
             assert domain is not None
             homepage = await session.get_one(Homepage, claim.id)
-            return domain.status, homepage.status
+            item = (await session.scalars(select(ReviewItem))).one()
+            return domain.status, homepage.status, item
 
-    assert db.run(check) == (EntityStatus.NEEDS_REVIEW, EntityStatus.NEEDS_REVIEW)
-    assert [rule for _, rule in reviews(db)] == ["domain_checks"]
+    domain_status, homepage_status, item = db.run(check)
+    assert (domain_status, homepage_status) == (
+        EntityStatus.NEEDS_REVIEW,
+        EntityStatus.NEEDS_REVIEW,
+    )
+    # The summary is the failed check, word for word what the review item asks about.
+    assert (item.rule, item.raised_by_assignment_id) == ("domain_checks", assignment.id)
+    assert item.question["homepage_id"] == str(claim.id)
+    assert item.question["institution_id"] == str(world.town.id)
+    assert item.question["reasons"] == [row.summary]
+    assert row.summary is not None
+    assert row.summary.startswith(
+        "confirm_domain checks failed:\n- quote not found on https://www.oakville.ca/: "
+        "'Welcome to our fine town'"
+    )
     assert spawned_for(db, world.town.id) == []
 
 
@@ -335,7 +350,14 @@ def test_find_institutions_saves_bodies_and_finishes_complete(
     )
     outcome, row = run(db, res, assignment)
     assert (outcome, row.result) == ("complete", AssignmentResult.COMPLETE)
-    assert row.types_not_found == [t for t in REGIONAL_TYPES if t != "conservation_authority"]
+    assert row.types_not_found == [
+        "housing_authority",
+        "municipal_corporation",
+        "police_service",
+        "public_health_unit",
+        "public_utility",
+        "transit_agency",
+    ]
 
     async def check() -> Institution:
         async with db.session() as session:
@@ -351,26 +373,6 @@ def test_find_institutions_saves_bodies_and_finishes_complete(
     assert authority.status is EntityStatus.VERIFIED
     # The finish spawned its homepage search, held in the step-mode run.
     assert spawned_for(db, authority.id) == [(FIND_HOMEPAGE, AssignmentStatus.HELD)]
-
-
-def test_find_institutions_finished_short_twice_ends_complete_with_gaps(
-    db: Database,
-    world: World,
-    scripted: Callable[[Script], Resources],
-    make_assignment: Callable[..., Assignment],
-):
-    assignment = make_assignment(FIND_INSTITUTIONS, world.oakville.id)
-    res = scripted(
-        steps(
-            ("finish", {"summary": "The town site lists nothing."}),
-            ("finish", {"summary": "The town site lists nothing."}),
-        )
-    )
-    outcome, row = run(db, res, assignment)
-    assert (outcome, row.result) == ("complete_with_gaps", AssignmentResult.COMPLETE_WITH_GAPS)
-    assert row.summary is not None
-    assert row.summary.startswith("Not accounted for: ")
-    assert reviews(db) == [(world.oakville.id, "gaps")]
 
 
 # --- find_sources ---

@@ -24,10 +24,23 @@ API_ROOT = Path(__file__).resolve().parents[3]
 
 
 def test_health_db_without_override_uses_the_lifespan_resources(settings: Settings):
-    """The real `get_session`, over the resources the lifespan built."""
-    with TestClient(create_app(settings)) as client:
+    """The real `get_session`, over the resources the lifespan built: the main database answers,
+    and asking for the eval database when none is configured apart from the main one is refused
+    before any session is opened."""
+    alone = settings.model_copy(update={"eval_database_name": settings.database_name})
+    with TestClient(create_app(alone)) as client:
         response = client.get("/health/db")
-    assert response.status_code == 200
+        assert (response.status_code, response.json()) == (200, {"status": "ok"})
+        refused = client.get("/health/db", headers={"X-Database": "eval"})
+        assert (refused.status_code, refused.json()) == (
+            422,
+            {"detail": "no eval database is configured apart from the main one"},
+        )
+        wrong = client.get("/health/db", headers={"X-Database": "staging"})
+        assert (wrong.status_code, wrong.json()) == (
+            422,
+            {"detail": "X-Database must be main or eval, not 'staging'"},
+        )
 
 
 def _upgrade_and_compare(connection: Connection) -> list[object]:

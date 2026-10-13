@@ -1,9 +1,14 @@
 import { expect, test } from "vite-plus/test";
 
-import { ApiError, errorMessage } from "./errors";
+import { ApiError, errorMessage, unwrap } from "./errors";
 
-function result(status: number, body: unknown, headers: Record<string, string> = {}) {
-  const response = new Response(null, { status, headers });
+function result(
+  status: number,
+  body: unknown,
+  headers: Record<string, string> = {},
+  statusText = "",
+) {
+  const response = new Response(null, { status, headers, statusText });
   return { error: body, response };
 }
 
@@ -63,7 +68,9 @@ test("a 422 maps each issue to its body field and lists them all", () => {
   );
 });
 
-test("a body without a detail falls back to the status", () => {
+test("a body without a detail falls back to the status text, then the status", () => {
+  const named = ApiError.fromResult(result(502, "<html>Bad Gateway</html>", {}, "Bad Gateway"));
+  expect(errorMessage(named)).toBe("Bad Gateway");
   const error = ApiError.fromResult(result(502, "<html>Bad Gateway</html>"));
   expect(errorMessage(error)).toBe("Request failed with status 502");
   expect(error.fields).toEqual({});
@@ -78,8 +85,7 @@ test("errors that are not from the API are worded for the user", () => {
   expect(errorMessage(undefined)).toBe("undefined");
 });
 
-test("unwrap returns the data of a 2xx and throws the ApiError of anything else", async () => {
-  const { unwrap } = await import("./errors");
+test("unwrap returns the data of a 2xx and throws the ApiError of anything else", () => {
   expect(unwrap({ data: { id: 1 }, response: new Response(null, { status: 200 }) })).toEqual({
     id: 1,
   });

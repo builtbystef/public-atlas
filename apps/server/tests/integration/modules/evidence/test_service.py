@@ -211,16 +211,17 @@ def test_the_latest_snapshot_is_the_newest_ready_one_of_the_assignment_asked_for
     async def scenario() -> tuple[bool, bool, bool]:
         async with db.session() as session:
             webpage = await graph.ensure_webpage(session, "https://www.whitby.ca/")
-            older, _ = await service.store_snapshot(
-                session,
-                object_store,
-                webpage,
-                b"<html>v1</html>",
-                text="v1",
-                media_type=service.HTML,
-                filename="page.html",
-                assignment_id=assignment.id,
-            )
+            for version in ("v1", "v2"):
+                newer, _ = await service.store_snapshot(
+                    session,
+                    object_store,
+                    webpage,
+                    f"<html>{version}</html>".encode(),
+                    text=version,
+                    media_type=service.HTML,
+                    filename="page.html",
+                    assignment_id=assignment.id,
+                )
             await service.store_snapshot(
                 session,
                 object_store,
@@ -237,10 +238,12 @@ def test_the_latest_snapshot_is_the_newest_ready_one_of_the_assignment_asked_for
                 session, webpage.id, assignment_id=another_assignment.id
             )
             rows = len((await session.scalars(select(Snapshot))).all())
-            assert rows == 2
+            assert rows == 3
+            # The second of the assignment's two ready copies, not the first; the other
+            # assignment's unparsed file is no one's latest.
             return (
-                newest is not None and newest.id == older.id,
-                mine is not None and mine.id == older.id,
+                newest is not None and newest.id == newer.id,
+                mine is not None and mine.id == newer.id,
                 theirs is None,
             )
 

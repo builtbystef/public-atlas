@@ -14,12 +14,13 @@ import { toast } from "sonner";
 import { assignmentKeys } from "@/features/assignments/queries";
 import { graphKeys } from "@/features/graph/queries";
 import { runKeys } from "@/features/runs/queries";
-import { assignmentTypeLabels, entityKindLabels, humanize, labelOf } from "@/lib/labels";
+import { entityKindLabels, humanize } from "@/lib/labels";
 import { TYPE_NAME } from "@/lib/validation";
 
 import { DecisionDialog } from "../components/decision-dialog";
 import { DecisionEffects } from "../components/decision-effects";
 import { MergeDialog } from "../components/merge-dialog";
+import { spawnSummary } from "../effects";
 import {
   approveReviewItem,
   approveReviewKind,
@@ -51,15 +52,6 @@ type Pending =
 /** A type as typed, when it is a type name; the field's own validation says what is wrong. */
 function typeOrNull(typed: string): string | null {
   return TYPE_NAME.test(typed) ? typed : null;
-}
-
-function spawnSummary(spawn: SpawnOutput[]): string {
-  if (spawn.length === 0) return "";
-  const counts = new Map<string, number>();
-  for (const s of spawn) counts.set(s.type, (counts.get(s.type) ?? 0) + 1);
-  return [...counts.entries()]
-    .map(([type, n]) => `${n} ${labelOf(assignmentTypeLabels, type)}`)
-    .join(", ");
 }
 
 /** The entities a decision on a whole row changes, for its dialog. */
@@ -129,10 +121,9 @@ export function useReviewActions(): {
         case "reject":
           return rejectReviewItem(pending.item.id, { note: values.note });
         case "merge":
-          return mergeReviewItem(pending.item.id, {
-            note: values.note,
-            into_id: values.into_id ?? "",
-          });
+          // The dialog's schema requires it; a merge into nothing never reaches the API.
+          if (!values.into_id) throw new Error("Choose what to merge into");
+          return mergeReviewItem(pending.item.id, { note: values.note, into_id: values.into_id });
         default:
           throw new Error("not an item decision");
       }

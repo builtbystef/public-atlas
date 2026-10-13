@@ -1,13 +1,14 @@
-"""The Newfoundland and Labrador places list: `entries()` on the cached census files keeps
-every rule and the counts are pinned."""
+"""The Newfoundland and Labrador places list: the counts are pinned, every government is
+composed from the census type, and a few places show the rules a count cannot. What every
+list's entries must satisfy is checked by the contract test beside the lists."""
+
+from typing import Any
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
-from public_atlas.modules.imports.lists.canada import statcan
 from public_atlas.modules.imports.lists.canada.newfoundland import places as newfoundland
 
 pytestmark = pytest.mark.lists
@@ -39,9 +40,13 @@ def by_code(entries) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(entries, built, opened, rules):
+@pytest.fixture(scope="module")
+def loaded(loaded_places_of) -> Any:
+    return loaded_places_of("CA", ("canada/newfoundland/places",))
+
+
+def test_the_counts(entries, built):
     notes = built[1]
-    assert len(newfoundland.entries(opened, rules)) == len(entries)
     assert len(entries) == MUNICIPALITIES
     assert sum(1 for entry in entries if entry.government.startswith("City of")) == CITIES
     assert sum(
@@ -55,33 +60,27 @@ def test_the_counts(entries, built, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_municipality_has_its_code_population_and_a_composed_government(
-    entries, opened, rules: countries.CountryRules
+def test_every_government_is_composed_from_the_census_and_names_its_place(
+    entries, rules: countries.CountryRules
 ):
+    """No file names the body: the government is the census type around the place's bare name,
+    cited where the place is."""
     naming = rules.naming
-    census = opened[statcan.POPULATION.name]
     for entry in entries:
-        assert (entry.level, entry.parent) == ("municipality", newfoundland.PROVINCE)
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert entry.code.value.startswith(newfoundland.PROVINCE_CODE)
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, statcan.CENSUS_YEAR)
-        line = census.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert entry.name in line
         assert "government" not in entry.citations
+        assert entry.government is not None, entry.name
         bare = newfoundland.bare_name(entry.name)
         assert naming.key(bare) in naming.key(entry.government), entry.name
 
 
-def test_the_two_seal_coves_stay_two_places(entries, sibling_namesakes):
+def test_the_two_seal_coves_stay_two_places(entries, loaded: Any) -> None:
     seal_coves = [entry for entry in entries if entry.name.startswith("Seal Cove")]
     assert [entry.name for entry in seal_coves] == [
         "Seal Cove (Fortune Bay)",
         "Seal Cove (White Bay)",
     ]
     assert all(entry.aliases == () for entry in seal_coves)
-    assert sibling_namesakes(entries) == 0
+    assert loaded.told_apart == []
 
 
 def test_the_places_that_show_the_rules(by_code):

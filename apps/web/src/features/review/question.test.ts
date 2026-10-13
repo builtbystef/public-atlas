@@ -128,3 +128,105 @@ test("an item without a question is titled by what it is about", () => {
   ).toBe("The agent asks about the tender source of Moss Park Arena");
   expect(itemTitle(item())).toBe("The agent asks about “Oakville Library”");
 });
+
+test("a suggested type asks whether the country should have it", () => {
+  expect(
+    itemQuestion(
+      item({ rule: "new_type", question: { suggested_type: "Conservation Authority" } }),
+    ),
+  ).toBe("Is “Conservation Authority” a type the country should have?");
+  // Without the suggestion there is no shared question; the agent's reasons must say it.
+  expect(itemQuestion(item({ rule: "new_type", question: {} }))).toBeNull();
+});
+
+test("a moved domain asks whether the new address is the owner's homepage", () => {
+  const owner = { id: "x", entity_kind: "institution" as const, label: "Town of Oakville" };
+  const named = item({
+    rule: "domain_moved",
+    label: "https://oakville.ca/",
+    entity_kind: "homepage",
+    subject: summary({ entity_kind: "homepage", label: "https://oakville.ca/", owner }),
+  });
+  expect(itemQuestion(named)).toBe("Is https://oakville.ca/ the homepage of Town of Oakville?");
+  const orphan = item({
+    rule: "domain_moved",
+    label: "https://oakville.ca/",
+    entity_kind: "homepage",
+    subject: summary({ entity_kind: "homepage", label: "https://oakville.ca/" }),
+  });
+  expect(itemQuestion(orphan)).toBe("Is https://oakville.ca/ a homepage to keep?");
+});
+
+test("a homepage on a platform asks whether the platform page is the homepage", () => {
+  const owner = { id: "x", entity_kind: "institution" as const, label: "Elm Library" };
+  expect(
+    itemQuestion(
+      item({
+        rule: "platform_homepage",
+        entity_kind: "homepage",
+        question: { platform: "facebook.com" },
+        subject: summary({ entity_kind: "homepage", owner }),
+      }),
+    ),
+  ).toBe("Is this page on facebook.com the homepage of Elm Library?");
+  expect(
+    itemQuestion(
+      item({
+        rule: "platform_homepage",
+        entity_kind: "homepage",
+        question: {},
+        subject: summary({ entity_kind: "homepage" }),
+      }),
+    ),
+  ).toBe("Is this page the homepage of the institution?");
+});
+
+test("a name off its pattern asks about the type the question or the subject names", () => {
+  expect(
+    itemQuestion(item({ rule: "name_pattern", question: { institution_type: "school_board" } })),
+  ).toBe("Is “Oakville Library” a school board, though its name misses the pattern?");
+  // The subject's own type is the fallback (the summary helper's is "library").
+  expect(itemQuestion(item({ rule: "name_pattern", question: {} }))).toBe(
+    "Is “Oakville Library” a library, though its name misses the pattern?",
+  );
+  expect(
+    itemQuestion(
+      item({ rule: "name_pattern", question: {}, subject: summary({ institution_type: null }) }),
+    ),
+  ).toBe("Is “Oakville Library” named as it should be?");
+});
+
+test("an institution without a homepage asks whether the searches missed one", () => {
+  expect(itemQuestion(item({ rule: "no_homepage", label: "Elm" }))).toBe(
+    "Does Elm have a homepage the searches missed?",
+  );
+});
+
+test("gaps without a readable type list ask the open question", () => {
+  expect(itemQuestion(item({ rule: "gaps", label: "Elm", question: { types_missing: [] } }))).toBe(
+    "Is anything missing from Elm?",
+  );
+  expect(itemQuestion(item({ rule: "gaps", label: "Elm", question: { types_missing: [7] } }))).toBe(
+    "Is anything missing from Elm?",
+  );
+});
+
+test("an item that has a question is titled by it, and a rule's item without one by its subject", () => {
+  expect(itemTitle(item({ rule: "no_homepage", label: "Elm" }))).toBe(
+    "Does Elm have a homepage the searches missed?",
+  );
+  const owner = { id: "x", entity_kind: "institution" as const, label: "Elm Library" };
+  expect(
+    itemTitle(
+      item({
+        rule: "quote_check",
+        entity_kind: "homepage",
+        label: "https://elm.ca/",
+        subject: summary({ entity_kind: "homepage", owner }),
+      }),
+    ),
+  ).toBe("The homepage claim of Elm Library");
+  expect(itemTitle(item({ rule: "quote_check", entity_kind: "domain", label: "elm.ca" }))).toBe(
+    "Elm.ca",
+  );
+});

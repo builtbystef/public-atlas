@@ -1,9 +1,10 @@
-"""The Quebec places list: `entries()` on the cached files keeps every rule, the counts are
-pinned, and a few places show the rules a count cannot. The files are fetched into the lists
-cache when they are not there; without the network the module's tests are skipped."""
+"""The Quebec places list: the counts are pinned, a place is coded and cited by the census or
+by the directory alone, each government is named from its place, municipalities sit under the
+MRC the directory names, and a few places show the rules a count cannot. What every list's
+entries must satisfy is checked by the contract test beside the lists."""
 
 from collections import Counter
-from collections.abc import Callable
+from typing import Any
 
 import pytest
 
@@ -43,9 +44,6 @@ SERVED_PLACES = {
 # Municipal names two places go by, each told apart by its code: the research's 32, less the
 # two Plessisvilles that merged and the Sainte-Jeanne-d'Arc the directory has renamed.
 NAMESAKES = 30
-# Of them, the pairs under one MRC: a ville and a paroisse, a canton and a village, which the
-# loader tells apart by their designators.
-SIBLING_NAMESAKES = 9
 
 
 @pytest.fixture(scope="module")
@@ -62,9 +60,9 @@ def built(
 
 @pytest.fixture(scope="module")
 def entries(
-    built: tuple[list[PlaceEntry | InstitutionEntry], quebec_places.Notes],
+    quebec_entries: list[PlaceEntry | InstitutionEntry],
 ) -> list[PlaceEntry | InstitutionEntry]:
-    return built[0]
+    return quebec_entries
 
 
 @pytest.fixture(scope="module")
@@ -107,10 +105,7 @@ def test_the_counts(
     municipalities: list[PlaceEntry],
     institutions: list[InstitutionEntry],
     notes: quebec_places.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
 ):
-    assert len(quebec_places.entries(opened, rules)) == len(entries)
     assert len(regions) == REGIONS
     assert len(municipalities) == MUNICIPALITIES
     assert len(institutions) == INSTITUTIONS
@@ -137,72 +132,53 @@ def test_the_counts(
     assert sum(1 for count in names.values() if count > 1) == NAMESAKES
 
 
-def test_every_place_has_its_code_populations_and_a_government_named_after_it(
+def test_a_place_is_coded_and_cited_by_the_census_or_by_the_directory_alone(
     regions: list[PlaceEntry],
     municipalities: list[PlaceEntry],
-    rules: countries.CountryRules,
     opened: dict[str, files.OpenedFile],
     notes: quebec_places.Notes,
 ):
-    naming = rules.naming
-    census = opened[statcan.POPULATION.name]
+    """An MRC the census has no division for, and a municipality the directory has since
+    created, are cited at the directory's line with no census figure; every other place at
+    the census's, with the decree's figure beside the census's."""
     created = {line.split(" ", 1)[0] for line in notes.created}
     without_division = {line.split(" ", 1)[0] for line in notes.mrcs_without_division}
     for entry in regions + municipalities:
-        assert entry.code.value.isdigit()
         assert entry.language == "fr"
         years = {(figure.name, figure.year) for figure in entry.figures}
         assert (MetricName.POPULATION, quebec_places.DECREE_YEAR) in years
-        assert all(figure.value >= 0 for figure in entry.figures)
         line = opened[entry.citations["place"].source].line(entry.citations["place"].line)
         if entry.code.scheme is IdentifierScheme.MAMH:
-            # An MRC the census has no division for, loaded from the directory alone: its
-            # directory code is its code, the directory's line is cited, no census figure.
             assert entry.code.value in without_division
             assert entry.codes == ()
             assert entry.citations["place"].source == quebec_places.MRCS.name
             assert (MetricName.POPULATION, statcan.CENSUS_YEAR) not in years
             assert f"AR{entry.code.value}" in line
         elif entry.code.value[2:] in created:
-            # Loaded from the directory alone: no census figure, the directory's line cited.
-            assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-            assert entry.code.value.startswith(quebec_places.PROVINCE_CODE)
             assert entry.citations["place"].source == quebec_places.MUNICIPALITIES.name
             assert (MetricName.POPULATION, statcan.CENSUS_YEAR) not in years
             assert entry.code.value[2:] in line
         else:
-            assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-            assert entry.code.value.startswith(quebec_places.PROVINCE_CODE)
             assert entry.citations["place"].source == statcan.POPULATION.name
             assert (MetricName.POPULATION, statcan.CENSUS_YEAR) in years
-            assert entry.code.value in line
-            assert line is census.line(entry.citations["place"].line)
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
-        # "Ville de Québec" governs "Québec": the place's name sits whole in its government's,
-        # less an article the connector contracts ("MRC du Domaine-du-Roy").
-        assert entry.government is not None
-        stem = naming.key(entry.name)
-        for article in ("le ", "les ", "des "):
-            stem = stem.removeprefix(article)
-        assert stem in naming.key(entry.government), entry.name
         assert entry.citations["government"].source in (
             quebec_places.MUNICIPALITIES.name,
             quebec_places.MRCS.name,
         )
 
 
-def test_every_homepage_is_the_directorys_link(
-    entries: list[PlaceEntry | InstitutionEntry], opened: dict[str, files.OpenedFile]
+def test_every_government_is_named_from_its_place(
+    regions: list[PlaceEntry], municipalities: list[PlaceEntry], rules: countries.CountryRules
 ):
-    for entry in entries:
-        if entry.homepage is None:
-            continue
-        assert entry.homepage.startswith(("http://", "https://"))
-        citation = entry.citations["homepage"]
-        assert citation.source in (quebec_places.MUNICIPALITIES.name, quebec_places.MRCS.name)
-        line = opened[citation.source].line(citation.line)
-        host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-        assert host.lower() in line.lower(), entry.name
+    """ "Ville de Québec" governs "Québec": the place's name sits whole in its government's,
+    less an article the connector contracts ("MRC du Domaine-du-Roy")."""
+    naming = rules.naming
+    for entry in regions + municipalities:
+        assert entry.government is not None, entry.name
+        stem = naming.key(entry.name)
+        for article in ("le ", "les ", "des "):
+            stem = stem.removeprefix(article)
+        assert stem in naming.key(entry.government), entry.name
 
 
 def test_regions_sit_under_quebec_and_municipalities_under_the_mrc_the_directory_names(
@@ -312,43 +288,28 @@ def test_the_overrides_apply_to_merged_and_recoded_municipalities(
     assert by_code["2431020"].government == "Paroisse de Disraeli"
 
 
-def test_no_two_places_of_one_name_and_kind_sit_under_one_parent(
-    regions: list[PlaceEntry], municipalities: list[PlaceEntry], rules: countries.CountryRules
-):
-    """What the loader tells apart: two places under one parent whose plain name is a form of
-    the other's are bodies of different kinds by the designators around their names ("Ville de
-    Disraeli" and "Paroisse de Disraeli"); any other pair would be merged into one place."""
-    naming = rules.naming
-
-    def kind(entry: PlaceEntry) -> set[int]:
-        assert entry.government is not None
-        return naming.designators_in(
-            naming.key(entry.government).replace(naming.key(entry.name), " ")
-        )
-
-    by_parent: dict[tuple[str, str | None, str | None], list[PlaceEntry]] = {}
-    for entry in regions + municipalities:
-        by_parent.setdefault((entry.level, entry.parent, entry.parent_parent), []).append(entry)
-    pairs = 0
-    for siblings in by_parent.values():
-        loaded: dict[str, list[PlaceEntry]] = {}
-        for entry in sorted(siblings, key=lambda entry: entry.name):
-            for form in naming.plain_forms(entry.name):
-                for earlier in loaded.get(form, []):
-                    pair = (earlier.name, earlier.government, entry.name, entry.government)
-                    assert kind(earlier), pair
-                    assert kind(entry), pair
-                    assert not kind(earlier) & kind(entry), pair
-                    pairs += 1
-            for form in naming.forms(entry.name):
-                loaded.setdefault(form, []).append(entry)
-    assert pairs == SIBLING_NAMESAKES
+def test_a_ville_and_the_paroisse_or_canton_of_its_name_are_two_places(loaded: Any) -> None:
+    """The pairs under one MRC the loader tells apart by their designators: "Paroisse" and
+    "Canton" are kinds of the country's own."""
+    assert [(pair.name, pair.government, pair.other_government) for pair in loaded.told_apart] == [
+        ("Bedford", "Ville de Bedford", "Canton de Bedford"),
+        ("Disraeli", "Ville de Disraeli", "Paroisse de Disraeli"),
+        ("Hatley", "Municipalité de Hatley", "Canton de Hatley"),
+        ("Hemmingford", "Village de Hemmingford", "Canton de Hemmingford"),
+        (
+            "Notre-Dame-du-Bon-Conseil",
+            "Village de Notre-Dame-du-Bon-Conseil",
+            "Paroisse de Notre-Dame-du-Bon-Conseil",
+        ),
+        ("Saint-Célestin", "Village de Saint-Célestin", "Municipalité de Saint-Célestin"),
+        ("Senneterre", "Ville de Senneterre", "Paroisse de Senneterre"),
+        ("Stanstead", "Ville de Stanstead", "Canton de Stanstead"),
+        ("Valcourt", "Ville de Valcourt", "Canton de Valcourt"),
+    ]
 
 
-def test_the_spanning_bodies_serve_loaded_municipalities(
-    institutions: list[InstitutionEntry],
-    by_name: dict[str, InstitutionEntry],
-    find_places: Callable[[str, str | None, str | None], list[PlaceEntry]],
+def test_the_spanning_bodies_sit_at_the_province_and_serve_the_directorys_municipalities(
+    institutions: list[InstitutionEntry], by_name: dict[str, InstitutionEntry]
 ):
     for entry in institutions:
         assert entry.institution_type == quebec_places.REGIONAL_GOVERNMENT
@@ -357,9 +318,6 @@ def test_the_spanning_bodies_serve_loaded_municipalities(
             quebec_places.PROVINCE_LEVEL,
         )
         assert entry.citations["institution"].source == quebec_places.MRCS.name
-        for served in entry.served_places:
-            found = find_places(served.name, served.level, served.parent)
-            assert len(found) == 1, (entry.name, served)
     montreal = by_name["Communauté métropolitaine de Montréal"]
     assert montreal.homepage == "http://www.cmm.qc.ca/"
     assert [alias.text for alias in montreal.aliases] == ["CMM"]

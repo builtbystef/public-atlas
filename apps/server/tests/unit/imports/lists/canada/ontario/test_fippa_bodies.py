@@ -1,7 +1,8 @@
-"""The FIPPA bodies list: `entries()` on the cached directory keeps every rule, the counts are
-pinned, and the universities and colleges match the ministry's own pages."""
+"""The FIPPA bodies list: the counts are pinned, every body is named cleanly at a municipality
+or a region with its homepage the origin of the directory's link, and the universities and
+colleges match the ministry's own pages. What every list's entries must satisfy is checked by
+the contract test beside the lists."""
 
-from collections.abc import Callable
 from urllib.parse import urlsplit
 
 import pytest
@@ -57,40 +58,26 @@ def test_the_counts(entries: list[InstitutionEntry]):
     )
 
 
-def test_every_entry_cites_the_line_that_names_it_and_sits_in_a_loaded_place(
+def test_every_body_is_named_cleanly_at_a_municipality_or_a_region(
     entries: list[InstitutionEntry],
-    opened: dict[str, files.OpenedFile],
-    is_loaded_place: Callable[[str], bool],
 ):
-    directory = opened[fippa_bodies.DIRECTORY.name]
     for entry in entries:
-        citation = entry.citations["institution"]
-        assert citation.source == fippa_bodies.DIRECTORY.name
-        line = fippa_bodies.as_text(directory.line(citation.line))
-        names = [entry.name, *(alias.text for alias in entry.aliases)]
-        assert any(name in line for name in names), entry.name
-        assert is_loaded_place(entry.place), (entry.name, entry.place)
-        assert entry.place_level in ("municipality", "region")
+        assert entry.place_level in ("municipality", "region"), entry.name
         assert entry.parent_institution is None
         assert entry.served_places == ()
+        # No tag or trailing note from the directory's HTML.
         assert "<" not in entry.name
         assert not entry.name.endswith(")")
 
 
-def test_every_homepage_is_the_origin_of_the_directorys_link(
-    entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
-):
-    directory = opened[fippa_bodies.DIRECTORY.name]
+def test_every_homepage_is_the_origin_of_the_directorys_link(entries: list[InstitutionEntry]):
     for entry in entries:
         if entry.homepage is None:
             continue
         parts = urlsplit(entry.homepage)
-        assert parts.scheme in ("http", "https")
         assert parts.path == "/"
         assert not parts.query
-        citation = entry.citations["homepage"]
-        assert citation == entry.citations["institution"]
-        assert parts.netloc in directory.line(citation.line).lower()
+        assert entry.citations["homepage"] == entry.citations["institution"]
 
 
 def test_the_names_and_notes(by_name: dict[str, InstitutionEntry]):
@@ -119,22 +106,22 @@ def test_the_names_and_notes(by_name: dict[str, InstitutionEntry]):
 
 
 def test_the_overrides_apply(by_name: dict[str, InstitutionEntry]):
+    """Each override's field is the entry's: a renamed body goes by the new name with the
+    directory's as an alias, and a place or language given by hand is the entry's."""
     assert "Royal Military College" not in by_name
     tmu = by_name["Toronto Metropolitan University"]
     assert [alias.text for alias in tmu.aliases] == ["Ryerson University"]
     assert tmu.homepage == "https://www.ryerson.ca/"
-    assert by_name["Seneca Polytechnic"].place == "Toronto"
-    assert by_name["Wilfrid Laurier University"].place == "Waterloo"
-    assert by_name["York University"].place == "Toronto"
-    assert by_name["George Brown College"].place == "Toronto"
-    assert by_name["Renfrew Victoria Hospital"].place == "Renfrew"
     assert by_name["University of Toronto"].homepage is None
     assert by_name["Atikokan General Hospital"].homepage is None
     assert by_name["Lennox & Addington County General Hospital"].homepage is None
-    for name in fippa_bodies.OVERRIDES:
-        assert name in by_name or any(
-            alias.text == name for entry in by_name.values() for alias in entry.aliases
-        ), name
+    for listed, fields in fippa_bodies.OVERRIDES.items():
+        entry = by_name[str(fields.get("name", listed))]
+        if "name" in fields:
+            assert listed in [alias.text for alias in entry.aliases], listed
+        for field in ("place", "language", "homepage"):
+            if field in fields:
+                assert getattr(entry, field) == fields[field], (listed, field)
 
 
 def test_the_universities_and_colleges_match_the_ministrys_pages(entries: list[InstitutionEntry]):

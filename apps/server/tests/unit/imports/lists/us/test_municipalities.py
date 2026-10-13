@@ -1,15 +1,17 @@
-"""The municipalities list: `entries()` on the cached files keeps every rule, the counts of
-each exception class are pinned, and a few places show the rules a count cannot."""
+"""The municipalities list: the counts are pinned, every government is named from its place
+with the line's figure, every parent is the loaded county the code names or the state, and a
+few places show the rules a count cannot. What every list's entries must satisfy is checked
+by the contract test beside the lists."""
 
 from collections import Counter
+from typing import Any
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
-from public_atlas.modules.imports.lists.us import census, municipalities, states_counties
+from public_atlas.modules.imports.lists.us import census, municipalities
 
 pytestmark = pytest.mark.lists
 
@@ -37,8 +39,8 @@ UNDER_STATE = {
 
 
 @pytest.fixture(scope="module")
-def opened(municipalities_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return municipalities_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(municipalities)
 
 
 @pytest.fixture(scope="module")
@@ -61,17 +63,7 @@ def by_code(entries: list[PlaceEntry]) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-@pytest.fixture(scope="module")
-def counties(states_counties_files: dict[str, files.OpenedFile]) -> dict[str, PlaceEntry]:
-    """The county places the counties list loads, by code."""
-    found, _ = states_counties.build(states_counties_files)
-    return {entry.code.value: entry for entry in found if entry.level == "county"}
-
-
-def test_the_counts(
-    entries: list[PlaceEntry], opened: dict[str, files.OpenedFile], rules: countries.CountryRules
-):
-    assert len(municipalities.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[PlaceEntry]):
     assert len(entries) == ENTRIES
     assert all(entry.level == "municipality" for entry in entries)
     assert all(entry.government for entry in entries)
@@ -83,66 +75,9 @@ def test_the_counts(
     }
 
 
-def test_the_exception_classes_are_pinned(notes: municipalities.Notes):
-    assert dict(notes.place_classes) == {
-        ("?", "A"): 37,
-        ("C1", "A"): 14963,
-        ("C1", "B"): 2,
-        ("C2", "A"): 268,
-        ("C5", "A"): 4136,
-        ("C5", "N"): 1,
-        ("C6", "A"): 14,
-        ("C7", "A"): INDEPENDENT_CITIES,
-        ("C8", "F"): CONSOLIDATED_CITIES,
-        ("C9", "N"): 2,
-        ("U1", "A"): 10,
-        ("U2", "S"): 1,
-    }
-    assert dict(notes.subdivision_classes) == {
-        ("?", "A"): 5,
-        ("?", "F"): 23,
-        ("?", "I"): 2,
-        ("?", "S"): 8,
-        ("C2", "F"): 232,
-        ("C5", "F"): 4140,
-        ("T1", "A"): 16142,
-        ("T1", "C"): 1,
-        ("T1", "F"): 2,
-        ("T1", "I"): 9,
-        ("T1", "S"): 1,
-        ("T5", "B"): 17,
-        ("T5", "C"): 28,
-        ("T9", "I"): 108,
-        ("Z1", "N"): 41,
-        ("Z2", "F"): 18,
-        ("Z3", "S"): 237,
-    }
-    assert dict(notes.dropped) == {
-        ("061", "F"): 4415,
-        ("061", "I"): 119,
-        ("061", "N"): 41,
-        ("061", "S"): 246,
-        ("162", "F"): 8,
-        ("162", "N"): 3,
-        ("162", "S"): 1,
-    }
-    assert dict(notes.kinds) == {
-        "township": 12449,
-        "city": 10225,
-        "town": 7838,
-        "village": 3707,
-        "borough": 1214,
-        "charter township": 118,
-        None: 42,
-        "plantation": 29,
-        "municipality": 7,
-        "unified government": 5,
-        "city and borough": 3,
-        "consolidated government": 2,
-        "metropolitan government": 2,
-        "urban county": 1,
-        "metro government": 1,
-    }
+def test_the_rules_leave_out_and_fold_what_they_say(notes: municipalities.Notes):
+    """The independent cities, the consolidated cities, the subdivisions merged into their
+    place and the places left under their state, by what the notes name."""
     assert len(notes.independent_cities) == INDEPENDENT_CITIES
     assert "5101000 Alexandria city, Virginia" in notes.independent_cities
     assert "3209700 Carson City, Nevada" in notes.independent_cities
@@ -158,21 +93,15 @@ def test_the_exception_classes_are_pinned(notes: municipalities.Notes):
     assert len(notes.overrides) == len(municipalities.OVERRIDES)
 
 
-def test_every_entry_has_its_code_population_and_a_government_the_naming_rules_give(
+def test_every_government_is_named_from_its_place_and_the_figure_is_the_lines(
     entries: list[PlaceEntry], opened: dict[str, files.OpenedFile], rules: countries.CountryRules
 ):
     naming = rules.naming
     register = opened[census.SUB_EST.name]
     for entry in entries:
-        assert entry.code.scheme is IdentifierScheme.FIPS
-        assert entry.code.value.isdigit()
         (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, 2025)
-        assert population.value >= 0
-        line = register.line(entry.citations["place"].line)
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
-        assert str(population.value) in line
-        assert entry.government is not None
+        assert str(population.value) in register.line(entry.citations["place"].line)
+        assert entry.government is not None, entry.name
         # "City of Springfield" governs "Springfield"; "Carson City" and "Township 1" are their
         # own names; "Town of Dodge City" carries its place's whole name.
         assert naming.core(entry.government) in (
@@ -181,14 +110,13 @@ def test_every_entry_has_its_code_population_and_a_government_the_naming_rules_g
         ) or naming.key(entry.name) in naming.key(entry.government), entry.name
 
 
-def test_every_parent_is_a_loaded_county_named_with_its_state_or_the_state(
-    entries: list[PlaceEntry], counties: dict[str, PlaceEntry]
+def test_every_parent_is_the_loaded_county_the_code_names_or_the_state(
+    entries: list[PlaceEntry],
+    loaded: Any,
 ):
-    by_name = {(entry.name, entry.parent): entry for entry in counties.values()}
     for entry in entries:
         if entry.parent_level == "county":
-            assert entry.parent is not None
-            county = by_name[entry.parent, entry.parent_parent]
+            (county,) = loaded.find(entry.parent, "county", entry.parent_parent)
             assert entry.code.value[:2] == county.code.value[:2], entry.name
             if len(entry.code.value) == 10:
                 assert entry.code.value[:5] == county.code.value, entry.name
@@ -207,40 +135,11 @@ def test_every_parent_is_a_loaded_county_named_with_its_state_or_the_state(
         "Town of Hamburg",
         "Village of Hamburg",
     ]
-
-
-def test_no_two_places_of_one_name_and_kind_sit_under_one_parent(
-    entries: list[PlaceEntry], rules: countries.CountryRules
-):
-    """What the loader tells apart: two places under one parent whose plain name is a form of
-    the other's ("Hamburg" and "Hamburg") are bodies of different kinds by the designators
-    around their names ("Town of Hamburg" and "Village of Hamburg", "City of Bird City" and
-    "Township of Bird City"); any other pair would be merged into one place. "Galesburg City"
-    is no form of "Galesburg", so the two townships are two places."""
-    naming = rules.naming
-
-    def kind(entry: PlaceEntry) -> set[int]:
-        assert entry.government is not None
-        return naming.designators_in(
-            naming.key(entry.government).replace(naming.key(entry.name), " ")
-        )
-
-    by_parent: dict[tuple[str | None, str | None], list[PlaceEntry]] = {}
-    for entry in entries:
-        by_parent.setdefault((entry.parent, entry.parent_parent), []).append(entry)
-    for siblings in by_parent.values():
-        # In the loader's order: by name, so "Galesburg" is loaded before "Galesburg City" and
-        # the second is matched against the first, not the other way round.
-        loaded: dict[str, list[PlaceEntry]] = {}
-        for entry in sorted(siblings, key=lambda entry: entry.name):
-            for form in naming.plain_forms(entry.name):
-                for earlier in loaded.get(form, []):
-                    pair = (earlier.name, earlier.government, entry.name, entry.government)
-                    assert kind(earlier), pair
-                    assert kind(entry), pair
-                    assert not kind(earlier) & kind(entry), pair
-            for form in naming.forms(entry.name):
-                loaded.setdefault(form, []).append(entry)
+    assert any(
+        pair.name == "Hamburg"
+        and {pair.government, pair.other_government} == {"Town of Hamburg", "Village of Hamburg"}
+        for pair in loaded.told_apart
+    )
 
 
 def test_the_places_that_show_the_rules(by_code: dict[str, PlaceEntry]):

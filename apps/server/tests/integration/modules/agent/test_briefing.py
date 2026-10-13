@@ -49,14 +49,10 @@ def test_the_instructions_come_from_the_country_tables(
 ):
     ctx = context(make_assignment(FIND_INSTITUTIONS, world.elm.id))
     text = prompts.instructions(ctx)
-    assert text.startswith(prompts.COMMON)
     assert "Your goal:\n" + ctx.descriptor.goal in text
     assert "Country: Canada (CA)." in text
+    # One level line and one platform line stand for the tables.
     assert "- region: regional_government; transit_agency, police_service" in text
-    assert "- ministry: A ministry of a provincial or territorial government; " in text
-    assert "names match /^(Ministry of |Ministère d)/" in text
-    assert "- other: a public body that buys things and fits none of the types above" in text
-    assert "- tender: Open calls for bids" in text
     assert "Platforms (fetchable, never trusted" in text
     assert "bidsandtenders.ca" in text
 

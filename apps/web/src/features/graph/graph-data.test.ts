@@ -117,12 +117,12 @@ test("places grow with population, institutions with sources, and the web stays 
   expect(nodeRadius(place("p", 999_999))).toBeCloseTo(11.8, 1);
   expect(nodeRadius(institution("i"))).toBe(3);
   expect(nodeRadius(institution("i", 9))).toBeCloseTo(5.4, 1);
-  expect(nodeRadius({ id: "s", kind: "source", label: "", status: "verified" })).toBeLessThan(
-    nodeRadius({ id: "d", kind: "domain", label: "", status: "verified" }),
-  );
+  expect(nodeRadius({ id: "d", kind: "domain", label: "", status: "verified" })).toBe(2.6);
+  expect(nodeRadius({ id: "h", kind: "homepage", label: "", status: "verified" })).toBe(2.2);
+  expect(nodeRadius({ id: "s", kind: "source", label: "", status: "verified" })).toBe(1.8);
 });
 
-test("a URL is labelled without its scheme, and a long label is cut short", () => {
+test("a URL is labelled without its scheme, and a label past 40 characters is cut short", () => {
   expect(
     shortLabel({
       id: "h",
@@ -135,10 +135,13 @@ test("a URL is labelled without its scheme, and a long label is cut short", () =
     shortLabel({
       id: "s",
       kind: "source",
-      label: `https://elmcounty.ca/${"a".repeat(60)}`,
+      label: `https://www.elmcounty.ca/${"a".repeat(60)}`,
       status: "verified",
     }),
-  ).toHaveLength(40);
+  ).toBe(`elmcounty.ca/${"a".repeat(26)}…`);
+  // Forty characters fit as they are.
+  expect(shortLabel(place("a".repeat(40)))).toBe("a".repeat(40));
+  expect(shortLabel(place("a".repeat(41)))).toBe(`${"a".repeat(39)}…`);
   expect(shortLabel(place("Elm"))).toBe("Elm");
 });
 

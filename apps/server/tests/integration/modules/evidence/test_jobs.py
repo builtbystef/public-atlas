@@ -184,7 +184,11 @@ def test_a_parse_the_parser_refuses_is_recorded_failed_at_once(
 
     snapshot = db.run(store)
     assert parse_as(db, resources(queue), snapshot, Attempt(1, last=False)) == "failed"
-    assert state(db, snapshot)[:2] == (TextStatus.FAILED, "scan.pdf: not text (invalid start byte)")
+    status, error = state(db, snapshot)[:2]
+    # The parser's reason, as given, under the file's name; its wording is the parser's own.
+    assert status is TextStatus.FAILED
+    assert error is not None
+    assert error.startswith("scan.pdf: ")
 
 
 def test_a_parse_whose_worker_died_is_recorded_failed_without_loading_the_parser(

@@ -1,5 +1,6 @@
-"""The transit list: `entries()` on the cached files keeps every rule, the counts per naming
-rule and per place are pinned, and a few bodies show the rules a count cannot."""
+"""The transit list: the counts per naming rule and per place are pinned, a state unit alone
+names no parent, and a few bodies show the rules a count cannot. What every list's entries
+must satisfy is checked by the contract test beside the lists."""
 
 from collections import Counter
 
@@ -49,8 +50,8 @@ WEBSITES = 1485
 
 
 @pytest.fixture(scope="module")
-def opened(transit_files: dict[str, files.OpenedFile]) -> dict[str, files.OpenedFile]:
-    return transit_files
+def opened(sources_of) -> dict[str, files.OpenedFile]:
+    return sources_of(transit)
 
 
 @pytest.fixture(scope="module")
@@ -75,13 +76,7 @@ def by_name(entries: list[InstitutionEntry]) -> dict[str, InstitutionEntry]:
     return {entry.name: entry for entry in entries}
 
 
-def test_the_counts(
-    entries: list[InstitutionEntry],
-    notes: transit.Notes,
-    opened: dict[str, files.OpenedFile],
-    rules: countries.CountryRules,
-):
-    assert len(transit.entries(opened, rules)) == ENTRIES
+def test_the_counts(entries: list[InstitutionEntry], notes: transit.Notes):
     assert len(entries) == ENTRIES
     assert dict(notes.left_out) == LEFT_OUT
     assert notes.asset_module == ASSET_MODULE
@@ -103,23 +98,9 @@ def test_the_counts(
     assert max(at_place.values()) == 1
 
 
-def test_every_entry_cites_the_row_that_names_it_and_sits_at_a_place(
-    entries: list[InstitutionEntry], opened: dict[str, files.OpenedFile]
-):
-    agencies = opened[transit.AGENCIES.name]
+def test_a_state_unit_alone_names_no_parent(entries: list[InstitutionEntry]):
     for entry in entries:
-        citation = entry.citations["institution"]
-        assert citation.source == transit.AGENCIES.name
-        line = agencies.line(citation.line)
-        # The name is the row's trade name, its division (composed with the agency name) or
-        # the agency name, recased: every word of it is on the line.
-        assert all(word.lower() in line.lower() for word in entry.name.split())
-        assert entry.place_level in LEVELS
-        assert (entry.place_parent is None) == (entry.place_level == "state")
-        if entry.homepage is not None:
-            homepage = entry.citations["homepage"]
-            assert homepage.source == transit.AGENCIES.name
-            assert entry.homepage.startswith(("http://", "https://"))
+        assert (entry.place_parent is None) == (entry.place_level == "state"), entry.name
 
 
 def test_the_bodies_that_show_the_rules(by_name: dict[str, InstitutionEntry]):

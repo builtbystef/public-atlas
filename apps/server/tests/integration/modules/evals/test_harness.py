@@ -32,6 +32,7 @@ from public_atlas.modules.evals import service as evals
 from public_atlas.modules.evals.dataset import PlaceList, SubjectFile
 from public_atlas.modules.evals.models import EvalRun, EvalScore
 from public_atlas.modules.graph import service as graph
+from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
     Domain,
     EnteredBy,
@@ -409,7 +410,24 @@ def test_results_are_recorded_and_read_back(
     in_session: Callable[..., Any],
     client: TestClient,
 ):
-    seed_town(in_session, finishing, world)
+    seeded = seed_town(in_session, finishing, world)
+
+    async def find_the_fire_service(session: AsyncSession) -> None:
+        """As the agent would: the fire service verified under the town's government, with no
+        homepage yet."""
+        town = await session.get_one(Place, seeded.place_id)
+        government = await session.get_one(Institution, seeded.institution_id)
+        fire = await graph.create_institution(
+            session,
+            name="Fixture Fire Services",
+            institution_type="fire_service",
+            place=town,
+            entered_by=EnteredBy.AGENT,
+            parent=government,
+        )
+        await status_changes.verify_institution(session, fire, entered_by=EnteredBy.AGENT)
+
+    in_session(find_the_fire_service)
     file = town_file()
     graph_read = in_session(scorer.load_graph)
     cards = scorer.score_files(graph_read, world.rules, {"fixture": file}, {})
@@ -427,8 +445,8 @@ def test_results_are_recorded_and_read_back(
         await session.flush()
         costs = await harness.cost_lines(session, world.run.id)
         rows = await evals.record_results(session, eval_run, cards, costs)
-        # The fire service was not found: an institution, a parent link, a homepage and a
-        # source are missed, so every measure has something to record.
+        # The fire service was found under its parent, its homepage was not, and no source
+        # was: every measure has something to record.
         assert {row.assignment_type for row in rows} == set(AssignmentType)
         return eval_run.id
 
@@ -436,76 +454,103 @@ def test_results_are_recorded_and_read_back(
     detail = in_session(lambda session: evals.read_eval_run(session, eval_run_id))
     assert detail.finished_at is not None
     by_type = {score.assignment_type: score for score in detail.scores}
-    assert by_type[FIND_INSTITUTIONS].recall == 0
-    assert {entry.bucket for entry in by_type[FIND_INSTITUTIONS].misses} == {
-        "not found",
-        "institution not found",
-    }
-    assert by_type[FIND_SOURCES].precision is None  # nothing saved, nothing wrong
-    # Hits are kept beside the misses, every entry with its kind.
+    # Hits are kept beside the misses, every entry with its kind: the fire service and its
+    # parent link, both found.
     institutions = by_type[FIND_INSTITUTIONS]
+    assert (institutions.recall, institutions.precision) == (1.0, 1.0)
     assert institutions.hits is not None
-    assert {entry.kind for entry in institutions.hits} <= {"hit"}
-    assert {entry.kind for entry in institutions.misses} <= {"miss", "wrong"}
-    # The gates the run was judged on: a subject file only, so no list file for homepages.
-    assert [(gate.name, gate.verdict) for gate in detail.gates] == [
-        ("homepages", None),
-        ("institutions", "fail"),
-        ("sources", "fail"),
+    assert [(entry.kind, entry.bucket) for entry in institutions.hits] == [
+        ("hit", "found (verified)"),
+        ("hit", "parent found"),
     ]
-    assert detail.gates[1].hits == 0
+    assert (institutions.misses, institutions.false_positives) == ([], [])
+    assert [(entry.kind, entry.bucket) for entry in by_type[FIND_HOMEPAGE].misses] == [
+        ("miss", "no homepage")
+    ]
+    # The town's budget was not found; the fire service's absences have no `find_sources`
+    # summary to be reported in, since no agent looked for its sources.
+    sources = by_type[FIND_SOURCES]
+    assert sources.precision is None  # nothing saved, nothing wrong
+    assert [(entry.kind, entry.bucket) for entry in sources.misses] == [
+        ("miss", "not found"),
+        ("miss", "no summary"),
+        ("miss", "no summary"),
+    ]
+
+    # The gates the run was judged on: a subject file only, so no list file for homepages;
+    # the one institution the agent was to find was, so that gate passes at its 95% floor.
+    assert [(gate.name, gate.verdict, gate.hits) for gate in detail.gates] == [
+        ("homepages", None, 0),
+        ("institutions", "pass", 1),
+        ("sources", "fail", 0),
+    ]
     assert detail.previous_id is None
     listed = client.get("/eval-runs").json()
     assert [row["id"] for row in listed["items"]] == [str(eval_run_id)]
-    assert [entry.bucket for entry in by_type[FIND_HOMEPAGE].misses] == ["institution not found"]
     page = client.get(f"/eval-runs/{eval_run_id}").json()
     assert len(page["scores"]) == 3
     # The per-type means the console shows, on the list and the detail alike.
     assert page["summary"]["find_institutions"] == {
         "subjects": 1,
-        "mean_recall": 0.0,
-        "mean_precision": None,
-        "hits": len(institutions.hits),
-        "misses": len(institutions.misses),
-        "false_positives": len(institutions.false_positives),
+        "mean_recall": 1.0,
+        "mean_precision": 1.0,
+        "hits": 2,
+        "misses": 0,
+        "false_positives": 0,
     }
     assert listed["items"][0]["summary"] == page["summary"]
     assert listed["items"][0]["gates"] == page["gates"]
     assert client.get(f"/eval-runs/{uuid.uuid4()}").status_code == 404
 
-    async def record_later(session: AsyncSession) -> uuid.UUID:
-        # A run from before hits and gates were kept, started after the first.
-        eval_run = EvalRun(
-            run_id=world.run.id,
-            dataset_version="older",
-            model="scripted",
-            settings={},
-            cost=Decimal(0),
-            started_at=datetime.now(UTC),
-        )
-        session.add(eval_run)
-        await session.flush()
-        session.add(
-            EvalScore(
-                eval_run_id=eval_run.id,
-                subject="fixture",
-                assignment_type=FIND_SOURCES,
-                recall=0.5,
-                precision=None,
-                hits=None,
-                misses=[{"kind": "miss", "line": "a", "bucket": "not found", "group": None}],
-                false_positives=[],
-            )
-        )
-        return eval_run.id
 
-    later_id = in_session(record_later)
-    later = client.get(f"/eval-runs/{later_id}").json()
-    # Unfinished runs are not compared against; the first, finished, is.
-    assert later["previous_id"] == str(eval_run_id)
-    assert later["summary"]["find_sources"]["hits"] is None
+async def older_run(session: AsyncSession, run: Run, *, finished: bool) -> uuid.UUID:
+    """A run from before hits and gates were kept: one score, no hits, no gates."""
+    now = datetime.now(UTC)
+    eval_run = EvalRun(
+        run_id=run.id,
+        dataset_version="older",
+        model="scripted",
+        settings={},
+        cost=Decimal(0),
+        started_at=now,
+        finished_at=now if finished else None,
+    )
+    session.add(eval_run)
+    await session.flush()
+    session.add(
+        EvalScore(
+            eval_run_id=eval_run.id,
+            subject="fixture",
+            assignment_type=FIND_SOURCES,
+            recall=0.5,
+            precision=None,
+            hits=None,
+            misses=[{"kind": "miss", "line": "a", "bucket": "not found", "group": None}],
+            false_positives=[],
+        )
+    )
+    return eval_run.id
+
+
+def test_a_run_is_compared_with_the_latest_finished_run_before_it(
+    db: Database, world: World, in_session: Callable[..., Any], client: TestClient
+):
+    """The first run has nothing before it; an unfinished one is compared with the first and
+    is itself never compared against, so a third started after it is compared with the first
+    too. A run from before hits and gates were kept reads with neither."""
+    first_id = in_session(lambda session: older_run(session, world.run, finished=True))
+    second_id = in_session(lambda session: older_run(session, world.run, finished=False))
+    third_id = in_session(lambda session: older_run(session, world.run, finished=False))
+    first, second, third = (
+        client.get(f"/eval-runs/{eval_run_id}").json()
+        for eval_run_id in (first_id, second_id, third_id)
+    )
+    assert first["previous_id"] is None
+    assert second["previous_id"] == str(first_id)
+    assert third["previous_id"] == str(first_id)
+    assert second["summary"]["find_sources"]["hits"] is None
     # No gates were recorded: today's floors, unjudged.
-    assert [(gate["floor"], gate["verdict"], gate["hits"]) for gate in later["gates"]] == [
+    assert [(gate["floor"], gate["verdict"], gate["hits"]) for gate in second["gates"]] == [
         (0.99, None, None),
         (0.95, None, None),
         (0.9, None, None),
@@ -513,28 +558,48 @@ def test_results_are_recorded_and_read_back(
 
 
 def test_progress_and_cost_lines(
-    db: Database, world: World, finishing: Resources, in_session: Callable[..., Any]
+    db: Database,
+    world: World,
+    build: type[Build],
+    finishing: Resources,
+    in_session: Callable[..., Any],
 ):
-    seed_town(in_session, finishing, world)
+    seeded = seed_town(in_session, finishing, world)
     line = db.run(harness.progress, finishing)
     assert line.startswith("assignments: finished 2; open: none")
 
-    async def record(session: AsyncSession) -> str:
-        rows = list(await session.scalars(select(Assignment)))
+    async def record(session: AsyncSession) -> tuple[str, uuid.UUID]:
+        first = seeded.queued[0]
         # On the other model, so the line is apart from the scripted sessions' own Luna lines.
         await assignments.record_usage(
             session,
-            assignment_id=rows[0].id,
+            assignment_id=first.id,
             kind=assignments.UsageKind.MODEL,
             provider="gpt-6.1-sol",
-            purpose=rows[0].type.value,
+            purpose=first.type.value,
             units=1_100_000,
             cached_units=500_000,
             output_units=100_000,
         )
-        return rows[0].type.value
+        # Work of another subject: a held search that spent nothing, and the one it spawned on
+        # another body, with two searches on it.
+        held = await build.open_assignment(
+            session, world.run, FIND_HOMEPAGE, world.town.id, status=AssignmentStatus.HELD
+        )
+        spawned = await build.open_assignment(session, world.run, FIND_HOMEPAGE, world.county.id)
 
-    purpose = in_session(record)
+        spawned.parent_assignment_id = held.id
+        await assignments.record_usage(
+            session,
+            assignment_id=spawned.id,
+            kind=assignments.UsageKind.SEARCH,
+            provider="brave",
+            purpose=FIND_HOMEPAGE.value,
+            units=2,
+        )
+        return first.type.value, held.id
+
+    purpose, held_id = in_session(record)
     costs = in_session(lambda session: harness.cost_lines(session, world.run.id))
     # 500k uncached at $2/M, 500k cached at $0.10/M, 100k out at $10/M.
     assert [line for line in costs if line.provider == "gpt-6.1-sol"] == [
@@ -547,13 +612,35 @@ def test_progress_and_cost_lines(
             cost=Decimal("2.05"),
         )
     ]
+    assert [line for line in costs if line.provider == "brave"] == [
+        harness.CostLine(
+            purpose=FIND_HOMEPAGE.value,
+            provider="brave",
+            calls=1,
+            units=2,
+            cached_units=0,
+            cost=Decimal("0.01"),
+        )
+    ]
+    # A subject's cost is its own assignments' and that of everything spawned from them: the
+    # held one, which spent nothing itself, is charged its child's two searches; the town's
+    # assignments, the rest of the run; a subject with no assignments, nothing.
+    total = sum((line.cost for line in costs), Decimal(0))
     by_subject = in_session(
         lambda session: harness.cost_by_subject(
-            session, world.run.id, {"fixture": [a.id for a in []]}
+            session,
+            world.run.id,
+            {"fixture": [a.id for a in seeded.queued], "held": [held_id], "none": []},
         )
     )
-    assert by_subject == {"fixture": Decimal(0)}
+    assert by_subject == {
+        "fixture": total - Decimal("0.01"),
+        "held": Decimal("0.01"),
+        "none": Decimal(0),
+    }
+    assert by_subject["fixture"] > Decimal("2.05")
     rendered = harness.render_costs(costs, by_subject)
+
     assert "$  2.0500" in rendered
     assert "total" in rendered
 

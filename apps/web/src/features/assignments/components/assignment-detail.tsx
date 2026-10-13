@@ -28,6 +28,7 @@ import { assignmentTypeLabels, humanize } from "@/lib/labels";
 import { paths } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
+import { budgetRatio } from "../budget";
 import { assignmentKeys, assignmentQuery } from "../queries";
 import { EventTimeline } from "./event-timeline";
 import { FindingsList } from "./findings-list";
@@ -200,7 +201,7 @@ function Stat({
 }
 
 function BudgetStat({ label, used, budget }: { label: string; used: number; budget: number }) {
-  const ratio = budget > 0 ? Math.min(used / budget, 1) : 0;
+  const ratio = budgetRatio(used, budget);
   return (
     <Stat
       label={label}

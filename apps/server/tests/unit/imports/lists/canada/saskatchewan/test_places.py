@@ -1,11 +1,12 @@
-"""The Saskatchewan places list: `entries()` on the cached files keeps every rule, the counts
-are pinned, and a few places show the rules a count cannot. The directory is a manual file:
-without it in the cache the tests are skipped."""
+"""The Saskatchewan places list: the counts are pinned, a place incorporated since the census
+is coded by the interim list with no figure, and a few places show the rules a count cannot.
+What every list's entries must satisfy is checked by the contract test beside the lists. The
+directory is a manual file: without it in the cache the tests are skipped."""
 
 import pytest
 
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
+from public_atlas.modules.graph.models import MetricName
 from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada import statcan
@@ -48,9 +49,8 @@ def by_code(entries) -> dict[str, PlaceEntry]:
     return {entry.code.value: entry for entry in entries}
 
 
-def test_the_counts(entries, built, opened, rules):
+def test_the_counts(entries, built, opened):
     notes = built[1]
-    assert len(saskatchewan.entries(opened, rules)) == len(entries)
     assert len(entries) == MUNICIPALITIES
     assert len(opened[saskatchewan.DIRECTORY.name].rows) == DIRECTORY_ROWS
     assert sum(1 for entry in entries if entry.homepage) == HOMEPAGES
@@ -66,34 +66,24 @@ def test_the_counts(entries, built, opened, rules):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_municipality_has_its_code_population_and_a_government_from_the_directory(
-    entries, opened, rules: countries.CountryRules
+def test_a_place_the_census_counts_has_its_figure_and_one_incorporated_since_has_none(
+    entries, rules: countries.CountryRules
 ):
     naming = rules.naming
-    census = opened[statcan.POPULATION.name]
-    directory = opened[saskatchewan.DIRECTORY.name]
+    interim = 0
     for entry in entries:
-        assert (entry.level, entry.parent) == ("municipality", saskatchewan.PROVINCE)
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert entry.code.value.startswith(saskatchewan.PROVINCE_CODE)
-        assert entry.government is not None
+        assert entry.government is not None, entry.name
         assert naming.key(entry.name) in naming.key(entry.government), entry.name
-        row = directory.line(entry.citations["government"].line)
-        if entry.homepage is not None:
-            host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-            assert host.lower() in row.lower(), entry.name
+        assert entry.citations["government"].source == saskatchewan.DIRECTORY.name
         if entry.citations["place"].source == statcan.INTERIM_CHANGES.name:
-            # Incorporated since the census: coded by the interim list, no figure.
             assert entry.figures == ()
-            assert entry.code.value in opened[statcan.INTERIM_CHANGES.name].line(
-                entry.citations["place"].line
-            )
-            continue
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, statcan.CENSUS_YEAR)
-        line = census.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
+            interim += 1
+        else:
+            assert entry.citations["place"].source == statcan.POPULATION.name
+            assert [(figure.name, figure.year) for figure in entry.figures] == [
+                (MetricName.POPULATION, statcan.CENSUS_YEAR)
+            ]
+    assert interim == CREATED
 
 
 def test_the_places_that_show_the_rules(by_code, built):

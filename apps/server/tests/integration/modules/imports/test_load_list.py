@@ -421,6 +421,15 @@ async def apply(
     return await load(db, store, module, cache_dir, apply=True)
 
 
+async def place_at(db: Database, name: str, level: str) -> Place:
+    async with db.session() as session:
+        return (
+            await session.scalars(
+                select(Place).where(Place.name == name, Place.administrative_level == level)
+            )
+        ).one()
+
+
 async def count(db: Database, model: type, *where: ColumnElement[bool]) -> int:
     async with db.session() as session:
         query = select(func.count()).select_from(model)
@@ -1132,6 +1141,13 @@ def test_loading_ontario_gives_the_pilots_places(
     assert db.run(count, db, Identifier) == 454
     assert db.run(count, db, Metric) == 454
     assert db.run(count, db, Homepage) == 441
+    # A lower tier sits under its upper tier, which sits under the province; a separated city
+    # under the province.
+    ontario = db.run(place_at, db, "Ontario", "province_territory")
+    waterloo = db.run(place_at, db, "Waterloo", "region")
+    assert waterloo.parent_place_id == ontario.id
+    assert db.run(place_at, db, "Kitchener", "municipality").parent_place_id == waterloo.id
+    assert db.run(place_at, db, "Kingston", "municipality").parent_place_id == ontario.id
 
     again = db.run(apply, db, object_store, ontario_places, cache_dir)
     assert again.changes == []

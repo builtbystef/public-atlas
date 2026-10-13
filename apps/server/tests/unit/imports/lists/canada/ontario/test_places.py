@@ -1,14 +1,11 @@
-"""The Ontario places list: `entries()` on the cached files keeps every rule, and a few places
-show the rules a count cannot. The files are fetched into the lists cache when they are not
-there; without the network the module's tests are skipped."""
+"""The Ontario places list: the counts of the pilot are pinned, each government is named from
+its place and each homepage is the directory's link, regions sit under Ontario and
+municipalities inside their division, and a few places show the rules a count cannot. What
+every list's entries must satisfy is checked by the contract test beside the lists."""
 
 import pytest
 
-from public_atlas.config import Settings
 from public_atlas.modules.countries import service as countries
-from public_atlas.modules.countries.seeds import canada
-from public_atlas.modules.graph.models import IdentifierScheme, MetricName
-from public_atlas.modules.imports import files
 from public_atlas.modules.imports.entries import PlaceEntry
 from public_atlas.modules.imports.lists.canada.ontario import places as ontario_places
 
@@ -21,24 +18,8 @@ HOMEPAGES = 441
 
 
 @pytest.fixture(scope="module")
-def rules() -> countries.CountryRules:
-    return countries.rules_from_seed(canada.SEED)
-
-
-@pytest.fixture(scope="module")
-def opened() -> dict[str, files.OpenedFile]:
-    cache_dir = Settings().lists_cache_dir
-    try:
-        return {
-            source.name: files.open_file(source, cache_dir) for source in ontario_places.SOURCES
-        }
-    except files.ListFileError as exc:
-        pytest.skip(f"the list's files are not cached and could not be fetched: {exc}")
-
-
-@pytest.fixture(scope="module")
-def entries(opened: dict[str, files.OpenedFile], rules: countries.CountryRules) -> list[PlaceEntry]:
-    return ontario_places.entries(opened, rules)
+def entries(places: list[PlaceEntry]) -> list[PlaceEntry]:
+    return places
 
 
 @pytest.fixture(scope="module")
@@ -59,49 +40,31 @@ def test_the_counts_of_the_pilot(entries: list[PlaceEntry]):
     assert len(set(codes)) == len(codes)
 
 
-def test_every_entry_has_its_code_population_and_a_government_name_the_naming_rules_give(
-    entries: list[PlaceEntry], rules: countries.CountryRules, opened: dict[str, files.OpenedFile]
+def test_every_government_is_named_from_its_place_and_a_district_has_none(
+    entries: list[PlaceEntry], rules: countries.CountryRules
 ):
     naming = rules.naming
-    register = opened[ontario_places.POPULATION.name]
     for entry in entries:
-        assert entry.code.scheme is IdentifierScheme.STATCAN_SGC
-        assert entry.code.value.isdigit()
-        assert entry.code.value.startswith("35")
-        (population,) = entry.figures
-        assert (population.name, population.year) == (MetricName.POPULATION, 2021)
-        assert population.value > 0
-        # The cited line names the place and carries its code.
-        line = register.line(entry.citations["place"].line)
-        assert entry.code.value in line
-        assert any(name in line for name in (entry.name, *(a.text for a in entry.aliases)))
-        if entry.government is not None:
-            # "City of Kingston" governs "Kingston"; "Haldimand County" governs itself; the
-            # designator in "Whitewater Region" is the name's own.
-            assert naming.core(entry.government) in (
-                naming.core(entry.name),
-                naming.key(entry.name),
-            ), entry.name
-        else:
-            assert entry.level == "region"
+        if entry.government is None:
+            # A district: no government, so no homepage to claim.
+            assert entry.level == "region", entry.name
             assert entry.homepage is None
+            continue
+        # "City of Kingston" governs "Kingston"; "Haldimand County" governs itself; the
+        # designator in "Whitewater Region" is the name's own.
+        assert naming.core(entry.government) in (
+            naming.core(entry.name),
+            naming.key(entry.name),
+        ), entry.name
 
 
-def test_every_homepage_is_the_directorys_link(
-    entries: list[PlaceEntry], opened: dict[str, files.OpenedFile]
-):
-    directory = opened[ontario_places.DIRECTORY.name]
+def test_every_homepage_is_the_directorys_link_on_the_governments_row(entries: list[PlaceEntry]):
     for entry in entries:
         if entry.homepage is None:
             continue
-        assert entry.homepage.startswith(("http://", "https://"))
         citation = entry.citations["homepage"]
         assert citation.source == ontario_places.DIRECTORY.name
         assert citation == entry.citations["government"]
-        line = directory.line(citation.line)
-        host = entry.homepage.removeprefix("http://").removeprefix("https://").rstrip("/")
-        assert host.lower() in line.lower()
-        assert entry.government is not None
 
 
 def test_regions_sit_under_ontario_and_municipalities_inside_their_division(

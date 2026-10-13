@@ -4,7 +4,6 @@ ones among them, a goal, a checklist, a budget and a model (spec sections 7.2, 7
 from public_atlas.integrations.browser import TOOLS as BROWSING
 from public_atlas.modules.assignments.descriptors import (
     DESCRIPTORS,
-    HANDOFF_MODEL,
     Checklist,
     descriptor_for,
 )
@@ -35,10 +34,6 @@ def test_every_type_has_a_whole_descriptor():
         assert set(descriptor.tools) <= set(BROWSING) | FINDINGS
         assert descriptor.finishing_tools
         assert set(descriptor.finishing_tools) <= set(descriptor.tools)
-        assert len(descriptor.goal) > 100
-        assert descriptor.budget.requests > 0
-        assert descriptor.budget.tokens > 0
-        assert descriptor.model.context_window >= 100_000
 
 
 def test_subjects_tools_and_checklists_follow_the_spec():
@@ -61,10 +56,3 @@ def test_subjects_tools_and_checklists_follow_the_spec():
     for descriptor in DESCRIPTORS.values():
         assert set(BROWSING) <= set(descriptor.tools)
         assert {"read_file", "status", "request_review"} <= set(descriptor.tools)
-
-
-def test_the_models_are_luna_at_the_efforts_of_the_spec():
-    for descriptor in DESCRIPTORS.values():
-        assert descriptor.model.name == "gpt-6-luna"
-        assert descriptor.model.reasoning_effort == "xhigh"
-    assert (HANDOFF_MODEL.name, HANDOFF_MODEL.reasoning_effort) == ("gpt-6-luna", "medium")

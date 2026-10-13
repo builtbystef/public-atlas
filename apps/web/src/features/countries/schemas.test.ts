@@ -47,8 +47,12 @@ test("a word in two designator groups is found, whatever its case", () => {
   expect(sharedDesignators([["City", "city"]]).size).toBe(0);
 });
 
+const TYPE_NAME_MESSAGE = "Lowercase letters, digits and underscores, starting with a letter";
+
 test("a country needs a name", () => {
-  expect(countryNameSchema.safeParse({ name: " " }).success).toBe(false);
+  expect(countryNameSchema.safeParse({ name: " " }).error?.issues[0]?.message).toBe(
+    "Name is required",
+  );
   expect(countryNameSchema.parse({ name: " Canada " })).toEqual({ name: "Canada" });
 });
 
@@ -66,27 +70,36 @@ test("a level has a slug name and a rank", () => {
     government_institution_type: "municipal_government",
     expected_institution_types: ["school_board"],
   });
-  expect(
-    levelSchema.safeParse({
-      name: "Municipality",
-      rank: "2",
-      government_institution_type: "x",
-      expected_institution_types: [],
-    }).success,
-  ).toBe(false);
+  const capitalised = levelSchema.safeParse({
+    name: "Municipality",
+    rank: "2",
+    government_institution_type: "x",
+    expected_institution_types: [],
+  });
+  expect(capitalised.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["name"], TYPE_NAME_MESSAGE],
+  ]);
   // The country is rank 1; nothing sits above it.
-  expect(
-    levelSchema.safeParse({
-      name: "municipality",
-      rank: "0",
-      government_institution_type: "x",
-      expected_institution_types: [],
-    }).success,
-  ).toBe(false);
+  const aboveTheCountry = levelSchema.safeParse({
+    name: "municipality",
+    rank: "0",
+    government_institution_type: "",
+    expected_institution_types: [],
+  });
+  expect(aboveTheCountry.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["rank"], "1 or more: the country is 1"],
+    [["government_institution_type"], "Choose the government's type"],
+  ]);
 });
 
 test("a type name is a slug", () => {
-  expect(typeSchema.safeParse({ name: "school board", description: "" }).success).toBe(false);
+  const spaced = typeSchema.safeParse({ name: "school board", description: "" });
+  expect(spaced.error?.issues.map((issue) => [issue.path, issue.message])).toEqual([
+    [["name"], TYPE_NAME_MESSAGE],
+  ]);
+  expect(typeSchema.safeParse({ name: "", description: "" }).error?.issues[0]?.message).toBe(
+    "A name is required",
+  );
   expect(typeSchema.parse({ name: "school_board", description: " Boards " })).toEqual({
     name: "school_board",
     description: "Boards",

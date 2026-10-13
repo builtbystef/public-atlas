@@ -14,6 +14,25 @@ from public_atlas.modules.assignments.models import (
 )
 from public_atlas.shared.exceptions import ConflictError
 
+HELD = AssignmentStatus.HELD
+QUEUED = AssignmentStatus.QUEUED
+RUNNING = AssignmentStatus.RUNNING
+FINISHED = AssignmentStatus.FINISHED
+CANCELLED = AssignmentStatus.CANCELLED
+STATUSES = [HELD, QUEUED, RUNNING, FINISHED, CANCELLED]
+# The moves of spec section 12.2, written out: a held assignment is released or cancelled, a
+# queued one is picked up or cancelled, a running one is put back, finished or cancelled, and
+# a finished or cancelled one goes nowhere.
+ALLOWED = {
+    (HELD, QUEUED),
+    (HELD, CANCELLED),
+    (QUEUED, RUNNING),
+    (QUEUED, CANCELLED),
+    (RUNNING, QUEUED),
+    (RUNNING, FINISHED),
+    (RUNNING, CANCELLED),
+}
+
 
 def assignment(status: AssignmentStatus) -> Assignment:
     return Assignment(
@@ -26,39 +45,38 @@ def assignment(status: AssignmentStatus) -> Assignment:
     )
 
 
-def test_the_allowed_moves():
-    held = assignment(AssignmentStatus.HELD)
-    lifecycle.move(held, AssignmentStatus.QUEUED)
-    lifecycle.move(held, AssignmentStatus.RUNNING)
-    lifecycle.move(held, AssignmentStatus.FINISHED, result=AssignmentResult.COMPLETE)
-    assert (held.status, held.result) == (AssignmentStatus.FINISHED, AssignmentResult.COMPLETE)
-    with pytest.raises(ConflictError, match="finished to queued"):
-        lifecycle.move(held, AssignmentStatus.QUEUED)
+@pytest.mark.parametrize(
+    ("start", "end"),
+    [(start, end) for start in STATUSES for end in STATUSES],
+    ids=lambda status: status.value,
+)
+def test_the_transition_table(start: AssignmentStatus, end: AssignmentStatus):
+    """Every pair of statuses: the seven allowed moves go through, with a result on the move to
+    `finished`; the other eighteen are refused by name and leave the assignment as it was."""
+    row = assignment(start)
+    result = AssignmentResult.COMPLETE if end is FINISHED else None
+    if (start, end) in ALLOWED:
+        lifecycle.move(row, end, result=result)
+        assert (row.status, row.result) == (end, result)
+    else:
+        with pytest.raises(ConflictError, match=f"from {start.value} to {end.value}"):
+            lifecycle.move(row, end, result=result)
+        assert (row.status, row.result) == (start, None)
 
 
 def test_a_result_belongs_to_finished_only():
-    running = assignment(AssignmentStatus.RUNNING)
-    with pytest.raises(ConflictError, match="result"):
-        lifecycle.move(running, AssignmentStatus.FINISHED)
-    with pytest.raises(ConflictError, match="result"):
-        lifecycle.move(running, AssignmentStatus.QUEUED, result=AssignmentResult.COMPLETE)
-    assert running.status is AssignmentStatus.RUNNING
-
-
-def test_cancel():
-    queued = assignment(AssignmentStatus.QUEUED)
-    lifecycle.cancel(queued)
-    assert queued.status is AssignmentStatus.CANCELLED
-    with pytest.raises(ConflictError):
-        lifecycle.cancel(queued)
-    with pytest.raises(ConflictError):
-        lifecycle.cancel(assignment(AssignmentStatus.FINISHED))
+    running = assignment(RUNNING)
+    with pytest.raises(ConflictError, match="a result belongs to a finished assignment"):
+        lifecycle.move(running, FINISHED)
+    with pytest.raises(ConflictError, match="a result belongs to a finished assignment"):
+        lifecycle.move(running, QUEUED, result=AssignmentResult.COMPLETE)
+    assert (running.status, running.result) == (RUNNING, None)
 
 
 def test_the_named_moves_set_the_timestamps():
     """Release queues a held one; a worker starts it once; a requeue puts it back without
     touching the start; finishing stamps the end and keeps the summary it is given."""
-    held = assignment(AssignmentStatus.HELD)
+    held = assignment(HELD)
     assert (held.started_at, held.finished_at) == (None, None)
     lifecycle.queue(held)
     lifecycle.start(held)
@@ -69,15 +87,23 @@ def test_the_named_moves_set_the_timestamps():
     assert held.started_at is started
     lifecycle.finish(held, AssignmentResult.OUT_OF_BUDGET, summary="Budget exhausted")
     assert (held.status, held.result, held.summary) == (
-        AssignmentStatus.FINISHED,
+        FINISHED,
         AssignmentResult.OUT_OF_BUDGET,
         "Budget exhausted",
     )
     assert held.finished_at is not None
-    with pytest.raises(ConflictError, match="finished to running"):
+    with pytest.raises(ConflictError, match="from finished to running"):
         lifecycle.start(held)
 
 
-def test_a_held_assignment_cannot_start_without_being_queued():
-    with pytest.raises(ConflictError, match="held to running"):
-        lifecycle.start(assignment(AssignmentStatus.HELD))
+def test_finishing_without_a_summary_keeps_the_old_one():
+    """A finish that says nothing (a failed job's, a stopped run's) leaves the summary the
+    agent wrote in an earlier session."""
+    running = assignment(RUNNING)
+    running.summary = "Halfway through the directory."
+    lifecycle.finish(running, AssignmentResult.FAILED)
+    assert (running.status, running.result, running.summary) == (
+        FINISHED,
+        AssignmentResult.FAILED,
+        "Halfway through the directory.",
+    )

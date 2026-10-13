@@ -448,6 +448,34 @@ def test_sources_the_type_does_not_list_are_reported_but_not_scored(
     assert (tally.hits, tally.misses, tally.false_positives) == (4, 2, 1)  # as without them
 
 
+def test_an_institution_expected_in_review_is_a_hit_in_review_and_a_miss_verified(
+    rules: countries.CountryRules,
+):
+    """A known type at a level the country does not list it under is the agent's to save for a
+    human, which the file says with `expected: review`: the row in review is found as
+    expected, and a row verified instead is a miss that says so."""
+    data = subject_file().model_dump(by_alias=True, mode="json")
+    assert data["institutions"][2]["key"] == "fixture-library"
+    data["institutions"][2]["expected"] = "review"
+    file = SubjectFile.model_validate(data)
+    (card,) = scorer.score_files(subject_graph(), rules, {"fixture": file}, {})
+    tally = card.tallies[FIND_INSTITUTIONS].only(exclude=(PARENT,))
+    assert tally.buckets["found (needs_review)"] == 1
+    assert (tally.hits, tally.misses, tally.false_positives) == (2, 1, 1)
+
+    graph = subject_graph()
+    library = graph.institutions[LIBRARY]
+    graph.institutions[LIBRARY] = InstitutionRow(
+        library.id, TOWN, "library", "verified", None, None, library.names
+    )
+    (card,) = scorer.score_files(graph, rules, {"fixture": file}, {})
+    tally = card.tallies[FIND_INSTITUTIONS].only(exclude=(PARENT,))
+    assert "- fixture-library (library): expected in review, saved verified" in tally.lines
+    assert tally.buckets["expected review, saved verified"] == 1
+    assert "found (needs_review)" not in tally.buckets
+    assert (tally.hits, tally.misses, tally.false_positives) == (1, 2, 1)
+
+
 def test_a_subject_missing_from_the_database_is_all_misses(rules: countries.CountryRules):
     files = {"fixture": subject_file()}
     cards = scorer.score_files(Graph(), rules, files, {})
@@ -576,6 +604,21 @@ def list_graph() -> Graph:
         "townshipofbrock.ca": DomainRow("townshipofbrock.ca", "needs_review", official=True),
     }
     return graph
+
+
+def test_a_municipality_is_matched_by_code_then_by_name_and_not_by_a_namesake_of_another_kind(
+    rules: countries.CountryRules,
+):
+    """Ajax by its code, Brock by name though saved under the province, Durham by name at its
+    level; the City of Pelee is "Pelee" bare like the dataset's Township of Pelee, but another
+    kind of body, so the township is not found."""
+    graph = list_graph()
+    durham, ajax, brock, pelee = municipal_list().municipalities
+    ontario, region = graph.places[ONTARIO], graph.places[DURHAM]
+    assert scorer.match_municipality(graph, rules, durham, ontario) is region
+    assert scorer.match_municipality(graph, rules, ajax, region) is graph.places[AJAX]
+    assert scorer.match_municipality(graph, rules, brock, region) is graph.places[BROCK]
+    assert scorer.match_municipality(graph, rules, pelee, ontario) is None
 
 
 def test_a_list_is_scored_on_its_governments_homepages_and_domains(

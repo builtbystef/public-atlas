@@ -9,7 +9,7 @@ from public_atlas.modules.imports.entries import Citation, Code, PlaceEntry
 from public_atlas.modules.imports.files import Format, ListFile, Retrieval
 from public_atlas.modules.imports.lists import LISTS, list_name
 from public_atlas.modules.imports.lists.canada import statcan
-from public_atlas.modules.imports.lists.canada.ontario import health_units, places
+from public_atlas.modules.imports.lists.canada.ontario import places
 from public_atlas.modules.imports.lists.us import (
     census,
     government_units,
@@ -21,27 +21,57 @@ from public_atlas.modules.imports.lists.us import (
     states_counties,
 )
 
+NAMES = [
+    "canada/alberta/places",
+    "canada/british_columbia/places",
+    "canada/federal",
+    "canada/manitoba/places",
+    "canada/new_brunswick/places",
+    "canada/newfoundland/places",
+    "canada/nova_scotia/places",
+    "canada/ontario/agencies",
+    "canada/ontario/conservation_authorities",
+    "canada/ontario/fippa_bodies",
+    "canada/ontario/health_units",
+    "canada/ontario/libraries",
+    "canada/ontario/places",
+    "canada/ontario/police_boards",
+    "canada/ontario/school_boards",
+    "canada/ontario/service_managers",
+    "canada/pei/places",
+    "canada/quebec/places",
+    "canada/saskatchewan/places",
+    "canada/territories/places",
+    "us/federal",
+    "us/government_units",
+    "us/municipalities",
+    "us/school_districts",
+    "us/special_districts",
+    "us/states_counties",
+    "us/transit",
+    "us/universities",
+]
+
 
 def test_lists_are_found_by_walking_the_package_and_named_by_their_path():
+    assert list(LISTS) == NAMES
     assert LISTS["canada/ontario/places"] is places
     assert LISTS["us/states_counties"] is states_counties
     assert LISTS["us/municipalities"] is municipalities
     assert LISTS["us/government_units"] is government_units
     assert LISTS["us/school_districts"] is school_districts
     assert LISTS["us/special_districts"] is special_districts
-    assert list(LISTS) == sorted(LISTS)
     # A shared reader defines no `entries`, so it is not a list.
     assert statcan not in LISTS.values()
     assert census not in LISTS.values()
     assert governments not in LISTS.values()
     assert loaded not in LISTS.values()
 
-    for name, module in LISTS.items():
-        assert "/" in name
-        assert module.COUNTRY
-        assert module.SOURCES
+    for module in LISTS.values():
+        assert module.COUNTRY in ("CA", "US")
         assert isinstance(module.OVERRIDES, dict)
         assert callable(module.entries)
+        assert [source.name for source in module.SOURCES]
 
 
 def test_a_list_is_named_by_its_path_under_the_package():
@@ -61,24 +91,15 @@ def _module(name: str, *sources: ListFile) -> ModuleType:
 
 
 def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
-    text = service.manifest(Path("/cache"))
-    sources = [file for module in LISTS.values() for file in module.SOURCES]
-    fetched = sum(1 for file in sources if file.retrieval is Retrieval.FETCHED)
-    manual = [file for file in sources if file.retrieval is Retrieval.MANUAL]
-    assert text.startswith(f"Fetched files ({fetched})")
-    for file in places.SOURCES:
-        assert f"canada/ontario/places/{file.name}: {file.title}" in text
-        assert f"  {file.url}" in text
-        assert f"  sha256 {file.sha256}" in text
-    # The health units page, saved by hand since ontario.ca pins no hash.
-    assert f"\nManual files ({len(manual)})\n" in text
-    page = health_units.PAGE
-    assert page in manual
-    assert f"canada/ontario/health_units/{page.name}: {page.title}" in text
-    assert f"  put it at /cache/{page.name}.html" in text
-    # The manifest ends with the last manual file's last step.
-    assert text.rstrip().endswith(manual[-1].instructions.strip().splitlines()[-1].strip())
-
+    """A fetched file is listed with its URL and hash, a manual one with where to put it and
+    the steps to get it, and the manifest counts each kind."""
+    fetched = ListFile(
+        name="population",
+        title="Population counts",
+        url="https://example.test/population.csv",
+        format=Format.CSV,
+        sha256="a" * 64,
+    )
     export = ListFile(
         name="alberta_contacts",
         title="Local Authority Contact Information",
@@ -90,14 +111,22 @@ def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
         min_rows=400,
     )
     text = service.manifest(
-        Path("/cache"), {"canada/alberta/places": _module("canada.alberta.places", export)}
+        Path("/cache"),
+        {"canada/alberta/places": _module("canada.alberta.places", fetched, export)},
     )
-    assert "Fetched files (0)\n  none" in text
-    assert "Manual files (1)" in text
+    assert text.startswith("Fetched files (1)\n")
+    assert "canada/alberta/places/population: Population counts\n" in text
+    assert "  https://example.test/population.csv\n" in text
+    assert f"  sha256 {'a' * 64}\n" in text
+    assert "\nManual files (1)\n" in text
     assert "canada/alberta/places/alberta_contacts: Local Authority Contact Information" in text
     assert "  put it at /cache/alberta_contacts.xlsx" in text
     assert "  at least 400 rows" in text
     assert "  Open the dashboard.\n  Export the table, all rows, Excel (427 rows)." in text
+    assert text.rstrip().endswith("Export the table, all rows, Excel (427 rows).")
+    none = service.manifest(Path("/cache"), {"x/y": _module("x.y")})
+    assert "Fetched files (0)\n  none" in none
+    assert "Manual files (0)\n  none" in none
 
 
 def test_an_override_matches_an_entry_by_code_name_or_alias():

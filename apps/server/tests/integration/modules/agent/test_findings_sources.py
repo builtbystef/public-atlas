@@ -12,7 +12,6 @@ from public_atlas.modules.agent import findings
 from public_atlas.modules.assignments.models import Assignment, AssignmentType
 from public_atlas.modules.evidence import service as evidence
 from public_atlas.modules.evidence.models import EvidenceKind, Snapshot
-from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph import status_changes
 from public_atlas.modules.graph.models import (
     EnteredBy,
@@ -319,11 +318,9 @@ def test_a_source_needs_an_institution_and_a_quote_from_the_page(
         quote="How we buy goods and services",
         institution_id=str(world.town.id),
     )
-    assert outcome.source_id != uuid.UUID(int=0)
 
     async def owner() -> uuid.UUID:
         async with db.session() as session:
             return (await session.get_one(Source, outcome.source_id)).institution_id
 
     assert db.run(owner) == world.town.id
-    assert graph.is_domain_name("elmcounty.ca")

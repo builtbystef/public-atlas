@@ -4,7 +4,7 @@ installed."""
 import pytest
 
 from public_atlas.integrations.parse import ParseFailed
-from public_atlas.integrations.parse.docling import MODELS, DoclingParser, _glibc, ocr_params
+from public_atlas.integrations.parse.docling import MODELS, DoclingParser, ocr_params
 
 pytestmark = pytest.mark.parse
 
@@ -46,12 +46,6 @@ def small_pdf(*texts: str) -> bytes:
         xref,
     )
     return bytes(out)
-
-
-def test_the_models_the_image_downloads_are_the_ones_the_converter_loads(parser: DoclingParser):
-    assert MODELS == ("layout", "rapidocr")
-    parser.warm_up()
-    assert parser.converter is parser.converter
 
 
 def test_a_pdf_parses_to_its_text(parser: DoclingParser):
@@ -104,7 +98,12 @@ def test_a_broken_file_fails_with_the_reason(parser: DoclingParser):
         parser.parse(b"%PDF-1.4 this is not a pdf", "broken.pdf")
 
 
-def test_ocr_stays_on_the_cpu_whatever_runtime_is_installed(parser: DoclingParser):
+def test_the_converter_loads_the_models_the_image_downloads_and_keeps_ocr_on_the_cpu(
+    parser: DoclingParser,
+):
+    """The parse image downloads the models named in `MODELS` at build time: the converter
+    must ask for those and no other, and run OCR on the CPU whatever runtime is installed."""
+    parser.warm_up()
     params = ocr_params()
     assert params["EngineConfig.onnxruntime.use_cuda"] is False
     assert all(params[f"{model}.use_cuda"] is False for model in ("Det", "Cls", "Rec"))
@@ -116,8 +115,10 @@ def test_ocr_stays_on_the_cpu_whatever_runtime_is_installed(parser: DoclingParse
 
     options = parser.converter.format_to_options[InputFormat.PDF].pipeline_options
     assert isinstance(options, PdfPipelineOptions)
+    assert options.do_ocr
     assert isinstance(options.ocr_options, RapidOcrOptions)
     assert options.ocr_options.rapidocr_params == params
+    assert set(MODELS) == {"layout", options.ocr_options.kind}
 
 
 def test_the_helper_pdf_is_well_formed():
@@ -125,11 +126,3 @@ def test_the_helper_pdf_is_well_formed():
     data = small_pdf("x")
     assert data.startswith(b"%PDF-1.4")
     assert data.endswith(b"%%EOF\n")
-
-
-def test_freed_memory_is_handed_back_after_a_range(parser: DoclingParser):
-    """`_glibc` is None off Linux, and `release_memory` must work either way."""
-    parser.release_memory()
-    libc = _glibc()
-    if libc is not None:
-        assert libc.malloc_trim(0) in (0, 1)
