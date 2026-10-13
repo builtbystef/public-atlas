@@ -1,11 +1,10 @@
 # The Next.js console. Build from the repository root, where the pnpm workspace and lockfile
 # live:
 #
-#   docker build --file apps/web/Dockerfile --build-arg API_URL=http://api:8000 --tag public-atlas-web .
+#   docker build --file apps/web/Dockerfile --tag public-atlas-web .
 #
-# `API_URL` is where the API lives. The browser's `/api/*` requests reach it through a rewrite
-# (next.config.ts) that Next.js fixes at build time, so the address is a build argument; the
-# server-side client reads the same variable at run time.
+# `API_URL` is where the API lives, read at run time by the server-side client and by the
+# `/api/*` proxy (src/proxy.ts), so one image serves any API: `docker run --env API_URL=...`.
 
 # --- Dependencies -------------------------------------------------------------
 # The Node version from .node-version. pnpm is the version pinned in package.json
@@ -27,9 +26,7 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 # --- Build --------------------------------------------------------------------
 FROM deps AS build
 
-ARG API_URL=http://api:8000
-ENV API_URL=$API_URL \
-    NEXT_TELEMETRY_DISABLED=1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY tsconfig tsconfig
 COPY packages/api-client packages/api-client
@@ -42,12 +39,11 @@ RUN pnpm --filter @public-atlas/web exec next build
 # --- Runtime ------------------------------------------------------------------
 FROM node:24.18.0-bookworm-slim AS runtime
 
-ARG API_URL=http://api:8000
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
     HOSTNAME=0.0.0.0 \
     PORT=3000 \
-    API_URL=$API_URL
+    API_URL=http://api:8000
 
 WORKDIR /app
 

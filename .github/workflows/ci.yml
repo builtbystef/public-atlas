@@ -134,8 +134,8 @@ jobs:
       - run: vp run test
       - run: vp run -r build
 
-      # The console smoke (apps/web/e2e): the console just built, served against the API on
-      # the job's database, migrated and seeded with Canada. Node's Playwright is pinned to
+      # The console smoke (apps/web/e2e): the console just built, served against the API on a
+      # database the smoke rebuilds and seeds with Canada. Node's Playwright is pinned to
       # the Python package's version, so the Chromium installed above is the one it wants
       # and the install here finds it in place.
       - run: |
@@ -146,10 +146,6 @@ jobs:
             exit 1
           fi
       - run: pnpm --filter @public-atlas/web exec playwright install chromium
-      - run: uv run alembic upgrade head
-        working-directory: apps/server
-      - run: uv run public-atlas seed canada
-        working-directory: apps/server
       - run: vp run test:e2e
 
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

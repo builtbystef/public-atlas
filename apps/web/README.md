@@ -28,12 +28,11 @@ apps/web/src/
 
 There is no authentication: the console is an operator's tool. The browser never sees
 `API_URL`: Client Components use `browserApi` from `@/lib/api/client`, which calls `/api/*`,
-and `next.config.ts` rewrites that to the API. Server Components call `getApi()` from
+and `src/proxy.ts` forwards that to the API. Server Components call `getApi()` from
 `@/lib/api/server`. `unwrap()` turns a non-2xx result into an `ApiError`; `unwrapOrNotFound()`
 renders the not-found page on a 404.
 
-The rewrite is fixed when Next.js builds, so `API_URL` is a build argument of
-`apps/web/Dockerfile`; the server-side client reads the same variable at run time.
+Both read `API_URL` at run time, so one build serves any API.
 
 ## The two databases
 

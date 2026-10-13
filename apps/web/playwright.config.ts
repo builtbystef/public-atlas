@@ -2,17 +2,21 @@ import { defineConfig, devices } from "@playwright/test";
 
 /**
  * The console smoke (e2e/): the built console, served by `next start`, against the API on a
- * seeded database. `vp run test:e2e` from the repository root runs it; locally it needs
- * `vp run infra:up`, a migrated database with `public-atlas seed canada`, and `next build`.
+ * database of its own. `vp run test:e2e` from the repository root runs it; locally it needs
+ * `vp run infra:up` and `next build`.
  *
- * Both servers are started here unless they are up already (outside CI). The API address is
- * the one next.config.ts bakes into the `/api` rewrite at build time, so the smoke runs the
- * console as CI built it.
+ * Both servers are started here, on ports of their own, so the development servers can keep
+ * running and are never used by mistake. The API's script (apps/server/tests/console_api.py)
+ * drops and rebuilds `public_atlas_e2e`, migrated and seeded with Canada, before it serves.
+ * The console reads `API_URL` at run time, so it runs as CI built it.
  */
 
-const API_URL = process.env["API_URL"] ?? "http://127.0.0.1:8000";
-const WEB_URL = "http://127.0.0.1:3000";
+const API_URL = "http://127.0.0.1:8100";
+const WEB_URL = "http://127.0.0.1:3100";
 const CI = process.env["CI"] !== undefined;
+
+// The specs call the API directly; workers load this file too, so they read the same address.
+process.env["API_URL"] = API_URL;
 
 export default defineConfig({
   testDir: "e2e",
@@ -26,18 +30,18 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: "uv run fastapi run --port 8000",
+      command: "uv run python tests/console_api.py 8100",
       cwd: "../server",
       url: `${API_URL}/health`,
-      reuseExistingServer: !CI,
-      timeout: 60_000,
+      reuseExistingServer: false,
+      timeout: 120_000,
     },
     {
       // `next start` warns that the standalone output has its own server.js; it serves the
       // build all the same, and needs no copying of static files first.
-      command: "next start --port 3000",
+      command: "next start --port 3100",
       url: `${WEB_URL}/lists`,
-      reuseExistingServer: !CI,
+      reuseExistingServer: false,
       env: { API_URL },
       timeout: 60_000,
     },

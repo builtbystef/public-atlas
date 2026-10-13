@@ -6,23 +6,31 @@ import { expect, test, type APIRequestContext } from "@playwright/test";
  * is asserted by what the person reads, never by the markup.
  */
 
-const API_URL = process.env["API_URL"] ?? "http://127.0.0.1:8000";
+// Set by playwright.config.ts: the smoke's own API, never the development one.
+const API_URL = process.env["API_URL"]!;
 
 test("the runs page lists the runs", async ({ page }) => {
   await page.goto("/runs");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Runs");
   await expect(page.getByRole("button", { name: "New run" })).toBeVisible();
-  // Rows when there are runs; the invitation when there are none. Never an error.
+  // Rows when there are runs; the invitation when there are none. Never an error. The
+  // invitation is itself a row, so both can match: `first()` takes either.
   await expect(
-    page.getByRole("table").getByRole("row").nth(1).or(page.getByText("No runs yet.")),
+    page.getByRole("table").getByRole("row").nth(1).or(page.getByText("No runs yet.")).first(),
   ).toBeVisible();
 });
 
 test("the review queue renders", async ({ page }) => {
   await page.goto("/review");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Review queue");
+  // Rows when items are open; the empty queue says so, in a row of its own.
   await expect(
-    page.getByRole("table").getByRole("row").nth(1).or(page.getByText("The queue is empty.")),
+    page
+      .getByRole("table")
+      .getByRole("row")
+      .nth(1)
+      .or(page.getByText("The queue is empty."))
+      .first(),
   ).toBeVisible();
 });
 

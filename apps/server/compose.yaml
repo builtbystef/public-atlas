@@ -165,9 +165,6 @@ services:
     build:
       context: ../..
       dockerfile: apps/web/Dockerfile
-      args:
-        # Baked into the `/api` rewrite at build time (apps/web/next.config.ts).
-        API_URL: http://api:8000
     restart: unless-stopped
     environment:
       API_URL: http://api:8000
