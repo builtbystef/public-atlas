@@ -21,6 +21,9 @@ updates:
         patterns: ["vite", "vite-plus", "@voidzero-dev/vite-plus-core"]
       tanstack-query:
         patterns: ["@tanstack/react-query", "@tanstack/react-query-devtools"]
+      # react and react-dom must be the exact same version, or every render fails.
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
       dev-dependencies:
         dependency-type: development
 
