@@ -587,6 +587,7 @@ async def aliases_of(
     )
     found: dict[uuid.UUID, list[str]] = {owner.id: [] for owner in owners}
     for owner_id, text in rows:
+        assert owner_id is not None  # noqa: S101 - the query matched it to an owner
         found[owner_id].append(text)
     return found
 

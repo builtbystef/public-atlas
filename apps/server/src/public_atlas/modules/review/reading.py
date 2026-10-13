@@ -190,7 +190,7 @@ async def _evidence_counts(
         .where(Evidence.entity_id.in_(list(entity_ids)))
         .group_by(Evidence.entity_id)
     )
-    return dict(rows.tuples().all())
+    return dict(rows.all())
 
 
 async def entity_ref(session: AsyncSession, entity_id: uuid.UUID | None) -> EntityRef | None:

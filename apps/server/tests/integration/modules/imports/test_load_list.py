@@ -470,13 +470,11 @@ async def read_oakville(db: Database) -> Oakville:
             await session.execute(select(Homepage).where(Homepage.institution_id == government.id))
         ).scalar_one()
         webpage = await session.get_one(Webpage, homepage.webpage_id)
-        quotes = (
-            await session.execute(
-                select(Evidence.kind, Evidence.quote).where(
-                    Evidence.entity_id.in_([place.id, government.id, homepage.id])
-                )
+        quotes = await session.execute(
+            select(Evidence.kind, Evidence.quote).where(
+                Evidence.entity_id.in_([place.id, government.id, homepage.id])
             )
-        ).tuples()
+        )
         link = (
             await session.execute(select(Evidence).where(Evidence.entity_id == homepage.id))
         ).scalar_one()
@@ -1003,7 +1001,7 @@ async def read_lists(db: Database) -> list[tuple[str, Retrieval]]:
         rows = await session.execute(
             select(OfficialList.name, OfficialList.retrieval).order_by(OfficialList.name)
         )
-        return list(rows.tuples().all())
+        return list(rows.all())
 
 
 def test_a_manual_file_loads_like_a_fetched_one_and_is_recorded_as_manual(

@@ -215,7 +215,7 @@ def test_a_redirect_is_recorded_against_the_url_the_browser_asked_for(
         async with db.session() as session:
             pages = await session.execute(select(Webpage.url, Webpage.redirects_to_url))
             blocked = list(await session.scalars(select(BlockedAttempt.url)))
-            return dict(pages.tuples().all()), blocked
+            return dict(pages.all()), blocked
 
     pages, blocked = db.run(check)
     assert pages == {
@@ -309,7 +309,7 @@ def test_a_redirect_off_the_allowlist_is_never_requested(
                     select(Webpage.url).join(Snapshot, Snapshot.webpage_id == Webpage.id)
                 )
             )
-            return dict(pages.tuples().all()), blocked, sorted(stored)
+            return dict(pages.all()), blocked, sorted(stored)
 
     pages, blocked, stored = db.run(check)
     # Every URL asked for is on record as leading where it led; neither the refused hop nor the

@@ -8,6 +8,7 @@ Every function here flushes and leaves the commit to the caller, so a decision a
 in motion land together or not at all."""
 
 import logging
+import uuid
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -19,7 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from public_atlas.modules.assignments import service as assignments
 from public_atlas.modules.assignments.models import AssignmentType
 from public_atlas.modules.assignments.service import Spawn
-from public_atlas.modules.evidence.models import Evidence
+from public_atlas.modules.evidence.models import Evidence, EvidenceKind
 from public_atlas.modules.graph import service as graph
 from public_atlas.modules.graph.models import (
     Alias,
@@ -33,6 +34,7 @@ from public_atlas.modules.graph.models import (
     Institution,
     InstitutionServedPlace,
     Metric,
+    MetricName,
     Place,
     Source,
     Webpage,
@@ -534,16 +536,14 @@ async def _move_evidence(
 ) -> None:
     """A quote the survivor holds from the same snapshot is one quote: the duplicate's copy
     goes."""
-    quoted = set(
+    quoted: set[tuple[uuid.UUID, EvidenceKind, str]] = set(
         (
             await session.execute(
                 select(Evidence.snapshot_id, Evidence.kind, Evidence.quote).where(
                     Evidence.entity_id == into.id
                 )
             )
-        )
-        .tuples()
-        .all()
+        ).all()
     )
     for row in await session.scalars(select(Evidence).where(Evidence.entity_id == duplicate.id)):
         key = (row.snapshot_id, row.kind, row.quote)
@@ -574,10 +574,8 @@ async def _move_metrics(
 ) -> None:
     """A figure for a name and year the survivor has already stays on the duplicate."""
     column = Metric.place_id if isinstance(duplicate, Place) else Metric.institution_id
-    years = set(
-        (await session.execute(select(Metric.name, Metric.year).where(column == into.id)))
-        .tuples()
-        .all()
+    years: set[tuple[MetricName, int]] = set(
+        (await session.execute(select(Metric.name, Metric.year).where(column == into.id))).all()
     )
     for metric in await session.scalars(select(Metric).where(column == duplicate.id)):
         if (metric.name, metric.year) not in years:

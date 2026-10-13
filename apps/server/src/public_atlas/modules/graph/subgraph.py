@@ -254,11 +254,11 @@ async def _places(session: AsyncSession, tree: CTE, filters: GraphFilters) -> li
             governed=bool(is_governed),
             online=bool(is_online),
         )
-        for place, population, children, institutions, is_governed, is_online in rows.tuples()
+        for place, population, children, institutions, is_governed, is_online in rows
     ]
 
 
-def _institutions_in(tree: CTE, filters: GraphFilters) -> Select[tuple[uuid.UUID]]:
+def _institutions_in(tree: CTE, filters: GraphFilters) -> Select[uuid.UUID]:
     """The ids of the institutions in the tree's places that the filters keep. The level filter
     is on the institution's own place, as the institutions table reads it."""
     places = select(tree.c.id)
@@ -282,9 +282,7 @@ def _institutions_in(tree: CTE, filters: GraphFilters) -> Select[tuple[uuid.UUID
     return query
 
 
-async def _institutions(
-    session: AsyncSession, ids: Select[tuple[uuid.UUID]]
-) -> list[_InstitutionNode]:
+async def _institutions(session: AsyncSession, ids: Select[uuid.UUID]) -> list[_InstitutionNode]:
     """The institutions with those ids, each with its number of sources and of homepage claims."""
     source_count = (
         select(func.count())
@@ -310,7 +308,7 @@ async def _institutions(
         _InstitutionNode(
             institution=institution, source_count=int(sources), homepage_count=int(homepages)
         )
-        for institution, sources, homepages in rows.tuples()
+        for institution, sources, homepages in rows
     ]
 
 
@@ -338,7 +336,7 @@ async def _web(
             )
             .order_by(Webpage.url, Homepage.id)
         )
-        homepages = [_WebNode(*row) for row in rows.tuples()]
+        homepages = [_WebNode(*row) for row in rows]
     if filters.kinds & {EntityKind.SOURCE, EntityKind.DOMAIN}:
         rows = await session.execute(
             select(
@@ -355,7 +353,7 @@ async def _web(
             )
             .order_by(Webpage.url, Source.id)
         )
-        sources = [_WebNode(*row) for row in rows.tuples()]
+        sources = [_WebNode(*row) for row in rows]
     return homepages, sources
 
 
@@ -382,7 +380,7 @@ async def _served(
             InstitutionServedPlace.institution_id.in_([row.institution.id for row in institutions])
         )
     )
-    return list(rows.tuples())
+    return list(rows)
 
 
 # --- Nodes and edges ---

@@ -328,7 +328,7 @@ async def evidence_details(
         .order_by(Evidence.id)
     )
     details: list[EvidenceDetail] = []
-    for row, snapshot, webpage in rows.tuples():
+    for row, snapshot, webpage in rows:
         url = None
         if snapshot.pruned_at is None:
             url = await store.download_url(
