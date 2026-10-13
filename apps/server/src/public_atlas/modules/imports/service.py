@@ -12,7 +12,9 @@ changes nothing."""
 
 import asyncio
 import logging
+import re
 import tarfile
+import textwrap
 import uuid
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
@@ -212,32 +214,105 @@ def idle_overrides(overrides: Mapping[str, object], entries: Sequence[Entry]) ->
     ]
 
 
+# The manifest's width. Fixed, not the terminal's: CI keys the lists cache on its hash.
+MANIFEST_WIDTH = 100
+
+
 def manifest(cache_dir: Path, modules: Mapping[str, ModuleType] = lists.LISTS) -> str:
-    """The from-scratch checklist, read from the list modules so it cannot drift from them: the
-    fetched URLs with their hashes, then the manual files with the steps that obtain each and
-    where in the cache it goes."""
-    fetched: list[str] = []
-    manual: list[str] = []
+    """The from-scratch checklist, read from the list modules so it cannot drift from them. First
+    an overview, one line per list by country, then each list's files: a fetched file with its
+    URL and hash, a manual one with where in the cache it goes and the steps that obtain it. A
+    file several lists read (a census table) is described under the first and named after."""
+    by_path = _files_by_path(cache_dir, modules)
+    lines = _manifest_overview(modules, [file for _, file in by_path.values()])
+    rule = "─" * MANIFEST_WIDTH
     for name, module in modules.items():
+        lines += ["", rule, name, rule]
+        if not module.SOURCES:
+            lines.append("  no files")
         for file in module.SOURCES:
-            if file.retrieval is Retrieval.FETCHED:
-                fetched.append(f"{name}/{file.name}: {file.title}")
-                fetched.append(f"  {file.url}")
-                fetched.append(f"  sha256 {file.sha256}")
+            lines.append("")
+            first, _ = by_path[file.cache_path(cache_dir)]
+            if first == f"{name}/{file.name}":
+                lines += _manifest_file(file, cache_dir)
             else:
-                manual.append(f"{name}/{file.name}: {file.title}")
-                manual.append(f"  {file.url}")
-                manual.append(f"  put it at {file.cache_path(cache_dir)}")
-                if file.min_rows:
-                    manual.append(f"  at least {file.min_rows} rows")
-                manual.extend(f"  {line}" for line in file.instructions.strip().splitlines())
-    lines = [f"Fetched files ({len(fetched) // 3})", *fetched]
-    if not fetched:
-        lines.append("  none")
-    lines.append("")
-    lines.append(f"Manual files ({sum(1 for line in manual if not line.startswith(' '))})")
-    lines.extend(manual or ["  none"])
+                lines.append(f"  {file.name}: as under {first.removesuffix(f'/{file.name}')}")
     return "\n".join(lines)
+
+
+def _manifest_overview(
+    modules: Mapping[str, ModuleType], distinct: Sequence[files.ListFile]
+) -> list[str]:
+    """The manifest's head: the lists and files counted, then one line per list by country with
+    how many files it reads and from which hosts."""
+    fetched = sum(1 for file in distinct if file.retrieval is Retrieval.FETCHED)
+    lines = [
+        (
+            f"Official lists: {_count(len(modules), 'list')} reading "
+            f"{_count(len(distinct), 'file')} ({fetched} fetched and pinned by hash, "
+            f"{len(distinct) - fetched} collected by hand)"
+        ),
+    ]
+    by_country: dict[str, list[str]] = {}
+    for name in modules:
+        by_country.setdefault(name.split("/", 1)[0], []).append(name)
+    width = max((len(name.split("/", 1)[-1]) for name in modules), default=0)
+    for country, names in by_country.items():
+        lines += ["", f"{country}/ ({_count(len(names), 'list')})"]
+        for name in names:
+            sources = modules[name].SOURCES
+            hosts = ", ".join(dict.fromkeys(_host(file.url) for file in sources))
+            count = f"{len(sources):>3} {'file' if len(sources) == 1 else 'files'}"
+            lines.append(f"  {name.removeprefix(f'{country}/'):<{width}}  {count:<9}  {hosts}")
+    return lines
+
+
+def _manifest_file(file: files.ListFile, cache_dir: Path) -> list[str]:
+    """One file in the manifest: a fetched one with its URL and hash, a manual one with where
+    it goes in the cache and the steps that obtain it."""
+    if file.retrieval is Retrieval.FETCHED:
+        return [
+            f"  {file.name} (fetched)",
+            *_wrapped(file.title, "    "),
+            f"    {file.url}",
+            f"    sha256 {file.sha256}",
+        ]
+    lines = [
+        f"  {file.name} (collected by hand)",
+        *_wrapped(file.title, "    "),
+        f"    {file.url}",
+        f"    put it at {file.cache_path(cache_dir)}",
+    ]
+    if file.min_rows:
+        lines.append(f"    at least {file.min_rows} rows")
+    lines.append("    steps:")
+    for step in file.instructions.strip().splitlines():
+        lines += _wrapped(step, "      ")
+    return lines
+
+
+def _count(n: int, noun: str) -> str:
+    """`1 file`, `2 files`."""
+    return f"{n} {noun}{'' if n == 1 else 's'}"
+
+
+def _host(url: str) -> str:
+    """A URL's host without a leading `www`, `www12` and the like: who publishes the file."""
+    host = url.split("://", 1)[-1].split("/", 1)[0]
+    head, _, rest = host.partition(".")
+    return rest if rest and re.fullmatch(r"www\d*", head) else host
+
+
+def _wrapped(text: str, indent: str) -> list[str]:
+    """`text` wrapped to the manifest's width under `indent`, never breaking a word or a URL."""
+    return textwrap.wrap(
+        text,
+        MANIFEST_WIDTH,
+        initial_indent=indent,
+        subsequent_indent=indent,
+        break_long_words=False,
+        break_on_hyphens=False,
+    ) or [indent.rstrip()]
 
 
 # --- The cache: `lists fetch` and `lists pack` ---

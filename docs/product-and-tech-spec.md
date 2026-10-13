@@ -258,8 +258,8 @@ applied, and the expected counts. The 28 lists today:
 | United States, places | `us/states_counties` (3,197 states and county equivalents) and `us/municipalities` (35,643), from Census population estimates with FIPS codes; `us/government_units` adds each government's legal name, Census of Governments id and `.gov` website |
 | United States, institutions | `us/school_districts` (NCES), `us/special_districts` (Census of Governments, typed by function), `us/federal` (Federal Register agencies that published in 2023–2025 or hold a `.gov` domain), `us/universities` (IPEDS public campuses) and `us/transit` (National Transit Database reporters) |
 
-`public-atlas lists manifest` prints every list's files, the checklist for building from
-scratch. `lists fetch` and `lists pack` download the fetchable files and bundle the hand-collected
+`public-atlas lists manifest` prints an overview of the lists by country, then every list's
+files, the checklist for building from scratch. `lists fetch` and `lists pack` download the fetchable files and bundle the hand-collected
 ones.
 
 Lists are also where the bodies under a body come from. `find_institutions` takes a place and

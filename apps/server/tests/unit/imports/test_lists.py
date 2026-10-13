@@ -92,8 +92,9 @@ def _module(name: str, *sources: ListFile) -> ModuleType:
 
 
 def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
-    """A fetched file is listed with its URL and hash, a manual one with where to put it and
-    the steps to get it, and the manifest counts each kind."""
+    """An overview counts the lists and their files by country, then a fetched file is listed
+    with its URL and hash, a manual one with where to put it and the steps to get it, and a
+    file two lists read is described once."""
     fetched = ListFile(
         name="population",
         title="Population counts",
@@ -113,21 +114,34 @@ def test_the_manifest_lists_the_fetched_urls_with_hashes_and_the_manual_steps():
     )
     text = service.manifest(
         Path("/cache"),
-        {"canada/alberta/places": _module("canada.alberta.places", fetched, export)},
+        {
+            "canada/alberta/places": _module("canada.alberta.places", fetched, export),
+            "canada/manitoba/places": _module("canada.manitoba.places", fetched),
+        },
     )
-    assert text.startswith("Fetched files (1)\n")
-    assert "canada/alberta/places/population: Population counts\n" in text
-    assert "  https://example.test/population.csv\n" in text
-    assert f"  sha256 {'a' * 64}\n" in text
-    assert "\nManual files (1)\n" in text
-    assert "canada/alberta/places/alberta_contacts: Local Authority Contact Information" in text
-    assert "  put it at /cache/alberta_contacts.xlsx" in text
-    assert "  at least 400 rows" in text
-    assert "  Open the dashboard.\n  Export the table, all rows, Excel (427 rows)." in text
-    assert text.rstrip().endswith("Export the table, all rows, Excel (427 rows).")
+    assert text.startswith(
+        "Official lists: 2 lists reading 2 files (1 fetched and pinned by hash, 1 collected by "
+        "hand)\n\ncanada/ (2 lists)\n"
+        "  alberta/places     2 files  example.test, visualizations.alberta.ca\n"
+        "  manitoba/places    1 file   example.test\n"
+    )
+    assert "\ncanada/alberta/places\n" in text
+    assert "  population (fetched)\n    Population counts\n" in text
+    assert "    https://example.test/population.csv\n" in text
+    assert f"    sha256 {'a' * 64}\n" in text
+    assert (
+        "  alberta_contacts (collected by hand)\n    Local Authority Contact Information\n" in text
+    )
+    assert "    put it at /cache/alberta_contacts.xlsx\n" in text
+    assert "    at least 400 rows\n" in text
+    assert "    steps:\n      Open the dashboard.\n      Export the table, all rows, Excel" in text
+    rule = "─" * 100
+    assert text.endswith(
+        f"\ncanada/manitoba/places\n{rule}\n\n  population: as under canada/alberta/places"
+    )
     none = service.manifest(Path("/cache"), {"x/y": _module("x.y")})
-    assert "Fetched files (0)\n  none" in none
-    assert "Manual files (0)\n  none" in none
+    assert none.startswith("Official lists: 1 list reading 0 files")
+    assert none.endswith(f"\nx/y\n{rule}\n  no files")
 
 
 def test_an_override_matches_an_entry_by_code_name_or_alias():
