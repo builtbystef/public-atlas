@@ -6,11 +6,12 @@ import type {
   GraphNode,
   InstitutionTypeInput,
 } from "@public-atlas/api-client";
-import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpIcon,
   ChevronRightIcon,
   Loader2Icon,
+  NetworkIcon,
   SearchIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
@@ -112,12 +113,18 @@ export function GraphView({
   const { deferred, isStale } = useUrlFilters(chosen, parseGraphSearch);
   const filters = graphViewFilters(deferred);
 
+  // Without a root the API would draw a whole country; the view waits for a place instead.
+  const hasRoot = Boolean(filters.place_id);
   const base = useQuery({
     ...graphQuery(browserApi, filters),
-    placeholderData: keepPreviousData,
+    enabled: hasRoot,
+    // Keep the old picture while a new root loads, but not once the root is cleared.
+    placeholderData: (previous) => (hasRoot ? previous : undefined),
   });
-  const picture = useMemo(() => combine(base.data ? [base.data] : []), [base.data]);
-  const root = base.data?.root_id;
+  // A disabled query still hands back what the cache holds, so no root means no data either.
+  const graph = hasRoot ? base.data : undefined;
+  const picture = useMemo(() => combine(graph ? [graph] : []), [graph]);
+  const root = graph?.root_id;
 
   // The canvas's data: the node objects survive each payload (see graph-data.ts), except
   // across a change of root, where the picture is a new one and gets a fresh layout.
@@ -261,7 +268,7 @@ export function GraphView({
     setPlatforms(false);
   };
 
-  const ancestors = base.data?.ancestors ?? [];
+  const ancestors = graph?.ancestors ?? [];
   const parent = ancestors.at(-1);
   const rootNode = root ? byId.get(root) : undefined;
   const counts = { place: 0, institution: 0, web: 0, levels: 0 };
@@ -410,40 +417,45 @@ export function GraphView({
         }
         onClear={filterCount > 0 ? clear : undefined}
       />
-      {base.data?.truncated && (
+      {graph?.truncated && (
         <p className="text-sm text-warning">
           Over the cap: showing the places and their governments alone. Centre the graph on a
           smaller place to see everything beneath it.
         </p>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
-        <nav aria-label="Root" className="flex min-w-0 flex-wrap items-center gap-1">
-          {ancestors.map((ancestor) => (
-            <Fragment key={ancestor.id}>
-              <button
-                type="button"
-                onClick={() => changeRoot(ancestor.id)}
-                className="text-muted-foreground hover:text-foreground hover:underline"
+      {hasRoot && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">
+          <nav aria-label="Root" className="flex min-w-0 flex-wrap items-center gap-1">
+            {ancestors.map((ancestor) => (
+              <Fragment key={ancestor.id}>
+                <button
+                  type="button"
+                  onClick={() => changeRoot(ancestor.id)}
+                  className="text-muted-foreground hover:text-foreground hover:underline"
+                >
+                  {ancestor.label}
+                </button>
+                <ChevronRightIcon
+                  className="size-3.5 text-muted-foreground/60"
+                  aria-hidden="true"
+                />
+              </Fragment>
+            ))}
+            <span className="font-medium">{rootNode?.label ?? "…"}</span>
+            {parent && (
+              <Button
+                variant="ghost"
+                size="xs"
+                onClick={() => changeRoot(parent.id)}
+                className="ml-1 text-muted-foreground"
               >
-                {ancestor.label}
-              </button>
-              <ChevronRightIcon className="size-3.5 text-muted-foreground/60" aria-hidden="true" />
-            </Fragment>
-          ))}
-          <span className="font-medium">{rootNode?.label ?? "…"}</span>
-          {parent && (
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={() => changeRoot(parent.id)}
-              className="ml-1 text-muted-foreground"
-            >
-              <ArrowUpIcon /> Up to {parent.label}
-            </Button>
-          )}
-        </nav>
-        {rootNode && <p className="text-muted-foreground tabular-nums">{stats}</p>}
-      </div>
+                <ArrowUpIcon /> Up to {parent.label}
+              </Button>
+            )}
+          </nav>
+          {rootNode && <p className="text-muted-foreground tabular-nums">{stats}</p>}
+        </div>
+      )}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
         <div
           className={cn(
@@ -460,7 +472,17 @@ export function GraphView({
             emphasis={emphasis}
             onSelect={select}
           />
-          {base.isPending && (
+          {!hasRoot && (
+            <div className="absolute inset-x-0 top-1/2 mx-auto flex max-w-md -translate-y-1/2 flex-col items-center gap-2 px-6 text-center text-sm">
+              <NetworkIcon className="size-6 text-muted-foreground/60" aria-hidden="true" />
+              <p className="font-medium">Choose a place to draw the graph</p>
+              <p className="text-muted-foreground">
+                Pick a place above or search for one. The graph shows everything beneath it, so
+                start small.
+              </p>
+            </div>
+          )}
+          {base.isLoading && (
             <p className="absolute inset-x-0 top-1/2 flex -translate-y-1/2 items-center justify-center gap-2 px-6 text-center text-sm text-muted-foreground">
               <Loader2Icon className="size-4 animate-spin" aria-hidden="true" /> Drawing the
               picture…
@@ -479,7 +501,7 @@ export function GraphView({
               No domain here carries pages of more than one institution.
             </p>
           )}
-          {base.data && picture.nodes.length === 0 && (
+          {graph && picture.nodes.length === 0 && (
             <p className="absolute inset-x-0 top-1/2 -translate-y-1/2 px-6 text-center text-sm text-muted-foreground">
               Nothing matches these filters.
             </p>
@@ -506,13 +528,15 @@ export function GraphView({
           </SheetContent>
         </Sheet>
       </div>
-      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-        <Legend overlay={overlay} present={picture.nodes} shared={shared?.size ?? 0} />
-        <p>
-          Click a node for its connections · scroll to zoom, drag to pan · arrow keys walk the
-          connections, Esc clears
-        </p>
-      </div>
+      {hasRoot && (
+        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+          <Legend overlay={overlay} present={picture.nodes} shared={shared?.size ?? 0} />
+          <p>
+            Click a node for its connections · scroll to zoom, drag to pan · arrow keys walk the
+            connections, Esc clears
+          </p>
+        </div>
+      )}
     </div>
   );
 }

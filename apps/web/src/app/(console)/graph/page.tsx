@@ -25,9 +25,10 @@ async function GraphContent({ searchParams }: { searchParams: Promise<SearchPara
   const search = parseGraphSearch(await searchParams);
   const api = await getApi();
   const queryClient = getQueryClient();
+  // No root, no picture: a whole country is too much to draw, so the view waits for a place.
   const [{ countries, institutionTypes }] = await Promise.all([
     getFilterOptions(api),
-    queryClient.prefetchQuery(graphQuery(api, graphViewFilters(search))),
+    search.place_id && queryClient.prefetchQuery(graphQuery(api, graphViewFilters(search))),
   ]);
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
