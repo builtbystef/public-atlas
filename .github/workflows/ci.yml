@@ -109,6 +109,9 @@ jobs:
         run: uv run playwright install --with-deps chromium
       - if: steps.chromium.outputs.cache-hit == 'true'
         run: uv run playwright install-deps chromium
+      # Ubuntu 24.04 restricts unprivileged user namespaces with AppArmor, which Chromium's
+      # sandbox needs. Lift the restriction rather than run the tests without the sandbox.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       # What the storage-init Compose service does locally.
       - run: aws s3api create-bucket --bucket public-atlas

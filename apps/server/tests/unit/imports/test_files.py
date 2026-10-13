@@ -190,7 +190,7 @@ def test_a_worksheet_that_declares_a_wrong_dimension_is_read_to_its_end():
         for item in source_zip.infolist():
             content = source_zip.read(item.filename)
             if item.filename == "xl/worksheets/sheet1.xml":
-                content = re.sub(rb'<dimension ref="[^"]*"/>', b'<dimension ref="A1"/>', content)
+                content = re.sub(rb'<dimension ref="[^"]*"\s*/>', b'<dimension ref="A1"/>', content)
                 assert b'<dimension ref="A1"/>' in content
             target.writestr(item, content)
     data = rewritten.getvalue()
