@@ -895,48 +895,40 @@ so that someone rebuilding from a fresh clone gets the same file.
   (visualizations.alberta.ca, report `41a37e88-38b3-4c10-b685-50ee51675369`), tab "Contact
   Info for Official and Organization", object "Local Authority Contact Information", its
   vertical-ellipsis menu, "Export data", all rows, Excel. The file is
-  `temp-manual-files/Alberta/alberta-local-authority-contacts-2026-10-09.xlsx` (sheet
-  "Results", 427 rows, columns Name, Type, Website, Email, Phone, Address, Address (line 2),
-  Municipality, Postal Code, Frequency). The province refreshes the table weekly, so a
-  re-export differs; that is why manual files pin no hash. The export's worksheet declares a
-  one-cell dimension, which the loader's read-only reader trusted until it was made to reset
-  it; the file in the cache (`alberta_local_authority_contacts_2026_10_09.xlsx`) is the export
-  as saved from the dashboard.
+  `alberta_local_authority_contacts_2026_10_09.xlsx` in the cache (sheet "Results", 427 rows,
+  columns Name, Type, Website, Email, Phone, Address, Address (line 2), Municipality, Postal
+  Code, Frequency), the export as saved from the dashboard. The province refreshes the table
+  weekly, so a re-export differs; that is why manual files pin no hash. The export's worksheet
+  declares a one-cell dimension, which the loader's read-only reader trusted until it was made
+  to reset it.
 
 - Prince Edward Island, done 2026-10-09: the Municipal Directory on princeedwardisland.ca
   is a single-page app with no export; each of the 57 results of a blank search was opened
-  and its detail view saved. The loader's file is the derived
-  `temp-manual-files/Prince Edward Island/pei_municipalities.csv` (57 rows; columns include
-  Municipality Name, Municipality Type, Population, Website, source_url); the 57 HTML
-  snapshots and `evidence_log.csv` beside it are the proof, kept outside the repository.
-- Yukon, done 2026-10-09: `temp-manual-files/Yukon/cs-local-government-directory-2026-06-16_.pdf`
-  from yukon.ca, text-based (Docling reads it).
-- Nunavut, done 2026-10-09: the 25 community pages under gov.nu.ca/en/communities saved as
-  `temp-manual-files/Nunavut/nunavut-community-<slug>.html`, with `nunavut_communities_
-  evidence.csv` as the index (URL, capture time, sha256 per page). 19 of the 25 link a hamlet
-  website. `canada/territories/places` declares the 25 pages as HTML files, in the cache as
-  `nunavut_community_<slug>.html` (underscores). The folder held 24 of them at first; Arctic
-  Bay's page (`nunavut-community-arctic-bay.html`, listed in the evidence index) was saved by
-  hand afterwards from the browser and put in the cache as `nunavut_community_arctic_bay.html`.
-  It is the one page that names no body and links no website.
+  and its detail view saved. The loader's file is the CSV derived from those pages,
+  `pei_municipal_directory_2026_10_09.csv` in the cache (57 rows; columns include
+  Municipality Name, Municipality Type, Population, Website, source_url).
+- Yukon, done 2026-10-09: the local government directory PDF from yukon.ca
+  (`cs-local-government-directory-2026-06-16_.pdf`), text-based (Docling reads it), in the
+  cache as `yukon_local_government_directory_2026_06.pdf`.
+- Nunavut, done 2026-10-09: the 25 community pages under gov.nu.ca/en/communities, saved from
+  the browser. 19 of the 25 link a hamlet website. `canada/territories/places` declares the 25
+  pages as HTML files, in the cache as `nunavut_community_<slug>.html`. Arctic Bay's is the
+  one page that names no body and links no website.
 - Northwest Territories, done 2026-10-09 (not foreseen as manual): the 33 community pages under
   maca.gov.nt.ca/en/content/<slug> each carry a form token that changes with every request,
   so no hash holds. Fetched once with curl and a browser user agent straight into the cache as
   `nwt_community_<slug>.html` (ASCII slugs: behchoko, deline, gameti, katlodeeche, lutselke,
   sambaa_ke, wekweeti, whati); the module's instructions say how.
 - Saskatchewan, done 2026-10-09: the Municipal Directory on saskatchewan.ca has no export;
-  all 761 municipality pages were saved (`temp-manual-files/Saskatchewan/
-  sk_municipal_directory_2026-10-09/raw_html/`). The loader's file is the derived
-  `data/municipalities.csv` in that folder (761 rows; name, municipality_type, website for
-  296, rm_number, source_url, page_sha256); `evidence/evidence.csv` ties every value to its
-  page.
-- Ontario, done 2026-10-09: Reg. 553 and O. Reg. 135/24 saved from e-Laws as text PDFs in
-  `temp-manual-files/Ontario/`; they feed the hand-written tables for health units and
-  police boards, not a source. The "Public Health Unit locations" page
-  (ontario.ca/page/public-health-unit-locations, updated 2026-08-28, 29 units) is a manual
-  file of `canada/ontario/health_units`: fetched once with a browser user agent and put in
-  the loader's cache as `public_health_unit_locations_2026_08.html`, since every response
-  carries a new bot-detection token.
+  all 761 municipality pages were saved and the loader's file derived from them,
+  `saskatchewan_municipal_directory_2026_10_09.csv` in the cache (761 rows; name,
+  municipality_type, website for 296, rm_number, source_url, page_sha256).
+- Ontario, done 2026-10-09: Reg. 553 and O. Reg. 135/24, read on e-Laws, feed the
+  hand-written tables for health units and police boards, not a source. The "Public Health
+  Unit locations" page (ontario.ca/page/public-health-unit-locations, updated 2026-08-28, 29
+  units) is a manual file of `canada/ontario/health_units`: fetched once with a browser user
+  agent and put in the loader's cache as `public_health_unit_locations_2026_08.html`, since
+  every response carries a new bot-detection token.
 
 - United States, done 2026-10-09: the National Transit Database's 2024 agency information
   file, the CSV export of dataset `ccvf-fykn` on data.transportation.gov (2,914 rows). The
@@ -954,8 +946,7 @@ pin means a new archive: `lists pack official-lists.tar.gz` and
 `gh release upload official-lists official-lists.tar.gz --clobber`.
 
 Two of these (PEI, Saskatchewan) are derived CSVs built from saved pages rather than files
-the site served. Their `instructions` say so and point at the raw captures; the loader's
-provenance for them is the derived file's hash plus the per-row `source_url` and
-`page_sha256` columns. `temp-manual-files/` is a staging folder: the session that writes a
-module copies its file into the loader's cache under the module's name, and the folder is
-deleted once every file has moved. Until then it stays out of commits.
+the site served, and their `instructions` say so. The saved pages were not kept: the
+loader's provenance for them is the derived file, in the archive, plus the per-row
+`source_url` (and, for Saskatchewan, `page_sha256`) columns. Re-deriving either CSV means
+capturing the live directory again.

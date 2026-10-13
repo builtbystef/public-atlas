@@ -211,10 +211,9 @@ NUNAVUT_COMMUNITIES: tuple[tuple[str, str], ...] = (
 _NUNAVUT_INSTRUCTIONS = (
     "gov.nu.ca refuses scripts. Open the community's page under "
     "https://www.gov.nu.ca/en/communities (25 communities) in a browser and save the rendered "
-    "page as HTML (the document's outerHTML) as nunavut_community_<slug>.html, recording the "
-    "capture time and the file's sha256 in an evidence log kept outside the repository. The "
-    "page gives the community's description, its hamlet council and administration, the "
-    "contact details and, where the hamlet has one, its website."
+    "page as HTML (the document's outerHTML) as nunavut_community_<slug>.html. The page gives "
+    "the community's description, its hamlet council and administration, the contact details "
+    "and, where the hamlet has one, its website."
 )
 
 

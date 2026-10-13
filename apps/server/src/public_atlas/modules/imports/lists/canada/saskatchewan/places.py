@@ -94,8 +94,7 @@ DIRECTORY = ListFile(
         "telephone, fax, website (the href of the URL row), email, the addresses, rm_number, "
         "office hours, council meeting time, the contacts, last_updated_on_page, source_url, "
         "fetched_at_utc, page_sha256 and raw_html_file. Save it as "
-        "saskatchewan_municipal_directory_2026_10_09.csv; the saved pages and the per-value "
-        "evidence log stay beside it outside the repository. Expect 761 rows: 16 cities, 147 "
+        "saskatchewan_municipal_directory_2026_10_09.csv. Expect 761 rows: 16 cities, 147 "
         "towns, 234 villages, 43 resort villages, 296 rural municipalities, 2 northern towns, "
         "11 northern villages, 11 northern hamlets and the administration district."
     ),

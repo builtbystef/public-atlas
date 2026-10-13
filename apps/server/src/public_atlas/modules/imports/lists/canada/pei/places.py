@@ -71,8 +71,7 @@ DIRECTORY = ListFile(
         "Municipality Name, Municipality Type, Date Incorporated, Population, Website (the "
         "link's href; 'n/a' when there is none), the officials and contact fields, source_url "
         "(the detail view's URL), captured_at_utc and html_snapshot_file. Save it as "
-        "pei_municipal_directory_2026_10_09.csv; the saved pages and the per-field evidence log "
-        "stay beside it outside the repository. Expect 57 rows: 2 cities, 10 towns and 45 "
+        "pei_municipal_directory_2026_10_09.csv. Expect 57 rows: 2 cities, 10 towns and 45 "
         "rural municipalities (the resort municipality among them)."
     ),
     min_rows=57,
