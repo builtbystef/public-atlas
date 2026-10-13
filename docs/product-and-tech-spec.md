@@ -2,7 +2,7 @@
 
 This is the design for the final rewrite of Public Atlas. Earlier versions live in
 `../archived-public-atlas-v1` and `../archived-maplegraph-v2`; the lessons
-from them are folded in here, and `todo.md` holds the build order.
+from them are folded in here.
 
 **Contents**
 
