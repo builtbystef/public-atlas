@@ -52,7 +52,7 @@ A government's name is composed from the kind ("City of X", "Town of X", "Villag
 of X", "X Plantation", "X Unified Government"); a unit with no kind (Carson City, Kansas's
 numbered townships) is its own name. The overrides name the few the composition gets wrong and
 give the consolidated governments the city's plain name as an alias. The Census of Governments'
-legal names and websites are the next list's (lists-todo session 5).
+legal names and websites are `us/government_units`'s.
 """
 
 import logging
@@ -223,6 +223,8 @@ class Notes:
 
 
 class Builder:
+    """The municipalities from the estimates, each under its loaded county or its state."""
+
     def __init__(self, estimates: Estimates, notes: Notes) -> None:
         self.estimates = estimates
         self.notes = notes
@@ -246,6 +248,8 @@ class Builder:
         return Parent(unit.state_name, STATE_LEVEL, None)
 
     def entry(self, unit: Unit, county: str | None, code: str) -> PlaceEntry:
+        """The unit as a place, named and governed by its census kind unless an override
+        says otherwise."""
         base, kind = census.split_name(unit.name)
         self.notes.kinds[kind] += 1
         name = base
@@ -276,6 +280,7 @@ class Builder:
         )
 
     def place(self, unit: Unit, class_: str) -> PlaceEntry:
+        """An incorporated place, under the county holding most of its population."""
         county = self.estimates.main_county(unit)
         label = f"{unit.fips} {unit.name}, {unit.state_name}"
         if county is None:
@@ -285,6 +290,7 @@ class Builder:
         return self.entry(unit, county, unit.fips)
 
     def subdivision(self, unit: Unit) -> PlaceEntry:
+        """A county subdivision, under its county."""
         return self.entry(unit, unit.county, unit.fips)
 
     def consolidated_city(self, unit: Unit) -> PlaceEntry:
@@ -340,6 +346,7 @@ class Builder:
         return found
 
     def consolidated_cities(self) -> list[PlaceEntry]:
+        """The consolidated cities that are governments (rule 2a)."""
         found = []
         for unit in self.estimates.units(SUMLEV_CONSOLIDATED_CITY):
             if not unit.active:

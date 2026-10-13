@@ -63,6 +63,7 @@ type Call = Callable[..., Any]
 
 @pytest.fixture
 def resources(queue: InlineConnector):
+    """The resources the inline jobs run with."""
     assert queue.resources is not None
     return queue.resources
 
@@ -118,7 +119,7 @@ def context(db: Database, queue: InlineConnector) -> Callable[[Assignment], Sess
 
 class Capture:
     """Pages stored as the capture hook stores them: any page by its URL, HTML and text, and
-    the three pages of the fixture site by name."""
+    the towns, library and platform pages by name."""
 
     TOWNS_URL = TOWNS_URL
     TOWNS_TEXT = TOWNS_TEXT

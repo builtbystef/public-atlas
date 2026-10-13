@@ -8,6 +8,7 @@ from public_atlas.modules.evals.scorer.rules import homepage_matches, place_form
 from public_atlas.modules.evals.scorer.subjects import FIND_HOMEPAGE, find_place, score_domains
 from public_atlas.modules.evals.scorer.tally import HOMEPAGE, LIST_MEASURES, Scorecard, Tally
 
+# How many saved URLs a line names before stopping.
 NAMED = 3
 
 
@@ -69,6 +70,8 @@ def score_places(graph: Graph, rules: CountryRules, slug: str, data: PlaceList) 
 def _score_government_homepage(
     tally: Tally, graph: Graph, municipality: Municipality, row: PlaceRow | None
 ) -> None:
+    """A listed government's homepage: a hit when its verified homepage or a claimed candidate
+    matches the list's, wrong when another was saved."""
     label = municipality.name
     wanted = [municipality.homepage, municipality.listed_homepage]
     wanted_urls = [url for url in wanted if url]

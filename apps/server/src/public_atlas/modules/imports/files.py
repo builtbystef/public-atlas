@@ -1,17 +1,13 @@
 """The files an official list is read from: what a list module declares about each
-(`ListFile`), fetching it once into a local cache and checking its hash, and turning it into
-lines of text with one renderer per format. A CSV or spreadsheet is one line per row with the
-header first (a workbook's named sheets one after another, each with its own header), JSON is
-one line per record, a web page is its visible text; a ZIP names the member to use. The text is
-what the snapshot stores, so a citation's line can be checked against it.
+(`ListFile`), fetching it once into a local cache with its hash checked, and rendering it as
+lines of text. A table is one line per row, header first (a workbook's named sheets one after
+another, each with its header); JSON is one line per record; a web page is its visible text; a
+ZIP names its member. The snapshot stores the text, so a citation's line can be checked against it.
 
-
-A file is `fetched` (the URL is the file: the loader downloads it and checks its pinned hash)
-or `manual` (a site that blocks scripts or only offers an interactive export: a person obtains
-the file by the module's instructions and drops it in the cache, and no hash is pinned since
-the next export differs). It is a file a list module reads, not the graph's `Source`, which is
-a web page carrying a procurement signal.
-"""
+A file is `fetched` (the URL is the file and its hash is pinned) or `manual` (the site blocks
+scripts or only offers an interactive export: a person follows the module's instructions and
+drops the file in the cache, with no hash pinned since the next export differs). This is a file
+a list module reads, not the graph's `Source`, a web page carrying a procurement signal."""
 
 import csv
 import io
@@ -73,6 +69,8 @@ _BLOCKS = frozenset(
 
 
 class Format(StrEnum):
+    """How a list's file is rendered as text."""
+
     CSV = "csv"
     SPREADSHEET = "spreadsheet"
     JSON = "json"
@@ -123,11 +121,10 @@ class ListFile:
     min_rows: int = 0
     # The file inside the ZIP at `url`, when it is one.
     member: str | None = None
-    # Spreadsheets: the worksheets to read, by name and in order, each a table of its own in
-    # the text (its header, then its rows; `Row.sheet` says which); None reads the first. With
-    # several, the kept columns are those each sheet has, and every one must be in some sheet.
-    # Two lists that read two sheets of one workbook share one `ListFile`: a file's bytes have
-    # one stored text, so the sheets are rendered together.
+    # Spreadsheets: the worksheets to read, in order, each its own table in the text
+    # (`Row.sheet` says which); None reads the first. With several, each keeps the columns it
+    # has, and every kept column must be in some sheet. Two lists reading two sheets of one
+    # workbook share one `ListFile`: one file's bytes have one stored text.
     sheets: tuple[str, ...] | None = None
 
     # Text formats only.
@@ -137,17 +134,16 @@ class ListFile:
     # Table formats: the row the header is on, counted from 1. The rows before it (a title, a
     # note) are kept in the text and are no rows, so a line number stays the file's row number.
     header_row: int = 1
-    # Table formats: keep only these columns, in this order. For a wide file read for a few of
-    # its columns; the stored text is the kept columns.
+    # Table formats: keep only these columns, in this order; the stored text is just these.
     columns: tuple[str, ...] | None = None
     # Table formats: one line per distinct row of the kept columns, first seen first. For a file
     # that repeats the rows of interest once per finer unit.
     distinct: bool = False
     # Manual files: the name the file has in the cache when its URL does not end in one.
     filename_override: str | None = None
-    # The file sits on a host that is not its publisher's own (a code host such as
-    # raw.githubusercontent.com, where anyone publishes). The loader admits the host as a
-    # platform, fetchable and never trusted, instead of trusting it as the list's domain.
+    # The host is not the publisher's own (a code host such as raw.githubusercontent.com, where
+    # anyone publishes): the loader admits it as a platform, fetchable and never trusted,
+    # instead of trusting it as the list's domain.
     shared_host: bool = False
     # PDF lists whose records are a table's rows (a directory): the parser reconstructs the
     # tables, so each row is a line of its own and a record is cited by its line. Off, a table
@@ -284,6 +280,7 @@ def fetch(file: ListFile, cache_dir: Path) -> bytes:
 
 
 def open_file(file: ListFile, cache_dir: Path, *, parser: Parser | None = None) -> OpenedFile:
+    """The file fetched (or read from the cache) and rendered."""
     return render(file, fetch(file, cache_dir), parser=parser)
 
 
@@ -335,6 +332,7 @@ def _member(file: ListFile, data: bytes) -> IO[bytes]:
 
 
 def _csv_rows(stream: IO[bytes], encoding: str, delimiter: str) -> Iterator[list[str]]:
+    """A CSV's rows as lists of cells."""
     reader = csv.reader(
         io.TextIOWrapper(stream, encoding=encoding, newline=""), delimiter=delimiter
     )
@@ -450,15 +448,20 @@ def _table(  # noqa: PLR0913 - the accumulators and what fills them
 
 
 def _cell(cells: list[str], index: int) -> str:
+    """The cell at `index`, empty past a short row's end."""
     return cells[index] if index < len(cells) else ""
 
 
 def _json_lines(document: Any) -> list[str]:  # noqa: ANN401 - JSON is any value
+    """One line per record (a top-level list's items, else the document), keys sorted so the
+    text does not depend on the file's key order."""
     records = document if isinstance(document, list) else [document]
     return [json.dumps(record, ensure_ascii=False, sort_keys=True) for record in records]
 
 
 class _VisibleText(HTMLParser):
+    """Collects the text a reader sees, one line per block element, whitespace collapsed."""
+
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.lines: list[str] = []

@@ -27,6 +27,8 @@ FIND_SOURCES = AssignmentType.FIND_SOURCES
 
 
 def prompt_of(db: Database, ctx: SessionContext) -> str:
+    """The briefing a session on `ctx` starts with."""
+
     async def read() -> str:
         async with db.session() as session:
             return await briefing.briefing(ctx, session)
@@ -35,6 +37,8 @@ def prompt_of(db: Database, ctx: SessionContext) -> str:
 
 
 def lines_of(db: Database, ctx: SessionContext) -> list[str]:
+    """The briefing's where-to-look lines."""
+
     async def read() -> list[str]:
         async with db.session() as session:
             return await briefing.where_to_look(ctx, session)

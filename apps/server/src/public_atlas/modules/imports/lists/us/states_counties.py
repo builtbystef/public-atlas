@@ -121,6 +121,7 @@ class Notes:
 
 
 def _state_entry(unit: Unit) -> PlaceEntry:
+    """A state or the District, under the United States."""
     return PlaceEntry(
         name=unit.name,
         level=STATE_LEVEL,
@@ -134,6 +135,7 @@ def _state_entry(unit: Unit) -> PlaceEntry:
 
 
 def _puerto_rico_entry(populations: Mapping[str, tuple[int, int]]) -> PlaceEntry:
+    """Puerto Rico as a state, cited at its row of the estimates table."""
     population, line = populations[PUERTO_RICO]
     citation = Citation(source=PUERTO_RICO_POPULATION.name, line=line)
     return PlaceEntry(
@@ -156,6 +158,7 @@ def _puerto_rico_entry(populations: Mapping[str, tuple[int, int]]) -> PlaceEntry
 
 
 def _county_entry(unit: Unit, notes: Notes) -> PlaceEntry:
+    """A county under its state, with no government when it is consolidated with its city."""
     fields = OVERRIDES.get(unit.fips, {})
     level = fields.get("level", COUNTY_LEVEL)
     if "government" in fields:
@@ -182,6 +185,7 @@ def _county_entry(unit: Unit, notes: Notes) -> PlaceEntry:
 def _municipio_entries(
     gazetteer: OpenedFile, populations: Mapping[str, tuple[int, int]]
 ) -> list[PlaceEntry]:
+    """Puerto Rico's municipios, each cited at its Gazetteer row and its estimates row."""
     entries = []
     for row in gazetteer.rows:
         if row["USPS"] != PUERTO_RICO_USPS:

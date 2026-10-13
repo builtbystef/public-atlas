@@ -15,6 +15,7 @@ from public_atlas.shared.text import normalize_text
 
 
 def normalize_name(text: str) -> str:
+    """A name as institution names are compared."""
     return normalize_text(text)
 
 
@@ -33,10 +34,12 @@ def listed(rules: CountryRules, institution_type: str, source_type: str) -> bool
 
 
 def site_of(url: str) -> str:
+    """The URL's host, case-folded, without `www.`."""
     return (urlsplit(url.strip()).hostname or "").casefold().removeprefix("www.")
 
 
 def same_site(a: str, b: str) -> bool:
+    """Whether two hosts are one site: equal, or one a subdomain of the other."""
     return bool(a) and bool(b) and (a == b or a.endswith("." + b) or b.endswith("." + a))
 
 

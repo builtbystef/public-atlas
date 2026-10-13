@@ -33,12 +33,7 @@ export function TableToolbar({
   );
   const filterRow = (filters || onClear) && (
     <div className="flex flex-wrap items-center gap-2">
-      {/*
-        With a search, the selects get a steady width, the same as the
-        pickers beside them, rather than growing to the table's width or
-        resizing with each choice; otherwise they keep theirs. Buttons and
-        badges keep their own either way.
-      */}
+      {/* With a search, selects take the pickers' steady width instead of resizing. */}
       {filters && (
         <div
           className={cn(

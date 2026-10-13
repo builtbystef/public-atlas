@@ -46,10 +46,11 @@ class Figure(BaseModel):
 
 
 class AliasEntry(BaseModel):
+    """Another name of a place or a body, in a BCP 47 language."""
+
     model_config = ConfigDict(frozen=True)
 
     text: str = Field(min_length=1, max_length=300)
-    # BCP 47.
     language: str = "en"
     is_acronym: bool = False
 
@@ -87,6 +88,8 @@ class PlaceEntry(BaseModel):
 
     @model_validator(mode="after")
     def cited(self) -> Self:
+        """Each fact cited, a homepage a URL with a government to claim it, one code per
+        scheme."""
         if "place" not in self.citations:
             raise ValueError(f"{self.name}: no citation for the place")
         if self.homepage is not None and "homepage" not in self.citations:
@@ -100,6 +103,7 @@ class PlaceEntry(BaseModel):
 
     @property
     def government_citation(self) -> Citation:
+        """The government's line, else the place's."""
         return self.citations.get("government", self.citations["place"])
 
 
@@ -154,6 +158,8 @@ class InstitutionEntry(BaseModel):
 
     @model_validator(mode="after")
     def cited(self) -> Self:
+        """Each fact cited, a homepage a URL, a suggested type only on `other`, one code per
+        scheme."""
         if "institution" not in self.citations:
             raise ValueError(f"{self.name}: no citation for the institution")
         if self.homepage is not None and "homepage" not in self.citations:

@@ -1,3 +1,5 @@
+"""The worker's command line: the queues it serves and how many jobs it runs at once."""
+
 import pytest
 
 from public_atlas.jobs.worker import concurrency_for, parse_args

@@ -216,6 +216,7 @@ async def add_evidence(  # noqa: PLR0913
 
 
 async def evidence_for(session: AsyncSession, entity_id: uuid.UUID) -> list[Evidence]:
+    """Every quote recorded for the entity, oldest first."""
     rows = await session.scalars(
         select(Evidence).where(Evidence.entity_id == entity_id).order_by(Evidence.id)
     )

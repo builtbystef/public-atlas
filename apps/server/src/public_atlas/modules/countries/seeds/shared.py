@@ -145,14 +145,10 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
             "center); it runs no regular schools of its own"
         ),
     },
-    # Bodies of a municipality or region that buy on their own account: their own procurement
-    # page, their own budget, or their own board that approves spending. Business improvement
-    # areas, council committees and tribunals are not institutions: they spend little and buy
-    # through the municipality. A paramedic service has no type either: it is a department of its
-    # municipality or region, which buys and budgets for it. Nor is a board of management for
-    # one facility, a non-profit the municipality only funds, a holding company above a utility,
-    # a subsidiary that buys through its parent, or a board that invests or grants the
-    # municipality's money (eval dataset README, "Scope").
+    # Bodies of a municipality or region that buy on their own account (eval dataset README,
+    # "Scope"). Business improvement areas, council committees, tribunals and paramedic services
+    # have no type: they buy through the municipality. Nor do the bodies `municipal_corporation`
+    # excludes (a facility's board, a funded non-profit, a holding company, and so on).
     {
         "name": "transit_agency",
         "description": (
@@ -219,8 +215,7 @@ INSTITUTION_TYPES: list[dict[str, Any]] = [
             "through its parent, or a board that invests or grants the municipality's money"
         ),
     },
-    # A public body with buying power of its own that fits no type is saved as `other`, with the
-    # type the agent would have given it in `suggested_type`, and sent to review.
+    # Saved with the agent's `suggested_type` and sent to review.
     {
         "name": "other",
         "description": (

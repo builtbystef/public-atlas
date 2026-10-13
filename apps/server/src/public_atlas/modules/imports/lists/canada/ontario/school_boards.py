@@ -125,6 +125,8 @@ def _address(name: str, rows: list[Row], fields: Mapping[str, str]) -> Row:
 
 
 def _entry(name: str, row: Row, fields: Mapping[str, str]) -> InstitutionEntry:
+    """One board at its head office's municipality; a school authority carries its kind as an
+    alias, and an unknown board type is an error."""
     board_type = row["Board Type"]
     aliases: tuple[AliasEntry, ...] = ()
     if board_type in AUTHORITY_KINDS:
@@ -152,4 +154,5 @@ def _entry(name: str, row: Row, fields: Mapping[str, str]) -> InstitutionEntry:
 
 
 def is_school_authority(entry: InstitutionEntry) -> bool:
+    """Whether the entry is a school authority, by the kind alias `_entry` gives one."""
     return any(alias.text in AUTHORITY_KINDS.values() for alias in entry.aliases)

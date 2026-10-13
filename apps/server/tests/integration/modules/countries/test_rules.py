@@ -27,6 +27,7 @@ async def load(db: Database, code: str) -> service.CountryRules:
 
 
 async def edit_tables(db: Database) -> None:
+    """Expect hospitals in municipalities, narrow libraries to procurement, add a platform."""
     async with db.session() as session:
         level = await session.get_one(AdministrativeLevel, ("CA", "municipality"))
         level.expected_institution_types = [*level.expected_institution_types, "hospital"]

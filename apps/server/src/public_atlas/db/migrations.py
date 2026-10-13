@@ -22,6 +22,7 @@ def alembic_config() -> Config:
 
 
 def head_revision() -> str:
+    """The latest migration's revision."""
     head = ScriptDirectory.from_config(alembic_config()).get_current_head()
     if head is None:
         raise RuntimeError("no migrations found under alembic/versions")

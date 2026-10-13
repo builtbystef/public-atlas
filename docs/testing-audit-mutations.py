@@ -1,9 +1,9 @@
 """Hand-made mutation probes: inject one fault, run the tests that should catch it, restore.
 
-Run from apps/server. Each probe names the source file, the exact text to replace, the
-replacement, and the test paths to run. A probe is KILLED when the tests fail, SURVIVED when
-they pass (the suite did not notice the fault).
-"""
+Run from apps/server; arguments are id prefixes (`Q`, `B3`) that limit the run to those probes.
+Each probe names the source file, the exact text to replace, the replacement, and the test paths
+to run. A probe is KILLED when the tests fail, SURVIVED when they pass (the suite did not notice
+the fault), NO-MATCH when the text is no longer in the source."""
 
 import subprocess
 import sys
@@ -169,6 +169,8 @@ PROBES = [
 
 
 def run(probe):
+    """Apply one probe, run its tests, and restore the file with `git checkout`: the name, the
+    outcome, and the first failing test or the last line of output."""
     name, path, old, new, tests = probe
     text = path.read_text()
     if old not in text:
@@ -185,7 +187,6 @@ def run(probe):
         subprocess.run(["git", "checkout", "--", str(path)], check=True)
     tail = [line for line in proc.stdout.splitlines() if line.strip()][-1:]
     status = "KILLED" if proc.returncode != 0 else "SURVIVED"
-    # The first failing test, for the report.
     failing = next((line for line in proc.stdout.splitlines() if line.startswith("FAILED")), "")
     return name, status, (failing or (tail[0] if tail else ""))[:160]
 

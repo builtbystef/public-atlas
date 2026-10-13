@@ -34,10 +34,12 @@ NEW_LIST_PREFIX = "canada/ontario/places/"
 
 
 def _listed(values: list[str]) -> str:
+    """The values as a SQL list of string literals."""
     return ", ".join(f"'{value}'" for value in values)
 
 
 def _rename_lists(old: str, new: str) -> None:
+    """Move every list whose name starts with `old` to the same path under `new`."""
     op.execute(
         sa.text(
             "UPDATE official_lists SET name = :new || substr(name, :cut) WHERE name LIKE :pattern"

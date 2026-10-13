@@ -80,7 +80,7 @@ export function ReviewItemDetail({ id, timeZone }: { id: string; timeZone: strin
     })),
   ];
   const duplicate = item.related.some((related) => related.fact === "duplicate_of");
-  // Set beside other entities, the comparison leads the page; alone, the entity follows the evidence.
+  // With other entities beside it, the comparison leads; alone, the entity follows the evidence.
   const compared = item.related.length > 0;
   const entityCard = (
     <Card>

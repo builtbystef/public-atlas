@@ -113,11 +113,9 @@ export function combine(payloads: readonly GraphOutput[]): {
 const SPAWN_SPREAD = 12;
 
 /**
- * The canvas's next data. A node that stays keeps its object, and with it the
- * position the layout gave it, so a refetch settles the picture instead of
- * redrawing it; its fields are refreshed in place. A new node starts beside a
- * neighbour that already has a position, so it grows out of the picture
- * rather than flying in from the origin.
+ * The canvas's next data. A node that stays keeps its object, and so its position, with its fields
+ * refreshed in place, so a refetch settles the picture instead of redrawing it. A new node starts
+ * beside a placed neighbour rather than flying in from the origin.
  */
 export function withPositions(
   previous: GraphData,
@@ -187,12 +185,9 @@ export const RING_GAP = 110;
 const RING_SPACING = 18;
 
 /**
- * The ring each node sits on: a place's depth below the root, an institution
- * half a step out from its place, a page a little further, a domain just past
- * its pages. The layout pulls each node to its ring, so the picture reads as
- * the hierarchy it is: the root in the middle, each level a ring around it.
- * A node with no path to the root gets no ring and settles where the links
- * leave it.
+ * The ring each node sits on, so the picture reads as its hierarchy: a place at its depth below the
+ * root, an institution half a step out from its place, a page a little further, a domain just past
+ * its pages. A node with no path to the root gets no ring and settles where its links leave it.
  */
 export function rings(
   rootId: string | undefined,

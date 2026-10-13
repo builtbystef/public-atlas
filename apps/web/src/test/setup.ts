@@ -1,8 +1,8 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vite-plus/test";
 
-// Testing Library unmounts after each test only through a global `afterEach`,
-// which Vitest does not provide without `globals`; so it is wired here.
+// Testing Library's automatic cleanup needs a global `afterEach`, which Vitest lacks
+// without `globals`.
 afterEach(() => {
   cleanup();
 });

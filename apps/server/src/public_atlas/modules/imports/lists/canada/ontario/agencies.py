@@ -111,6 +111,7 @@ def split_name(text: str, language: str = "en") -> tuple[str, list[AliasEntry]]:
 
 
 def ministry_name(column: str) -> str:
+    """The ministry the column names: "Health" is the Ministry of Health."""
     return MINISTRY_NAMES.get(column, f"Ministry of {column}")
 
 

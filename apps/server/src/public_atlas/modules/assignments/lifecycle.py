@@ -12,12 +12,11 @@ from public_atlas.shared.exceptions import ConflictError
 
 __all__ = ["MOVES", "cancel", "finish", "move", "queue", "start"]
 
-# From each status, where it may go.
 MOVES: dict[AssignmentStatus, frozenset[AssignmentStatus]] = {
     AssignmentStatus.HELD: frozenset({AssignmentStatus.QUEUED, AssignmentStatus.CANCELLED}),
     AssignmentStatus.QUEUED: frozenset({AssignmentStatus.RUNNING, AssignmentStatus.CANCELLED}),
-    # Running goes back to queued when a job has run its twenty sessions and requeues itself, and
-    # to cancelled when its run was stopped: after its session, by the runner alone.
+    # Back to queued when a job has run its twenty sessions; to cancelled when its run was
+    # stopped, by the runner alone after its session.
     AssignmentStatus.RUNNING: frozenset(
         {AssignmentStatus.QUEUED, AssignmentStatus.FINISHED, AssignmentStatus.CANCELLED}
     ),
@@ -53,6 +52,7 @@ def start(assignment: Assignment) -> None:
 
 
 def finish(assignment: Assignment, result: AssignmentResult, *, summary: str | None = None) -> None:
+    """Finish with `result` and stop the clock; a summary, when given, replaces the old one."""
     move(assignment, AssignmentStatus.FINISHED, result=result)
     assignment.finished_at = utcnow()
     if summary is not None:

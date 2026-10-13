@@ -128,6 +128,7 @@ class Manager:
 
     @property
     def is_board(self) -> bool:
+        """Whether the manager is a board, by its name, rather than a municipality."""
         return bool(_BOARD.search(self.name))
 
 

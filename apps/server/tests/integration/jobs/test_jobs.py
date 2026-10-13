@@ -1,3 +1,5 @@
+"""The job queue: registration, queues, retries, stalled workers and the purge."""
+
 import importlib
 import logging
 import pkgutil
@@ -26,6 +28,7 @@ SETTLED: list[dict[str, object]] = []
 
 
 async def settle(res: Resources, **kwargs: object) -> None:
+    """Record what the hook was handed in `SETTLED`."""
     SETTLED.append(kwargs)
 
 

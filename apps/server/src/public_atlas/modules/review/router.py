@@ -70,6 +70,7 @@ async def _spawned(
 async def _decision(
     session: SessionDep, resources: ResourcesDep, decision: service.Decision
 ) -> DecisionOutput:
+    """Create the decision's work, commit, and answer with the item and what it set off."""
     spawned = await _spawned(session, resources, [decision.item], decision.spawn)
     await session.commit()
     return DecisionOutput(
@@ -82,6 +83,7 @@ async def _decision(
 async def _kind_decision(
     session: SessionDep, resources: ResourcesDep, decision: service.KindDecision
 ) -> KindDecisionOutput:
+    """As `_decision`, for every item of a kind decided together."""
     spawned = await _spawned(session, resources, decision.items, decision.spawn)
     await session.commit()
     return KindDecisionOutput(
@@ -93,6 +95,7 @@ async def _kind_decision(
 
 
 def _row(row: service.Row) -> ReviewRow:
+    """A queue row as the API shows it, identified by its first item."""
     first = row.members[0].item
     return ReviewRow(
         id=first.id,

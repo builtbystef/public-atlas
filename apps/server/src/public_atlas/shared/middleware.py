@@ -1,3 +1,5 @@
+"""The request-ID middleware: one ID per request, in its logs, its response and its access line."""
+
 import logging
 import time
 from typing import TYPE_CHECKING
@@ -21,8 +23,8 @@ INTERNAL_ERROR_DETAIL = "Something went wrong. Quote the request ID when reporti
 
 
 def _incoming_request_id(scope: Scope) -> str | None:
-    """A caller's ID, if it is short printable ASCII (log lines and headers must
-    stay clean). `None` to make one."""
+    """The caller's ID, if it is short printable ASCII (log lines and headers must stay clean);
+    None to make one."""
     header = REQUEST_ID_HEADER.lower().encode()
     for name, value in scope["headers"]:
         if name == header:
@@ -43,12 +45,9 @@ def is_health_check(path: str) -> bool:
 
 
 class RequestIdMiddleware:
-    """Sets the request ID for the request, echoes it in the response, answers an
-    unhandled error with a 500 that quotes it, and writes the access log line.
-
-    Pure ASGI, so it costs one dict lookup per request rather than a task per
-    request like `BaseHTTPMiddleware`.
-    """
+    """Sets the request ID for the request, echoes it in the response, answers an unhandled error
+    with a 500 that quotes it, and writes the access log line. Pure ASGI, so it costs one dict
+    lookup per request rather than a task per request like `BaseHTTPMiddleware`."""
 
     def __init__(self, app: ASGIApp) -> None:
         self.app = app

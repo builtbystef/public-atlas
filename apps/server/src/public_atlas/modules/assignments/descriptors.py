@@ -44,13 +44,14 @@ class Budget:
 
 @dataclass(frozen=True, slots=True)
 class Descriptor:
+    """Everything an assignment type fixes: its subject, tools, goal, checklist, budget, model."""
+
     type: AssignmentType
     subject_kind: EntityKind
     # By name, as the agent module's adapter registers them (spec section 8.1).
     tools: tuple[str, ...]
-    # The tools that end the assignment.
     finishing_tools: tuple[str, ...]
-    # The goal, as the briefing states it.
+    # As the briefing states it.
     goal: str
     checklist: Checklist
     budget: Budget
@@ -58,7 +59,7 @@ class Descriptor:
 
 
 LUNA = "gpt-6-luna"
-# Luna's context window, in tokens.
+# In tokens.
 LUNA_WINDOW = 272_000
 
 # For handoff notes and summaries, which compress state the database already holds.
@@ -67,8 +68,8 @@ HANDOFF_MODEL = ModelChoice(LUNA, "medium", LUNA_WINDOW)
 # What every type gets besides the browser: files, its own status, and a human to ask.
 SHARED = ("read_file", "status", "request_review")
 
-# For the discovery types, which read long lists. On the first crawl, reading a list's CSV
-# took 4 sessions where paging the HTML table 20 rows at a time took 7 or more.
+# For the discovery types, which read long lists. On the first crawl a list's CSV took 4
+# sessions where paging its HTML table took 7 or more.
 DOWNLOAD_FIRST = (
     "When a list page links to a download of the list (CSV, spreadsheet, JSON) on an allowed "
     "domain, read it once with read_file instead of paging the table, and compare its row "
@@ -187,9 +188,9 @@ DESCRIPTORS: dict[AssignmentType, Descriptor] = {
             "refused once."
         ),
         checklist=Checklist.INSTITUTION_TYPES,
-        # 250 requests: Toronto's discovery spent 150 with bodies still unfound. The stall rule
-        # in `agent/runner.py` ends an assignment that has stopped finding things, so the
-        # larger cap is not spent on nothing.
+        # Toronto's discovery spent 150 requests with bodies still unfound. The stall rule in
+        # `agent/runner.py` ends an assignment that stops finding things, so the cap is not
+        # spent on nothing.
         budget=Budget(requests=250, tokens=20_000_000),
         model=ModelChoice(LUNA, "xhigh", LUNA_WINDOW),
     ),

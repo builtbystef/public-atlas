@@ -19,6 +19,7 @@ DomainName = Annotated[
 
 
 def compiled(pattern: str | None) -> str | None:
+    """`pattern` unchanged, or a `ValueError` when it is not a regular expression."""
     if pattern is not None:
         try:
             re.compile(pattern)
@@ -184,6 +185,7 @@ class SharedSeed(BaseModel):
 
     @model_validator(mode="after")
     def consistent(self) -> Self:
+        """Names are unique, and the default sources name known types on both sides."""
         unique_names(self.institution_types, "institution type")
         unique_names(self.source_types, "source type")
         for institution_type, sources in self.default_expected_source_types.items():
@@ -233,6 +235,7 @@ class CountrySeed(BaseModel):
 
     @model_validator(mode="after")
     def consistent(self) -> Self:
+        """No level, type or platform twice, and the levels and places hang together."""
         unique_names(self.administrative_levels, "administrative level")
         if len(self.institution_type_names) != len(self.institution_types):
             raise ValueError("an institution type is listed twice")
@@ -243,6 +246,7 @@ class CountrySeed(BaseModel):
         return self
 
     def _check_levels(self) -> None:
+        """Every type a level expects, its government's included, is one the country uses."""
         for level in self.administrative_levels:
             expected = [level.government_institution_type, *level.expected_institution_types]
             if unknown := set(expected) - self.institution_type_names:
@@ -278,12 +282,14 @@ class CountrySeed(BaseModel):
 
 
 def distinct(values: list[str]) -> list[str]:
+    """`values` unchanged, or a `ValueError` when one repeats."""
     if len(set(values)) != len(values):
         raise ValueError("a name is listed twice")
     return values
 
 
 def unique_names(rows: list[Any], what: str) -> None:
+    """Refuse rows that share a `name`; `what` names them in the error."""
     names = [row.name for row in rows]
     if len(set(names)) != len(names):
         raise ValueError(f"an {what} is listed twice")

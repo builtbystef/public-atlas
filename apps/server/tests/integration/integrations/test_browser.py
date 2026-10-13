@@ -30,11 +30,12 @@ def make_browser(capture: PageCapture) -> Browser:
 
 @pytest.fixture(autouse=True)
 def _fresh_pacing(monkeypatch: pytest.MonkeyPatch) -> None:
-    # The pacing table is process-wide; a host one test made rest would slow the next test.
+    """An empty pacing table. It is process-wide: a host one test made rest would slow the next."""
     monkeypatch.setattr(policy_module, "_next_slot", {})
 
 
 async def rows(db: Database, assignment: Assignment) -> tuple[list[str], list[Snapshot], list[str]]:
+    """The page URLs, the snapshots and the assignment's blocked URLs, each in order."""
     async with db.session() as session:
         urls = list(await session.scalars(select(Webpage.url).order_by(Webpage.url)))
         snapshots = list(await session.scalars(select(Snapshot).order_by(Snapshot.fetched_at)))
@@ -85,8 +86,7 @@ def test_every_navigating_tool_produces_a_snapshot_and_a_refusal_a_blocked_attem
     urls, snapshots, blocked = db.run(rows, db, assignment)
     # Only the pages that opened have a row; a refused URL has none.
     assert urls == [f"{site.allowed}/", f"{site.allowed}/agency"]
-    # The index twice (the second time after go_back) is the same bytes for the same assignment:
-    # one snapshot.
+    # The index seen again after go_back is the same bytes for the same assignment: one snapshot.
     assert [snapshot.filename for snapshot in snapshots] == ["page.html", "page.html"]
     assert capture.visited == [f"{site.allowed}/", f"{site.allowed}/agency", f"{site.allowed}/"]
     assert blocked == [

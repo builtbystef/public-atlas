@@ -1,4 +1,7 @@
+"""Text repair and folding: mojibake, typographic punctuation and name keys."""
+
 # ruff: noqa: RUF001 - the odd characters are the point
+
 from public_atlas.shared.text import name_key, normalize_text, repair_mojibake
 
 

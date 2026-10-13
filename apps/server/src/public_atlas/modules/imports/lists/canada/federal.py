@@ -112,7 +112,6 @@ TYPES: dict[str, str] = {
     "Joint Enterprises": OTHER,
     "Other Organizations": OTHER,
 }
-# The chambers of Parliament.
 CHAMBERS = frozenset({"House of Commons", "Senate"})
 _AIRPORT = re.compile(r"\b(airports?|aéroports?)\b", re.IGNORECASE)
 _PORT = re.compile(r"\bport authority\b", re.IGNORECASE)

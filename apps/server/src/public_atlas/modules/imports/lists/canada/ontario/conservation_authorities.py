@@ -96,6 +96,7 @@ def read_layer(opened: OpenedFile) -> list[Record]:
     count: int | None = None
 
     def close() -> None:
+        """End the record being read, keeping it when it has a legal name."""
         if "LEGAL_NAME" in fields:
             legal, line = fields["LEGAL_NAME"]
             common, _ = fields.get("COMMON_NAME", ("", 0))

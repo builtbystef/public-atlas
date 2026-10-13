@@ -61,6 +61,7 @@ class _Events:
         )
 
     def request(self, message: ModelRequest) -> None:
+        """The prompts and tool results of one request."""
         for part in message.parts:
             match part:
                 case UserPromptPart():
@@ -82,6 +83,7 @@ class _Events:
                     continue
 
     def response(self, message: ModelResponse) -> None:
+        """The model's texts and tool calls of one response."""
         for part in message.parts:
             match part:
                 case TextPart():

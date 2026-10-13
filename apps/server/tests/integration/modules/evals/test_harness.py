@@ -126,6 +126,7 @@ def town_file() -> SubjectFile:
 
 
 def ministry_file() -> SubjectFile:
+    """A ministry of Ontario with one procurement source, under the province's own homepage."""
     return SubjectFile.model_validate(
         {
             "subject": {
@@ -214,6 +215,7 @@ def finishing(scripted: Callable[[Script], Resources], finish_script: Callable[.
 
 
 def seed_town(in_session: Callable[..., Any], resources: Resources, world: World) -> harness.Seeded:
+    """The town's file seeded into the world's run."""
     return in_session(
         lambda session: harness.seed_subject(
             session, resources, world.run, world.rules, town_file(), slug="fixture"
@@ -658,6 +660,7 @@ def eval_resources(finishing: Resources, settings: Settings) -> Resources:
 
 @pytest.fixture
 def subject_file(tmp_path: Path) -> Path:
+    """The town's subject file, written out as YAML."""
     path = tmp_path / "fixture.yaml"
     path.write_text(yaml.safe_dump(town_data(), sort_keys=False))
     return path

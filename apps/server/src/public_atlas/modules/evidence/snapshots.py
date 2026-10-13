@@ -48,6 +48,7 @@ def has_text(snapshot: Snapshot) -> bool:
 
 
 def _copy_text(target: Snapshot, source: Snapshot) -> None:
+    """Give `target` the text `source` holds, with its status and page counts."""
     target.text_key = source.text_key
     target.text_status = source.text_status
     target.page_count = source.page_count
@@ -188,6 +189,7 @@ async def snapshot_text(store: ObjectStore, snapshot: Snapshot) -> str:
 
 
 async def snapshot_bytes(store: ObjectStore, snapshot: Snapshot) -> bytes | None:
+    """The stored bytes; None once pruned or missing from the store."""
     if snapshot.pruned_at is not None:
         return None
     try:

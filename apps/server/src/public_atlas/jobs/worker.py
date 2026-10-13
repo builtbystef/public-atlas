@@ -49,6 +49,7 @@ def concurrency_for(queues: list[Queue], configured: int) -> int:
 
 
 async def run(settings: Settings, queues: list[Queue]) -> None:
+    """Serve `queues` until stopped; a parse worker loads the parser's models first."""
     logs.configure(settings.log_level, settings.log_format)
     if (handler := telemetry.configure(settings, service_name="public-atlas-worker")) is not None:
         logging.getLogger().addHandler(handler)
@@ -68,6 +69,7 @@ async def run(settings: Settings, queues: list[Queue]) -> None:
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """`public-atlas-worker`."""
     queues = parse_args(argv)
     asyncio.run(run(Settings(), queues))
 

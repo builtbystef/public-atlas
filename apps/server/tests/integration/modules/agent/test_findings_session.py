@@ -64,6 +64,7 @@ def discover(
     context: Callable[[Assignment], SessionContext],
     capture: Capture,
 ) -> SessionContext:
+    """A `find_institutions` session on the region Elm, with the towns page captured."""
     assignment = make_assignment(FIND_INSTITUTIONS, world.elm.id)
     capture.towns(assignment.id)
     return context(assignment)

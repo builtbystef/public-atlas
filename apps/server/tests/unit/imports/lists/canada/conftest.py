@@ -27,6 +27,7 @@ def sibling_namesakes(  # noqa: C901 - the loader's matching, replayed step by s
     naming = rules.naming
 
     def kind(entry: PlaceEntry) -> set[int]:
+        """The designators around the place's name in its government's."""
         assert entry.government is not None, entry.name
         return naming.designators_in(
             naming.key(entry.government).replace(naming.key(entry.name), " ")

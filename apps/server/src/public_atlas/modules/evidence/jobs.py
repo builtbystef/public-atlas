@@ -30,8 +30,8 @@ WORKER_DIED = "The parse worker stopped while parsing this file"
 
 
 async def abandoned(res: Resources, *, snapshot_id: str) -> None:
-    """Runs on whichever worker finds a job whose own worker died on its last attempt. No
-    parser is loaded; the file is just recorded `failed`."""
+    """Record the file `failed` when its worker died on the last attempt. Runs on whichever
+    worker finds the job, with no parser loaded."""
     await record_failed(res, uuid.UUID(snapshot_id), error=WORKER_DIED)
 
 
@@ -66,9 +66,9 @@ def pages_per_range(attempt: Attempt) -> int | None:
 
 
 async def parse(res: Resources, snapshot_id: uuid.UUID, *, through: int | None = None) -> str:
-    """A parse the parser refuses outright is recorded `failed` at once: the same bytes would
-    fail again. Any other error is retried by the queue and recorded `failed` on the last
-    attempt."""
+    """Parse the snapshot's next range. A parse the parser refuses outright is recorded `failed`
+    at once, since the same bytes would fail again; any other error is retried by the queue and
+    recorded `failed` on the last attempt."""
     try:
         return await _parse(res, snapshot_id, through=through)
     except Exception as exc:
@@ -91,6 +91,7 @@ def _next_range(snapshot: Snapshot, through: int | None) -> int | None:
 
 
 async def _parse(res: Resources, snapshot_id: uuid.UUID, *, through: int | None) -> str:
+    """Parse and store the next range, appending to the text so far; returns what happened."""
     async with res.session() as session:
         snapshot = await session.get(Snapshot, snapshot_id)
         if snapshot is None:

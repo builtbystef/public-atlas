@@ -43,6 +43,7 @@ router = APIRouter(tags=["runs"])
 
 
 async def _detail(session: SessionDep, run_id: uuid.UUID) -> RunDetail:
+    """The run with its progress and cost."""
     run = await service.get_run(session, run_id)
     return RunDetail(
         **RunOutput.model_validate(run).model_dump(), progress=await service.progress(session, run)

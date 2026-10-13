@@ -26,6 +26,8 @@ from public_atlas.modules.graph.models import (
 
 @dataclass(frozen=True, slots=True)
 class PlaceRow:
+    """A place, with its names (its own first) and its official code."""
+
     id: uuid.UUID
     level: str
     parent_id: uuid.UUID | None
@@ -39,6 +41,8 @@ class PlaceRow:
 
 @dataclass(frozen=True, slots=True)
 class InstitutionRow:
+    """An institution, with its names (its own first), verified homepage and parent."""
+
     id: uuid.UUID
     place_id: uuid.UUID
     type: str
@@ -61,6 +65,8 @@ class HomepageRow:
 
 @dataclass(frozen=True, slots=True)
 class SourceRow:
+    """A saved source, whatever its status."""
+
     institution_id: uuid.UUID
     source_type: str
     url: str
@@ -69,6 +75,8 @@ class SourceRow:
 
 @dataclass(frozen=True, slots=True)
 class DomainRow:
+    """A domain and what was decided about it."""
+
     name: str
     status: str
     # Official, as opposed to a platform: trusted once verified.
@@ -77,6 +85,8 @@ class DomainRow:
 
 @dataclass(frozen=True, slots=True)
 class AssignmentRow:
+    """An assignment and how it finished."""
+
     type: str
     subject_id: uuid.UUID
     status: str
@@ -102,6 +112,7 @@ class Graph:
         return [s for s in self.sources if s.institution_id == institution_id]
 
     def claimed_urls(self, institution_id: uuid.UUID) -> tuple[str, ...]:
+        """Every homepage URL claimed for the institution, oldest first."""
         return tuple(row.url for row in self.homepages.get(institution_id, ()))
 
     def summary_of(self, type_: AssignmentType, subject_id: uuid.UUID) -> str | None:
@@ -120,6 +131,7 @@ class Graph:
 
 
 async def load_graph(session: AsyncSession) -> Graph:
+    """The whole database as the scorer reads it, in a few queries."""
     graph = Graph()
     names: dict[uuid.UUID, list[str]] = {}
     for place_id, institution_id, text in (

@@ -5,8 +5,7 @@ returns what the assignments module should spawn (spec section 7.3). The rules, 
 list loader and the country seed all call these functions and nothing else changes a status.
 
 Every function here flushes and leaves the commit to the caller, so a decision and what it sets
-in motion land together or not at all.
-"""
+in motion land together or not at all."""
 
 import logging
 from collections.abc import Iterator, Sequence
@@ -71,6 +70,8 @@ MERGED = "the institution was merged into another"
 
 @dataclass(frozen=True, slots=True)
 class StatusChange:
+    """One status change, as a preview records it."""
+
     entity: Entity
     before: EntityStatus
     after: EntityStatus
@@ -340,6 +341,7 @@ async def reject_place(
 async def verify_source(
     session: AsyncSession, source: Source, *, entered_by: EnteredBy
 ) -> list[Spawn]:
+    """The source is the institution's and of its type. Nothing is spawned."""
     _set_status(source, EntityStatus.VERIFIED, entered_by)
     await session.flush()
     return []
@@ -348,6 +350,7 @@ async def verify_source(
 async def reject_source(
     session: AsyncSession, source: Source, *, entered_by: EnteredBy
 ) -> list[Spawn]:
+    """The source is not what it was saved as. Nothing is spawned."""
     _set_status(source, EntityStatus.REJECTED, entered_by)
     await session.flush()
     return []
@@ -401,6 +404,8 @@ async def merge_entities(
 async def _merge_institutions(
     session: AsyncSession, duplicate: Institution, into: Institution, entered_by: EnteredBy
 ) -> None:
+    """Refused when `duplicate` governs a place `into` cannot govern, or both have a verified
+    homepage; otherwise everything of `duplicate` moves to `into`, the government link with it."""
     governed = await session.scalar(
         select(Place).where(Place.government_institution_id == duplicate.id)
     )
@@ -445,6 +450,8 @@ async def _merge_institutions(
 async def _merge_places(
     session: AsyncSession, duplicate: Place, into: Place, entered_by: EnteredBy
 ) -> None:
+    """Refused across countries or levels; otherwise everything of `duplicate`, its institutions
+    included, moves to `into`, and two governments are merged in turn."""
     if duplicate.country_code != into.country_code:
         raise ConflictError("the places are in different countries")
     if duplicate.administrative_level != into.administrative_level:
@@ -500,6 +507,7 @@ async def _move_attachments(
 
 
 def _owner(row: Alias | Identifier | Metric, into: Place | Institution) -> None:
+    """Point an attachment row at `into`."""
     if isinstance(into, Place):
         row.place_id = into.id
     else:
@@ -509,6 +517,7 @@ def _owner(row: Alias | Identifier | Metric, into: Place | Institution) -> None:
 async def _move_aliases(
     session: AsyncSession, duplicate: Place | Institution, into: Place | Institution
 ) -> None:
+    """An alias the survivor has already is dropped; the rest move."""
     column = Alias.place_id if isinstance(duplicate, Place) else Alias.institution_id
     held = set(await session.scalars(select(Alias.text).where(column == into.id)))
     for alias in await session.scalars(select(Alias).where(column == duplicate.id)):
@@ -563,6 +572,7 @@ async def _move_identifiers(
 async def _move_metrics(
     session: AsyncSession, duplicate: Place | Institution, into: Place | Institution
 ) -> None:
+    """A figure for a name and year the survivor has already stays on the duplicate."""
     column = Metric.place_id if isinstance(duplicate, Place) else Metric.institution_id
     years = set(
         (await session.execute(select(Metric.name, Metric.year).where(column == into.id)))
@@ -579,6 +589,7 @@ async def _move_metrics(
 async def _move_served_places(
     session: AsyncSession, duplicate: Institution, into: Institution
 ) -> None:
+    """The places the duplicate serves, served by the survivor instead."""
     for served in await session.scalars(
         select(InstitutionServedPlace).where(InstitutionServedPlace.institution_id == duplicate.id)
     ):
@@ -637,4 +648,5 @@ async def _move_homepages(
 
 
 def _distinct(spawns: Sequence[Spawn]) -> list[Spawn]:
+    """Each spawn once, in order."""
     return list(dict.fromkeys(spawns))

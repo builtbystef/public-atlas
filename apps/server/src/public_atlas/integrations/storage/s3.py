@@ -1,3 +1,6 @@
+"""The object store on S3 or an S3-compatible service (RustFS, MinIO, Cloudflare R2), with
+presigned URLs for the browser."""
+
 from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Self
@@ -15,15 +18,16 @@ if TYPE_CHECKING:
     from types_aiobotocore_s3 import S3Client
     from types_aiobotocore_s3.type_defs import ObjectIdentifierTypeDef
 
+# The error codes the services answer for a missing object.
 MISSING = {"404", "NoSuchKey", "NotFound"}
 # S3 deletes at most this many keys per request.
 DELETE_BATCH = 1000
 
 
 def content_disposition(filename: str) -> str:
-    """`attachment` with the name in both the ASCII form (for old clients) and the
-    RFC 5987 UTF-8 form (which every browser prefers). The ASCII form is a
-    quoted-string, so quotes, backslashes, and control characters are replaced."""
+    """`attachment` with the name in both the ASCII form (for old clients) and the RFC 5987
+    UTF-8 form (which every browser prefers). The ASCII form is a quoted-string, so quotes,
+    backslashes, and control characters are replaced."""
     ascii_name = "".join(
         c if c.isprintable() and c != "\\" else "_"
         for c in filename.encode("ascii", "replace").decode()
@@ -33,23 +37,24 @@ def content_disposition(filename: str) -> str:
 
 @dataclass(frozen=True, slots=True)
 class S3Config:
+    """The bucket, its credentials, and how to address the service."""
+
     bucket: str
     access_key: str
     secret_key: str
     region: str = "us-east-1"
     # `None` is AWS itself.
     endpoint_url: str | None = None
-    # The address the browser reaches the service at, when it differs from the one
-    # the API uses (inside Docker, say). Presigned URLs embed the host they were
-    # signed for, so they are signed with this one.
+    # The address the browser reaches the service at, when it differs from the one the API uses
+    # (inside Docker, say). Presigned URLs embed the host they were signed for.
     public_endpoint_url: str | None = None
     # `host/bucket/key` (RustFS, MinIO) rather than `bucket.host/key` (AWS).
     path_style: bool = True
 
 
 class S3ObjectStore:
-    """One bucket on an S3-compatible service. Use as an async context manager: the
-    clients are opened on enter."""
+    """One bucket on an S3-compatible service. Use as an async context manager: the clients are
+    opened on enter."""
 
     def __init__(self, config: S3Config) -> None:
         self.bucket = config.bucket
@@ -96,6 +101,7 @@ class S3ObjectStore:
 
     @property
     def signer(self) -> S3Client:
+        """The client presigned URLs are made with: the public endpoint's when it differs."""
         if self._signer is None:
             msg = "S3ObjectStore is used outside its `async with` block"
             raise RuntimeError(msg)
@@ -150,9 +156,8 @@ class S3ObjectStore:
     async def upload_url(
         self, key: str, content_type: str, size: int, expires_in: timedelta
     ) -> str:
-        # `ContentType` and `ContentLength` become signed headers: a PUT with another
-        # type or another body size fails the signature check before anything is
-        # written.
+        # `ContentType` and `ContentLength` become signed headers: a PUT with another type or
+        # body size fails the signature check before anything is written.
         return await self.signer.generate_presigned_url(
             "put_object",
             Params={

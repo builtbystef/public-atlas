@@ -136,6 +136,7 @@ class UnitType:
 
 
 def _types(rows: list[tuple[str, str, str]]) -> dict[str, UnitType]:
+    """A type table from rows of code, name and space-separated province codes."""
     return {
         code: UnitType(code=code, name=name, provinces=frozenset(provinces.split()))
         for code, name, provinces in rows
@@ -597,11 +598,14 @@ class Draft:
     cite_population: bool = True
 
     def alias(self, text: str, language: str = "en") -> None:
+        """Add an alias, whitespace collapsed, unless it is empty, the name or held already."""
         text = " ".join(text.split())
         if text and text != self.name and all(alias.text != text for alias in self.aliases):
             self.aliases.append(AliasEntry(text=text, language=language))
 
     def entry(self) -> PlaceEntry:
+        """The place entry. The homepage is cited at its own line, else the government's, else
+        the census line."""
         place = Citation(source=POPULATION.name, line=self.unit.line)
         citations: dict[Fact, Citation] = {"place": place}
         if self.government_citation is not None:

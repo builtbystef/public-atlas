@@ -54,6 +54,7 @@ def discover(
     context: Callable[[Assignment], SessionContext],
     capture: Capture,
 ) -> SessionContext:
+    """A `find_institutions` session on the region Elm, with the towns page captured."""
     assignment = make_assignment(FIND_INSTITUTIONS, world.elm.id)
     capture.towns(assignment.id)
     return context(assignment)
@@ -75,6 +76,8 @@ def library(db: Database, world: World, build: type[Build]) -> Institution:
 
 
 def homepage_of(db: Database, institution_id: uuid.UUID) -> tuple[Institution, list[Homepage]]:
+    """The institution and its homepage claims."""
+
     async def read() -> tuple[Institution, list[Homepage]]:
         async with db.session() as session:
             row = await session.get_one(Institution, institution_id)
@@ -84,6 +87,8 @@ def homepage_of(db: Database, institution_id: uuid.UUID) -> tuple[Institution, l
 
 
 def spawned_for(db: Database, subject_id: uuid.UUID) -> list[tuple[AssignmentType, str]]:
+    """The assignments spawned on `subject_id`, as type and status."""
+
     async def read() -> list[tuple[AssignmentType, str]]:
         async with db.session() as session:
             rows = await assignments.list_assignments(session, subject_id=subject_id)

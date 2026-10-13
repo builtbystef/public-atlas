@@ -99,6 +99,7 @@ def read_units(opened: OpenedFile, sheet: str) -> list[GovernmentUnit]:
 
 
 def _unit(row: Row) -> GovernmentUnit:
+    """A row as a unit, its codes zero-padded to their widths."""
     return GovernmentUnit(
         gid=row.get("CENSUS_ID_GIDID") or None,
         name=" ".join(row["UNIT_NAME"].split()),
@@ -204,6 +205,8 @@ def title_case(name: str) -> str:
 
 
 def _recase(match: re.Match[str], *, first: bool) -> str:
+    """One word of a capitalized name recased: an abbreviation kept, an ordinal's suffix and a
+    small word inside the name lower case, "MCHENRY" as "McHenry"."""
     word = match.group()
     if word in _ACRONYMS:
         return word

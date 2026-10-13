@@ -14,6 +14,7 @@ BY_HAND = Prices(
 
 
 def model_cost(units: int, cached: int, output: int) -> Decimal | None:
+    """A call to the model `m`, priced from `BY_HAND`."""
     return BY_HAND.cost(UsageKind.MODEL, "m", units=units, cached_units=cached, output_units=output)
 
 
@@ -39,9 +40,7 @@ def test_a_search_is_priced_per_request_and_an_unknown_provider_has_no_price():
 
 def test_cached_tokens_are_never_charged_twice():
     """`units` counts every token; the cached input and the output are priced at their own
-    rates and only the rest at the input rate, so an all-cached call costs the cached price
-    alone, a call whose cached and output tokens account for every token has no uncached
-    input to charge, and a call of no tokens costs nothing."""
+    rates and only the rest at the input rate."""
     # A million input tokens, every one served from the cache: $0.10, not $2.10.
     assert model_cost(1_000_000, 1_000_000, 0) == Decimal("0.1")
     # 90 cached plus 20 output is more than the 100 reported: nothing is uncached.

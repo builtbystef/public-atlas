@@ -94,7 +94,7 @@ class InlineConnector(InMemoryConnector):
         for row in rows:
             job = self.jobs[row["id"]]
             if job["status"] == "todo" and job["scheduled_at"]:
-                # Put back for later (a paused run's assignment): not run now.
+                # Scheduled for later (a paused run's assignment), so not run now.
                 continue
             assert job["status"] == "succeeded", job
         return rows
@@ -120,9 +120,8 @@ def app_client(app: FastAPI, queue: InlineConnector) -> Iterator[TestClient]:
     with TestClient(app) as client:
         resources: Resources = client.app_state["resources"]
         queue.resources = resources
-        # A worker fires a periodic task on start when its last tick was less than this many
-        # seconds ago (ten minutes by default). The tests start a worker per deferred job, so
-        # never.
+        # A worker fires a periodic task on start if its last tick was within `max_delay` (ten
+        # minutes by default); here a worker starts per deferred job, so never.
         resources.jobs.periodic_defaults["max_delay"] = 0
         yield client
 
@@ -148,7 +147,7 @@ class Database:
         return self.portal.call(guarded)
 
     def session(self) -> AsyncSession:
-        # commit() releases a savepoint; the fixture rolls back the outer transaction.
+        """A session in the test transaction: `commit()` only releases a savepoint."""
         return AsyncSession(
             bind=self.connection, join_transaction_mode="create_savepoint", expire_on_commit=False
         )
@@ -160,13 +159,14 @@ class Database:
 
 
 async def _begin(engine: AsyncEngine) -> AsyncConnection:
+    """Open the test transaction, with the schema created and stamped at head."""
     try:
         connection = await engine.connect()
     except OperationalError as exc:
         pytest.fail(f"PostgreSQL is not reachable at {engine.url}. Run `vp run infra:up`. ({exc})")
     await connection.begin()
     await connection.run_sync(Base.metadata.create_all)
-    # Stamped at head, as a migrated database is: the eval service checks before it starts.
+    # The eval service checks the database is at head before it starts.
     await connection.run_sync(migrations.stamp_head)
     return connection
 
@@ -262,10 +262,12 @@ THROTTLED = "throttled"
 
 
 class _Handler(BaseHTTPRequestHandler):
+    """Serves `pages` by path and records every request."""
+
     pages: ClassVar[dict[str, tuple[str, bytes]]] = {}
-    # Every path asked for, so a test can check what the browser did not fetch.
+    # Every path asked for, so a test can check what the browser did not fetch, and the same with
+    # the host each was asked of (`127.0.0.1:<port>` or `localhost:<port>`).
     requested: ClassVar[list[str]] = []
-    # The same with the host each was asked of: `127.0.0.1:<port>` or `localhost:<port>`.
     requests: ClassVar[list[tuple[str, str]]] = []
 
     def do_GET(self) -> None:
@@ -377,6 +379,7 @@ LEAKY_HTML = b"""<!doctype html><html><head><title>Fixture Leaky</title></head>
 
 @pytest.fixture
 def site() -> Iterator[FixtureSite]:
+    """The fixture site, running, with the `{port}` in its off-allowlist links filled in."""
     pages = {
         "/": ("text/html; charset=utf-8", INDEX_HTML),
         "/agency": ("text/html; charset=utf-8", AGENCY_HTML),

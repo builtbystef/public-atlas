@@ -1,6 +1,6 @@
 """What the United States lists' rule tests share: the country's rules and the places the two
-places lists load, which the other lists attach their bodies to, looked up as the loader looks
-them up. The files of a list come from the fixtures every list's tests share."""
+places lists load, which the other lists attach their bodies to, looked up as the loader does.
+A list's files come from the fixtures every list's tests share."""
 
 from typing import Any
 

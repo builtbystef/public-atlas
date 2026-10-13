@@ -19,6 +19,8 @@ MAX_RETRIES = 8
 
 
 class OpenAIModels:
+    """OpenAI's Responses API over one shared client, with one model object per model name."""
+
     def __init__(self, api_key: str) -> None:
         self._client = AsyncOpenAI(api_key=api_key, max_retries=MAX_RETRIES)
         self._models: dict[str, Model] = {}

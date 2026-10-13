@@ -100,6 +100,7 @@ class SeedReport:
 
     @property
     def added(self) -> int:
+        """Rows added across every table."""
         return sum(
             getattr(self, item.name) for item in fields(self) if item.name != "naming_rules_changed"
         )
@@ -133,6 +134,7 @@ async def seed(session: AsyncSession, country: dict[str, Any]) -> SeedReport:
 
 
 async def _seed_types(session: AsyncSession, shared: SharedSeed, report: SeedReport) -> None:
+    """The global institution and source types the tables lack."""
     for institution_type in shared.institution_types:
         if await session.get(InstitutionType, institution_type.name) is None:
             session.add(InstitutionType(**institution_type.model_dump()))
@@ -147,6 +149,8 @@ async def _seed_types(session: AsyncSession, shared: SharedSeed, report: SeedRep
 async def _seed_country_tables(
     session: AsyncSession, seed: CountrySeed, report: SeedReport
 ) -> None:
+    """The country's settings, levels and type uses the tables lack; the naming rules follow
+    the seed."""
     code = seed.settings.country_code
     naming_rules = seed.settings.naming_rules.model_dump()
     settings = await session.get(CountrySettings, code)
@@ -156,8 +160,8 @@ async def _seed_country_tables(
         )
         report.country_settings += 1
     elif settings.naming_rules != naming_rules:
-        # The naming rules are code: a change to the seed's reaches the row on the next run,
-        # as the loader and the agent read the row. Every other edit to the row is kept.
+        # The naming rules are code: a change to the seed's reaches the row on the next run.
+        # Every other edit to the row is kept.
         settings.naming_rules = naming_rules
         report.naming_rules_changed = True
     await session.flush()
@@ -370,6 +374,7 @@ async def check_name_pattern(
 
 
 async def read_country(session: AsyncSession, country_code: str) -> CountryOutput:
+    """The country's settings, its levels by rank and its type uses by name."""
     settings = await _settings(session, country_code)
     levels = await session.scalars(
         select(AdministrativeLevel)
@@ -591,6 +596,7 @@ async def delete_country_institution_type(
 
 
 async def _settings(session: AsyncSession, country_code: str) -> CountrySettings:
+    """The country's settings row, or `NotFoundError`."""
     settings = await session.get(CountrySettings, country_code)
     if settings is None:
         raise NotFoundError(f"no country {country_code!r}")
@@ -615,6 +621,7 @@ async def _check_types_used(
 
 
 async def _check_source_types(session: AsyncSession, source_types: list[str]) -> None:
+    """Every name is a source type that exists."""
     known = set(
         await session.scalars(select(SourceType.name).where(SourceType.name.in_(source_types)))
     )

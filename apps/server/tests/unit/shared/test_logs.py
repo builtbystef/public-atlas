@@ -1,3 +1,5 @@
+"""The log formatters: text lines and JSON lines, each with a UTC time and the request id."""
+
 import json
 import logging
 from typing import TYPE_CHECKING
@@ -11,6 +13,7 @@ if TYPE_CHECKING:
 
 
 def record(message: str, exc_info: ExcInfo | None = None) -> logging.LogRecord:
+    """A record as a handler sees it, with the request id filter applied."""
     rec = logging.LogRecord("public_atlas.tests", logging.INFO, __file__, 1, message, (), exc_info)
     RequestIdFilter().filter(rec)
     return rec

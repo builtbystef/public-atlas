@@ -79,6 +79,7 @@ ROWS = [
 
 
 def estimates() -> census.Estimates:
+    """`ROWS` read as the estimates file, in its own encoding."""
     data = "\n".join(ROWS).encode("cp1252")
     file = ListFile(
         name="tiny_estimates",

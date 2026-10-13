@@ -67,6 +67,7 @@ def test_the_constraint_in_the_models_names_the_column_and_lists_the_enum(
 
 
 def _upgrade_and_read(connection: Connection) -> dict[tuple[str, str], str]:
+    """Every check constraint at head, by (table, name), migrating back to base afterwards."""
     config = Config(file_=API_ROOT / "alembic.ini", toml_file=API_ROOT / "pyproject.toml")
     config.attributes["connection"] = connection
     command.upgrade(config, "head")

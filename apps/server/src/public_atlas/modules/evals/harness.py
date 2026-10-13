@@ -65,7 +65,6 @@ from public_atlas.resources import Resources, worker_context
 
 logger = logging.getLogger(__name__)
 
-# apps/server, where pyproject.toml holds Alembic's settings.
 # Everything the harness seeds was verified by hand: the dataset is the labeller's word.
 BY = EnteredBy.MANUAL
 
@@ -128,8 +127,8 @@ async def ensure_database(settings: Settings) -> bool:
 
 
 def _upgrade(connection: Connection) -> None:
+    """Migrate to head on `connection`, which Alembic's env.py uses instead of opening its own."""
     config = migrations.alembic_config()
-    # Alembic's env.py migrates on a connection passed this way instead of opening its own.
     config.attributes["connection"] = connection
     command.upgrade(config, "head")
 
@@ -144,6 +143,7 @@ async def require_main_migrated(resources: Resources) -> None:
 
 
 async def migrate(engine: AsyncEngine) -> None:
+    """Migrate the engine's database to head."""
     async with engine.begin() as connection:
         await connection.run_sync(_upgrade)
 
@@ -205,6 +205,8 @@ async def seed_country(  # noqa: PLR0913 - what a load needs
 
 @dataclass(slots=True)
 class Seeded:
+    """One dataset file seeded into the eval database, and the work it queued."""
+
     slug: str
     place_id: uuid.UUID
     # The government or the ministry; a places file has none.
@@ -460,6 +462,8 @@ async def _find_or_create_institution(
     institution_type: str,
     names: Sequence[Name],
 ) -> Institution:
+    """The place's institution of `institution_type` going by any of `names`, verified, with
+    every name added; created from the first name when there is none."""
     for name in names:
         # Of the type alone: a school district's names include the directory's "Washoe County",
         # which is the county government's name too.
@@ -487,6 +491,7 @@ async def _find_or_create_institution(
 
 
 async def _add_names(session: AsyncSession, owner: Institution, names: Sequence[Name]) -> None:
+    """Each name as an alias of the institution."""
     for name in names:
         await graph.add_alias(
             session,
@@ -586,8 +591,8 @@ async def parse_worker(settings: Settings, report: Report) -> None:
     """The parse worker in a process of its own on the eval database, started again whenever it
     stops, until cancelled."""
     # Not in this process: a parse worker runs one job at a time, which would make every agent
-    # session here wait its turn, and it retires its own process once its memory has grown
-    # (`parse_retire_rss_mb`), which here would end the run.
+    # session here wait, and it retires its process once its memory grows (`parse_retire_rss_mb`),
+    # which here would end the run.
     url = make_url(str(settings.database_url)).render_as_string(hide_password=False)
     # Warnings only: Docling logs every page, which would bury the run's report.
     env = {**os.environ, "PUBLIC_ATLAS_DATABASE_URL": url, "PUBLIC_ATLAS_LOG_LEVEL": "WARNING"}
@@ -629,6 +634,8 @@ async def _wait_for_drain(
     report: Report,
     poll_seconds: float,
 ) -> None:
+    """Poll until the queues stay empty or a worker exits, whose error is raised; a progress
+    line now and then."""
     empty = 0
     polls = 0
     while True:
@@ -647,6 +654,7 @@ async def _wait_for_drain(
 
 
 async def pending_jobs(resources: Resources, queues: Sequence[Queue]) -> int:
+    """How many jobs on `queues` are queued or running."""
     async with resources.session() as session:
         count = await session.scalar(
             text(
@@ -769,6 +777,7 @@ async def cost_by_subject(
 
 
 def render_costs(lines: Iterable[CostLine], by_subject: dict[str, Decimal]) -> str:
+    """The cost table: a line per purpose and provider, the total, then each subject's cost."""
     header = (
         f"   {'purpose':20} {'provider':16} {'calls':>6} {'units':>12} {'cached':>12} {'cost':>9}"
     )

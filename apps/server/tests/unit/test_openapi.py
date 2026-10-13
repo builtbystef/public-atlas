@@ -1,3 +1,5 @@
+"""The OpenAPI schema covers exactly the app's routes, and the script writes it out."""
+
 import json
 from collections.abc import Iterator, Sequence
 

@@ -72,6 +72,7 @@ def steps(*calls: tuple[str, dict[str, object]]) -> Script:
 
 
 def run(db: Database, res: Resources, assignment: Assignment) -> tuple[str, Assignment]:
+    """Run the assignment through the runner: its outcome and the row after."""
     outcome = db.run(runner.run_assignment, res, assignment.id)
 
     async def read() -> Assignment:
@@ -84,6 +85,8 @@ def run(db: Database, res: Resources, assignment: Assignment) -> tuple[str, Assi
 def spawned_for(
     db: Database, subject_id: uuid.UUID
 ) -> list[tuple[AssignmentType, AssignmentStatus]]:
+    """The assignments spawned on `subject_id`, as type and status."""
+
     async def read() -> list[tuple[AssignmentType, AssignmentStatus]]:
         async with db.session() as session:
             rows = await assignments.list_assignments(session, subject_id=subject_id)
@@ -93,6 +96,8 @@ def spawned_for(
 
 
 def reviews(db: Database) -> list[tuple[uuid.UUID, str]]:
+    """Every review item, as entity id and rule, in id order."""
+
     async def read() -> list[tuple[uuid.UUID, str]]:
         async with db.session() as session:
             rows = await session.scalars(select(ReviewItem).order_by(ReviewItem.id))

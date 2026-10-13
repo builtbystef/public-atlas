@@ -83,6 +83,7 @@ def test_a_list_is_named_by_its_path_under_the_package():
 
 
 def _module(name: str, *sources: ListFile) -> ModuleType:
+    """A list module under the package, with these sources and no entries."""
     module = ModuleType(f"public_atlas.modules.imports.lists.{name}")
     module.__dict__.update(
         COUNTRY="CA", SOURCES=sources, OVERRIDES={}, entries=lambda _files, _rules: []

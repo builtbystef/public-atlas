@@ -43,6 +43,7 @@ def frame_blocks(frames: Sequence[FrameLinks]) -> str:
 
 
 def stored_html(page: SettledPage) -> str:
+    """The stored copy: the page's HTML with its frames' links appended."""
     blocks = frame_blocks(page.frames)
     return f"{page.html}\n{blocks}" if blocks else page.html
 
@@ -144,7 +145,8 @@ async def prune_unreferenced(session: AsyncSession, assignment_id: uuid.UUID) ->
 
 
 async def delete_objects(store: ObjectStore, keys: Sequence[str]) -> None:
-    """The rows are pruned already, so a store that fails here leaks bytes, never a row."""
+    """Delete the pruned objects, logging failures: the rows are pruned already, so a store that
+    fails here leaks bytes, never a row."""
     for key in keys:
         try:
             await store.delete(key)
@@ -170,6 +172,7 @@ class PageCapture:
         self.blocked_urls: list[str] = []
 
     async def settled(self, page: SettledPage) -> None:
+        """Store the page, and the redirect that led to it."""
         async with self._session_factory() as session:
             await record_visit(session, self._store, page, assignment_id=self._assignment_id)
             if page.requested_url is not None:
@@ -186,11 +189,11 @@ class PageCapture:
     async def blocked(
         self, url: str, reason: str, *, action: str, requested_url: str | None = None
     ) -> None:
+        """Log the refused attempt, and the redirect that led to it."""
         async with self._session_factory() as session:
             await record_blocked(session, url=url, reason=reason, assignment_id=self._assignment_id)
             if requested_url is not None:
-                # A redirect off the allowlist: the URL asked for is on record as leading
-                # there, which `domain_moved` checks.
+                # A redirect off the allowlist, on record for `domain_moved` to check.
                 await record_redirect(
                     session, requested=requested_url, landed=url, assignment_id=self._assignment_id
                 )

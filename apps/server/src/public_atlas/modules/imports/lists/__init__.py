@@ -1,10 +1,9 @@
-"""One module per official list, the only code written to add one, in a tree by country and
-region: `canada/ontario/places.py`, `us/municipalities.py`. Each holds `COUNTRY`, `SOURCES`,
-`OVERRIDES` and `entries()`, and knows everything about its list and nothing about the
-database. A list's name is its path under this package with slashes (`canada/ontario/places`);
-`public-atlas load-list <name>` loads one by it. Nothing is registered by hand: `LISTS` is
-built by walking the package for modules that define `entries`. Shared readers sit beside the
-modules that use them (`canada/statcan.py`) and define no `entries`."""
+"""One module per official list, in a tree by country and region (`canada/ontario/places.py`,
+`us/municipalities.py`); adding a list means writing only its module. Each holds `COUNTRY`,
+`SOURCES`, `OVERRIDES` and `entries()`, and knows its list but nothing of the database. A list's
+name is its path here with slashes (`canada/ontario/places`), as `public-atlas load-list <name>`
+takes it. Nothing is registered by hand: `LISTS` is found by walking the package for modules that
+define `entries`. Shared readers (`canada/statcan.py`) sit beside their users and define none."""
 
 import importlib
 import pkgutil
@@ -24,6 +23,7 @@ def list_name(module_name: str) -> str:
 
 
 def _discover() -> dict[str, ModuleType]:
+    """Every list module in the package, by name, sorted."""
     found: dict[str, ModuleType] = {}
     for info in pkgutil.walk_packages(__path__, prefix=f"{__name__}."):
         if info.ispkg:

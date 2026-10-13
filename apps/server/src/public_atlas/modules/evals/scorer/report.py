@@ -61,6 +61,7 @@ class Gate:
     cards: CardKind | None = None
 
     def tally(self, cards: Sequence[Scorecard]) -> Tally:
+        """The gate's measure summed over the cards of its kind, narrowed to its groups."""
         summed = Tally()
         for card in cards:
             if self.cards is not None and card.kind != self.cards:
@@ -71,6 +72,7 @@ class Gate:
         return summed
 
     def what(self) -> str:
+        """The gate in words, as the report and the API show it."""
         over = f" over {', '.join(self.groups)}" if self.groups else ""
         where = f" on the {self.cards} files" if self.cards is not None else ""
         return f"{self.measure.value} recall{over}{where}"
@@ -103,6 +105,8 @@ GATES: tuple[Gate, ...] = (
 
 @dataclass(frozen=True, slots=True)
 class GateResult:
+    """A gate judged on a run's scorecards."""
+
     gate: Gate
     hits: int
     misses: int
@@ -114,6 +118,7 @@ class GateResult:
 
     @property
     def verdict(self) -> str:
+        """`pass` or `fail` against the floor, `-` when there was nothing to judge."""
         recall = self.recall
         if recall is None:
             return "-"
@@ -139,6 +144,7 @@ class GateResult:
 
 
 def gates(cards: Sequence[Scorecard]) -> list[GateResult]:
+    """Every gate judged on `cards`."""
     results = []
     for gate in GATES:
         tally = gate.tally(cards)
@@ -192,6 +198,7 @@ def render(cards: Sequence[Scorecard], *, details: bool = False) -> str:
 
 
 def _measure_line(measure: AssignmentType, tally: Tally) -> str:
+    """One measure on one line: recall, precision, its subgroups and its buckets."""
     buckets = ", ".join(f"{name} {count}" for name, count in sorted(tally.buckets.items()))
     found = _ratio(tally.hits, tally.hits + tally.misses)
     right = _ratio(tally.hits, tally.hits + tally.false_positives)
@@ -211,6 +218,7 @@ def _measure_line(measure: AssignmentType, tally: Tally) -> str:
 
 
 def tally_json(tally: Tally) -> dict[str, Any]:
+    """A tally's numbers, buckets, groups and lines as a document."""
     return {
         "hits": tally.hits,
         "misses": tally.misses,

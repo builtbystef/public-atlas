@@ -283,6 +283,8 @@ def entries(files: Mapping[str, OpenedFile], rules: CountryRules) -> list[Instit
 def _entry(
     row: Row, listed: str, library_type: str, fields: Mapping[str, object]
 ) -> InstitutionEntry:
+    """One board: named and placed by its override, else by the hand tables, else by its
+    shorthand, which stays as an alias."""
     name = str(fields.get("name") or composed_name(listed, library_type))
     where = fields.get("place") or FIRST_NATIONS.get(listed) or PLACES.get(listed)
     if where is None:

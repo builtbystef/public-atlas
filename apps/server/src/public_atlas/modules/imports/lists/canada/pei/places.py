@@ -125,6 +125,8 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Row:
+    """One municipality's row in the hand-made directory CSV."""
+
     name: str
     kind: str
     homepage: str | None
@@ -132,6 +134,7 @@ class Row:
 
 
 def read_rows(opened: OpenedFile) -> list[Row]:
+    """The directory's rows, "n/a" read as no website."""
     rows = []
     for row in opened.rows:
         site = row["Website"].strip()
@@ -148,6 +151,8 @@ def read_rows(opened: OpenedFile) -> list[Row]:
 
 @dataclass
 class Notes:
+    """What the build left out, dissolved or renamed, for the load's log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     dissolved: list[str] = field(default_factory=list)
     renamed: list[str] = field(default_factory=list)
@@ -164,11 +169,15 @@ class Notes:
 
 
 def government_name(row: Row, type_: str, name: str) -> str:
+    """The name composed from the directory's kind, or the census type's designator for the
+    resort municipality, whose row gives its kind as its name."""
     designator = MUNICIPAL_TYPES[RESORT_MUNICIPALITY] if type_ == RESORT_MUNICIPALITY else row.kind
     return f"{designator} of {name}"
 
 
 def build(files: Mapping[str, OpenedFile], naming: Naming) -> tuple[list[PlaceEntry], Notes]:
+    """The municipalities, each with its directory row, and the notes; a census municipality
+    with no row or override, or a row no municipality takes, is an error."""
     census = PRINCE_EDWARD_ISLAND.read(files)
     rows = read_rows(files[DIRECTORY.name])
     by_key = {naming.key(row.name): row for row in rows}

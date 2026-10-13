@@ -108,6 +108,8 @@ PDF_NAMES: dict[str, str] = {
 
 @dataclass(frozen=True)
 class Row:
+    """One local government's row in the contacts table."""
+
     name: str
     kind: str
     homepage: str | None
@@ -155,6 +157,8 @@ def read_rows(opened: OpenedFile) -> list[Row]:
 
 @dataclass
 class Notes:
+    """What the build left out, renamed or found without a website, for the load's log."""
+
     rural_districts: list[str] = field(default_factory=list)
     dropped: Counter[str] = field(default_factory=Counter)
     without_website: list[str] = field(default_factory=list)
@@ -193,6 +197,8 @@ def local_governments(changes: list[Change], notes: Notes) -> list[Change]:
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
+    """The local governments, each cited at its interim-list row and its PDF row, and the
+    notes; a local government with no PDF row is an error."""
     notes = Notes()
     governments = local_governments(read_changes(files[INTERIM_CHANGES.name], NEW_BRUNSWICK), notes)
     rows = read_rows(files[CONTACTS.name])

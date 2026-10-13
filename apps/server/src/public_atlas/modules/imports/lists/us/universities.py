@@ -78,7 +78,7 @@ ACTIVE = "1"
 LEVELS: dict[str, str] = {"1": UNIVERSITY, "2": COLLEGE}
 LESS_THAN_TWO_YEAR = "3"
 _ALIAS_SEPARATOR = re.compile(r"\s*\|\s*|\s{2,}")
-# What an alias may be long: `AliasEntry`'s limit.
+# `AliasEntry`'s length limit.
 ALIAS_LENGTH = 300
 _ACRONYM = re.compile(r"^[A-Z0-9&]+$")
 

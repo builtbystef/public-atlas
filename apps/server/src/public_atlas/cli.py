@@ -1,7 +1,7 @@
 """`public-atlas`: the operator's command line (seed, load-list, lists, run, eval, worker).
-Each command builds the resources the way the API's lifespan does and calls a module's service;
-the logic lives there, not here. The one place, with asgi.py and the worker, that reads the
-environment."""
+
+Each command builds the resources as the API's lifespan does and calls a module's service, where
+the logic lives. With asgi.py and the worker, the one place that reads the environment."""
 
 import argparse
 import asyncio
@@ -34,6 +34,7 @@ from public_atlas.shared.exceptions import AppError
 
 
 async def seed(settings: Settings, name: str) -> countries.SeedReport:
+    """Load the seed `name` and commit."""
     async with build_resources(settings) as resources, resources.session() as session:
         report = await countries.seed(session, SEEDS[name])
         await session.commit()
@@ -41,6 +42,7 @@ async def seed(settings: Settings, name: str) -> countries.SeedReport:
 
 
 def run_seed(args: argparse.Namespace) -> None:
+    """`public-atlas seed`: print what each table gained."""
     report = asyncio.run(seed(Settings(), args.country))
     for item in fields(report):
         if item.name != "naming_rules_changed":
@@ -54,7 +56,8 @@ def run_seed(args: argparse.Namespace) -> None:
 
 
 async def load_list(settings: Settings, name: str, *, apply: bool) -> imports.LoadReport:
-    """A dry run rolls back, so the diff it prints is exactly what `--apply` writes."""
+    """Load the list `name`, committing only with `apply`. A dry run rolls back, so the diff it
+    prints is exactly what `--apply` writes."""
     async with build_resources(settings) as resources, resources.session() as session:
         report = await imports.load_list(
             session,
@@ -72,6 +75,7 @@ async def load_list(settings: Settings, name: str, *, apply: bool) -> imports.Lo
 
 
 def run_load_list(args: argparse.Namespace) -> None:
+    """`public-atlas load-list`."""
     try:
         report = asyncio.run(load_list(Settings(), args.name, apply=args.apply))
     except (ListFileError, AppError) as exc:
@@ -83,6 +87,7 @@ def run_load_list(args: argparse.Namespace) -> None:
 
 
 def run_lists(args: argparse.Namespace) -> None:
+    """`public-atlas lists manifest|fetch|pack`."""
     cache_dir = Settings().lists_cache_dir
     match args.action:
         case "manifest":
@@ -133,6 +138,7 @@ def describe_run(run: Run, progress: Progress) -> str:
 
 
 async def create_run(settings: Settings, args: argparse.Namespace) -> str:
+    """Create a run from the command's filter and mode."""
     wanted = RunFilter(
         administrative_levels=args.level or [],
         institution_types=args.type or [],
@@ -155,6 +161,7 @@ async def create_run(settings: Settings, args: argparse.Namespace) -> str:
 
 
 async def change_run(settings: Settings, run_id: uuid.UUID, action: str) -> str:
+    """Pause, resume or stop a run."""
     async with build_resources(settings) as resources, resources.session() as session:
         run = await assignments.get_run(session, run_id)
         match action:
@@ -170,6 +177,7 @@ async def change_run(settings: Settings, run_id: uuid.UUID, action: str) -> str:
 
 
 async def release_run(settings: Settings, args: argparse.Namespace) -> str:
+    """Queue held assignments of a step-mode run, and list the ones released."""
     async with build_resources(settings) as resources, resources.session() as session:
         run = await assignments.get_run(session, args.run_id)
         released = await assignments.release(
@@ -195,6 +203,7 @@ async def show_run(settings: Settings, run_id: uuid.UUID) -> str:
 
 
 def run_run(args: argparse.Namespace) -> None:
+    """`public-atlas run create|pause|resume|stop|release|show`."""
     settings = Settings()
     try:
         match args.action:
@@ -214,6 +223,7 @@ def run_run(args: argparse.Namespace) -> None:
 
 
 def run_eval(args: argparse.Namespace) -> None:
+    """`public-atlas eval validate|evidence|score|run`."""
     settings = Settings()
     try:
         match args.action:
@@ -241,6 +251,8 @@ def eval_validate(args: argparse.Namespace) -> int:
 
 
 async def eval_evidence(args: argparse.Namespace) -> int:
+    """Check each evidence quote against its URL; 1 as the exit status when any is missing or
+    invalid."""
     files = dataset.files_named(args.subject or [], lists_by_default=False)
     tally = await dataset.check_evidence(files, print)
     print(" ".join(f"{k}={v}" for k, v in sorted(tally.items())))  # noqa: T201
@@ -248,12 +260,14 @@ async def eval_evidence(args: argparse.Namespace) -> int:
 
 
 def _write_json(path: Path | None, document: dict[str, object]) -> None:
+    """Write `document` to `path`, when one was given."""
     if path is not None:
         path.write_text(json.dumps(document, indent=2, default=str) + "\n")
         print(f"\nwritten: {path}")  # noqa: T201
 
 
 async def eval_score(settings: Settings, args: argparse.Namespace) -> None:
+    """Score a database against the chosen dataset files."""
     files = dataset.files_named(args.subject or [], lists_by_default=True)
     async with build_resources(settings) as resources:
         report = await evals.score_database(resources, files, eval_database=args.evals)
@@ -262,6 +276,7 @@ async def eval_score(settings: Settings, args: argparse.Namespace) -> None:
 
 
 async def eval_run(settings: Settings, args: argparse.Namespace) -> None:
+    """Run an eval on the chosen files and assignment types, then score it."""
     if args.subject:
         files = dataset.files_named(args.subject, lists_by_default=False)
     elif args.all:
@@ -295,6 +310,7 @@ async def eval_run(settings: Settings, args: argparse.Namespace) -> None:
 
 
 def run_worker(args: argparse.Namespace) -> None:
+    """`public-atlas worker`: serve the chosen queues, or every queue."""
     queues: list[Queue] = args.queues or list(QUEUES)
     asyncio.run(jobs_worker.run(Settings(), queues))
 
@@ -303,6 +319,7 @@ def run_worker(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """The `public-atlas` argument parser."""
     parser = argparse.ArgumentParser(prog="public-atlas", description="Operate Public Atlas.")
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -502,6 +519,7 @@ def add_eval_command(commands: argparse._SubParsersAction[argparse.ArgumentParse
 
 
 def main(argv: Sequence[str] | None = None) -> None:
+    """Parse the command line, configure logging and run the command."""
     args = build_parser().parse_args(argv)
     settings = Settings()
     logs.configure(settings.log_level, settings.log_format)

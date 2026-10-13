@@ -214,7 +214,7 @@ export function SelectField({
   );
 }
 
-/** A contact or company chosen by name; the value is its id, "" for none. */
+/** A record chosen by name through `EntityCombobox`; the value is its id, "" for none. */
 export function ComboboxField<
   P extends { items: readonly EntityOption[]; total: number },
   R extends EntityOption,

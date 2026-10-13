@@ -34,7 +34,8 @@ def create_app(
     searcher: Searcher | None = None,
     parser: Parser | None = None,
 ) -> FastAPI:
-    """The doubles go to `build_resources`; tests pass an in-memory store, queue and parser."""
+    """The API on `settings`. The doubles go to `build_resources`; tests pass an in-memory store,
+    queue and parser."""
     logs.configure(settings.log_level, settings.log_format)
     if (handler := telemetry.configure(settings, service_name="public-atlas-server")) is not None:
         logging.getLogger().addHandler(handler)

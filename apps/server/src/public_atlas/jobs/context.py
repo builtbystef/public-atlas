@@ -45,8 +45,8 @@ def trace() -> Trace:
 def running(
     name: str, job_id: int | None, carrier: Trace | None, attempt: Attempt = OUTSIDE_A_JOB
 ) -> Iterator[None]:
-    """The context a run executes in. A job the schedule sent, or a retry of one,
-    has no request: it gets an ID of its own, so its lines still group."""
+    """The context a run executes in. A job the schedule sent, or a retry of one, has no request:
+    it gets an ID of its own, so its lines still group."""
     carrier = carrier or {}
     token = request_id.set(carrier.get(REQUEST_ID) or new_request_id())
     attempt_token = current_attempt.set(attempt)

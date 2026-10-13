@@ -69,6 +69,8 @@ class Decided:
 
 @dataclass(frozen=True, slots=True)
 class Subject:
+    """The rows of the claim a session is deciding on."""
+
     domain: Domain
     homepage: Homepage
     institution: Institution
@@ -143,6 +145,8 @@ async def domain_moved(ctx: RunContext[SessionContext], url: str) -> Decided:
 
 @dataclass(frozen=True, slots=True)
 class Quote:
+    """One quote for `confirm_candidate`: a page on the candidate domain and a phrase from it."""
+
     url: str
     quote: str
 
@@ -295,6 +299,7 @@ async def confirm_candidate(  # noqa: C901, PLR0912, PLR0915 - one pass over eve
 
 
 def _covers(host: str, domain: str) -> bool:
+    """Whether `host` is `domain` or a subdomain of it."""
     return host == domain or host.endswith(f".{domain}")
 
 
@@ -347,12 +352,11 @@ async def _trusted_link(
     """The trusted page on record as linking the institution to the candidate domain, with the
     `links_to` quote and the stored copy it was found in. Any claim of the institution may carry
     the link, to any page on the domain: a city's site links to a deep page on the utility's
-    domain, and the agent then claims the root page it found there, so the link to the deep
-    page is what vouches for the domain. A link to another domain is taken when there is no
-    better; the caller checks the redirect. The claim's own evidence is read first, the page it
-    was found on before the rest, such as the official list the loader read (a register is
-    trusted from the start, spec section 6.1). The linking page's domain must be trusted now,
-    not just then."""
+    domain and the agent claims the root page, so the deep link vouches for the domain. A link
+    to another domain is taken only when there is no better; the caller checks the redirect. The
+    claim's own evidence is read first, the page it was found on before the rest, such as the
+    official list the loader read (a register is trusted from the start, spec section 6.1). The
+    linking page's domain must be trusted now, not just then."""
     rows = await session.execute(
         select(Evidence, Snapshot, Homepage, Webpage)
         .join(Snapshot, Snapshot.id == Evidence.snapshot_id)

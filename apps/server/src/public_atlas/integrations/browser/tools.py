@@ -155,6 +155,7 @@ class _Deadlines:
 
 
 def _truncate(text: str, max_chars: int) -> str:
+    """`text` cut to `max_chars`, ending in a marker that says so when the marker fits."""
     if len(text) <= max_chars:
         return text
     marker = f"\n[... tool output truncated at {max_chars} characters]"
@@ -164,6 +165,8 @@ def _truncate(text: str, max_chars: int) -> str:
 
 
 def _scroll_script(move: str) -> str:
+    """A script that runs `move` and reports the scroll position before and after it and the
+    furthest the page scrolls, joined with `|`."""
     return (
         "(() => { const before = window.scrollY; " + move + "; return [before, window.scrollY, "
         'Math.max(0, document.documentElement.scrollHeight - window.innerHeight)].join("|"); })()'
@@ -258,6 +261,7 @@ class Browser:
         return self._bound("\n\n".join([text, *frames]))
 
     def _bound(self, text: str) -> str:
+        """`text` within the tool output's token budget."""
         return _truncate(text, self._max_content_tokens * _CHARS_PER_TOKEN)
 
     def _text(self, text: str) -> Text:

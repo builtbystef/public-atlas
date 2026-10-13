@@ -135,9 +135,11 @@ class Places:
         return names
 
     def _groups(self, government: str) -> frozenset[int]:
+        """The designator groups a government's name uses."""
         return frozenset(self.naming.designators_in(self.naming.key(government)))
 
     def _forms(self, names: list[str]) -> set[str]:
+        """Every form of the names, as the loader compares them."""
         found: set[str] = set()
         for name in names:
             found |= self.naming.forms(name)
@@ -288,6 +290,7 @@ class Places:
     def _one(
         self, index: dict[tuple[str, str], set[Municipality]], under: str, name: str
     ) -> Municipality | None:
+        """The one municipality the index holds under `under` by a form of `name`, else None."""
         found: set[Municipality] = set()
         for form in self.naming.forms(name):
             found |= index.get((under, form), set())

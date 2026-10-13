@@ -9,8 +9,8 @@ is one loaded municipality under that county. The rules:
   is a school board that carries the file's words for its kind as an alias, since the type
   cannot say it. A service agency (4: an intermediate unit, a board of cooperative educational
   services, an education service district) is an `education_service_agency`. Supervisory
-  unions (3), state and federal operated agencies
-  (5, 6), other agencies (8) and specialized districts (9) are left out and counted.
+  unions (3), state and federal operated agencies (5, 6), other agencies (8) and specialized
+  districts (9) are left out and counted.
 - A row closed, inactive or yet to open (`SY_STATUS` 2, 6, 7) is left out.
 - The place is the county of the location address when that county is a loaded place; else
   the loaded municipality under the state the county row or the address city names; else the

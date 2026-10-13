@@ -19,8 +19,9 @@ logger = logging.getLogger(__name__)
 
 @task("agent.purge_videos", cron="0 3 * * *")
 async def purge_videos(res: Resources) -> int:
-    """How many videos were purged. Each event keeps its row, with the time of the purge in
-    place of the storage key, so the console can say a video existed."""
+    """Purge the videos of assignments finished `video_keep_days` ago, and return how many. Each
+    event keeps its row, with the time of the purge in place of the storage key, so the console
+    can say a video existed."""
     cutoff = utcnow() - timedelta(days=res.settings.video_keep_days)
     async with res.session() as session:
         rows = await session.scalars(
@@ -50,7 +51,8 @@ async def purge_videos(res: Resources) -> int:
 
 @task("agent.purge_events", cron="30 3 * * *")
 async def purge_events(res: Resources) -> int:
-    """How many events were deleted. A video not purged yet goes from storage with its event."""
+    """Delete the events of assignments finished `events_keep_days` ago, and return how many. A
+    video not purged yet goes from storage with its event."""
     cutoff = utcnow() - timedelta(days=res.settings.events_keep_days)
     async with res.session() as session:
         old = select(Assignment.id).where(
@@ -78,7 +80,8 @@ async def purge_events(res: Resources) -> int:
 
 
 async def _delete(res: Resources, keys: list[str]) -> None:
-    """The rows are written already, so a store that fails here leaks a video, never a row."""
+    """Delete `keys` from the store. The rows are committed already, so a store that fails here
+    leaks a video, never a row."""
     for key in keys:
         try:
             await res.object_store.delete(key)

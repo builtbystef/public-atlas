@@ -57,6 +57,8 @@ FILENAME_LENGTH = 200
 
 @dataclass(frozen=True, slots=True)
 class Detected:
+    """A download's media type, the filename to store it under, and what to do with it."""
+
     media_type: str
     filename: str
     handling: Handling
@@ -89,10 +91,12 @@ def detect(data: bytes, content_type: str | None, url: str) -> Detected:
 
 
 def handling_of(media: str) -> Handling:
+    """Parsed, read as text, or refused, by media type."""
     return "parse" if media in PARSED else "text" if media in DIRECT else "unsupported"
 
 
 def _zip_type(data: bytes) -> str | None:
+    """The Office format a zip holds, or None for any other zip."""
     try:
         names = zipfile.ZipFile(io.BytesIO(data)).namelist()
     except zipfile.BadZipFile:
@@ -108,6 +112,7 @@ def _zip_type(data: bytes) -> str | None:
 
 
 def _looks_like_text(data: bytes) -> bool:
+    """Whether the first bytes decode as UTF-8 and hold no NUL."""
     sample = data[:4096]
     if b"\x00" in sample:
         return False
@@ -128,5 +133,6 @@ def filename_for(url: str, media: str) -> str:
 
 
 def challenge_marker(data: bytes) -> str | None:
+    """The bot-check marker near the start of `data`, if any."""
     text = data[:CHALLENGE_SCAN].decode(errors="replace").lower()
     return next((marker for marker in CHALLENGE_MARKERS if marker in text), None)

@@ -39,8 +39,7 @@ OUT_OF_STATE = 189
 # The Bureau of Indian Education's schools and the territories' agencies; Puerto Rico's
 # Department of Education sits under Puerto Rico.
 NO_STATE = 183
-# One more than the first load: a served place is judged by the loaded name, as the loader
-# reads it, since the transit list needed that reading.
+# A served place is judged by its loaded name, as the loader reads it.
 SERVED = 12864
 WEBSITES = 16107
 

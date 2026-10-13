@@ -22,6 +22,8 @@ __all__ = ["Change", "Planned", "Preview", "RunRef", "preview"]
 
 @dataclass(frozen=True, slots=True)
 class Change:
+    """One entity's status before and after the decision."""
+
     entity: EntityRef
     before: EntityStatus
     after: EntityStatus
@@ -44,6 +46,8 @@ class RunRef:
 
 @dataclass(frozen=True, slots=True)
 class Preview:
+    """What a decision would change, the work it would ask for, and the run it would go to."""
+
     # Each entity whose status would change, once, in the order the decision changes them.
     changes: list[Change]
     spawn: list[Planned]

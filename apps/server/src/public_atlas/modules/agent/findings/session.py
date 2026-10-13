@@ -81,8 +81,8 @@ async def status(ctx: RunContext[SessionContext]) -> Status:
 async def status_of(
     ctx: SessionContext, session: AsyncSession, *, spent_now: tuple[int, int] = (0, 0)
 ) -> Status:
-    """`spent_now` is what this session has used so far: the row is written up only when the
-    session ends."""
+    """What `status` reports. `spent_now` is what this session has used so far, since the row is
+    written up only when the session ends."""
     assignment = await session.get_one(Assignment, ctx.assignment_id)
     requests_now, tokens_now = spent_now
     saved = [
@@ -120,6 +120,7 @@ async def status_of(
 
 
 async def _files(session: AsyncSession, assignment_id: uuid.UUID) -> list[str]:
+    """The files the assignment read, each with how far its parsing got."""
     rows = await session.execute(
         select(
             Webpage.url,
@@ -327,6 +328,7 @@ async def finish_assignment(
 async def _homepage_result(
     ctx: SessionContext, session: AsyncSession, summary: str
 ) -> AssignmentResult:
+    """How a `find_homepage` finish ends: refused while the candidate is undecided."""
     if ctx.candidate is not None:
         raise FindingError(
             "Not finished: decide the candidate you saved first, with confirm_domain, "
@@ -358,6 +360,7 @@ async def _homepage_result(
 async def _discovery_result(
     ctx: SessionContext, session: AsyncSession, summary: str, listed: list[str]
 ) -> tuple[AssignmentResult, str]:
+    """How a discovery finish ends, checked against the checklist (see `finish_assignment`)."""
     kind, _ = _known_types(ctx)
     saved = await saved_types(ctx, session)
     missing = [
@@ -418,6 +421,8 @@ async def request_review(ctx: RunContext[SessionContext], entity_id: str, reason
 async def raise_item(
     ctx: SessionContext, session: AsyncSession, entity_id: str, reason: str
 ) -> Reviewed:
+    """Raise a review item on the entity. Sending a `find_homepage` session's candidate ends the
+    assignment `needs_review`."""
     entity = await graph.entity_by_id(session, parse_uuid(entity_id, "entity_id"))
     if entity is None:
         raise FindingError(f"Nothing with id {entity_id}. Check status() for the ids.")

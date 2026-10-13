@@ -5,8 +5,7 @@ status moves only in `status_changes.py`, the graph's other door (spec section 6
 
 The duplicate search takes the country's rules for its naming forms. It imports them from
 `countries.rules`, below `countries.service`, which seeds anchors through this module: the two
-services never import each other.
-"""
+services never import each other."""
 
 import re
 import uuid
@@ -135,6 +134,7 @@ _PAGE_SEGMENT = re.compile(
 
 
 def is_domain_name(value: str) -> bool:
+    """Whether `value` is spelt as a domain name: dot-separated labels, 253 characters at most."""
     return bool(_DOMAIN.match(value.lower())) and len(value) <= MAX_DOMAIN_LENGTH
 
 
@@ -153,6 +153,7 @@ def normalize_url(url: str) -> str:
 
 
 def host_of(url: str) -> str:
+    """The URL's host, lower-cased."""
     return (urlsplit(url).hostname or "").lower()
 
 
@@ -193,6 +194,7 @@ def is_trusted(domain: Domain) -> bool:
 
 
 async def domain_by_name(session: AsyncSession, name: str) -> Domain | None:
+    """The domain row of exactly this name."""
     return await session.scalar(select(Domain).where(Domain.name == name.lower()))
 
 
@@ -244,6 +246,7 @@ async def ensure_domain(
 
 
 async def webpage_by_url(session: AsyncSession, url: str) -> Webpage | None:
+    """The webpage row for `url`, normalized."""
     return await session.scalar(select(Webpage).where(Webpage.url == normalize_url(url)))
 
 
@@ -452,6 +455,7 @@ async def create_source(  # noqa: PLR0913
     entered_by: EnteredBy,
     access: SourceAccess = SourceAccess.PUBLIC,
 ) -> Source:
+    """A candidate source of `source_type` for the institution on `webpage`."""
     source = Source(
         institution_id=institution.id,
         webpage_id=webpage.id,
@@ -465,6 +469,7 @@ async def create_source(  # noqa: PLR0913
 
 
 def _forms(rules: CountryRules, names: Iterable[str]) -> set[str]:
+    """Every form of every name, by the country's naming rules."""
     forms: set[str] = set()
     for name in names:
         forms |= rules.naming.forms(name)
@@ -541,6 +546,7 @@ async def place_chain(session: AsyncSession, place: Place) -> list[Place]:
 
 
 async def homepages_of(session: AsyncSession, institution: Institution) -> list[Homepage]:
+    """Every homepage claim of the institution, whatever its status, oldest first."""
     rows = await session.scalars(
         select(Homepage).where(Homepage.institution_id == institution.id).order_by(Homepage.id)
     )
@@ -564,6 +570,7 @@ async def verified_homepage_owner(
 
 
 def _owner_column(owner: Place | Institution) -> InstrumentedAttribute[uuid.UUID | None]:
+    """The alias column that points at an owner of this kind."""
     return Alias.place_id if isinstance(owner, Place) else Alias.institution_id
 
 
@@ -601,7 +608,8 @@ async def add_alias(  # noqa: PLR0913
     entered_by: EnteredBy,
     is_acronym: bool = False,
 ) -> bool:
-    """Whether the alias was added; one the owner has already is left as it is."""
+    """Add `text`, whitespace collapsed, as an alias of the owner. Whether it was added: one
+    the owner has already is left as it is."""
     text = " ".join(text.split())
     found = await session.scalar(
         select(Alias.id).where(_owner_column(owner) == owner.id, Alias.text == text)
@@ -674,6 +682,8 @@ async def _similar[T: (Place, Institution)](  # noqa: PLR0913 - one argument per
     name: str,
     rules: CountryRules,
 ) -> list[Match[T]]:
+    """The live rows `filters` admit with an alias like `name`, each once with its most alike
+    alias, those whose designators differ from the name's dropped, at most `MAX_MATCHES`."""
     name = " ".join(name.split())
     if not name:
         return []

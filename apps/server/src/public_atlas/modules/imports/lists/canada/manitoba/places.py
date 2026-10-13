@@ -130,7 +130,9 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Entry:
-    # As the heading writes it, in capitals.
+    """One municipality's entry in the directory, its name in capitals as the heading writes
+    it."""
+
     name: str
     kind: str
     homepage: str | None
@@ -139,6 +141,7 @@ class Entry:
 
     @property
     def census_type(self) -> str:
+        """The census type the directory's kind answers to."""
         return KINDS[self.kind]
 
 
@@ -222,6 +225,9 @@ def read_entries(opened: OpenedFile) -> list[Entry]:
 
 @dataclass
 class Notes:
+    """What the build left out, renamed, merged or found without a website, for the load's
+    log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     shared: list[str] = field(default_factory=list)
     renamed: list[str] = field(default_factory=list)
@@ -247,6 +253,7 @@ class Notes:
 
 
 def government_name(entry: Entry, name: str) -> str:
+    """The name composed from the directory's kind: "Rural Municipality of Alexander"."""
     designator = MUNICIPAL_TYPES[entry.census_type]
     return f"{designator} of {name}"
 
@@ -263,6 +270,8 @@ def _entry_for(unit: Counted, entries: list[Entry], namesakes: Counter[str]) -> 
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
+    """The municipalities, each with its directory entry, and the notes; a census municipality
+    with no entry is an error."""
     census = MANITOBA.read(files)
     saskatchewan = SASKATCHEWAN.read(files)
     directory = read_entries(files[DIRECTORY.name])
@@ -297,6 +306,8 @@ def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
 def _place(
     unit: Counted, entry: Entry, census: statcan.Census, saskatchewan: statcan.Census, notes: Notes
 ) -> PlaceEntry:
+    """One municipality, with its override, any merged part's and Flin Flon's Saskatchewan
+    part's population added, and the directory's name and website."""
     fields = OVERRIDES.get(unit.code, {})
     name = fields.get("name", census_name(unit))
     draft = Draft(unit=unit, name=name, parent=PROVINCE)

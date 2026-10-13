@@ -89,10 +89,12 @@ REGIONS = frozenset({"Central", "East", "North East", "North West", "Toronto", "
 
 
 def region(place: str) -> Location:
+    """A county, region or district under Ontario."""
     return Location(place, REGION, PROVINCE)
 
 
 def municipality(place: str, parent: str | None = None) -> Location:
+    """A municipality, with the parent that tells it from a namesake when it has one."""
     return Location(place, MUNICIPALITY, parent)
 
 
@@ -329,6 +331,7 @@ _ACRONYM = re.compile(r"\((?P<acronym>[A-Z]{2,})\)")
 
 
 def is_region_line(text: str) -> bool:
+    """Whether the line holds only Ontario Health regions, which end a unit's row."""
     return all(part.strip() in REGIONS for part in text.split("|"))
 
 
@@ -382,6 +385,7 @@ def website_of(lines: list[tuple[int, str]]) -> tuple[str, int] | None:
 
 
 def city_of(lines: list[tuple[int, str]]) -> str:
+    """The head office's city, from the row's line that ends in "ON" and a postal code."""
     for _, text in lines:
         match = _CITY.match(text)
         if match:

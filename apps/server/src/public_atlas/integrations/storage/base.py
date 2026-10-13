@@ -1,3 +1,5 @@
+"""What an object store must provide, and what it reports about an object."""
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
@@ -7,18 +9,17 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True, slots=True)
 class ObjectInfo:
+    """An object's key, its size in bytes and its content type."""
+
     key: str
     size: int
     content_type: str
 
 
 class ObjectStore(Protocol):
-    """Implement this to add a backend, then return it from `create_object_store`.
-
-    The store holds bytes and a content type, nothing else. Access is decided by
-    the app, which hands out short-lived URLs so the bytes never pass through
-    the API.
-    """
+    """Implement this to add a backend, then return it from `create_object_store`. The store
+    holds bytes and a content type, nothing else; the app decides access and hands out
+    short-lived URLs, so the bytes never pass through the API."""
 
     async def ping(self) -> None:
         """Raises when the store (or the bucket) is not reachable. For health checks."""
@@ -45,9 +46,9 @@ class ObjectStore(Protocol):
     async def upload_url(
         self, key: str, content_type: str, size: int, expires_in: timedelta
     ) -> str:
-        """A URL that accepts one `PUT` of a body with exactly this `Content-Type` and
-        exactly `size` bytes. The store refuses anything else, so a client cannot
-        upload more than it declared."""
+        """A URL that accepts one `PUT` of a body with exactly this `Content-Type` and exactly
+        `size` bytes. The store refuses anything else, so a client cannot upload more than it
+        declared."""
         ...
 
     async def download_url(self, key: str, filename: str, expires_in: timedelta) -> str:
@@ -56,6 +57,8 @@ class ObjectStore(Protocol):
 
 
 class ObjectNotFoundError(KeyError):
+    """No object is stored under `key`."""
+
     def __init__(self, key: str) -> None:
         super().__init__(key)
         self.key = key

@@ -42,6 +42,7 @@ FIND_SOURCES = AssignmentType.FIND_SOURCES
 
 
 def work(rows: list[Assignment]) -> set[tuple[AssignmentType, uuid.UUID]]:
+    """The (type, subject) pairs of the rows."""
     return {(row.type, row.subject_id) for row in rows}
 
 

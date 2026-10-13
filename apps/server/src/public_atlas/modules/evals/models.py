@@ -16,6 +16,9 @@ from public_atlas.modules.assignments.models import AssignmentType
 
 
 class EvalRun(UUIDPrimaryKey, Base):
+    """The record of one eval run: the dataset version and models it ran with, its cost and
+    its gates."""
+
     __tablename__ = "eval_runs"
 
     # The run (`is_eval`) whose assignments built the graph. The same row exists in the eval

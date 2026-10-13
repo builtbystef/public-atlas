@@ -35,6 +35,7 @@ ALLOWED = {
 
 
 def assignment(status: AssignmentStatus) -> Assignment:
+    """An assignment at `status`, with no run or subject behind it."""
     return Assignment(
         run_id=uuid.uuid7(),
         type=AssignmentType.FIND_SOURCES,

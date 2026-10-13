@@ -1,3 +1,5 @@
+"""The request id middleware: an id for every request, a safe 500, and an access log line."""
+
 import logging
 from typing import TYPE_CHECKING
 
@@ -18,6 +20,7 @@ INTERNAL_DETAIL = "the database ate my homework"
 
 @pytest.fixture
 def failing_client() -> Iterator[TestClient]:
+    """An app behind the middleware, with a route that answers and one that raises."""
     app = FastAPI()
     app.add_middleware(RequestIdMiddleware)
 

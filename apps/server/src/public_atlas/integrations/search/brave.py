@@ -12,6 +12,9 @@ MAX_COUNT = 20
 
 
 class BraveSearcher:
+    """Brave's web search. A client passed as `http` is reused and left open; without one, each
+    call opens and closes its own."""
+
     name = "brave"
 
     def __init__(self, api_key: str, *, http: httpx.AsyncClient | None = None) -> None:

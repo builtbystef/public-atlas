@@ -104,6 +104,7 @@ SITE_LINE_SAYS: dict[str, str] = {"canada/territories/places": "website"}
 
 
 def _normal(text: str) -> str:
+    """`text` case-folded, with runs of whitespace as one space."""
     return " ".join(text.split()).casefold()
 
 
@@ -122,10 +123,12 @@ def _names_in(entry: Entry, line: str) -> bool:
 
 
 def _own(entry: Entry) -> Citation:
+    """The citation of the entry itself: its place's or its institution's."""
     return entry.citations["place" if isinstance(entry, PlaceEntry) else "institution"]
 
 
 def _citations(entry: Entry) -> list[Citation]:
+    """Every citation the entry carries, its figures' included."""
     found = list(entry.citations.values())
     if isinstance(entry, PlaceEntry):
         found.extend(figure.citation for figure in entry.figures)
@@ -133,12 +136,13 @@ def _citations(entry: Entry) -> list[Citation]:
 
 
 def _host(url: str) -> str:
+    """A URL's host, case-folded and without `www.`."""
     host = url.split("://", 1)[1].split("/", 1)[0].casefold()
     return host.removeprefix("www.")
 
 
 def _parse_marked(name: str) -> Any:
-    """Lists read from a PDF run with the `parse` tests."""
+    """A list's parameter, marked `parse` when the list reads a PDF."""
     marks = (
         [pytest.mark.parse]
         if any(source.format is files.Format.PDF for source in LISTS[name].SOURCES)

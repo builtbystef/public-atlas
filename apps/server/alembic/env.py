@@ -1,3 +1,6 @@
+"""Alembic's entry point: the URL from the app's settings, and the models' metadata for
+autogenerate, which `include_name` keeps off the job queue's tables."""
+
 import asyncio
 from logging.config import fileConfig
 from typing import TYPE_CHECKING
@@ -37,6 +40,7 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    """Run the migrations on `connection`, in one transaction."""
     context.configure(
         connection=connection, target_metadata=target_metadata, include_name=include_name
     )
@@ -55,7 +59,8 @@ async def run_async_migrations() -> None:
 
 
 def run_migrations_online() -> None:
-    # Tests pass an open connection so the migrations join its transaction.
+    """Against the database, on a new engine, or on the open connection a test passes so the
+    migrations join its transaction."""
     connection = config.attributes.get("connection")
     if connection is None:
         asyncio.run(run_async_migrations())

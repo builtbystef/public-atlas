@@ -26,6 +26,8 @@ class ModelPrice:
 
 @dataclass(frozen=True, slots=True)
 class Prices:
+    """The price list: models by name, searches by engine."""
+
     models: dict[str, ModelPrice]
     # US dollars per request, by engine.
     searches: dict[str, Decimal]
@@ -51,6 +53,7 @@ class Prices:
 
 @cache
 def load_prices(path: Path = PRICES_FILE) -> Prices:
+    """The price list read from `path`, once per process."""
     with path.open("rb") as file:
         raw = tomllib.load(file)
     return Prices(

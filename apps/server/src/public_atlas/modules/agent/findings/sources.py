@@ -124,6 +124,8 @@ async def record_source(  # noqa: PLR0913
     access: str = "public",
     linked_from_url: str | None = None,
 ) -> SavedSource:
+    """The work of `save_source`: the source is saved with its quote, then verified when the
+    trust rules allow (`_trust`), or sent to review."""
     rules = ctx.rules
     if source_type not in rules.source_types:
         raise FindingError(

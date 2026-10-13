@@ -31,6 +31,7 @@ export interface SubjectRow {
   baseline: ByType<EvalScoreOutput>;
 }
 
+/** The scores pivoted to a row per subject; a subject only the compared run scored is left out. */
 export function subjectRows(
   scores: readonly EvalScoreOutput[],
   baseline: readonly EvalScoreOutput[] = [],

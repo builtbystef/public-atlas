@@ -1,3 +1,6 @@
+"""Object storage for snapshots and recorded videos: the port and the backend the settings
+choose. The in-memory double is in `storage.memory`."""
+
 from typing import TYPE_CHECKING, Literal
 
 from public_atlas.integrations.storage.base import ObjectInfo, ObjectNotFoundError, ObjectStore
@@ -12,6 +15,7 @@ StorageProvider = Literal["s3"]
 
 
 def create_object_store(settings: Settings) -> AbstractAsyncContextManager[ObjectStore]:
+    """The store the settings name, usable once entered."""
     match settings.storage_provider:
         case "s3":
             return S3ObjectStore(

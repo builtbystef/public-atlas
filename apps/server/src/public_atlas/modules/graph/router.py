@@ -65,6 +65,7 @@ def _place_output(place: Place, population: int | None) -> PlaceOutput:
 
 
 def _output(row: service.InstitutionRow) -> InstitutionOutput:
+    """An institution as the table's row."""
     institution = row.institution
     return InstitutionOutput(
         id=institution.id,

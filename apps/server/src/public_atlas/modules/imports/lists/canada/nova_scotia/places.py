@@ -90,6 +90,8 @@ OVERRIDES: dict[str, dict[str, str]] = {}
 
 @dataclass(frozen=True)
 class Row:
+    """One municipality's record in the GeoNOVA layer."""
+
     legal_name: str
     name: str
     kind: str
@@ -115,6 +117,9 @@ def read_rows(opened: OpenedFile) -> list[Row]:
 
 @dataclass
 class Notes:
+    """What the build left out and how each county municipality was summed, for the load's
+    log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     # Each county municipality with the parts summed into it.
     counties: list[str] = field(default_factory=list)
@@ -129,10 +134,13 @@ class Notes:
 
 
 def _matches(row: Row, unit: Counted) -> bool:
+    """Whether the census unit is the row's municipality: the same name, a type of its kind."""
     return census_name(unit).casefold() == row.name.casefold() and unit.type_ in KINDS[row.kind]
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
+    """One municipality per layer row, and the notes; a census municipality no row takes is an
+    error."""
     census = NOVA_SCOTIA.read(files)
     rows = read_rows(files[MUNICIPALITIES.name])
     notes = Notes()

@@ -39,6 +39,8 @@ class EvalDatabaseUnavailableError(LookupError):
 
 @dataclass(frozen=True, slots=True)
 class Resources:
+    """The open resources, passed to every route and job."""
+
     settings: Settings
     engine: AsyncEngine
     # Tests swap in a factory whose sessions join one transaction.

@@ -19,6 +19,8 @@ from public_atlas.modules.countries.schemas import (
 
 @dataclass(frozen=True, slots=True)
 class Level:
+    """One administrative level of the country."""
+
     name: str
     # From the top: the country is 1.
     rank: int
@@ -37,6 +39,8 @@ class TypeUse:
 
 @dataclass(frozen=True)
 class CountryRules:
+    """One country's rules, as its tables held them when read."""
+
     country_code: str
     name: str
     naming: Naming

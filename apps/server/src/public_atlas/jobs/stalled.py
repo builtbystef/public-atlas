@@ -12,10 +12,10 @@ logger = logging.getLogger(__name__)
 
 @task("jobs.retry_stalled", cron="*/10 * * * *")
 async def retry_stalled(res: Resources) -> int:
-    """A job whose worker died mid-run would stay running for good. Its worker's heartbeat has
-    stopped, so the job is put back in the queue; every job is written to bear a second run. A
-    job out of retries is marked failed instead and its task's `abandoned` hook settles what it
-    left behind, so a poison file cannot loop and nothing waits on a run that never comes."""
+    """Requeue each job whose worker died mid-run (its heartbeat stopped), and return how many
+    there were; every job is written to bear a second run. A job out of retries is marked failed
+    and its task's `abandoned` hook settles what it left behind, so a poison file cannot loop and
+    nothing waits on a run that never comes."""
     jobs = res.jobs
     stalled = list(await jobs.job_manager.get_stalled_jobs())
     requeued = 0

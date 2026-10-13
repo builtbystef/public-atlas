@@ -159,6 +159,8 @@ async def record_institution(  # noqa: PLR0913
     decision: str | None = None,
     suggested_type: str | None = None,
 ) -> SavedInstitution | LikelyDuplicates:
+    """The work of `save_institution`: checks, then the likely duplicates on offer, then a new
+    body or a name added to a match, verified from a trusted page unless a review holds it."""
     rules = ctx.rules
     suggested = _check_type(rules, institution_type, suggested_type)
     name = require_name(name, "institution")
@@ -271,6 +273,7 @@ def _check_type(
 
 
 def _buyer(value: str) -> ProcurementHandledBy:
+    """`procurement_handled_by` as the enum; refused when it is neither value."""
     try:
         return ProcurementHandledBy(value)
     except ValueError:
@@ -302,6 +305,7 @@ async def _place_for(
 async def _parent_for(
     session: AsyncSession, parent_institution_id: str | None
 ) -> Institution | None:
+    """The parent named, if any; refused when it is missing or rejected."""
     if parent_institution_id is None:
         return None
     parent = await session.get(
@@ -354,6 +358,7 @@ def _reviews_for(
 async def _send_for_review(
     ctx: SessionContext, session: AsyncSession, institution: Institution, reviews: list[Review]
 ) -> list[str]:
+    """Raise each review item on the institution; their reasons, for the tool result."""
     for item in reviews:
         await review.raise_review(
             session,
@@ -376,6 +381,7 @@ async def _name_and_cite(  # noqa: PLR0913, PLR0917
     match: evidence.QuoteMatch,
     quote: str,
 ) -> None:
+    """Add the name, and the acronym if any, to the institution and cite the quote for it."""
     await graph.add_alias(session, institution, name, language=language, entered_by=EnteredBy.AGENT)
     if acronym:
         await graph.add_alias(
@@ -390,10 +396,12 @@ async def _name_and_cite(  # noqa: PLR0913, PLR0917
 
 
 def _detail(institution: Institution) -> str:
+    """How a likely duplicate is described: its type and status."""
     return f"{institution.institution_type}, {institution.status.value}"
 
 
 async def _verified_owner(session: AsyncSession, url: str) -> Institution | None:
+    """The institution whose verified homepage is at `url`, if any."""
     try:
         webpage = await graph.webpage_by_url(session, url)
     except ValueError:

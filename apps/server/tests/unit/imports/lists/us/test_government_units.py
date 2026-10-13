@@ -232,6 +232,7 @@ def test_a_registry_organization_is_read_as_a_place_name_and_a_designator(
 
 def test_the_legal_name_takes_the_census_spelling_where_the_two_agree():
     def unit(name: str) -> governments.GovernmentUnit:
+        """A municipal unit of `name`, with nothing else to go by."""
         return governments.GovernmentUnit(
             gid=None,
             name=name,

@@ -124,6 +124,7 @@ def test_find_domain_takes_the_row_that_covers_the_name():
 
 
 def ids(n: int) -> list[uuid.UUID]:
+    """`n` fresh ids."""
     return [uuid.uuid4() for _ in range(n)]
 
 
@@ -132,6 +133,8 @@ GOVERNMENT, TRANSIT, LIBRARY, BIA, STRAY, TWIN = ids(6)
 
 
 def subject_file() -> SubjectFile:
+    """The Town of Fixture's labels: four institutions, their sources and absences, three
+    candidate domains and a BIA out of scope."""
     return SubjectFile.model_validate(
         {
             "subject": {
@@ -250,6 +253,7 @@ def subject_file() -> SubjectFile:
 
 
 def subject_graph() -> Graph:
+    """What a run saved for the Town of Fixture: a row for each case the scorer tells apart."""
     graph = Graph()
     graph.places = {
         ONTARIO: PlaceRow(
@@ -334,6 +338,7 @@ def subject_graph() -> Graph:
 
 @pytest.fixture
 def card(rules: countries.CountryRules) -> scorer.Scorecard:
+    """The subject file scored against its graph."""
     files = {"fixture": subject_file()}
     cards = scorer.score_files(subject_graph(), rules, files, {})
     assert len(cards) == 1
@@ -489,6 +494,7 @@ def test_a_subject_missing_from_the_database_is_all_misses(rules: countries.Coun
 
 
 def municipal_list() -> PlaceList:
+    """A places file: Durham, two of its municipalities, and Pelee under the province."""
     return PlaceList.model_validate(
         {
             "country_code": "CA",
@@ -544,6 +550,7 @@ DURHAM_GOV, AJAX_GOV, BROCK_GOV = ids(3)
 
 
 def list_graph() -> Graph:
+    """What a run saved for the places file, Brock misplaced and a namesake of Pelee added."""
     graph = Graph()
     graph.places = {
         ONTARIO: PlaceRow(

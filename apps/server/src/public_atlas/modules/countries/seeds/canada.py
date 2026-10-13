@@ -11,12 +11,10 @@ from public_atlas.modules.countries.seeds.shared import uses
 SETTINGS: dict[str, Any] = {
     "country_code": "CA",
     "name": "Canada",
-    # How public bodies write their names, in English and French. A government's name is a
-    # place name with a designator around it: "Township of Elmwood", "Elmwood Township",
-    # "Elmwood, Township of" in a list. Designators of different kinds are two bodies ("Township
-    # of Elmwood", "Elmwood, City of"), so the duplicate check never offers one for the other;
-    # and a site that writes the place name with another designator ("Elmwood Township" for
-    # "Township of Elmwood") may still name the body when its domain is verified.
+    # In English and French. Designators of different kinds are two bodies ("Township of
+    # Elmwood", "Elmwood, City of"), so the duplicate check never offers one for the other; a
+    # site that writes the place name with another designator ("Elmwood Township" for "Township
+    # of Elmwood") may still name the body when its domain is verified.
     "naming_rules": {
         # One group per kind of body; "Ville" is a city or a town. A Quebec paroisse is a
         # kind of its own: the ville and the paroisse of Disraeli are two municipalities. A
@@ -39,13 +37,9 @@ SETTINGS: dict[str, Any] = {
             ["Region", "Région"],
             ["District"],
             # The other provinces' and territories' kinds of municipality (lists-research
-            # section 2.1): the prairies' rural, resort, summer and northern municipalities,
-            # Alberta's districts and areas, British Columbia's regional districts and resort
-            # municipalities, Nova Scotia's county and district municipalities, New Brunswick's
-            # rural communities, the territories' hamlets and community governments. Each is a
-            # kind of its own so that a composed name's core is the place ("Rural Municipality
-            # of Morris" and "Town of Morris" are two places; "Municipality of the County of
-            # Kings" is Kings).
+            # section 2.1). Each is a kind of its own so that a composed name's core is the
+            # place ("Rural Municipality of Morris" and "Town of Morris" are two places;
+            # "Municipality of the County of Kings" is Kings).
             ["Rural Municipality"],
             ["Resort Municipality"],
             ["Resort Village"],
@@ -187,13 +181,11 @@ PLATFORMS: list[str] = [
     "rogerstv.com",
 ]
 
-# The anchors: places whose government and domains were verified by hand. The names are the
-# census's English names, so a places list finds its province. Every host under gov.on.ca is
-# the Government of Ontario, and the allowlist takes subdomains, so the one entry covers the
-# Public Appointments Secretariat (pas.gov.on.ca, the list of every provincial agency by
-# ministry, where ontario.ca's "Agencies, boards and commissions" page sends readers), INFO-GO
-# (www.infogo.gov.on.ca) and the ministries' legacy sites such as www.mto.gov.on.ca. Agency
-# domains such as supplyontario.ca stay out: find_homepage verifies them like any other
+# The anchors: places whose government and domains were verified by hand, under the census's
+# English names so a places list finds its province. Every host under gov.on.ca is the
+# Government of Ontario and the allowlist takes subdomains, so the one entry covers the Public
+# Appointments Secretariat (pas.gov.on.ca), INFO-GO and the ministries' legacy sites.
+# Agency domains such as supplyontario.ca stay out: find_homepage verifies them like any other
 # candidate. The other governments' domains are from lists-research section 2.3.
 PLACES: list[dict[str, Any]] = [
     {

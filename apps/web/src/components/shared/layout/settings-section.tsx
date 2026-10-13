@@ -2,16 +2,16 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
-/**
- * One block of a settings page: heading in the left column,
- * the form or control in the right, with a rule between blocks. `wide`
- * stacks the heading above the content for things that need the full width,
- * such as tables.
- */
+/** The blocks of a settings page, with a rule between them. */
 export function SettingsSections({ children }: { children: ReactNode }) {
   return <div className="flex flex-col divide-y">{children}</div>;
 }
 
+/**
+ * One block of a settings page: heading in the left column, the form or control
+ * in the right. `wide` stacks the heading above content that needs the full
+ * width, such as a table.
+ */
 export function SettingsSection({
   id,
   title,

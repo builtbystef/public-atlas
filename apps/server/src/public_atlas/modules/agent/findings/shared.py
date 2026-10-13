@@ -78,6 +78,7 @@ class Page:
 
 
 def absolute_url(url: str) -> str:
+    """`url` normalized; refused unless it is absolute."""
     try:
         normalized = graph.normalize_url(url)
     except ValueError:
@@ -93,6 +94,7 @@ async def page_of(session: AsyncSession, webpage: Webpage) -> Page:
 
 
 async def _captured(session: AsyncSession, url: str) -> Webpage | None:
+    """The webpage at `url`, when a copy of it is stored."""
     webpage = await graph.webpage_by_url(session, url)
     if webpage is None or await evidence.latest_snapshot(session, webpage.id) is None:
         return None
@@ -214,6 +216,7 @@ async def add_quote(  # noqa: PLR0913
 
 
 def parse_uuid(value: str, what: str) -> uuid.UUID:
+    """`value` as an id; refused when it is not one."""
     try:
         return uuid.UUID(value)
     except ValueError:
@@ -246,6 +249,7 @@ async def subject_institution(
 
 
 async def name_texts(session: AsyncSession, owner: Place | Institution) -> list[str]:
+    """Every name `owner` goes by."""
     return [alias.text for alias in await graph.names_of(session, owner)]
 
 
@@ -328,4 +332,5 @@ async def spawn(
 
 
 def describe_assignments(rows: Sequence[Assignment]) -> str:
+    """The spawned assignments, as a tool result lists them."""
     return ", ".join(f"{row.type.value} ({row.status.value})" for row in rows) or "nothing new"

@@ -116,6 +116,7 @@ def test_the_served_places_are_loaded_at_the_levels_the_regulation_means(
     assert all(count == 1 for count in counts.values()), counts
 
     def under(region: str) -> set[str]:
+        """The loaded municipalities under `region`."""
         return {
             entry.name
             for entry in places

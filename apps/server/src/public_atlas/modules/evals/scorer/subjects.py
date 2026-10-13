@@ -130,6 +130,8 @@ def _prefer(rows: list[InstitutionRow], type_: str, place_id: uuid.UUID | None) 
 
 
 def match_subject(graph: Graph, rules: CountryRules, expected: SubjectFile) -> SubjectMatch:
+    """The subject file's place, by its code or else its name, and each of its institutions'
+    rows; the subject's own government is whatever the place points at."""
     subject = expected.subject
     place = None
     if subject.kind == "place" and subject.official_code is not None:
@@ -150,7 +152,6 @@ def match_subject(graph: Graph, rules: CountryRules, expected: SubjectFile) -> S
     place_id = place.id if place else None
     government_id = place.government_id if place is not None else None
     for expected_institution in expected.institutions:
-        # The subject's own government is whatever the place points at, by any name.
         if (
             subject.kind == "place"
             and expected_institution.key == subject.institution
@@ -181,17 +182,20 @@ class Refs:
         self.files = files
 
     def split(self, ref: str) -> tuple[str, str]:
+        """The slug and key a ref names; this file's slug when it names none."""
         if ":" in ref:
             slug, key = ref.split(":", 1)
             return slug, key
         return self.slug, ref
 
     def row(self, ref: str) -> InstitutionRow | None:
+        """The database row matched for the institution `ref` names."""
         slug, key = self.split(ref)
         match = self.matches.get(slug)
         return match.rows.get(key) if match else None
 
     def expected_type(self, ref: str) -> str | None:
+        """The dataset type of the institution `ref` names."""
         slug, key = self.split(ref)
         file = self.files.get(slug)
         if file is None:
@@ -214,6 +218,7 @@ class Refs:
 
 
 def describe(row: InstitutionRow) -> str:
+    """A row as a report line names it: name, type and status."""
     name = row.names[0] if row.names else str(row.id)
     return f"{name!r} ({row.type}, {row.status})"
 
@@ -225,6 +230,8 @@ def score_subject(
     matches: dict[str, SubjectMatch],
     files: dict[str, SubjectFile],
 ) -> Scorecard:
+    """One subject file's scorecard: institutions and parents, homepages and domains, and
+    sources. `matches` holds every subject's match, for cross-file refs."""
     expected = files[slug]
     match = matches[slug]
     card = Scorecard(slug=slug, kind="subject", status=expected.status)
@@ -247,6 +254,8 @@ def score_subject(
 def _score_institutions(
     tally: Tally, graph: Graph, expected: SubjectFile, match: SubjectMatch
 ) -> None:
+    """Each labelled institution but the subject's own: a hit when saved with its type (and in
+    review when the file expects it), then the traps."""
     subject = expected.subject
     for inst in expected.institutions:
         if inst.key == subject.institution:
@@ -359,9 +368,11 @@ def _score_parents(
 def _score_homepages(
     tally: Tally, graph: Graph, expected: SubjectFile, match: SubjectMatch
 ) -> None:
+    """Each labelled institution's homepage: a hit when the verified one matches, wrong when
+    another was verified, a miss when it is only claimed or not saved. The subject's government
+    is skipped: it was seeded with its homepage."""
     for inst in expected.institutions:
         if inst.key == expected.subject.institution:
-            # The subject's government was seeded with its homepage; there is nothing to score.
             continue
         row = match.rows.get(inst.key)
         label = f"{inst.key}"
@@ -439,6 +450,8 @@ def _score_sources(  # noqa: PLR0913, PLR0917
     match: SubjectMatch,
     refs: Refs,
 ) -> None:
+    """Each labelled source, a source type the institution's type does not ask for reported
+    off the list; then the absences and the extra sources saved."""
     # (institution id, type, key) of every source the dataset accepts; anything else saved on
     # these institutions is a false positive.
     accepted: set[tuple[uuid.UUID, str, str]] = set()
@@ -545,6 +558,8 @@ def _score_extra_sources(
     match: SubjectMatch,
     accepted: set[tuple[uuid.UUID, str, str]],
 ) -> None:
+    """Sources saved on the file's institutions that it does not accept: false positives, or
+    off the list when the institution's type does not ask for the source type."""
     own = {row.id for row in match.rows.values()}
     for saved_source in graph.sources:
         if saved_source.institution_id not in own or saved_source.status == REJECTED:

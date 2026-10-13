@@ -33,6 +33,7 @@ ANSWER = {
 
 
 def brave(handler) -> tuple[BraveSearcher, list[httpx.Request]]:
+    """A Brave searcher whose requests `handler` answers, and the requests it sends."""
     sent: list[httpx.Request] = []
 
     def handle(request: httpx.Request) -> httpx.Response:

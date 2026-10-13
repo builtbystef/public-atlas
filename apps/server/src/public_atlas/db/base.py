@@ -1,3 +1,5 @@
+"""The declarative base and the mixins every model shares."""
+
 import uuid
 from datetime import UTC, datetime
 
@@ -16,7 +18,8 @@ NAMING_CONVENTION = {
 
 
 class Base(AsyncAttrs, DeclarativeBase):
-    """`AsyncAttrs` adds `awaitable_attrs` for loading lazy relationships in async code."""
+    """The models' base; `AsyncAttrs` adds `awaitable_attrs` for loading lazy relationships in
+    async code."""
 
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
@@ -26,9 +29,8 @@ def utcnow() -> datetime:
 
 
 def include_name(name: str | None, type_: str, _parent_names: object) -> bool:
-    """For Alembic's autogenerate: the job queue's tables are Procrastinate's
-    (its schema is applied by a migration), not the models', so a comparison
-    must not propose dropping them."""
+    """For Alembic's autogenerate: the job queue's tables are Procrastinate's (a migration applies
+    its schema), not the models', so a comparison must not propose dropping them."""
     return not (type_ == "table" and name is not None and name.startswith("procrastinate_"))
 
 

@@ -27,6 +27,7 @@ export class ApiError extends Error {
     super(message);
   }
 
+  /** The error for a failed result: a 500 quotes its request ID, a 422 maps issues to fields. */
   static fromResult(result: ApiResult<unknown>): ApiError {
     const { response, error } = result;
     const detail = isRecord(error) ? error["detail"] : undefined;
@@ -40,7 +41,6 @@ export class ApiError extends Error {
       return new ApiError(response.status, detail, {}, requestId);
     }
     if (Array.isArray(detail)) {
-      // FastAPI request validation: [{ loc: ["body", "email"], msg, type }].
       const fields: Record<string, string> = {};
       const messages: string[] = [];
       for (const issue of detail as ValidationIssue[]) {
@@ -66,6 +66,7 @@ export class ApiError extends Error {
   }
 }
 
+/** The data of a 2xx result; anything else throws its `ApiError`. */
 export function unwrap<T>(result: ApiResult<T>): T {
   if (result.response.ok) {
     return result.data as T;
@@ -73,6 +74,7 @@ export function unwrap<T>(result: ApiResult<T>): T {
   throw ApiError.fromResult(result);
 }
 
+/** What to show the user for anything thrown; a failed fetch reads as the API being unreachable. */
 export function errorMessage(error: unknown): string {
   if (error instanceof ApiError) return error.message;
   if (error instanceof TypeError) return "The API could not be reached.";

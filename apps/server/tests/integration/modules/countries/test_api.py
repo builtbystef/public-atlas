@@ -28,6 +28,7 @@ async def ontario_level(db: Database) -> str:
 
 
 async def level_types(db: Database, name: str) -> list[str]:
+    """The institution types Canada's level `name` expects."""
     async with db.session() as session:
         country = await service.read_country(session, "CA")
     return next(

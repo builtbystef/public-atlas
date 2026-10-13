@@ -1,11 +1,12 @@
 """What every list's rule tests share: a list module's files opened as the loader opens them,
-from the lists cache (a fetched file is downloaded into it when it is not there), with Docling
-for the lists read from PDFs, which keeps each file's parsed pages beside the cache so a rule
-test parses a PDF once per machine; a list's entries, built once for the session; and the
-places a country's lists load, looked up as the loader looks them up, with no database. A list
-whose files cannot be had skips its tests, unless the suite is told the files must be there
-(`PUBLIC_ATLAS_REQUIRE_LISTS=1`, as in CI, where the cache is restored and warmed first): then
-they fail. The country and province packages have conftests of their own for their rules."""
+from the lists cache (a missing fetched file is downloaded into it), with Docling for PDFs and
+its parsed pages kept beside the cache so a PDF is parsed once per machine; a list's entries,
+built once per session; and the places a country's lists load, looked up as the loader does,
+with no database.
+
+A list whose files cannot be had skips its tests, unless `PUBLIC_ATLAS_REQUIRE_LISTS=1` (as in
+CI, where the cache is restored and warmed first): then they fail. The country and province
+packages have conftests of their own for their rules."""
 
 import json
 import uuid
@@ -68,6 +69,7 @@ class CachedParser:
         page_batch: int | None = None,
         tables: bool = False,
     ) -> ParsedDocument:
+        """Docling's parse, read back from the cache when this file and range were parsed."""
         rows = "-tables" if tables else ""
         path = self.cache_dir / f"{content_hash(data)}-{self.version}-{start}-{limit}{rows}.json"
         if path.exists():
@@ -101,6 +103,7 @@ def open_list_file(*, require_lists: bool) -> OpenListFile:
     opened: dict[tuple[str, str, str | None], files.OpenedFile] = {}
 
     def unavailable(reason: str) -> None:
+        """Fail when the lists are required, else skip."""
         if require_lists:
             pytest.fail(f"PUBLIC_ATLAS_REQUIRE_LISTS=1 and {reason}")
         pytest.skip(reason)
@@ -239,12 +242,12 @@ class LoadedPlaces:
                 self._add(entry)
 
     def _add(self, entry: PlaceEntry) -> None:
+        """One entry as `Loader._match_place` takes it: the place holding its code, else the
+        place at its level under the same parent that goes by its name, unless its government
+        is a body of another kind; else a place of its own."""
         parent = self._parent_of(entry)
         if entry.parent is not None and parent is None:
             return
-        # `Loader._match_place`: the place holding the entry's code, else the place at the level
-        # under the same parent that goes by the entry's name, unless its government is a body
-        # of another kind.
         coded = self._by_code.get((entry.code.scheme, entry.code.value))
         if coded is not None:
             if coded.entry.level != entry.level:
@@ -305,6 +308,7 @@ class LoadedPlaces:
         return matched
 
     def _load(self, entry: PlaceEntry, parent: _Loaded | None) -> None:
+        """The entry as a new place: its row, its name forms and the indexes that find it."""
         row = Place(
             id=uuid.uuid7(),
             name=entry.name,

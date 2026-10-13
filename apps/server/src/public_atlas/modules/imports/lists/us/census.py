@@ -250,14 +250,17 @@ class Unit:
 
     @property
     def active(self) -> bool:
+        """Whether the functional status is a government's."""
         return self.funcstat in ACTIVE
 
     @property
     def citation(self) -> Citation:
+        """The unit's line of SUB-EST2025."""
         return Citation(source=SUB_EST.name, line=self.line)
 
     @property
     def figure(self) -> Figure:
+        """The unit's 2025 population, cited at its line."""
         return Figure(
             name=MetricName.POPULATION,
             year=ESTIMATES_YEAR,
@@ -381,6 +384,7 @@ def split_name(name: str) -> tuple[str, str | None]:
 
 
 def is_part(name: str) -> bool:
+    """Whether the name marks a county part or a remainder, "(pt.)" or "(balance)"."""
     return _PART.search(name) is not None
 
 

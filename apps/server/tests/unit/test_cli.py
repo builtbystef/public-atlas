@@ -1,3 +1,5 @@
+"""The command line's parser: what each command takes and what it refuses."""
+
 from pathlib import Path
 
 import pytest

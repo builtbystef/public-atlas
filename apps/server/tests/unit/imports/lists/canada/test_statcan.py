@@ -11,6 +11,7 @@ from public_atlas.modules.imports.lists.canada.statcan import Province
 
 
 def types_of(table: dict[str, statcan.UnitType], province: str) -> set[str]:
+    """The codes of a type table that occur in `province`."""
     return {code for code, unit in table.items() if province in unit.provinces}
 
 
@@ -75,6 +76,7 @@ ATTRIBUTES_CSV = (
 
 
 def _opened(file: ListFile, data: bytes) -> files.OpenedFile:
+    """`data` rendered with `file`'s columns, under a test URL and its own hash."""
     return files.render(
         ListFile(
             name=file.name,

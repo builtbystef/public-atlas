@@ -1,3 +1,5 @@
+"""The object store contract, against the in-memory store and the S3 bucket `infra:up` runs."""
+
 import uuid
 from contextlib import asynccontextmanager
 from datetime import timedelta
@@ -27,13 +29,14 @@ TTL = timedelta(minutes=5)
 
 
 def local_settings(bucket: str = "public-atlas") -> Settings:
-    """The settings as the code defaults them, which name the object storage `compose.yaml`
-    runs: the developer's `.env` is not read, so the tests see the code, not the machine."""
+    """The code's default settings, which name the object storage `compose.yaml` runs. `.env` is
+    not read, so the tests see the code, not the machine."""
     return Settings(_env_file=None, storage_bucket=bucket)
 
 
 @asynccontextmanager
 async def open_s3() -> AsyncIterator[S3ObjectStore]:
+    """The S3 store, failing the test with a hint when the service is not reachable."""
     store = create_object_store(local_settings())
     assert isinstance(store, S3ObjectStore)
     async with store:
@@ -52,6 +55,7 @@ async def s3() -> AsyncIterator[S3ObjectStore]:
 
 @pytest.fixture(params=["memory", "s3"])
 async def store(request: pytest.FixtureRequest) -> AsyncIterator[ObjectStore]:
+    """Each implementation in turn, so both honour the same contract."""
     if request.param == "memory":
         yield MemoryObjectStore()
     else:

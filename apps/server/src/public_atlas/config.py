@@ -67,19 +67,18 @@ class Settings(BaseSettings):
     # --- Background jobs ---
     # Jobs one worker process runs at a time.
     jobs_concurrency: int = Field(2, ge=1)
-    # A job that failed for good stays in the queue's table, to be looked at, this long.
+    # How long a job that failed for good stays in the queue's table, to be looked at.
     purge_after: timedelta = timedelta(days=7)
 
     # --- Parsing ---
     # "docling" needs the parse dependency group, which only the parse image installs. "memory"
     # is the test double: the bytes are the text.
     parse_provider: ParseProvider = "docling"
-    # Pages of a PDF per Docling call. Docling keeps every page of a call in memory until the
-    # call is done: a long budget book parsed in one call took the worker past 10 GB. A call is
-    # cheap, so few pages. A file whose first attempt took the worker down is retried one page
-    # per call.
-    # Also how far each parse job goes: the first range when the file is fetched, the next when
-    # the agent reads past it, so a budget book is parsed only as far as it is read.
+    # Pages of a PDF per Docling call, and how far one parse job goes (the first range on fetch,
+    # the next when the agent reads past it, so a budget book is parsed only as far as it is
+    # read). Docling holds every page of a call in memory: a budget book in one call took the
+    # worker past 10 GB. A file whose first attempt took the worker down is retried one page per
+    # call.
     parse_page_batch: int = Field(10, ge=1)
     # Per range of `parse_page_batch` pages; a range that runs longer fails the parse.
     parse_timeout: timedelta = timedelta(minutes=3)

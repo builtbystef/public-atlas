@@ -1,3 +1,5 @@
+"""The health endpoints."""
+
 from typing import TYPE_CHECKING
 
 from public_atlas.dependencies import get_object_store
@@ -16,6 +18,8 @@ def test_liveness_db_and_storage_answer(client: TestClient):
 
 
 class DownStore(MemoryObjectStore):
+    """An object store whose bucket cannot be reached."""
+
     async def ping(self) -> None:
         msg = "no bucket"
         raise RuntimeError(msg)

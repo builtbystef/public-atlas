@@ -48,7 +48,6 @@ class Snapshot(UUIDPrimaryKey, Base):
     bytes_key: Mapped[str] = mapped_column(Text)
     text_key: Mapped[str | None] = mapped_column(Text)
     text_status: Mapped[TextStatus] = checked_string(TextStatus, "text_status")
-    # Why extraction failed.
     text_error: Mapped[str | None] = mapped_column(Text)
     # How many pages the document has, and how many of them the stored text holds, from the
     # first: equal once the text is `ready`.

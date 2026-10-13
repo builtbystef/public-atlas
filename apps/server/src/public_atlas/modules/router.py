@@ -1,3 +1,5 @@
+"""The API's router: every module's routes, included in one place."""
+
 from fastapi import APIRouter
 
 from public_atlas.modules.assignments.router import router as assignments_router

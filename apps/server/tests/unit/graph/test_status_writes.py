@@ -8,7 +8,6 @@ from pathlib import Path
 
 SOURCE = Path(__file__).resolve().parents[3] / "src" / "public_atlas"
 THE_ONE_DOOR = "modules/graph/status_changes.py"
-# The other lifecycles' one line each, by file.
 OTHER_DOORS = {
     ("modules/assignments/lifecycle.py", "assignment.status = status"),
     ("modules/assignments/service.py", "run.status = RunStatus.PAUSED"),

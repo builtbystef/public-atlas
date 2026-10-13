@@ -84,6 +84,7 @@ class FileText:
     progress: Progress | None = None
 
     def __str__(self) -> str:
+        """A header the agent reads (where it is, how to go on), then the chunk."""
         if self.progress is None:
             header = (
                 f"File: {self.url} ({self.media_type}, {self.page_count} page(s), "

@@ -26,6 +26,7 @@ NEW_SCHEMES = ["statcan_sgc", "mamh", "fips", "gnis", "census_gid", "nces", "ipe
 
 
 def _listed(values: list[str]) -> str:
+    """The values as a SQL list of string literals."""
     return ", ".join(f"'{value}'" for value in values)
 
 

@@ -218,6 +218,7 @@ def test_a_preview_says_what_a_decision_would_do_and_keeps_none_of_it(
 
 
 def _kind_preview(client: TestClient, kind: str) -> dict[str, list[str]]:
+    """What approving `kind` would change (by label) and spawn (by type)."""
     body = client.post("/review-items/kinds/approve/preview", json={"kind": kind}).json()
     return {
         "changes": [c["entity"]["label"] for c in body["changes"]],
@@ -438,8 +439,8 @@ def test_an_item_page_sets_the_entity_beside_the_ones_its_question_names(
 
 
 def _raise_kinds(db: Database, world: World, build: type[Build]) -> dict[str, uuid.UUID]:
-    """Two libraries under regions, two bodies of a suggested type and one of another; the
-    bodies by name."""
+    """Raise two libraries under regions, two bodies of one suggested type and one of another;
+    the bodies' ids by name."""
 
     async def make() -> dict[str, uuid.UUID]:
         bodies: dict[str, uuid.UUID] = {}
@@ -489,6 +490,7 @@ def _raise_kinds(db: Database, world: World, build: type[Build]) -> dict[str, uu
 def _queue(
     client: TestClient, **params: str
 ) -> list[tuple[str | None, int, list[str], dict[str, str]]]:
+    """The open queue's rows as (kind, count, member labels, question)."""
     listed = client.get("/review-items", params={"status": "open", **params})
     assert listed.status_code == 200, listed.text
     return [

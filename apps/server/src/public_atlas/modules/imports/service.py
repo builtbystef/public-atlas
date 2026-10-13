@@ -1,16 +1,14 @@
-"""The shared list loader (spec section 5.2), written once: it never changes when a list is
-added. It opens the module's files (fetched, hash-checked and cached, or collected by hand and
-read from the cache), stores each as a snapshot and an `official_lists` row, asks the module
-for its entries, and writes what the database lacks: a place by its code, then by its name
-under the same parent, with its government, identifiers, metrics, aliases, candidate homepage
-and an evidence row quoting the list's own line for each fact; an institution by its codes, then
-by its name at its place, with its identifiers, served places and candidate homepage.
-
+"""The shared list loader (spec section 5.2), which never changes when a list is added. It
+opens the module's files (fetched and hash-checked, or collected by hand, from the cache), stores
+each as a snapshot and an `official_lists` row, asks the module for its entries, and writes what
+the database lacks: a place matched by its code, then by its name under the same parent, with its
+government, identifiers, metrics, aliases, candidate homepage and an evidence row quoting the
+list's line for each fact; an institution matched by its codes, then by its name at its place,
+with its identifiers, served places and candidate homepage.
 
 Every run writes in the session and reports what it changed; the caller commits an apply and
-rolls a dry run back, so the diff a dry run prints is exactly what an apply would do. A second
-apply changes nothing.
-"""
+rolls a dry run back, so a dry run's diff is exactly what an apply would do. A second apply
+changes nothing."""
 
 import asyncio
 import logging
@@ -70,6 +68,8 @@ LISTED_ADDITIONS = 20
 
 @dataclass(frozen=True, slots=True)
 class Change:
+    """One row a load adds, changes or reports as gone, as the report prints it."""
+
     action: Action
     table: str
     label: str
@@ -107,6 +107,8 @@ class LoadReport:
         return Counter((change.action, change.table) for change in self.changes)
 
     def render(self) -> str:
+        """Totals per action and table, then each change, with a table's additions past the
+        first `LISTED_ADDITIONS` counted rather than listed, then the skips and idle overrides."""
         mode = "applied" if self.applied else "dry run: nothing written"
         lines = [
             f"{self.list_name}: {self.entries} entries from {len(self.sources)} sources ({mode})"
@@ -373,6 +375,9 @@ class Known:
 
 @dataclass
 class Loader:
+    """One load's state: the session, the opened files and their stored rows, and the places
+    read so far."""
+
     session: AsyncSession
     store: ObjectStore
     rules: CountryRules
@@ -494,6 +499,8 @@ class Loader:
     # --- Places ---
 
     async def _load_place(self, entry: PlaceEntry) -> None:
+        """The place under its parent (found at the levels above, or the top level for none),
+        matched or created, then its aliases, codes, figures, evidence and government."""
         if entry.level not in self.rules.levels:
             raise Skip(f"{self.rules.name} has no administrative level {entry.level!r}")
         parent = None
@@ -583,6 +590,7 @@ class Loader:
         return naming.designators_in(naming.key(government).replace(naming.key(name), " "))
 
     async def _by_code(self, code: Code) -> Place | None:
+        """The place holding the code, if any."""
         held = await self.session.scalar(
             select(Identifier).where(
                 Identifier.scheme == code.scheme,
@@ -664,12 +672,14 @@ class Loader:
         return {ids[institution_id]: name for institution_id, name in rows}
 
     def _forms(self, names: Iterable[str]) -> set[str]:
+        """Every form of the names (`naming.forms`), designators off."""
         forms: set[str] = set()
         for name in names:
             forms |= self.rules.naming.forms(name)
         return forms
 
     def _plain_forms(self, names: Iterable[str]) -> set[str]:
+        """The names' plain forms (`naming.plain_forms`), designators kept."""
         forms: set[str] = set()
         for name in names:
             forms |= self.rules.naming.plain_forms(name)
@@ -682,6 +692,8 @@ class Loader:
         language: str,
         aliases: Iterable[AliasEntry],
     ) -> None:
+        """The name and the aliases on the owner, and, for a place, their forms on its known
+        row so later entries match them."""
         wanted = [AliasEntry(text=name, language=language), *aliases]
         added = 0
         for alias in wanted:
@@ -748,6 +760,7 @@ class Loader:
                 self.report.skipped.append(f"{label}: {skip}")
 
     async def _metric(self, place: Place, figure: Figure, label: str) -> None:
+        """The figure as the place's metric for its year: added, or changed when it differs."""
         official_list, _, _ = self.cited(figure.citation)
         metric = await self.session.scalar(
             select(Metric).where(
@@ -787,6 +800,7 @@ class Loader:
         kind: EvidenceKind = EvidenceKind.APPEARS_ON,
         link_url: str | None = None,
     ) -> None:
+        """An evidence row quoting the cited line, reported when new."""
         if await evidence.add_evidence(
             self.session,
             entity_id=entity_id,
@@ -873,6 +887,8 @@ class Loader:
     # --- Institutions ---
 
     async def _load_institution(self, entry: InstitutionEntry) -> None:
+        """The institution at its place, matched or created, then its aliases, parent body
+        (set only when new or unset), served places, codes, evidence and candidate homepage."""
         if entry.institution_type not in self.rules.institution_types:
             raise Skip(f"no institution type {entry.institution_type!r}")
         levels = list(self.rules.levels)
@@ -942,6 +958,7 @@ class Loader:
         return institution, True
 
     async def _institution_by_code(self, code: Code) -> Institution | None:
+        """The institution holding the code, if any."""
         held = await self.session.scalar(
             select(Identifier).where(
                 Identifier.scheme == code.scheme,

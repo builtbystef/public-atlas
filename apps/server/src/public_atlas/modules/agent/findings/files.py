@@ -84,6 +84,8 @@ async def search(
 
 
 async def search_web(ctx: SessionContext, query: str, domains: list[str]) -> SearchOutcome:
+    """The work of `search`: the cap and the domains are checked, the request is recorded as
+    usage before the engine is asked, and the results' sites open for the session."""
     searcher = ctx.searcher
     if searcher is None:
         return SearchOutcome(
@@ -150,4 +152,5 @@ async def search_web(ctx: SessionContext, query: str, domains: list[str]) -> Sea
 
 
 def _covers(host: str, domain: str) -> bool:
+    """Whether `host` is `domain` or a subdomain of it."""
     return host == domain or host.endswith(f".{domain}")

@@ -25,6 +25,7 @@ type Loaded = tuple[dict[Path, SubjectFile], dict[Path, PlaceList], list[str]]
 
 
 def all_files() -> list[Path]:
+    """Every subject file, then every places file."""
     return sorted(SUBJECTS.glob("*.yaml")) + sorted(PLACES.glob("*.yaml"))
 
 
@@ -60,11 +61,15 @@ def listed_at(rules: CountryRules, institution_type: str, level: str) -> bool:
 def validate_subject(  # noqa: C901, PLR0912, PLR0915 - one check after another
     slug: str, expected: SubjectFile, rules: CountryRules, all_keys: dict[str, set[str]]
 ) -> list[str]:
+    """One subject file's errors against its country's rules, each prefixed with `slug`.
+    `all_keys` holds every subject file's institution keys by slug, for cross-file refs."""
     errors: list[str] = []
     keys = [row.key for row in expected.institutions]
     by_key = {row.key: row for row in expected.institutions}
 
     def resolve(ref: str, where: str) -> Institution | None:
+        """The institution `ref` names in this file, or None (always for a cross-file ref),
+        with an error recorded when it names none."""
         if ":" in ref:
             other, key = ref.split(":", 1)
             if key not in all_keys.get(other, set()):
@@ -160,6 +165,8 @@ def validate_subject(  # noqa: C901, PLR0912, PLR0915 - one check after another
 
 
 def validate_places(slug: str, data: PlaceList, rules: CountryRules) -> list[str]:
+    """One place list's errors, each prefixed with `slug`: tiers, levels and parents agree,
+    homepages follow the rules, and the stated counts hold."""
     errors: list[str] = []
     names = [m.name for m in data.municipalities]
     if len(names) != len(set(names)):

@@ -78,6 +78,8 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass
 class Notes:
+    """What the build left out, unqualified or overrode, for the load's log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     qualified: list[str] = field(default_factory=list)
     overrides: list[str] = field(default_factory=list)
@@ -100,6 +102,7 @@ def bare_name(name: str) -> str:
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
+    """The municipalities with their composed governments, and the notes."""
     census = NEWFOUNDLAND.read(files)
     notes = Notes()
     found = []

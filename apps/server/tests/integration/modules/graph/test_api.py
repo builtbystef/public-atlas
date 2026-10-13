@@ -74,7 +74,7 @@ def test_listing_institutions_with_search_filters_and_sorting(
 ):
     library_id, _ = db.run(make_library, db, object_store, world, build)
 
-    # The three bodies under Ontario, the library, and the seed's fourteen anchor governments.
+    # The four bodies under Ontario, its own government among them, and the seed's other thirteen.
     everything = client.get("/institutions", params={"country_code": "CA"}).json()
     assert everything["total"] == 4 + 13
     under_ontario = client.get("/institutions", params={"place_id": str(world.ontario.id)}).json()
@@ -215,8 +215,8 @@ def test_places_carry_their_newest_population_and_filter_and_sort_by_it(
     db.run(count_people, db, world)
 
     by_size = client.get("/places", params={"sort": "population", "order": "desc"}).json()
-    # A place with no figure (Canada and the other twelve provinces) comes last whichever way
-    # the list runs.
+    # A place with no figure (Canada and the other twelve provinces and territories) comes last
+    # whichever way the list runs.
     rows = [(row["name"], row["population"]) for row in by_size["items"]]
     assert rows[:3] == [("Ontario", 14_223_942), ("Elm", 650_000), ("Oakville", 213_759)]
     assert len(rows) == 3 + 13

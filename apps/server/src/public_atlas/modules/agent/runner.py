@@ -84,8 +84,9 @@ class SessionOutcome:
 
 
 async def run_assignment(res: Resources, assignment_id: uuid.UUID) -> str:
-    """A failed run is retried by the queue; on the last attempt the assignment finishes `failed`
-    first, or it would stay `running` with no job left to run it."""
+    """The job body: sessions until the assignment ends. A failed run is retried by the queue; on
+    the last attempt the assignment finishes `failed` first, or it would stay `running` with no
+    job left to run it."""
     try:
         return await _run(res, assignment_id)
     except Exception as exc:
@@ -96,6 +97,7 @@ async def run_assignment(res: Resources, assignment_id: uuid.UUID) -> str:
 
 
 async def _run(res: Resources, assignment_id: uuid.UUID) -> str:
+    """Up to `MAX_SESSIONS_PER_JOB` sessions, then a requeue if every one handed off."""
     for _ in range(MAX_SESSIONS_PER_JOB):
         claimed = await _claim(res, assignment_id)
         if isinstance(claimed, str):
@@ -271,8 +273,7 @@ async def run_session(res: Resources, assignment: Assignment, run: Run) -> Sessi
                             if isinstance(node, CallToolsNode):
                                 # One model response is one move of the stall rule.
                                 ctx.requests_since_finding += 1
-                                # `total_tokens` is input plus output; input counts cached
-                                # tokens.
+                                # `total_tokens` is input plus output, cached input included.
                                 if node.model_response.usage.total_tokens > threshold:
                                     over_threshold = True
                             if isinstance(node, ModelRequestNode) and (
@@ -372,8 +373,8 @@ def budget_summary(assignment: Assignment) -> str:
 
 
 def remaining_budget(assignment: Assignment) -> UsageLimits:
-    """Raises `UsageLimitExceeded` when nothing is left, so a spent assignment never makes a
-    request."""
+    """The limits left for a session; raises `UsageLimitExceeded` when nothing is left, so a spent
+    assignment never makes a request."""
     requests = assignment.budget_requests - assignment.requests_used
     tokens = assignment.budget_tokens - assignment.tokens_used
     if requests <= 0 or tokens <= 0:
@@ -438,6 +439,7 @@ async def write_session_events(
     instructions: str,
     videos: Sequence[tuple[str, int]],
 ) -> None:
+    """Write the session's events, its videos after them."""
     rows = events.events_from(
         assignment.id, assignment.sessions, messages, instructions=instructions
     )

@@ -42,12 +42,14 @@ __all__ = [
     "read_item",
 ]
 
-# The assignments the page lists as started since the decision.
+# How many assignments started since the decision the page lists.
 STARTED_SHOWN = 20
 
 
 @dataclass(frozen=True, slots=True)
 class EntityRef:
+    """An entity by id, kind and label."""
+
     id: uuid.UUID
     entity_kind: EntityKind
     label: str
@@ -90,6 +92,8 @@ class Related:
 
 @dataclass(frozen=True, slots=True)
 class AssignmentRef:
+    """An assignment as the page links to it, with its subject named."""
+
     id: uuid.UUID
     type: AssignmentType
     status: AssignmentStatus
@@ -99,6 +103,8 @@ class AssignmentRef:
 
 @dataclass(frozen=True, slots=True)
 class ItemDetail:
+    """A review item with everything its page shows."""
+
     item: ReviewItem
     subject: EntitySummary
     # The entity's own columns, for a reader who needs more than the summary.
@@ -139,6 +145,7 @@ async def read_item(
 
 
 async def _entity(session: AsyncSession, entity_id: uuid.UUID) -> Entity:
+    """The item's entity, of whatever kind."""
     entity = await graph.entity_by_id(session, entity_id)
     if entity is None:  # pragma: no cover - the foreign key keeps the item's entity
         raise NotFoundError("the review item's entity is gone")
@@ -177,6 +184,7 @@ async def _named(session: AsyncSession, item: ReviewItem) -> list[tuple[str, Ent
 async def _evidence_counts(
     session: AsyncSession, entity_ids: Iterable[uuid.UUID]
 ) -> dict[uuid.UUID, int]:
+    """How many quotes each entity has; an entity with none is left out."""
     rows = await session.execute(
         select(Evidence.entity_id, func.count())
         .where(Evidence.entity_id.in_(list(entity_ids)))
@@ -196,6 +204,7 @@ async def entity_ref(session: AsyncSession, entity_id: uuid.UUID | None) -> Enti
 
 
 async def _url(session: AsyncSession, webpage_id: uuid.UUID | None) -> str | None:
+    """The webpage's URL; None for no id or no row."""
     webpage = await session.get(Webpage, webpage_id) if webpage_id is not None else None
     return webpage.url if webpage is not None else None
 
@@ -220,6 +229,7 @@ async def _owner_id(
 
 
 async def _country(session: AsyncSession, place_id: uuid.UUID | None) -> str | None:
+    """The place's country code; None for no id or no row."""
     place = await session.get(Place, place_id) if place_id is not None else None
     return place.country_code if place is not None else None
 
@@ -227,6 +237,8 @@ async def _country(session: AsyncSession, place_id: uuid.UUID | None) -> str | N
 async def _summary(
     session: AsyncSession, entity: Entity, question: dict[str, Any], counts: dict[uuid.UUID, int]
 ) -> EntitySummary:
+    """The entity summarised, the fields of its kind filled; a country from its owner's place
+    when it has none of its own."""
     names: list[str] = []
     institution_type = suggested_type = level = country = url = homepage_url = None
     place = parent = None
@@ -271,6 +283,7 @@ async def _summary(
 
 
 async def _columns(session: AsyncSession, entity: Entity) -> dict[str, Any]:
+    """Every column of the entity and its kind's table, ids as strings, a page's URL added."""
     found: dict[str, Any] = {}
     for table in type(entity).__table__.columns, Entity.__table__.columns:
         for column in table:
@@ -282,6 +295,7 @@ async def _columns(session: AsyncSession, entity: Entity) -> dict[str, Any]:
 
 
 async def _assignment_ref(session: AsyncSession, assignment: Assignment) -> AssignmentRef:
+    """The assignment with its subject named."""
     subject = await graph.entity_by_id(session, assignment.subject_id)
     if subject is None:  # pragma: no cover - the foreign key keeps the subject
         raise NotFoundError("the assignment's subject is gone")
@@ -297,11 +311,13 @@ async def _assignment_ref(session: AsyncSession, assignment: Assignment) -> Assi
 async def _assignment(
     session: AsyncSession, assignment_id: uuid.UUID | None
 ) -> AssignmentRef | None:
+    """The assignment by id, named; None for no id or no row."""
     assignment = await session.get(Assignment, assignment_id) if assignment_id else None
     return await _assignment_ref(session, assignment) if assignment is not None else None
 
 
 async def _same_kind_open(session: AsyncSession, item: ReviewItem) -> int:
+    """How many other open items share the item's kind; 0 when it has none."""
     if item.kind is None:
         return 0
     count = await session.scalar(

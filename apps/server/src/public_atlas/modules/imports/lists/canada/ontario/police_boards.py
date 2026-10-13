@@ -71,6 +71,7 @@ PREFIX = "Police Service Board - "
 
 
 def region(place: str) -> Location:
+    """A region under Ontario."""
     return Location(place, REGION, PROVINCE)
 
 
@@ -95,10 +96,12 @@ class Board:
 
     @property
     def served_places(self) -> tuple[Location, ...]:
+        """The places the board polices: those given, else its own."""
         return self.served or (self.place,)
 
     @property
     def page(self) -> ListFile:
+        """The board's PAS agency page, a fetched source."""
         return ListFile(
             name=f"pas_agency_{self.pas_id}",
             title=f"Public Appointments Secretariat, agency page of the {self.name}",
@@ -401,6 +404,7 @@ class Page:
 
 
 def read_page(opened: OpenedFile) -> Page:
+    """The page's heading and the line after "Background"."""
     title = next(
         ((n, line) for n, line in enumerate(opened.lines, 1) if line.startswith(PREFIX)), None
     )
@@ -414,6 +418,8 @@ def read_page(opened: OpenedFile) -> Page:
 
 
 def build(files: Mapping[str, OpenedFile]) -> list[InstitutionEntry]:
+    """The table's boards, each checked against its page; a list whose board links are not the
+    table's, a page headed otherwise or citing another Act is an error."""
     links = board_links(files[LIST.name])
     known = set(BY_ID) | set(LEGACY)
     if set(links) != known:

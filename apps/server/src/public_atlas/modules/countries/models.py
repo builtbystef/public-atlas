@@ -37,6 +37,8 @@ class InstitutionType(Base):
 
 
 class SourceType(Base):
+    """Global, like `InstitutionType`."""
+
     __tablename__ = "source_types"
 
     name: Mapped[str] = mapped_column(Text, primary_key=True)
@@ -56,7 +58,6 @@ class AdministrativeLevel(Base):
     name: Mapped[str] = mapped_column(Text, primary_key=True)
     # From the top: the country is 1.
     rank: Mapped[int]
-    # The type of this level's government institution.
     government_institution_type: Mapped[str] = mapped_column(
         ForeignKey("institution_types.name", onupdate="CASCADE")
     )

@@ -90,7 +90,6 @@
   --border: oklch(0.895 0.009 240);
   --input: oklch(0.87 0.012 240);
 
-  /* The main colour. */
   --primary: oklch(0.46 0.1 232);
   --primary-foreground: oklch(0.985 0.002 240);
   --ring: oklch(0.6 0.09 232);
@@ -113,10 +112,8 @@
   --chart-4: var(--plum);
   --chart-5: var(--destructive);
 
-  /* The graph view's node colours, one per kind, in the same register: the brand blue for
-     places, the plum for institutions, the green for homepages, a teal for sources and the
-     sidebar's bronze for domains. Status is a ring or a fade, so the warning and destructive
-     hues stay out of this set. The canvas reads these by name (features/graph). */
+  /* The graph view's node colours, one per kind. Status is a ring or a fade, so warning and
+     destructive stay out of this set. The canvas reads these by name (features/graph). */
   --graph-place: var(--primary);
   --graph-institution: var(--plum);
   --graph-homepage: var(--success);

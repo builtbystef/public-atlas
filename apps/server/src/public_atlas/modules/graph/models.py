@@ -240,6 +240,7 @@ Base.metadata.tables["institutions"].append_constraint(
 
 
 def one_owner() -> CheckConstraint:
+    """Exactly one of `place_id` and `institution_id` is set."""
     return CheckConstraint("num_nonnulls(place_id, institution_id) = 1", name="one_owner")
 
 
@@ -301,6 +302,8 @@ class Identifier(UUIDPrimaryKey, Base):
 
 
 class Metric(UUIDPrimaryKey, Base):
+    """A figure for a place or institution in a year, such as its population."""
+
     __tablename__ = "metrics"
 
     place_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("places.id"), index=True)

@@ -90,6 +90,7 @@ ROWS_V2 = [
 
 
 def csv_bytes(rows: list[list[str]]) -> bytes:
+    """The tiny register's file: the header and `rows`."""
     buffer = io.StringIO()
     writer = csv.writer(buffer)
     writer.writerow(COLUMNS)
@@ -175,6 +176,7 @@ def tiny_places(
 
 
 def tiny_libraries(cache_dir: Path) -> ModuleType:
+    """A list module of one library at Oakville that also serves Pine."""
     data = b"name,place,served\nOakville Public Library,Oakville,Pine\n"
     source = ListFile(
         name="tiny_libraries",
@@ -400,6 +402,7 @@ def tiny_us_places(rows: list[list[str]], cache_dir: Path) -> ModuleType:
 async def load(
     db: Database, store: MemoryObjectStore, module: ModuleType, cache_dir: Path, *, apply: bool
 ) -> service.LoadReport:
+    """Load the list, committing an apply and rolling back a dry run."""
     async with db.session() as session:
         report = await service.load_list(session, store, module, cache_dir=cache_dir, apply=apply)
         if apply:
@@ -431,6 +434,7 @@ async def place_at(db: Database, name: str, level: str) -> Place:
 
 
 async def count(db: Database, model: type, *where: ColumnElement[bool]) -> int:
+    """The number of `model` rows matching every clause."""
     async with db.session() as session:
         query = select(func.count()).select_from(model)
         for clause in where:
@@ -440,6 +444,8 @@ async def count(db: Database, model: type, *where: ColumnElement[bool]) -> int:
 
 @dataclass
 class Oakville:
+    """Oakville as loaded, with every row the list gave it."""
+
     place: Place
     parent: Place
     government: Institution
@@ -519,7 +525,6 @@ def test_a_dry_run_reports_and_writes_nothing(
     assert report.count("add", "domain") == 3
     assert report.skipped == []
     assert "dry run" in report.render()
-    # Only Canada and Ontario.
     # The seed's Canada and thirteen provinces and territories, and nothing else.
     assert db.run(count, db, Place) == 14
     assert object_store.objects == {}

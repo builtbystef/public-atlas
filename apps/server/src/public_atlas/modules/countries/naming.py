@@ -15,10 +15,9 @@ def _plain(text: str) -> str:
 
 
 class Naming:
-    """How a country writes its public bodies' names, in its languages. A government's name is a
-    place name with a designator around it ("Township of Elmwood", "Elmwood, Township of");
-    knowing the designators lets the checks find the place name and tell a township from the
-    city of the same name."""
+    """A country's `NamingRules`, compiled: finds the place name inside a government's name
+    ("Township of Elmwood", "Elmwood, Township of") and tells a township from the city of the
+    same name."""
 
     def __init__(self, rules: NamingRules) -> None:
         self.rules = rules
@@ -42,6 +41,7 @@ class Naming:
         return key.strip()
 
     def without_leading(self, key: str) -> str:
+        """`key` without the longest leading word it starts with, if any."""
         for word in self._leading:
             if key.startswith(f"{word} "):
                 return key.removeprefix(f"{word} ").strip()

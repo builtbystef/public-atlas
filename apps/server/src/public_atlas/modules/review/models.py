@@ -21,6 +21,8 @@ class ReviewStatus(StrEnum):
 
 
 class ReviewItem(UUIDPrimaryKey, Base):
+    """One question about one entity, open until a reviewer decides it."""
+
     __tablename__ = "review_items"
 
     entity_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("entities.id"), index=True)

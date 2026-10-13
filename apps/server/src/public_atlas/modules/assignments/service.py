@@ -88,17 +88,17 @@ logger = logging.getLogger(__name__)
 # The job that runs an assignment (`jobs.py`). Looked up by name on the app, so this module
 # never imports the job module, which imports the agent, which imports this module.
 RUN_ASSIGNMENT_TASK = "assignments.run_assignment"
-# A subject with a finished assignment of a type that ended one of these ways has had that
-# work done: a run seeding itself does not do it again, and nor does a finish that saved the
-# subject again. Any other ending leaves it to be redone. `no_homepage` is settled because the
-# searches were made and a review item asks a person for the address; another search would
-# find the same nothing.
+# Endings that settle a subject's work of that type: neither a run seeding itself nor a finish
+# that saved the subject again redoes it. Any other ending leaves it to be redone. `no_homepage`
+# is settled because the searches were made and a review item asks a person for the address;
+# another search would find the same nothing.
 SETTLED_RESULTS = (
     AssignmentResult.COMPLETE,
     AssignmentResult.COMPLETE_WITH_GAPS,
     AssignmentResult.NO_HOMEPAGE,
 )
 
+# Providers already warned about as unpriced, so each is logged once per process.
 _unpriced: set[str] = set()
 
 
@@ -220,6 +220,7 @@ async def due_work(session: AsyncSession, subject: Place | Institution) -> list[
 
 
 async def _due_for_place(session: AsyncSession, place: Place) -> list[Spawn]:
+    """`find_institutions` once the place's government has a homepage and is not rejected."""
     if place.government_institution_id is None:
         return []
     government = await session.get_one(Institution, place.government_institution_id)
@@ -229,6 +230,7 @@ async def _due_for_place(session: AsyncSession, place: Place) -> list[Spawn]:
 
 
 async def _due_for_institution(session: AsyncSession, institution: Institution) -> list[Spawn]:
+    """`find_sources` with a verified homepage, else `find_homepage` unless one is in review."""
     if institution.homepage_id is not None:
         return [Spawn(AssignmentType.FIND_SOURCES, institution.id)]
     pending = await session.scalar(
@@ -451,6 +453,7 @@ async def would_spawn(
 
 
 async def _subject(session: AsyncSession, asked: Spawn) -> Place | Institution | None:
+    """The spawn's subject, of the kind its type works on; None, with a warning, when gone."""
     kind = descriptor_for(asked.type).subject_kind
     table: type[Place | Institution] = Place if kind == "place" else Institution
     subject = await session.get(table, asked.subject_id)
@@ -481,6 +484,7 @@ async def _in_scope(
 
 
 async def _open(session: AsyncSession, asked: Spawn) -> Assignment | None:
+    """An open assignment of the spawn's type on its subject, if any."""
     return await session.scalar(
         select(Assignment)
         .where(
@@ -715,6 +719,7 @@ def _assignments_matching(
     assignment_type: AssignmentType | None,
     subject_id: uuid.UUID | None,
 ) -> Select[tuple[Assignment]]:
+    """The assignments matching every filter given."""
     query = select(Assignment)
     if run_id is not None:
         query = query.where(Assignment.run_id == run_id)
@@ -753,6 +758,7 @@ async def get_assignment(session: AsyncSession, assignment_id: uuid.UUID) -> Ass
 
 
 async def assignment_cost(session: AsyncSession, assignment_id: uuid.UUID) -> Decimal:
+    """What the assignment's model and search calls have cost, in dollars."""
     cost = await session.scalar(
         select(func.coalesce(func.sum(Usage.cost), 0)).where(Usage.assignment_id == assignment_id)
     )

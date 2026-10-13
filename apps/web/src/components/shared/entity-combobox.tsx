@@ -19,7 +19,7 @@ import {
 import { InputGroupAddon } from "@/components/ui/input-group";
 import { useDebouncedValue } from "@/hooks/use-debounced-value";
 
-/** What a picker needs of a contact or company. */
+/** What a picker needs of a record (a place, an institution). */
 export interface EntityOption {
   id: string;
   name: string;
@@ -33,8 +33,8 @@ interface EntityPage {
 }
 
 /**
- * Generic over the queries' exact types (a contact page, a company record)
- * so the `queryOptions()` a form passes in fit without widening.
+ * Generic over the queries' exact types (a page of matches, one record) so the
+ * `queryOptions()` a form passes in fit without widening.
  */
 export interface EntityComboboxProps<
   P extends EntityPage,
@@ -71,8 +71,8 @@ const DEBOUNCE_MS = 250;
 
 /**
  * A searchable picker over an API list. The API does the matching, so the
- * list is right however many rows the workspace has: each keystroke (after a
- * pause) fetches the first matches, and the popup says when there were more.
+ * list is right however many rows there are: each keystroke (after a pause)
+ * fetches the first matches, and the popup says when there were more.
  */
 export function EntityCombobox<
   P extends EntityPage,

@@ -1,3 +1,5 @@
+"""The request id a job logs under."""
+
 import logging
 from typing import TYPE_CHECKING
 
@@ -18,11 +20,13 @@ seen: list[str] = []
 
 @task("tests.log_request_id")
 async def log_request_id(_res: Resources) -> None:
+    """Log a line and record the request id the job runs under."""
     log.info("inside the job")
     seen.append(request_id.get())
 
 
 async def run_job(db: Database, queue: InlineConnector) -> str:
+    """Defer `log_request_id` and return the request id it saw."""
     assert queue.resources is not None
     async with db.session() as session:
         await defer(queue.resources.jobs, session, log_request_id)

@@ -111,6 +111,8 @@ async def record_homepage(  # noqa: PLR0913
     link_quote: str | None = None,
     page_quote: str | None = None,
 ) -> SavedHomepage:
+    """The work of `save_homepage`: on a trusted domain or a platform the claim is verified from
+    the page's own text; on any other it becomes a candidate."""
     institution = await subject_institution(ctx, session, institution_id)
     url = absolute_url(url)
     held = await _held_already(session, institution, url)
@@ -213,6 +215,8 @@ async def _linking_page(  # noqa: PLR0913, PLR0917
 
 
 def _may_claim_unlinked(ctx: SessionContext, institution: Institution, url: str) -> bool:
+    """Whether a `find_homepage` session may claim `url` for its subject with no linking page:
+    it is on the candidate domain or a site the session's searches returned."""
     if not ctx.finding_homepage or institution.id != ctx.subject.id:
         return False
     host = graph.host_of(url)
@@ -222,6 +226,7 @@ def _may_claim_unlinked(ctx: SessionContext, institution: Institution, url: str)
 
 
 def _covers(host: str, domain: str) -> bool:
+    """Whether `host` is `domain` or a subdomain of it."""
     return host == domain or host.endswith(f".{domain}")
 
 

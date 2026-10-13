@@ -46,6 +46,7 @@ export function wallClockToIso(value: string, timeZone: string): string | null {
   return new Date(instant).toISOString();
 }
 
+/** The datetime-local value for an ISO instant in `timeZone`; "" for none or an invalid one. */
 export function isoToWallClock(iso: string | null | undefined, timeZone: string): string {
   if (!iso) return "";
   const instant = new Date(iso);
@@ -86,6 +87,7 @@ export function formatRelativeDays(
   return new Intl.RelativeTimeFormat("en-US", { numeric: "auto" }).format(days, "day");
 }
 
+/** Whether `iso` falls on an earlier calendar day than `now` in `timeZone`. */
 export function isBeforeToday(iso: string | null | undefined, timeZone: string, now = Date.now()) {
   if (!iso) return false;
   const target = wallClockAsUtc(new Date(iso), timeZone);

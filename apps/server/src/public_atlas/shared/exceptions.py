@@ -1,3 +1,5 @@
+"""The errors a route raises, each with its HTTP status, and the handler that answers them."""
+
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from starlette import status

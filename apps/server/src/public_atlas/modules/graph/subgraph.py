@@ -56,6 +56,8 @@ class GraphFilters:
 
 @dataclass(slots=True)
 class Subgraph:
+    """What the graph view draws: the root's ancestors, the nodes and the edges."""
+
     root_id: uuid.UUID
     ancestors: list[GraphAncestor]
     nodes: list[GraphNode]
@@ -115,6 +117,8 @@ async def subgraph(session: AsyncSession, filters: GraphFilters) -> Subgraph:
 
 @dataclass(frozen=True, slots=True)
 class _PlaceNode:
+    """A place with its population, what an expansion would bring, and its coverage."""
+
     place: Place
     population: int | None
     child_count: int
@@ -125,6 +129,8 @@ class _PlaceNode:
 
 @dataclass(frozen=True, slots=True)
 class _InstitutionNode:
+    """An institution with its counts of sources and homepage claims, rejected ones aside."""
+
     institution: Institution
     source_count: int
     homepage_count: int
@@ -144,6 +150,7 @@ class _WebNode:
 
 
 async def _root(session: AsyncSession, filters: GraphFilters) -> Place:
+    """`place_id`, else the first top place of `country_code` (or of any country)."""
     if filters.place_id is not None:
         return await get_place(session, filters.place_id)
     query = select(Place).where(Place.parent_place_id.is_(None))
@@ -355,6 +362,8 @@ async def _web(
 async def _domains(
     session: AsyncSession, homepages: list[_WebNode], sources: list[_WebNode], filters: GraphFilters
 ) -> list[Domain]:
+    """The domains the homepages and sources sit on that the filters keep; platforms only
+    with `platforms`."""
     ids = {row.domain_id for row in [*homepages, *sources] if row.domain_id is not None}
     if not ids:
         return []
@@ -391,6 +400,7 @@ def _nodes(  # noqa: PLR0913, PLR0917 - one argument per kind
     sources: list[_WebNode],
     domains: list[Domain],
 ) -> list[GraphNode]:
+    """A node per row, of the kinds asked for, places first."""
     nodes: list[GraphNode] = []
     if EntityKind.PLACE in kinds:
         nodes += [

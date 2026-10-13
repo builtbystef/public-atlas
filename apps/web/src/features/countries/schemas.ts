@@ -16,7 +16,6 @@ const words = z
 export const countryNameSchema = z.object({ name: requiredText("Name", 100) });
 
 export const namingRulesSchema = z.object({
-  // One group per row; a row left empty is dropped.
   designators: z
     .array(z.array(z.string()))
     .transform((groups) =>

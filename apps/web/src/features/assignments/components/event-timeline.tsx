@@ -21,10 +21,8 @@ import { assignmentEventsQuery } from "../queries";
 const REFRESH_MS = 5_000;
 
 /**
- * Everything the agent saw, said and did, session by session: the prompt,
- * the model's words, each tool call with its result, and the recorded video
- * when the run asked for one. A session can run to hundreds of events, so
- * each is folded until opened; the latest starts open.
+ * Everything the agent saw, said and did, session by session, with the recorded video when the run
+ * asked for one. A session can run to hundreds of events, so each is folded but the latest.
  */
 export function EventTimeline({
   assignmentId,

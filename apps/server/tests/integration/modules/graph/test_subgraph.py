@@ -42,6 +42,7 @@ class Picture:
 
 
 async def make_picture(db: Database, world: World, build: type[Build]) -> Picture:
+    """Add the `Picture` to the world."""
     async with db.session() as session:
         milton = await build.verified_place(session, "Milton", "municipality", world.elm)
         milton_government = await build.verified_government(session, milton, "Town of Milton")
@@ -73,10 +74,12 @@ async def make_picture(db: Database, world: World, build: type[Build]) -> Pictur
 
 
 def labels(body: dict, kind: str | None = None) -> set[str]:
+    """The labels of the payload's nodes, of one kind if given."""
     return {n["label"] for n in body["nodes"] if kind is None or n["kind"] == kind}
 
 
 def edges(body: dict) -> set[tuple[str, str, str]]:
+    """The payload's edges, as source label, target label and relation."""
     by_id = {n["id"]: n["label"] for n in body["nodes"]}
     return {(by_id[e["source"]], by_id[e["target"]], e["relation"]) for e in body["edges"]}
 

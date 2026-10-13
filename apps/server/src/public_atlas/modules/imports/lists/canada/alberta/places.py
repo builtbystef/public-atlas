@@ -199,6 +199,8 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Row:
+    """One local authority in the export."""
+
     name: str
     kind: str
     homepage: str | None
@@ -206,6 +208,7 @@ class Row:
 
     @property
     def census_type(self) -> str | None:
+        """The census type the kind answers to; None for a kind that is not a municipality."""
         return KINDS.get(self.kind)
 
 
@@ -243,6 +246,7 @@ def key(name: str) -> str:
 
 
 def commission_type(name: str) -> str | None:
+    """The institution type a commission's name says, or None for `other`."""
     for pattern, institution_type in COMMISSION_TYPES:
         if pattern.search(name):
             return institution_type
@@ -251,6 +255,8 @@ def commission_type(name: str) -> str | None:
 
 @dataclass
 class Notes:
+    """What the build left out, dissolved, composed or typed, for the load's log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     dissolved: list[str] = field(default_factory=list)
     composed: list[str] = field(default_factory=list)
@@ -279,6 +285,9 @@ class Notes:
 
 
 class Builder:
+    """Alberta's entries from the opened files, the export's municipal rows found by name key
+    and census type."""
+
     def __init__(self, files: Mapping[str, OpenedFile]) -> None:
         self.census = ALBERTA.read(files)
         self.saskatchewan = SASKATCHEWAN.read(files)
@@ -292,6 +301,8 @@ class Builder:
         self.taken: set[int] = set()
 
     def places(self) -> list[PlaceEntry]:
+        """The special areas and the municipalities, each municipality with its export row; one
+        with neither a row nor an override is an error."""
         found = []
         for unit in self.census.subdivisions:
             if unit.type_ == SPECIAL_AREA:
@@ -319,6 +330,8 @@ class Builder:
         return sorted(found, key=lambda entry: entry.name)
 
     def _municipality(self, unit: Counted, row: Row) -> PlaceEntry:
+        """The place under the census's name, governed by the export's legal name (composed
+        from the kind when bare) with its website."""
         name = census_name(unit)
         draft = Draft(unit=unit, name=name, parent=PROVINCE)
         citation = Citation(source=CONTACTS.name, line=row.line)
@@ -387,6 +400,7 @@ class Builder:
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry | InstitutionEntry], Notes]:
+    """The entries, places first, and the notes on what was left out."""
     builder = Builder(files)
     places = builder.places()
     institutions = builder.institutions()

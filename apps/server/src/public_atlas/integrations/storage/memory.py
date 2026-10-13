@@ -1,3 +1,5 @@
+"""An object store for tests that keeps the objects in a dict."""
+
 from typing import TYPE_CHECKING
 
 from public_atlas.integrations.storage.base import ObjectInfo, ObjectNotFoundError
@@ -7,6 +9,9 @@ if TYPE_CHECKING:
 
 
 class MemoryObjectStore:
+    """The test double: objects by key, and `memory://` URLs that spell out what they were
+    made for."""
+
     def __init__(self) -> None:
         self.objects: dict[str, tuple[bytes, str]] = {}
 

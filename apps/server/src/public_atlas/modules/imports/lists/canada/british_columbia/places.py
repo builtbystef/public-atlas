@@ -165,6 +165,8 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Row:
+    """One feature of a boundary layer."""
+
     legal_name: str
     abbreviation: str
     # The regional district a municipality belongs to; "" for a regional district.
@@ -173,6 +175,7 @@ class Row:
 
 
 def read_rows(opened: OpenedFile) -> list[Row]:
+    """A layer's rows, legal names with whitespace collapsed."""
     return [
         Row(
             legal_name=" ".join(row["ADMIN_AREA_NAME"].split()),
@@ -193,6 +196,8 @@ def district_core(legal_name: str) -> str:
 
 @dataclass
 class Notes:
+    """What the build left out, renamed or found misplaced, for the load's log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     census_only: list[str] = field(default_factory=list)
     renamed: list[str] = field(default_factory=list)
@@ -217,6 +222,9 @@ class Notes:
 
 
 class Builder:
+    """British Columbia's entries from the opened files; `regions` runs first and records
+    the region names its municipalities sit under."""
+
     def __init__(self, files: Mapping[str, OpenedFile], naming: Naming) -> None:
         self.naming = naming
         self.census = BRITISH_COLUMBIA.read(files)
@@ -228,6 +236,8 @@ class Builder:
         self.region_of_legal_name: dict[str, str] = {}
 
     def regions(self) -> list[PlaceEntry]:
+        """The regional districts, each found in the layer by the place name in its legal
+        name."""
         found = []
         by_core = {name_key(district_core(row.legal_name)): row for row in self.districts}
         for code, division in self.census.divisions.items():
@@ -268,6 +278,7 @@ class Builder:
         return sorted(found, key=lambda entry: entry.name)
 
     def _is_regional_municipality(self, division_code: str) -> bool:
+        """Whether the division holds a regional municipality (Northern Rockies)."""
         inside = [unit for unit in self.census.subdivisions if unit.division == division_code]
         return any(unit.type_ == REGIONAL_MUNICIPALITY for unit in inside)
 
@@ -297,6 +308,8 @@ class Builder:
         return rows[0]
 
     def municipality_entries(self) -> list[PlaceEntry]:
+        """The municipalities, each under the regional district the layer names, or the
+        province."""
         found = []
         names = Counter(census_name(unit) for unit in self.census.municipalities)
         taken: set[int] = set()
@@ -338,6 +351,7 @@ class Builder:
 
 
 def build(files: Mapping[str, OpenedFile], naming: Naming) -> tuple[list[PlaceEntry], Notes]:
+    """The entries, regions first, and the notes."""
     builder = Builder(files, naming)
     regions = builder.regions()
     municipalities = builder.municipality_entries()

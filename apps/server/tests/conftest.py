@@ -1,7 +1,6 @@
-"""The settings every test builds on, and the skips for tests whose tools are absent. Nothing
-here touches the environment: the configured server (environment or `.env`) is read once, the
-tests get a copy pointed at the test database, with the in-memory parser and no search engine,
-and one switch of the suite's own is read beside it."""
+"""The settings every test builds on, and the skips for tests whose tools are absent. The
+configured server (environment or `.env`) is read once; tests get a copy on the test database,
+with the in-memory parser, no search engine and no model."""
 
 import importlib.util
 import os
@@ -41,11 +40,9 @@ def _has_chromium() -> bool:
 
 HAS_CHROMIUM = _has_chromium()
 
-# The tests marked `lists` read an official list's files from the lists cache and skip when the
-# files are not there and cannot be fetched. CI restores the cache and runs `lists fetch` before
-# the suite, then sets this so such a skip is a failure: a list test that never ran would
-# otherwise count as green. Read from the environment, not `Settings`: it is the suite's, not
-# the server's.
+# CI runs `lists fetch` before the suite and sets this, so a `lists` test that cannot get its
+# files fails instead of skipping green. Read from the environment, not `Settings`: the switch is
+# the suite's, not the server's.
 REQUIRE_LISTS = os.environ.get("PUBLIC_ATLAS_REQUIRE_LISTS") == "1"
 
 
@@ -56,6 +53,7 @@ def require_lists() -> bool:
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Skip the `parse` and `browser` tests when Docling or Chromium is not installed."""
     skips = []
     if not HAS_DOCLING:
         skips.append(("parse", "Docling is not installed (uv sync --group parse-cpu)"))

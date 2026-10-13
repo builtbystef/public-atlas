@@ -105,12 +105,9 @@ const LINK_DISTANCE: Record<GraphLinkObject["relation"], number> = {
 };
 
 /**
- * The picture itself: d3-force physics on a canvas, with the root pinned in
- * the middle and each node pulled to a ring by its depth, so a region reads
- * as its hierarchy. Each node is a disc coloured by the overlay with its
- * status as a fade or a ring, sized by its figure; hovering one lights its
- * neighbours and dims the rest. The canvas keeps the node objects across payloads, so a refetch
- * settles rather than jumps.
+ * The picture itself: d3-force physics on a canvas, the root pinned in the middle and each node
+ * pulled to its ring. A node is a disc coloured by the overlay, sized by its figure, its status a
+ * fade or a ring; hovering one lights its neighbours and dims the rest.
  */
 export function GraphCanvas({
   data,

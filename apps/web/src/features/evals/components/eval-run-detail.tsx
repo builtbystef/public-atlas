@@ -34,12 +34,10 @@ import { EvalSummary, GatesVerdict } from "./eval-summary";
 const REFRESH_MS = 15_000;
 
 /**
- * One eval run (spec section 10): whether it met the pilot's targets, the
- * mean per assignment type, then each subject's recall and precision, all
- * set against an earlier run (the one before, unless another is chosen).
- * A score opens beside the table with the entries behind it. What is
- * compared, the order, the filter and the open score live in the URL, so a
- * view can be shared.
+ * One eval run (spec section 10): the pilot's targets, the mean per assignment type and each
+ * subject's scores, set against an earlier run (the previous one unless another is chosen). The
+ * comparison, order, filter and the score open beside the table live in the URL, so a view can be
+ * shared.
  */
 export function EvalRunDetail({
   id,

@@ -1,3 +1,6 @@
+"""The database: the lifespan's sessions, the migrations against the models, and the
+rolled-back transaction every test runs in."""
+
 import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -44,6 +47,7 @@ def test_health_db_without_override_uses_the_lifespan_resources(settings: Settin
 
 
 def _upgrade_and_compare(connection: Connection) -> list[object]:
+    """The autogenerate diff between the migrated head and the models."""
     config = Config(file_=API_ROOT / "alembic.ini", toml_file=API_ROOT / "pyproject.toml")
     # env.py migrates on this connection instead of opening its own.
     config.attributes["connection"] = connection

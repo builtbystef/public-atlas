@@ -23,6 +23,7 @@ CSV = b"\xef\xbb\xbfname,code,note\nElmwood,3501,  a township \nOakville,3502,a 
 
 
 def source(data: bytes, **fields: Any) -> ListFile:
+    """A fetched CSV of `data`, with `fields` laid over the defaults."""
     defaults: dict[str, Any] = {
         "name": "tiny",
         "title": "A tiny list",
@@ -34,6 +35,7 @@ def source(data: bytes, **fields: Any) -> ListFile:
 
 
 def manual(**fields: Any) -> ListFile:
+    """A manual CSV export, with `fields` laid over the defaults."""
     defaults: dict[str, Any] = {
         "name": "tiny_export",
         "title": "A tiny export",

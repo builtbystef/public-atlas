@@ -27,6 +27,7 @@ def place(
     aliases: tuple[str, ...] = (),
     code: str | None = None,
 ) -> PlaceEntry:
+    """A cited place entry, coded by its level, name and parent unless given a code."""
     return PlaceEntry(
         name=name,
         aliases=tuple(AliasEntry(text=alias) for alias in aliases),
@@ -145,6 +146,7 @@ def test_the_lookup_finds_places_as_the_loaders_find_place_does(
     loader.known = loaded.known
 
     async def by_the_loader(name: str, level: str | None, parent: str | None) -> list[str] | str:
+        """The loader's answer: the name of the place it finds, none, or why it skips."""
         levels = list(rules.levels) if level is None else [level]
         try:
             found = await loader._find_place(name, levels, parent=parent)  # noqa: SLF001

@@ -1,3 +1,5 @@
+"""The assembled app: its routes and operation ids, request ids, redirects and access log."""
+
 import logging
 from typing import TYPE_CHECKING
 

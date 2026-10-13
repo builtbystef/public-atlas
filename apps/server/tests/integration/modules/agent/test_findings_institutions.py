@@ -272,6 +272,7 @@ def test_a_place_outside_the_chain_is_refused_with_the_allowed_ones_named(
 
 
 async def _canada(db: Database, world: World) -> uuid.UUID:
+    """The id of Canada, the place above Ontario."""
     async with db.session() as session:
         ontario = await session.get_one(Place, world.ontario.id)
         assert ontario.parent_place_id is not None

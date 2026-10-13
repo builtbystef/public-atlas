@@ -164,6 +164,7 @@ async def raise_review(  # noqa: PLR0913
 
 
 async def _entity(session: AsyncSession, entity_id: uuid.UUID) -> Entity:
+    """The item's entity, of whatever kind."""
     entity = await graph.entity_by_id(session, entity_id)
     if entity is None:  # pragma: no cover - the foreign key keeps the item's entity
         raise NotFoundError("the review item's entity is gone")
@@ -239,6 +240,7 @@ class _Facts:
 
 
 def _facts() -> _Facts:
+    """The joins from an item to its entity, its page and its owning institution."""
     entity = Entity.__table__
     place = Place.__table__.alias("place")
     institution = Institution.__table__.alias("institution")
@@ -291,6 +293,7 @@ def _facts() -> _Facts:
 def _matching[T: tuple[Any, ...]](
     query: Select[T], facts: _Facts, filters: RowFilters
 ) -> Select[T]:
+    """`query` over the joined items, narrowed by every filter but `affects`, which is a count."""
     query = query.select_from(facts.joined)
     if filters.status is not None:
         query = query.where(ReviewItem.status == filters.status)
@@ -431,11 +434,14 @@ async def country_of(session: AsyncSession, item: ReviewItem) -> str | None:
 
 @dataclass(slots=True)
 class Decision:
+    """A decided item and the work the decision asks for."""
+
     item: ReviewItem
     spawn: list[Spawn] = field(default_factory=list)
 
 
 def _close(item: ReviewItem, status: ReviewStatus, note: str | None) -> None:
+    """Close an open item as decided; one decided already is refused."""
     if item.status is not ReviewStatus.OPEN:
         raise ConflictError("the review item is decided already")
     item.status = status
@@ -467,6 +473,7 @@ async def _approve_entity(
     *,
     institution_type: str | None,
 ) -> list[Spawn]:
+    """Verify the entity through its kind's `status_changes` function; the work it asks for."""
     by = EnteredBy.MANUAL
     if institution_type is not None and not isinstance(entity, Institution):
         raise UnprocessableError("institution_type is for an institution")
@@ -556,6 +563,8 @@ async def merge(
 
 @dataclass(slots=True)
 class KindDecision:
+    """Every item of a kind decided at once, and the work they ask for."""
+
     kind: str
     items: list[ReviewItem]
     spawn: list[Spawn] = field(default_factory=list)
@@ -637,4 +646,5 @@ async def settle_type_items(session: AsyncSession, country_code: str) -> list[De
 
 
 def spawned(decisions: Sequence[Decision]) -> list[Spawn]:
+    """The work every decision asks for, in order."""
     return [spawn for decision in decisions for spawn in decision.spawn]

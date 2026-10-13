@@ -36,14 +36,18 @@ OFFICIAL_CODE_SCHEMES: dict[str, IdentifierScheme] = {
 
 
 def host_of(url: str) -> str:
+    """The URL's host, without `www.` or a trailing dot."""
     return (urlparse(url).hostname or "").removeprefix("www.").rstrip(".")
 
 
 def on_domain(host: str, domain: str) -> bool:
+    """Whether `host` is `domain` or a subdomain of it."""
     return host == domain or host.endswith("." + domain)
 
 
 class Strict(BaseModel):
+    """A dataset model: unknown fields are an error, so a misspelt label does not vanish."""
+
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
 
@@ -65,12 +69,15 @@ class Evidence(Strict):
 
     @model_validator(mode="after")
     def links_to_has_target(self) -> Self:
+        """A `links_to` quote names the link it vouches for."""
         if self.kind == "links_to" and not self.link_target:
             raise ValueError("links_to evidence needs link_target")
         return self
 
 
 class Name(Strict):
+    """One of an institution's names, in a language."""
+
     text: str
     lang: str = Field(pattern=r"^[a-z]{2,3}(-[A-Za-z0-9]+)*$")
     is_acronym: bool = False
@@ -86,6 +93,8 @@ class Parent(Strict):
 
 
 class Institution(Strict):
+    """A body the subject should yield, with its homepage, its evidence and its parent."""
+
     key: Key
     type: str
     names: list[Name] = Field(min_length=1)
@@ -108,6 +117,8 @@ class Institution(Strict):
 
 
 class Source(Strict):
+    """A source a body publishes, with the evidence that it is the body's."""
+
     institution: Ref
     source_type: str
     url: Url
@@ -120,6 +131,8 @@ class Source(Strict):
 
 
 class AbsentSource(Strict):
+    """A source type the body was searched for and does not publish."""
+
     institution: Ref
     source_type: str
     # What was searched, and why it is judged absent.
@@ -131,6 +144,8 @@ class AbsentSource(Strict):
 
 
 class CandidateDomain(Strict):
+    """A domain `find_homepage` should meet for an institution, and what it should decide."""
+
     domain: str
     institution: Ref
     expected: Outcome
@@ -138,12 +153,16 @@ class CandidateDomain(Strict):
 
 
 class OutOfScope(Strict):
+    """A body the agent must not save for this subject, and why."""
+
     name: str
     url: Url | None = None
     reason: str
 
 
 class Subject(Strict):
+    """What a subject file is about: a place, or an institution of a place."""
+
     kind: Literal["place", "institution"]
     # The country whose seed gives the levels, types and platforms the file is read against.
     country_code: CountryCode
@@ -165,6 +184,8 @@ class Subject(Strict):
 
 
 class SubjectFile(Strict):
+    """One subject's labels: what a perfect run yields for it."""
+
     subject: Subject
     status: Literal["draft", "reviewed"]
     labelled_at: date
@@ -179,6 +200,7 @@ class SubjectFile(Strict):
     notes: str | None = None
 
     def institution(self, key: str) -> Institution | None:
+        """The file's institution with this key, if any."""
         return next((row for row in self.institutions if row.key == key), None)
 
 
@@ -186,12 +208,16 @@ class SubjectFile(Strict):
 
 
 class MunicipalCandidate(Strict):
+    """A candidate domain of a listed government, and what `find_homepage` should decide."""
+
     domain: str
     expected: Outcome
     reason: str
 
 
 class Municipality(Strict):
+    """A government an official list names, with its homepage and candidate domains."""
+
     name: str
     tier: Literal["single", "upper", "lower"]
     level: Literal["region", "municipality"]
@@ -222,6 +248,8 @@ class Municipality(Strict):
 
 
 class PlaceList(Strict):
+    """The governments an official list names, with where the list came from."""
+
     country_code: CountryCode
     place: str
     # url, publisher, retrieved_at.

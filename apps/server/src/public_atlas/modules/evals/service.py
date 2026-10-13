@@ -7,8 +7,7 @@ seeds the country through the real seed and loader with every assignment held, s
 chosen subject and queues its discovery, serves the queues in this process, then scores and
 prices the graph and writes `eval_runs` and `eval_scores` to the main database, so history
 survives a reset of the eval database. A run works one country's files: each file names its
-country, and the country's seed and official lists are what the eval database is built from.
-"""
+country, and the country's seed and official lists are what the eval database is built from."""
 
 import logging
 import uuid
@@ -130,6 +129,8 @@ def load_dataset(
 
 @dataclass(slots=True)
 class ScoreReport:
+    """How a database scored against the chosen files."""
+
     database: str
     institutions: int
     cards: list[scorer.Scorecard]
@@ -199,6 +200,7 @@ async def score_database(
 async def _graph_and_rules(
     session: AsyncSession, country_code: str
 ) -> tuple[scorer.Graph, countries.CountryRules]:
+    """The session's graph as the scorer reads it, and the country's rules."""
     graph = await scorer.load_graph(session)
     rules = await countries.load_rules(session, country_code)
     return graph, rules
@@ -288,8 +290,6 @@ async def run_eval(  # noqa: PLR0913, PLR0915 - the steps of a run, in order
     queues = tuple(queues) if queues is not None else harness.default_queues()
     settings = harness.eval_settings(resources.settings)
     harness.refuse_shared_database(resources.settings, settings.eval_database_name)
-    # The run and its scores are rows in the main database; a column it lacks would fail the
-    # insert at the end of the run, hours in.
     await harness.require_main_migrated(resources)
     if serve and resources.models is None:
         raise ValueError("no model is configured (PUBLIC_ATLAS_OPENAI_API_KEY); nothing can run")
@@ -514,6 +514,7 @@ async def _summaries(
 
 
 async def read_eval_run(session: AsyncSession, eval_run_id: uuid.UUID) -> EvalRunDetail:
+    """One eval run with its summary, its scores and the finished run before it."""
     eval_run = await session.get(EvalRun, eval_run_id)
     if eval_run is None:
         raise NotFoundError("no such eval run")

@@ -187,6 +187,8 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class Row:
+    """One municipality's row in the hand-made directory CSV."""
+
     name: str
     kind: str
     homepage: str | None
@@ -194,6 +196,7 @@ class Row:
 
     @property
     def census_type(self) -> str | None:
+        """The census type the kind answers to; None for the administration district."""
         return KINDS.get(self.kind)
 
     @property
@@ -207,10 +210,12 @@ class Row:
 
     @property
     def government(self) -> str:
+        """The name composed from the kind: "Rural Municipality of Aberdeen No. 373"."""
         return f"{self.kind} of {self.place_name}"
 
 
 def read_rows(opened: OpenedFile) -> list[Row]:
+    """The directory's rows."""
     rows = []
     for row in opened.rows:
         site = row["website"].strip()
@@ -234,6 +239,8 @@ def key(name: str) -> str:
 
 @dataclass
 class Notes:
+    """What the build left out, restructured, renamed or created, for the load's log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     restructured: list[str] = field(default_factory=list)
     renamed: list[str] = field(default_factory=list)
@@ -264,6 +271,9 @@ class Notes:
 
 
 class Builder:
+    """Saskatchewan's entries from the opened files, the directory's municipal rows found by
+    name key and census type."""
+
     def __init__(self, files: Mapping[str, OpenedFile]) -> None:
         self.census = SASKATCHEWAN.read(files)
         self.rows = read_rows(files[DIRECTORY.name])
@@ -278,6 +288,7 @@ class Builder:
             self.by_key[(key(row.place_name), type_)] = row
 
     def _row_for(self, unit: Counted, fields: Mapping[str, str]) -> Row | None:
+        """The unit's row by name and type, or by the override's directory name as written."""
         name = fields.get("directory", census_name(unit))
         row = self.by_key.get((key(name), unit.type_))
         if row is None and "directory" in fields:
@@ -285,6 +296,8 @@ class Builder:
         return row
 
     def municipalities(self) -> list[PlaceEntry]:
+        """The census municipalities with their rows, then those incorporated since; a census
+        municipality with no row or override is an error."""
         found = []
         taken: set[int] = set()
         for unit in self.census.subdivisions:
@@ -312,8 +325,8 @@ class Builder:
         return sorted(found, key=lambda entry: entry.name)
 
     def _entry(self, unit: Counted, row: Row, fields: Mapping[str, str]) -> PlaceEntry:
-        # The directory's name wins where it differs in more than case and accents (the
-        # directory writes "Roche Percee" and "Lake Of The Rivers").
+        """A census municipality, named as the directory names it where the two differ in more
+        than case and accents (it writes "Roche Percee" and "Lake Of The Rivers")."""
         name = fields.get("name", row.place_name)
         if key(name) == key(census_name(unit)):
             name = census_name(unit)
@@ -349,6 +362,7 @@ class Builder:
         return found
 
     def _incorporated(self, row: Row, change: Change) -> PlaceEntry:
+        """A post-census municipality, coded and cited by its interim-list row."""
         interim = Citation(source=INTERIM_CHANGES.name, line=change.line)
         directory = Citation(source=DIRECTORY.name, line=row.line)
         citations: dict[Fact, Citation] = {"place": interim, "government": directory}
@@ -367,6 +381,7 @@ class Builder:
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
+    """The municipalities and the notes."""
     builder = Builder(files)
     return builder.municipalities(), builder.notes
 

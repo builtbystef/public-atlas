@@ -21,9 +21,8 @@ if TYPE_CHECKING:
 type Queue = Literal["default", "assignment", "parse"]
 QUEUES: tuple[Queue, ...] = ("default", "assignment", "parse")
 
-# Imported by `create_app` before the registry is bound, so every task is registered. A domain
-# task lives in a `jobs.py` next to what it works on and is listed here; the tasks in this
-# package are about the platform.
+# Imported by `create_app` before the registry is bound, so every task is registered. The tasks
+# in this package are the platform's own.
 TASK_MODULES = [
     "public_atlas.jobs.purge",
     "public_atlas.jobs.stalled",
@@ -32,7 +31,7 @@ TASK_MODULES = [
     "public_atlas.modules.evidence.jobs",
 ]
 
-# What every `@task` registers on. Import-time, settings-free.
+# What every `@task` registers on, at import time and without settings.
 registry = Blueprint()
 
 

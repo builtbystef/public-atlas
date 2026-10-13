@@ -1,7 +1,6 @@
 /**
- * The API sends money as a decimal string (`"0.0123"`), never a float. Shown
- * in dollars with four decimals under a dollar, since an assignment's cost
- * is cents, and two above.
+ * Dollars from the API's decimal string (`"0.0123"`, never a float): four
+ * decimals under a dollar, since an assignment costs cents, and two above.
  */
 export function formatCost(value: string | number | null | undefined): string {
   if (value === null || value === undefined || value === "") return "";
@@ -16,7 +15,7 @@ export function formatCost(value: string | number | null | undefined): string {
   }).format(amount);
 }
 
-/** "1,234" and "12.5k" style counts for tokens and requests. */
+/** "12,345": a count of tokens or requests with thousands separators. */
 export function formatCount(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
@@ -27,7 +26,7 @@ export function formatPercent(value: number | null | undefined): string {
   return `${Math.round(value * 100)}%`;
 }
 
-/** "4.6M" and "12.5k": for a figure whose exact count sits in a tooltip beside it. */
+/** "4.6M" and "12.5K": for a figure whose exact count sits in a tooltip beside it. */
 export function formatCompact(value: number): string {
   return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(
     value,

@@ -1,9 +1,10 @@
-"""A small graph for the status change, review, run and runner tests to work in, built through
-the same doors the loader and the rules use: Canada seeded; the region Elm with its government,
-a trusted domain and a verified homepage; the town Oakville under it with a government that has
-no homepage yet; and a step-mode run. `Build` adds to it the same way; it is reached through a
-fixture because the tests are collected in importlib mode, with no `tests` package to import.
-A scripted model stands in for every model choice when a test runs the agent."""
+"""A small graph for the status change, review, run and runner tests, built through the doors the
+loader and the rules use: Canada seeded; the region Elm with its government, a trusted domain and
+a verified homepage; the town Oakville under it, whose government has no homepage yet; and a
+step-mode run. A scripted model stands in for every model when a test runs the agent.
+
+`Build` and the script helpers are reached through fixtures: the tests are collected in importlib
+mode, with no `tests` package to import."""
 
 import re
 import uuid
@@ -60,6 +61,8 @@ BY = EnteredBy.SCRIPT
 
 @dataclass
 class World:
+    """The graph `build_world` makes."""
+
     rules: countries.CountryRules
     ontario: Place
     elm: Place
@@ -100,6 +103,7 @@ class Build:
 
     @staticmethod
     async def verified_government(session: AsyncSession, place: Place, name: str) -> Institution:
+        """A verified government set as `place`'s: regional for a region, else municipal."""
         level = place.administrative_level
         government = await graph.create_institution(
             session,
@@ -181,6 +185,7 @@ class Build:
         *,
         status: AssignmentStatus = AssignmentStatus.QUEUED,
     ) -> Assignment:
+        """An assignment in `run` on `subject_id`, with a small budget."""
         assignment = Assignment(
             run_id=run.id,
             type=assignment_type,
@@ -195,6 +200,7 @@ class Build:
 
 
 async def build_world(db: Database) -> World:
+    """The module docstring's graph, committed; the anchors leave out Elm and Oakville."""
     async with db.session() as session:
         await countries.seed(session, canada.SEED)
         rules = await countries.load_rules(session, "CA")
@@ -261,6 +267,7 @@ def last_prompt(messages: list[ModelMessage]) -> str:
 
 
 def calls_made(messages: list[ModelMessage]) -> int:
+    """The number of tool calls the model has made so far."""
     return sum(
         isinstance(part, ToolCallPart)
         for message in messages

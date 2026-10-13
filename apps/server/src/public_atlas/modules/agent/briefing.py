@@ -84,6 +84,8 @@ async def briefing(ctx: SessionContext, session: AsyncSession) -> str:
 
 
 async def _subject_lines(ctx: SessionContext, session: AsyncSession) -> list[str]:
+    """The subject with its names and ids, its homepages, and what the assignment type adds: the
+    places to save under, the claims to decide, the source types to find."""
     place = await session.get_one(Place, ctx.place.id)
     if isinstance(ctx.subject, Place):
         names = await findings_names(session, place)
@@ -114,6 +116,7 @@ async def findings_names(session: AsyncSession, owner: Place | Institution) -> s
 
 
 async def _institution_line(session: AsyncSession, institution: Institution, label: str) -> str:
+    """The institution's names, type and id, after `label`."""
     names = await findings_names(session, institution)
     return (
         f"{label}: the institution {names} ({institution.institution_type}, id {institution.id})."
@@ -190,6 +193,7 @@ async def _candidate_lines(ctx: SessionContext, session: AsyncSession) -> list[s
 
 
 def _source_types_line(ctx: SessionContext, institution: Institution) -> str:
+    """The source types the country expects for the institution's type."""
     sources = ", ".join(ctx.rules.expected_source_types(institution.institution_type))
     if sources:
         return (
@@ -204,11 +208,10 @@ def _source_types_line(ctx: SessionContext, institution: Institution) -> str:
 
 
 async def recorded_under(session: AsyncSession, place: Place) -> str | None:
-    """The institution types with rows under the place already, as counts, never names: a list
-    of names does not scale to a city with hundreds of bodies, a line of types does. A count
-    from an official list means the loader read the authority's own list, which beats anything
-    a directory page would add, so the agent is told to skip that type's directories. The list
-    is not named: the agent cannot open it and could only be led astray by its name."""
+    """The institution types with rows under the place already, as counts, never names (a list of
+    names does not scale to a city with hundreds of bodies). A count from an official list beats
+    anything a directory page would add, so the agent is told to skip that type's directories.
+    The list is not named: the agent cannot open it and could only be led astray by its name."""
     rows = await session.execute(
         select(Institution.institution_type, Institution.entered_by, func.count())
         .where(Institution.place_id == place.id, Institution.status != EntityStatus.REJECTED)
@@ -257,10 +260,10 @@ async def places_to_save_under(session: AsyncSession, place: Place) -> str:
 
 
 async def where_to_look(ctx: SessionContext, session: AsyncSession) -> list[str]:
-    """The allowed domains with a stake in the subject, each with why: the subject's own site,
-    the pages that name it, its place's government and the governments above. The allowlist
-    itself is every trusted domain and every platform, enforced by the browser; the model is
-    told these few instead of the whole list, so a session's briefing stays short."""
+    """The allowed domains with a stake in the subject, each with why: its own site, the pages
+    that name it, and the governments of its place and those above. The browser enforces the
+    whole allowlist (every trusted domain and platform); the model is told only these few, so
+    the briefing stays short."""
     reasons: dict[str, list[str]] = {}
 
     def note(domain: str | None, reason: str) -> None:
@@ -297,6 +300,7 @@ async def where_to_look(ctx: SessionContext, session: AsyncSession) -> list[str]
 
 
 async def _homepage_domain(session: AsyncSession, institution: Institution) -> str | None:
+    """The domain of the institution's verified homepage, if it has one."""
     if institution.homepage_id is None:
         return None
     homepage = await session.get_one(Homepage, institution.homepage_id)

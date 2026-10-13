@@ -20,6 +20,7 @@ CODE = Code(scheme=IdentifierScheme.STATCAN_SGC, value="3501")
 
 
 def place(**changes: object) -> PlaceEntry:
+    """A valid place entry, with `changes` laid over its fields."""
     fields: dict[str, object] = {
         "name": "Elmwood",
         "level": "municipality",

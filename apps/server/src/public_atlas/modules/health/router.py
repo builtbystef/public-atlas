@@ -1,3 +1,5 @@
+"""The health API: liveness, and readiness of the database and the object store."""
+
 import logging
 from collections.abc import Awaitable, Callable
 
@@ -18,6 +20,7 @@ class Health(BaseModel):
 
 
 async def probe(name: str, check: Callable[[], Awaitable[object]]) -> Health:
+    """`ok` when `check` succeeds, else a 503 naming `name`; kept out of the traces."""
     with telemetry.quiet():
         try:
             await check()

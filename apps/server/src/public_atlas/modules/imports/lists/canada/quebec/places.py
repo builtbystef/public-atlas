@@ -237,6 +237,8 @@ MERGED_INTO: dict[str, str] = {
 
 @dataclass(frozen=True)
 class MunicipalityRow:
+    """One row of `MUN.csv`: a municipality, a reserve or an unorganized territory."""
+
     code: str
     name: str
     designation: str
@@ -252,11 +254,15 @@ class MunicipalityRow:
 
     @property
     def is_municipality(self) -> bool:
+        """Whether the designation is a municipality's, not a reserve's or a territory's."""
         return self.designation in DESIGNATORS
 
 
 @dataclass(frozen=True)
 class MrcRow:
+    """One row of `MRC_CM_Arg.csv`: an MRC, a communauté métropolitaine or the Kativik
+    administration."""
+
     # "AR460", "CM663".
     code: str
     name: str
@@ -281,20 +287,24 @@ class MrcRow:
 
 
 def _coded(cell: str) -> str | None:
+    """The code in parentheses that ends the cell, or None."""
     match = _CODED.match(cell)
     return match.group("code") if match else None
 
 
 def _homepage(cell: str) -> str | None:
+    """A website cell as a URL, or None when it is empty."""
     cell = cell.strip()
     return normalize_url(cell) if cell else None
 
 
 def _population(cell: str) -> int | None:
+    """A population cell as a number, or None when it holds none."""
     return int(cell) if cell.isdigit() else None
 
 
 def read_municipalities(opened: OpenedFile) -> list[MunicipalityRow]:
+    """`MUN.csv`'s rows."""
     return [
         MunicipalityRow(
             code=row["mcode"],
@@ -312,6 +322,7 @@ def read_municipalities(opened: OpenedFile) -> list[MunicipalityRow]:
 
 
 def read_mrcs(opened: OpenedFile) -> list[MrcRow]:
+    """`MRC_CM_Arg.csv`'s rows."""
     return [
         MrcRow(
             code=row["mrccod"],
@@ -344,6 +355,7 @@ def with_connector(designator: str, name: str) -> str:
 
 
 def government_name(designation: str, name: str) -> str:
+    """The government's name from the directory's designation: "Ville de Québec"."""
     return with_connector(DESIGNATORS[designation], name)
 
 
@@ -386,6 +398,8 @@ class Notes:
 
 @dataclass
 class Builder:
+    """Quebec's entries from its census units and the directory's two files."""
+
     counted: dict[str, Counted]
     municipalities: list[MunicipalityRow]
     mrcs: list[MrcRow]
@@ -419,6 +433,8 @@ class Builder:
         return self.region_names.get(row.mrc or "", PROVINCE)
 
     def regions(self) -> list[PlaceEntry]:
+        """The MRCs, coded by their census division where there is one, else by their `mamh`
+        code alone."""
         found = []
         for row in self.mrcs:
             if not row.is_mrc:
@@ -509,6 +525,8 @@ class Builder:
         return sorted(found, key=lambda entry: entry.name)
 
     def _merged(self, unit: Counted) -> None:
+        """Note what a census municipality the directory no longer lists became; one no
+        override explains is an error."""
         new = MERGED_INTO.get(unit.code)
         if new is None:
             raise ListFileError(
@@ -525,6 +543,8 @@ class Builder:
         )
 
     def _municipality(self, row: MunicipalityRow, unit: Counted | None) -> PlaceEntry:
+        """A municipality as the directory names it, with its 2021 and décret figures; with no
+        census unit (created since), the directory's line cites the place."""
         directory = Citation(source=MUNICIPALITIES.name, line=row.line)
         aliases: list[AliasEntry] = []
         figures: list[Figure] = []
@@ -573,6 +593,7 @@ class Builder:
         )
 
     def served(self, row: MunicipalityRow) -> ServedPlace:
+        """The municipality as a place a body serves, under its MRC."""
         parent = self.parent_of(row)
         return ServedPlace(name=row.name, level=MUNICIPALITY, parent=parent)
 

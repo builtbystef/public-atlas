@@ -31,6 +31,8 @@ class SettledPage:
 
 
 class CaptureHook(Protocol):
+    """Receives what one session's browser saw: every settled page and every refusal."""
+
     async def settled(self, page: SettledPage) -> None:
         """A page passed the policy after an action; store it here."""
         ...

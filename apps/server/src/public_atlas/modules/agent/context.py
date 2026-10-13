@@ -75,6 +75,8 @@ class Candidate:
 
 @dataclass
 class SessionContext:
+    """One session's state, handed to every tool as `RunContext.deps`."""
+
     res: Resources
     settings: Settings
     session_factory: Callable[[], AsyncSession]
@@ -194,6 +196,7 @@ class SessionContext:
 async def build_context(
     session: AsyncSession, res: Resources, assignment: Assignment
 ) -> SessionContext:
+    """The context of a new session of `assignment`, read from the database."""
     run = await session.get_one(Run, assignment.run_id)
     descriptor = descriptor_for(assignment.type)
     rules = await countries.load_rules(session, run.country_code)
@@ -242,6 +245,7 @@ async def searches_made(session: AsyncSession, assignment_id: uuid.UUID) -> int:
 async def _subject(
     session: AsyncSession, assignment: Assignment, descriptor: Descriptor
 ) -> Place | Institution:
+    """The assignment's subject; `SubjectMissingError` when it is gone or of the wrong kind."""
     entity = await graph.entity_by_id(session, assignment.subject_id)
     if entity is None:
         raise SubjectMissingError(f"subject {assignment.subject_id} does not exist")
@@ -274,6 +278,7 @@ async def allowed_domains(session: AsyncSession) -> list[str]:
 async def _open_claims(
     session: AsyncSession, institution: Institution, statuses: tuple[EntityStatus, ...]
 ) -> list[tuple[Homepage, Domain | None]]:
+    """The institution's homepage claims in `statuses`, oldest first, each with its domain."""
     rows = await session.execute(
         select(Homepage, Webpage)
         .join(Webpage, Webpage.id == Homepage.webpage_id)

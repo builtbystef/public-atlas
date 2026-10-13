@@ -75,9 +75,8 @@ AGENCIES = ListFile(
     url="https://data.transportation.gov/Public-Transit/2024-Annual-Database-Agency-Information/ccvf-fykn",
     format=Format.CSV,
     retrieval=Retrieval.MANUAL,
-    # The export is not the same bytes twice: the platform (Socrata) orders the rows as it
-    # pleases on each request (the same 2,914 rows, two orders seen on 2026-10-09), so no hash
-    # can be pinned; the file is kept as a person exported it.
+    # No hash: Socrata orders the same rows differently per request (two orders seen on
+    # 2026-10-09), so the file is kept as a person exported it.
     instructions=(
         "Open the dataset page, choose Export, then CSV (the download URL is "
         "https://data.transportation.gov/api/views/ccvf-fykn/rows.csv?accessType=DOWNLOAD), "
@@ -182,6 +181,7 @@ class Reporter:
 
 
 def read_reporters(opened: OpenedFile) -> list[Reporter]:
+    """The file's rows, names in capitals recased."""
     return [
         Reporter(
             ntd_id=row["NTD ID"],
@@ -233,6 +233,7 @@ def service_name(reporter: Reporter, government: Attachment) -> str | None:
 
 
 def _trade_names(rows: list[Reporter], name: str) -> tuple[AliasEntry, ...]:
+    """The rows' distinct trade names other than the body's name, as aliases."""
     found: dict[str, AliasEntry] = {}
     for row in rows:
         if row.trade_name and row.trade_name != name:

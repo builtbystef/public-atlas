@@ -23,10 +23,13 @@ PARSE_JOB = "evidence.parse_snapshot"
 
 
 def policy_for_site() -> BrowserPolicy:
+    """The fixture host only, unpaced, with private addresses allowed."""
     return BrowserPolicy(["127.0.0.1"], block_private_addresses=False, min_interval=0)
 
 
 def read(db: Database, res: Resources, assignment: Assignment, url: str, chunk: int = 1) -> str:
+    """`read_file`'s answer for the assignment, as the agent sees it."""
+
     async def run() -> str:
         return str(
             await service.read_file(
@@ -38,10 +41,12 @@ def read(db: Database, res: Resources, assignment: Assignment, url: str, chunk: 
 
 
 def parses(queue: InlineConnector) -> int:
+    """How many parse jobs have been queued."""
     return [job["task_name"] for job in queue.jobs.values()].count(PARSE_JOB)
 
 
 def resources(queue: InlineConnector, **settings: object) -> Resources:
+    """The inline worker's resources, with `settings` overridden."""
     assert queue.resources is not None
     res = queue.resources
     if settings:

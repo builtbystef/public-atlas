@@ -155,6 +155,7 @@ class BrowserSession:
         return self._browser.version if self._browser is not None else "unknown"
 
     def begin_operation(self) -> None:
+        """Forget the previous operation's failure and held redirect."""
         self.last_failure = None
         self.redirect = None
 
@@ -320,6 +321,7 @@ class BrowserSession:
         return response
 
     async def _refuse(self, route: Route, url: str, reason: str) -> None:
+        """Abort the request and record why, for the tool to report."""
         self.last_failure = Failure(url, reason)
         # The page may have gone while the response was fetched.
         with contextlib.suppress(PlaywrightError):
@@ -354,6 +356,7 @@ class BrowserSession:
         task.add_done_callback(self._event_task_done)
 
     def _event_task_done(self, task: asyncio.Task[None]) -> None:
+        """Release the task, retrieving its exception so asyncio does not log it as unretrieved."""
         self._event_tasks.discard(task)
         if not task.cancelled():
             task.exception()
@@ -380,13 +383,15 @@ class BrowserSession:
             await dialog.dismiss()
 
     def _on_request_failed(self, request: PlaywrightRequest) -> None:
+        """Record a request Chromium could not complete. An abort is the route guard's, which
+        recorded its own reason."""
         failure = request.failure or "failed"
         if failure == _ABORTED_FAILURE:
-            # The route guard already recorded this refusal with its reason.
             return
         self.last_failure = Failure(request.url, failure)
 
     def _on_page_closed(self, closed: object) -> None:
+        """Forget a closed tab; when it was active, the newest tab left becomes active."""
         self.pages = [page for page in self.pages if page is not closed]
         if self.page is closed and self.pages:
             self.page = self.pages[-1]
@@ -394,6 +399,7 @@ class BrowserSession:
     # --- Tabs ---
 
     async def open_tab(self) -> Page:
+        """A new blank tab, made active."""
         if self._context is None:
             raise RuntimeError("the browser is not launched")
         page = await self._context.new_page()
@@ -403,6 +409,7 @@ class BrowserSession:
         return page
 
     async def activate(self, page: Page) -> Page:
+        """Make `page` the tab the tools act on."""
         self.page = page
         await page.bring_to_front()
         return page

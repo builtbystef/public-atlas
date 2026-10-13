@@ -114,6 +114,7 @@ class DoclingParser:
         )
 
     def warm_up(self) -> None:
+        """Loads the reading-order PDF pipeline; the table converter loads on first use."""
         from docling.datamodel.base_models import InputFormat  # noqa: PLC0415
 
         self.converter.initialize_pipeline(InputFormat.PDF)

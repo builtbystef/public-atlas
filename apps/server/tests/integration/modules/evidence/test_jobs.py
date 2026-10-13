@@ -97,6 +97,8 @@ def stored(
 
 
 def parse_as(db: Database, res: Resources, snapshot: Snapshot, attempt: Attempt) -> str:
+    """Run the parse job on `snapshot` as `attempt`, returning its outcome."""
+
     async def run() -> str:
         token = current_attempt.set(attempt)
         try:
@@ -110,6 +112,8 @@ def parse_as(db: Database, res: Resources, snapshot: Snapshot, attempt: Attempt)
 def state(
     db: Database, snapshot: Snapshot
 ) -> tuple[TextStatus, str | None, int | None, str | None]:
+    """Status, error, page count and text key, read afresh."""
+
     async def check() -> tuple[TextStatus, str | None, int | None, str | None]:
         async with db.session() as session:
             row = await session.get_one(Snapshot, snapshot.id)
@@ -137,6 +141,7 @@ def progress(
 
 
 def resources(queue: InlineConnector) -> Resources:
+    """The resources the inline worker runs jobs with."""
     assert queue.resources is not None
     return queue.resources
 
@@ -208,6 +213,7 @@ def test_a_parse_whose_worker_died_is_recorded_failed_without_loading_the_parser
 
 
 def with_batch(res: Resources, pages: int) -> Resources:
+    """`res` parsing `pages` pages per range."""
     return replace(res, settings=res.settings.model_copy(update={"parse_page_batch": pages}))
 
 
@@ -259,6 +265,8 @@ def test_a_long_file_is_parsed_one_range_at_a_time_as_it_is_asked_for(
 
 
 def parse_through(db: Database, res: Resources, snapshot: Snapshot, *, through: int) -> str:
+    """Run the parse job asked to reach page `through`, as a first attempt."""
+
     async def run() -> str:
         token = current_attempt.set(Attempt(1, last=False))
         try:

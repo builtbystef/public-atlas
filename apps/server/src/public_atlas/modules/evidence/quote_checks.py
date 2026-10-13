@@ -64,6 +64,8 @@ def _contains(haystack: str, needle: str) -> bool:
 
 
 def _found_at_word_edges(text: str, needle: str, *, squashed: bool = False) -> bool:
+    """Whether `needle` is in `text` starting and ending at word edges. `squashed` searches the
+    text with its spaces removed and checks the edges at the original positions."""
     if not needle:
         return False
     positions = [index for index, char in enumerate(text) if char != " "] if squashed else None
@@ -84,6 +86,7 @@ def _starts_a_word(text: str, first: int, needle: str) -> bool:
 
 
 def _ends_a_word(text: str, last: int, needle: str) -> bool:
+    """A quote that ends with a letter or a digit must end where the page's word does."""
     return not needle[-1].isalnum() or last == len(text) - 1 or not text[last + 1].isalnum()
 
 
@@ -131,6 +134,8 @@ def closest_passage(text: str, quote: str) -> str | None:
 
 
 def _resolves_to(raw_href: str, page_url: str, wanted: str) -> bool:
+    """Whether an `href`, resolved against the page, is `wanted`; fragments and `javascript:`,
+    `mailto:` and `tel:` links never are."""
     raw = html.unescape(raw_href)
     if not raw or raw.startswith(("#", "javascript:", "mailto:", "tel:")):
         return False

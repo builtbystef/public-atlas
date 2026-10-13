@@ -1,3 +1,6 @@
+"""Logging: one line shape, text or JSON, carrying the request ID, for the app and the
+libraries it routes through it."""
+
 import json
 import logging
 import secrets
@@ -8,20 +11,20 @@ from typing import Literal
 
 LogFormat = Literal["text", "json"]
 
-# Set by the API's request-ID middleware for the length of a request, and by
-# `jobs.context.running` for the length of a job run. "-" outside both.
+# Set by the request-ID middleware for a request and by `jobs.context.running` for a job run;
+# "-" outside both.
 request_id: ContextVar[str] = ContextVar("request_id", default="-")
 
 TEXT_FORMAT = "%(asctime)s %(levelname)s [%(name)s] [%(request_id)s] %(message)s"
 
-# Uvicorn gives these their own handlers. They are pointed at ours instead, so
-# every line has the same shape, and its access log is dropped in favour of
-# `public_atlas.access`, which carries the request ID.
+# Uvicorn gives these their own handlers. They are pointed at ours instead, so every line has
+# the same shape, and its access log is dropped in favour of `public_atlas.access`, which
+# carries the request ID.
 _UVICORN_LOGGERS = ("uvicorn", "uvicorn.error")
 _UVICORN_ACCESS_LOGGER = "uvicorn.access"
-# Its lines quote every job's arguments (an email with its link, say), so its
-# chatter is dropped in favour of `public_atlas.jobs`, one line per run. A job
-# that has failed for good is still reported here, arguments and traceback included.
+# Its lines quote every job's arguments (an email with its link, say), so its chatter is dropped
+# in favour of `public_atlas.jobs`, one line per run. A job that failed for good is still
+# reported here, arguments and traceback included.
 _PROCRASTINATE_WORKER_LOGGER = "procrastinate.worker"
 
 
@@ -30,12 +33,16 @@ def new_request_id() -> str:
 
 
 class RequestIdFilter(logging.Filter):
+    """Stamps each record with the current request ID."""
+
     def filter(self, record: logging.LogRecord) -> bool:
         record.request_id = request_id.get()
         return True
 
 
 class TextFormatter(logging.Formatter):
+    """`TEXT_FORMAT`, timestamped in UTC."""
+
     def __init__(self) -> None:
         super().__init__(TEXT_FORMAT)
 
@@ -44,6 +51,8 @@ class TextFormatter(logging.Formatter):
 
 
 class JsonFormatter(logging.Formatter):
+    """One JSON object per record, for a log collector."""
+
     def format(self, record: logging.LogRecord) -> str:
         line: dict[str, str] = {
             "time": _timestamp(record),
@@ -58,6 +67,7 @@ class JsonFormatter(logging.Formatter):
 
 
 def _timestamp(record: logging.LogRecord) -> str:
+    """The record's time as ISO 8601 UTC, to the millisecond."""
     created = datetime.fromtimestamp(record.created, tz=UTC)
     return created.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
@@ -67,11 +77,9 @@ def make_formatter(log_format: LogFormat) -> logging.Formatter:
 
 
 def configure(level: str, log_format: LogFormat = "text") -> None:
-    """A handler and level for the root logger, so the app's loggers print, and
-    Uvicorn's loggers routed through it. Adds nothing where the root logger
-    already has a handler (the tests' capture, say), but still filters and
-    formats what is there.
-    """
+    """A handler and level for the root logger, so the app's loggers print, with Uvicorn's routed
+    through it. Where the root logger already has a handler (the tests' capture, say), adds none
+    but still filters and formats what is there."""
     root = logging.getLogger()
     root.setLevel(level)
     if not root.handlers:

@@ -20,6 +20,8 @@ OTHER = b"name,code\nOakville,3502\n"
 
 
 class _Handler(BaseHTTPRequestHandler):
+    """Serves `pages` by path and 404 for any other, without logging."""
+
     pages: ClassVar[dict[str, bytes]] = {}
 
     def do_GET(self) -> None:
@@ -52,10 +54,12 @@ def served() -> Iterator[str]:
 
 
 def fetched(name: str, data: bytes, url: str) -> ListFile:
+    """A fetched CSV at `url` whose recorded hash is that of `data`."""
     return ListFile(name=name, title=name, url=url, format=Format.CSV, sha256=content_hash(data))
 
 
 def manual(name: str) -> ListFile:
+    """A manual CSV export, with the steps that obtain it."""
     return ListFile(
         name=name,
         title=name,
@@ -68,12 +72,14 @@ def manual(name: str) -> ListFile:
 
 
 def module(*sources: ListFile) -> ModuleType:
+    """A list module with these sources and no entries."""
     found = ModuleType("tests.tiny")
     found.__dict__.update(COUNTRY="CA", SOURCES=sources, OVERRIDES={}, entries=lambda *_: [])
     return found
 
 
 def put(file: ListFile, cache_dir: Path, data: bytes) -> Path:
+    """`data` written where the cache keeps `file`."""
     path = file.cache_path(cache_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)

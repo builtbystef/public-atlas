@@ -12,11 +12,10 @@ changes with each request, so no hash can be pinned and a person saves each (the
 `instructions`). The rules:
 
 - Yukon: the *Local Government Directory* PDF lists the eight municipalities with their
-  websites. The parser renders its layout as one table cell per page (table structure is off,
-  spec section 8.3), so a municipality's government and homepage cite the line that holds its
-  page. The government's name is the directory's, less a leading "The" ("City of Dawson",
-  "Village of Carmacks"). The hamlets and local advisory councils are advisory areas, not
-  governments.
+  websites. The parser reconstructs its table (`tables`), so a municipality's government and
+  homepage cite its row. The government's name is the directory's, less a leading "The"
+  ("City of Dawson", "Village of Carmacks"). The hamlets and local advisory councils are
+  advisory areas, not governments.
 - Northwest Territories: MACA's community list is a page per community with its official
   name, status and website. The 24 communities the census types as a city, town, village,
   hamlet, community government or chartered community are municipalities, named as the
@@ -161,6 +160,7 @@ _NWT_INSTRUCTIONS = (
 
 
 def _nwt_file(slug: str) -> ListFile:
+    """A community's MACA page, saved by hand."""
     name = slug.replace("-", "_")
     return ListFile(
         name=f"nwt_community_{name}",
@@ -219,6 +219,7 @@ _NUNAVUT_INSTRUCTIONS = (
 
 
 def _nunavut_file(slug: str) -> ListFile:
+    """A community's Government of Nunavut page, saved by hand."""
     name = slug.replace("-", "_")
     return ListFile(
         name=f"nunavut_community_{name}",
@@ -232,12 +233,11 @@ def _nunavut_file(slug: str) -> ListFile:
 
 
 NUNAVUT_PAGES: dict[str, ListFile] = {slug: _nunavut_file(slug) for slug, _ in NUNAVUT_COMMUNITIES}
-# "<Kind> of <the community's name>" as the page's prose or link gives it, and its website link
-# in the HTML.
 _NUNAVUT_KINDS = ("City", "Municipality", "Hamlet")
 
 
 def _government_pattern(name: str) -> re.Pattern[str]:
+    """ "<Kind> of <name>" as the page's prose or a link gives it."""
     kinds = "|".join(_NUNAVUT_KINDS)
     return re.compile(rf"\b(?P<government>(?P<kind>{kinds}) of {re.escape(name)})\b")
 
@@ -245,6 +245,7 @@ def _government_pattern(name: str) -> re.Pattern[str]:
 # What the page calls the body, the most specific first: the hamlets that style themselves a
 # municipality say both.
 _KIND_ORDER = {"City": 0, "Municipality": 1, "Hamlet": 2}
+# The website link, read from the page's HTML.
 _NUNAVUT_LINK = re.compile(
     r"Website:?(?:&nbsp;|\s)*<a[^>]*href=\"(?P<href>[^\"]+)\"", re.IGNORECASE
 )
@@ -262,11 +263,13 @@ OVERRIDES: dict[str, dict[str, str]] = {}
 
 
 def key(name: str) -> str:
+    """A name as the census and the directories are compared: lower case, accents folded."""
     folded = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
     return " ".join(re.sub(r"[^a-z0-9]+", " ", folded.lower()).split())
 
 
 def _site(text: str) -> str | None:
+    """A website as a URL, a missing colon mended ("https//"); None when it is no address."""
     text = text.strip().rstrip(".,;)")
     if "." not in text or "@" in text or " " in text:
         return None
@@ -276,6 +279,8 @@ def _site(text: str) -> str | None:
 
 @dataclass
 class Notes:
+    """What the build left out, renamed or found without a website, for the load's log."""
+
     dropped: Counter[str] = field(default_factory=Counter)
     renamed: list[str] = field(default_factory=list)
     without_website: list[str] = field(default_factory=list)
@@ -293,6 +298,7 @@ class Notes:
 
 
 def _municipalities(census: Census, notes: Notes) -> list[Counted]:
+    """The territory's municipalities, its other subdivisions counted as left out."""
     notes.dropped.update(census.dropped())
     return census.municipalities
 
@@ -301,9 +307,10 @@ def _municipalities(census: Census, notes: Notes) -> list[Counted]:
 
 
 def yukon_entries(files: Mapping[str, OpenedFile], notes: Notes) -> list[PlaceEntry]:
+    """Yukon's municipalities, each governed and linked as its directory row says."""
     census = YUKON.read(files)
     opened = files[YUKON_DIRECTORY.name]
-    # Each municipality's row, with its line.
+    # By name key: the government, the row's line and its text.
     segments: dict[str, tuple[str, int, str]] = {}
     for number, line in enumerate(opened.lines, 1):
         match = _YUKON_ROW.match(line)
@@ -340,6 +347,8 @@ def _after(lines: list[str], label: str) -> str | None:
 
 
 def nwt_entries(files: Mapping[str, OpenedFile], notes: Notes) -> list[PlaceEntry]:
+    """The Northwest Territories' municipalities from their MACA pages; a designated
+    authority's page is counted and left out."""
     census = NORTHWEST_TERRITORIES.read(files)
     by_name = {key(census_name(unit)): unit for unit in _municipalities(census, notes)}
     found = []
@@ -389,6 +398,8 @@ def nwt_entries(files: Mapping[str, OpenedFile], notes: Notes) -> list[PlaceEntr
 
 
 def nunavut_entries(files: Mapping[str, OpenedFile], notes: Notes) -> list[PlaceEntry]:
+    """Nunavut's municipalities from their community pages, each named by its page's heading
+    and governed by the most specific kind the page names."""
     census = NUNAVUT.read(files)
     by_name = {key(census_name(unit)): unit for unit in _municipalities(census, notes)}
     found = []
@@ -441,6 +452,7 @@ def nunavut_entries(files: Mapping[str, OpenedFile], notes: Notes) -> list[Place
 
 
 def build(files: Mapping[str, OpenedFile]) -> tuple[list[PlaceEntry], Notes]:
+    """The three territories' entries, by territory then name, and the notes."""
     notes = Notes()
     found = [
         *yukon_entries(files, notes),

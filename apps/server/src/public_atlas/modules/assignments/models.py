@@ -100,7 +100,6 @@ class Assignment(UUIDPrimaryKey, Base):
     # Written at half a context window, read by the next session.
     handoff_note: Mapped[str | None] = mapped_column(Text)
     summary: Mapped[str | None] = mapped_column(Text)
-    # The types the agent looked for and did not find.
     types_not_found: Mapped[list[str]] = mapped_column(JSONB, default=list)
     last_error: Mapped[str | None] = mapped_column(Text)
     parent_assignment_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("assignments.id"))

@@ -191,6 +191,8 @@ class Notes:
 
 @dataclass(frozen=True, slots=True)
 class RegistryRow:
+    """One City or County row of the .gov registry."""
+
     domain: str
     organization: str
     state: str
@@ -270,6 +272,9 @@ def legal_name(unit: GovernmentUnit, place_name: str) -> str:
 
 
 class Builder:
+    """Matches the sheet's rows and the registry's to the places the counties and
+    municipalities lists load, rebuilt from the same files."""
+
     def __init__(self, files: Mapping[str, OpenedFile], naming: Naming) -> None:
         self.naming = naming
         self.notes = Notes()

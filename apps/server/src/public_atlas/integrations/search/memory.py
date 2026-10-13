@@ -4,6 +4,8 @@ from public_atlas.integrations.search.base import SearchResult
 
 
 class MemorySearcher:
+    """The test double: the first `count` of its results for any query, each query recorded."""
+
     name = "memory"
 
     def __init__(self, results: list[SearchResult] | None = None) -> None:

@@ -1,3 +1,6 @@
+"""Telemetry through Logfire: the app's logs and a span per request, query and job run. Off
+unless a Logfire token is set."""
+
 import logging
 from collections.abc import Iterator, Mapping
 from contextlib import AbstractContextManager, contextmanager
@@ -21,8 +24,8 @@ def enabled(settings: Settings) -> bool:
 
 
 def configure(settings: Settings, *, service_name: str) -> logfire.LogfireLoggingHandler | None:
-    """Connect to Logfire and return the handler that forwards the app's logs, or
-    None when telemetry is off. Call once per process, before instrumenting."""
+    """Connect to Logfire and return the handler that forwards the app's logs, or None when
+    telemetry is off. Call once per process, before instrumenting."""
     if settings.logfire_token is None:
         return None
     logfire.configure(
@@ -31,8 +34,8 @@ def configure(settings: Settings, *, service_name: str) -> logfire.LogfireLoggin
         environment=settings.logfire_environment,
         # The plain logging handler already prints to the terminal.
         console=False,
-        # Do not continue a trace from an incoming `traceparent` header: the web
-        # app sends none, and anyone could.
+        # Do not continue a trace from an incoming `traceparent` header: the web app sends none,
+        # and anyone could.
         distributed_tracing=False,
     )
     handler = logfire.LogfireLoggingHandler()
@@ -41,22 +44,21 @@ def configure(settings: Settings, *, service_name: str) -> logfire.LogfireLoggin
 
 
 class _OwnLogsAndWarnings(logging.Filter):
-    """The app's own records at any level; libraries only when something is wrong.
-    Keeps Procrastinate's and Uvicorn's per-request chatter out."""
+    """The app's own records at any level; libraries' only when something is wrong, which keeps
+    Procrastinate's and Uvicorn's per-request chatter out."""
 
     def filter(self, record: logging.LogRecord) -> bool:
         return record.name.startswith("public_atlas") or record.levelno >= logging.WARNING
 
 
 def quiet() -> AbstractContextManager[None]:
-    """Records nothing inside. For polled checks, which would otherwise leave a
-    span per poll."""
+    """Records nothing inside: for polled checks, which would otherwise leave a span per poll."""
     return logfire.suppress_instrumentation()
 
 
 def instrument_app(app: FastAPI) -> None:
-    """One span per request. Health checks are polled, so they are left out (their
-    handlers run under `quiet` for the same reason)."""
+    """One span per request. Health checks are polled, so they are left out (their handlers run
+    under `quiet` for the same reason)."""
     logfire.instrument_fastapi(
         app,
         excluded_urls=r"/health(/.*)?$",
@@ -65,28 +67,28 @@ def instrument_app(app: FastAPI) -> None:
 
 
 def instrument_engine(engine: AsyncEngine) -> None:
+    """One span per query."""
     logfire.instrument_sqlalchemy(engine=engine.sync_engine)
 
 
 def _drop_endpoint_arguments(
     _request: Request | WebSocket, attributes: dict[str, Any]
 ) -> dict[str, Any]:
-    """The parsed endpoint arguments include emails, names, and passwords. Keep only
-    which fields failed validation, which names no values."""
+    """Keep only which fields failed validation: the parsed endpoint arguments include emails,
+    names and passwords, and the errors name no values."""
     return {"errors": attributes["errors"]} if attributes.get("errors") else {}
 
 
 def inject(carrier: dict[str, str]) -> None:
-    """Write the current trace context into `carrier`, for a job's arguments.
-    Writes nothing when telemetry is off."""
+    """Write the current trace context into `carrier`, for a job's arguments; nothing when
+    telemetry is off."""
     propagate.inject(carrier)
 
 
 @contextmanager
 def job_span(name: str, job_id: int | None, carrier: Mapping[str, str]) -> Iterator[None]:
-    """One span per job run, under the request that queued it when `carrier` holds
-    its trace context. An exception is recorded and re-raised. Nothing is
-    recorded when telemetry is off."""
+    """One span per job run, under the request that queued it when `carrier` holds its trace
+    context. An exception is recorded and re-raised; nothing is recorded when telemetry is off."""
     attributes: dict[str, str | int] = {"job.name": name}
     if job_id is not None:
         attributes["job.id"] = job_id

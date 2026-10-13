@@ -22,6 +22,7 @@ def recording_dir() -> Path:
 
 
 def video_key(assignment_id: uuid.UUID, session_no: int, index: int) -> str:
+    """The storage key of a session's `index`-th video."""
     return f"{PREFIX}/{assignment_id}/{session_no}/{index}.webm"
 
 
@@ -31,6 +32,7 @@ def assignment_prefix(assignment_id: uuid.UUID) -> str:
 
 
 def _recorded(directory: Path) -> list[Path]:
+    """The videos in `directory`, by name; none when it is gone."""
     return sorted(directory.glob("*.webm")) if directory.is_dir() else []
 
 

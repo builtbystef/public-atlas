@@ -135,6 +135,7 @@ def is_blocked_address(host: str) -> bool:
 
 
 def is_ip_literal(host: str) -> bool:
+    """Whether `host` is an IP address rather than a name, a trailing dot allowed."""
     try:
         ipaddress.ip_address(host.rstrip("."))
     except ValueError:
@@ -166,11 +167,14 @@ async def _getaddrinfo(host: str) -> tuple[str, ...]:  # pragma: no cover
 
 
 def domain_matches(host: str, domain: str) -> bool:
+    """Whether `host` is `domain` or a subdomain of it; the dot keeps `evilontario.ca` off
+    `ontario.ca`."""
     return host == domain or host.endswith("." + domain)
 
 
 class BrowserPolicy:
-    """Deny wins: a blocked address is refused even when the allowlist names it."""
+    """Where one session's browser may go. Deny wins: a blocked address is refused even when
+    the allowlist names it."""
 
     def __init__(
         self,
@@ -263,6 +267,7 @@ class BrowserPolicy:
     # --- robots.txt ---
 
     async def _robots_allow(self, netloc: str, url: str) -> bool:
+        """Whether the host's `robots.txt` lets this client fetch `url`, read once per policy."""
         if netloc not in self._robots:
             self._robots[netloc] = await self._fetch_robots(netloc, urlsplit(url).scheme or "https")
         parser = self._robots[netloc]
@@ -297,6 +302,8 @@ class BrowserPolicy:
     # --- Pacing ---
 
     async def _pace(self, netloc: str, url: str) -> None:
+        """Wait for the host's next slot: `min_interval` or its `Crawl-delay` after the last,
+        whichever is longer."""
         # The browser asks twice per navigation (the tool's check, then the route guard); the
         # second ask must not wait again.
         if url == self._last_paced_url:

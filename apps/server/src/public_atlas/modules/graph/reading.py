@@ -70,6 +70,8 @@ class InstitutionFilters:
 
 @dataclass(frozen=True, slots=True)
 class InstitutionRow:
+    """An institution as the table lists it, with its place and verified homepage URL."""
+
     institution: Institution
     place: Place
     homepage_url: str | None
@@ -101,6 +103,7 @@ def population_figure(
 def _within(
     population: ScalarSelect[Decimal], min_population: int | None, max_population: int | None
 ) -> list[ColumnElement[bool]]:
+    """The population bounds as conditions, inclusive; a place with no figure meets none."""
     bounds: list[ColumnElement[bool]] = []
     if min_population is not None:
         bounds.append(population >= min_population)
@@ -121,6 +124,7 @@ _domain = aliased(Domain, flat=True)
 
 
 def _institutions_matching(filters: InstitutionFilters) -> Select[tuple[Institution, Place]]:
+    """The institutions `filters` admit, with their places."""
     query = select(Institution, _place).join(_place, _place.id == Institution.place_id)
     if filters.q:
         pattern = f"%{' '.join(filters.q.split())}%"
@@ -169,6 +173,7 @@ def _ordering(sort: InstitutionSort, order: SortOrder) -> list[ColumnElement[Any
 def _directed(
     columns: list[ColumnElement[Any] | InstrumentedAttribute[Any]], order: SortOrder
 ) -> list[ColumnElement[Any]]:
+    """Each column in `order`."""
     return [column.desc() if order == "desc" else column.asc() for column in columns]
 
 
@@ -203,6 +208,7 @@ async def list_institutions(  # noqa: PLR0913
 
 
 async def count_institutions(session: AsyncSession, filters: InstitutionFilters) -> int:
+    """How many institutions `filters` admit."""
     total = await session.scalar(
         select(func.count()).select_from(_institutions_matching(filters).subquery())
     )
@@ -225,6 +231,7 @@ async def institution_children(
 
 
 async def served_places_of(session: AsyncSession, institution: Institution) -> list[Place]:
+    """The places a multi-place body serves, by name."""
     rows = await session.scalars(
         select(Place)
         .join(InstitutionServedPlace, InstitutionServedPlace.place_id == Place.id)
@@ -235,6 +242,7 @@ async def served_places_of(session: AsyncSession, institution: Institution) -> l
 
 
 async def identifiers_of(session: AsyncSession, institution: Institution) -> list[Identifier]:
+    """The institution's codes in outside schemes, by scheme."""
     rows = await session.scalars(
         select(Identifier)
         .where(Identifier.institution_id == institution.id)
@@ -244,6 +252,7 @@ async def identifiers_of(session: AsyncSession, institution: Institution) -> lis
 
 
 async def metrics_of(session: AsyncSession, institution: Institution) -> list[Metric]:
+    """The institution's figures, by name, newest year first."""
     rows = await session.scalars(
         select(Metric)
         .where(Metric.institution_id == institution.id)
@@ -254,6 +263,8 @@ async def metrics_of(session: AsyncSession, institution: Institution) -> list[Me
 
 @dataclass(frozen=True, slots=True)
 class HomepageRow:
+    """A homepage claim with its URL, the page that linked to it and its domain."""
+
     homepage: Homepage
     url: str
     found_on_url: str | None
@@ -308,8 +319,9 @@ class PlaceFilters:
 
 @dataclass(frozen=True, slots=True)
 class PlaceRow:
+    """A place with its newest population figure."""
+
     place: Place
-    # The newest population figure.
     population: int | None
 
 
@@ -356,6 +368,7 @@ def _place_ordering(
 
 
 def _places_matching(filters: PlaceFilters) -> Select[tuple[Place]]:
+    """The places `filters` admit, rejected ones aside."""
     query = select(Place).where(Place.status != EntityStatus.REJECTED)
     if filters.q:
         pattern = f"%{' '.join(filters.q.split())}%"
@@ -372,6 +385,7 @@ def _places_matching(filters: PlaceFilters) -> Select[tuple[Place]]:
 
 
 async def get_place(session: AsyncSession, place_id: uuid.UUID) -> Place:
+    """The place with this id; `NotFoundError` when there is none."""
     place = await session.get(Place, place_id)
     if place is None:
         raise NotFoundError("no such place")

@@ -19,6 +19,8 @@ ROBOTS = b"User-agent: PublicAtlas\nDisallow: /private\n"
 
 
 def site(routes: dict[str, httpx.Response]) -> httpx.MockTransport:
+    """A transport answering each URL from `routes`, and 404 for any other."""
+
     def handle(request: httpx.Request) -> httpx.Response:
         return routes.get(str(request.url), httpx.Response(404))
 
@@ -26,6 +28,7 @@ def site(routes: dict[str, httpx.Response]) -> httpx.MockTransport:
 
 
 def policy_for(*domains: str, http: httpx.AsyncClient | None = None) -> BrowserPolicy:
+    """A policy on `domains` that respects `robots.txt`, with no pacing or address block."""
     return BrowserPolicy(
         list(domains), block_private_addresses=False, min_interval=0, respect_robots=True, http=http
     )

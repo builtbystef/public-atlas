@@ -1,5 +1,5 @@
 """Tallies and scorecards: the hits, misses and false positives per measure, with the bucket of
-each, and the gates."""
+each."""
 
 from collections import Counter
 from dataclasses import dataclass, field
@@ -168,6 +168,8 @@ LIST_MEASURES: tuple[AssignmentType, ...] = (AssignmentType.FIND_HOMEPAGE,)
 
 @dataclass(slots=True)
 class Scorecard:
+    """One dataset file's tallies, one per measure, and the notes the report prints."""
+
     slug: str
     kind: CardKind
     # The dataset file's own status: `draft` or `reviewed`.

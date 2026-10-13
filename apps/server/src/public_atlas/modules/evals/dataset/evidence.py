@@ -51,28 +51,30 @@ class _Text(HTMLParser):
 
 
 def normalize(text: str) -> str:
+    """Text as quotes are compared: entities decoded, typographic quotes and dashes made plain,
+    whitespace collapsed, case folded."""
     text = html.unescape(text)
     text = text.translate(
         str.maketrans(
             {
-                "\u2019": "'",  # right single quotation mark
+                "\u2019": "'",
                 "\u2018": "'",
                 "\u201c": '"',
                 "\u201d": '"',
-                "\u2013": "-",  # en dash
-                "\u2014": "-",  # em dash
+                "\u2013": "-",
+                "\u2014": "-",
                 "\xa0": " ",
             }
         )
     )
     text = re.sub(r"\s+", " ", text)
-    # The parser's text pieces are joined with a space, so "<a>link</a>." reads "link ." until
-    # this.
+    # The parser's pieces are joined with a space, so "<a>link</a>." reads "link ." until this.
     text = re.sub(r" ([,.;:!?)\]])", r"\1", text)
     return re.sub(r"([(\[]) ", r"\1", text).strip().casefold()
 
 
 def evidence_items(expected: SubjectFile) -> list[tuple[str, Evidence]]:
+    """Every evidence of a subject file, each with a label for what it backs."""
     items = [(f"institution {i.key}", i.evidence) for i in expected.institutions]
     items += [
         (f"parent of {i.key}", i.parent.evidence)
@@ -86,8 +88,9 @@ def evidence_items(expected: SubjectFile) -> list[tuple[str, Evidence]]:
 async def check_one(
     client: httpx.AsyncClient, sem: asyncio.Semaphore, what: str, ev: Evidence
 ) -> tuple[Status, str]:
+    """One evidence item's status and message. A quote a human confirmed (`manual_check`) is
+    `manual`, not a failure, on a page the script cannot read."""
     status, msg = await _check_one(client, sem, what, ev)
-    # A quote a human confirmed is not a failure on a page the script cannot read.
     if status != "ok" and ev.manual_check:
         return "manual", ""
     return status, msg
@@ -96,6 +99,7 @@ async def check_one(
 async def _check_one(
     client: httpx.AsyncClient, sem: asyncio.Semaphore, what: str, ev: Evidence
 ) -> tuple[Status, str]:
+    """Fetch the evidence page and look for the quote on it, and for `links_to` the link."""
     async with sem:
         try:
             resp = await client.get(ev.url)

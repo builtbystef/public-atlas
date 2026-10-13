@@ -38,11 +38,9 @@ function Line({ icon, children }: { icon: ReactNode; children: ReactNode }) {
 }
 
 /**
- * "What this does": the decision's preview in plain sentences, from the
- * server making the decision and rolling it back. `request` is null until
- * the dialog has what the preview needs, such as the entity to merge into;
- * `extra` adds what the dialog itself knows, such as the type it sets;
- * `tone` marks the changes as the decision's own.
+ * "What this does": the decision's preview in plain sentences, from the server making the decision
+ * and rolling it back. `request` is null until the dialog has what the preview needs (the entity to
+ * merge into); `extra` adds what the dialog itself knows, such as the type it sets.
  */
 export function DecisionEffects({
   request,

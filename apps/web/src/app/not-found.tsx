@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = { title: "Page not found" };
 
-/** Also reached from inside a page whose record id is not one, after that page's title has
- * streamed; hence <DocumentTitle>. */
+/**
+ * Also reached from inside a page whose record id matches nothing, after that page's title
+ * has streamed; hence <DocumentTitle>.
+ */
 export default function RootNotFound() {
   return (
     <main className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">

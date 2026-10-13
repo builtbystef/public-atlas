@@ -172,7 +172,9 @@ OVERRIDES: dict[str, dict[str, str]] = {
 
 @dataclass(frozen=True)
 class DirectoryRow:
-    # The legal name in the list's inverted form: "Kingston, City of".
+    """One municipality's row in the directory, its legal name in the list's inverted form
+    ("Kingston, City of")."""
+
     name: str
     status: str
     area: str
@@ -243,6 +245,7 @@ class Directory:
         return rows
 
     def named(self, title: str) -> DirectoryRow:
+        """The row with exactly this title, as an override names it."""
         for row in self.rows:
             if row.name == title:
                 return row
@@ -282,10 +285,13 @@ class Draft:
             self.alias(written[-1])
 
     def alias(self, text: str, language: str = "en") -> None:
+        """Add an alias unless it is the name or held already."""
         if text != self.name and all(alias.text != text for alias in self.aliases):
             self.aliases.append(AliasEntry(text=text, language=language))
 
     def entry(self) -> PlaceEntry:
+        """The place entry: the census line cites the place and its population, the directory
+        row, when one was taken, the government and the homepage."""
         place = Citation(source=POPULATION.name, line=self.unit.line)
         citations: dict[Fact, Citation] = {"place": place}
         if self.row is not None:
@@ -350,6 +356,8 @@ class Notes:
 
 
 class Builder:
+    """Drafts places from census units and the directory, and applies the overrides."""
+
     def __init__(self, naming: Naming, directory: Directory, notes: Notes) -> None:
         self.naming = naming
         self.directory = directory
@@ -382,6 +390,7 @@ class Builder:
         return draft
 
     def override(self, draft: Draft) -> None:
+        """Apply the unit's override to the draft, noting it as idle when it changed nothing."""
         fields = OVERRIDES.get(draft.unit.code)
         if fields is None:
             return

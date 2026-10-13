@@ -11,9 +11,11 @@ if TYPE_CHECKING:
 
 
 class FixedModels:
+    """Hands out the one model for every choice, with default settings, and records each choice
+    so a test can check which model a session wanted."""
+
     def __init__(self, model: Model) -> None:
         self._model = model
-        # Every choice asked for, so a test can check which model a session wanted.
         self.choices: list[ModelChoice] = []
 
     def model(self, choice: ModelChoice) -> Model:
