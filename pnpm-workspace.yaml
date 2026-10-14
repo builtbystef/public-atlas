@@ -6,10 +6,10 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@base-ui/react": ^1.8.0
+  "@base-ui/react": ^1.9.0
   # Pinned to the Python playwright package's version (uv.lock), so both use one Chromium
   # build and CI installs it once. Bump the two together.
-  "@playwright/test": 1.63.0
+  "@playwright/test": 1.64.0
   "@tailwindcss/postcss": ^4.3.3
   "@tanstack/react-form": ^1.33.5
   "@tanstack/react-query": ^5.104.1
@@ -21,10 +21,10 @@ catalog:
   "@types/node": ^24
   class-variance-authority: ^0.7.1
   cn: ^0.4.0
-  concurrently: ^10.0.5
+  concurrently: ^10.0.6
   country-flag-icons: ^1.6.20
-  jsdom: ^30.0.1
-  lucide-react: ^1.48.0
+  jsdom: ^30.1.2
+  lucide-react: ^1.55.0
   next-themes: ^0.4.6
   postcss: ^8.5.29
   react-force-graph-2d: ^1.29.2
