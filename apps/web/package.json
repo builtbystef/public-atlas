@@ -22,7 +22,7 @@
     "cn": "catalog:",
     "country-flag-icons": "catalog:",
     "lucide-react": "catalog:",
-    "next": "^16.4.0",
+    "next": "^16.4.2",
     "next-themes": "catalog:",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
