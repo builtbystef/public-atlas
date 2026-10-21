@@ -6,30 +6,30 @@ packages:
 catalogMode: prefer
 
 catalog:
-  "@base-ui/react": ^1.8.0
+  "@base-ui/react": ^1.9.0
   # Pinned to the Python playwright package's version (uv.lock), so both use one Chromium
   # build and CI installs it once. Bump the two together.
-  "@playwright/test": 1.63.0
+  "@playwright/test": 1.64.1
   "@tailwindcss/postcss": ^4.3.3
   "@tanstack/react-form": ^1.33.5
   "@tanstack/react-query": ^5.104.1
   "@tanstack/react-query-devtools": ^5.104.1
-  "@tanstack/react-table": ^9.2.8
+  "@tanstack/react-table": ^9.3.1
   "@testing-library/dom": ^10.4.2
   "@testing-library/react": ^16.3.3
-  "@testing-library/user-event": ^14.6.1
+  "@testing-library/user-event": ^14.6.8
   "@types/node": ^24
   class-variance-authority: ^0.7.1
-  cn: ^0.4.0
-  concurrently: ^10.0.5
+  cn: ^0.5.0
+  concurrently: ^10.0.6
   country-flag-icons: ^1.6.20
-  jsdom: ^30.0.1
-  lucide-react: ^1.48.0
+  jsdom: ^30.1.3
+  lucide-react: ^1.59.0
   next-themes: ^0.4.6
-  postcss: ^8.5.29
+  postcss: ^8.5.30
   react-force-graph-2d: ^1.29.2
   server-only: ^0.0.1
-  shadcn: ^4.21.4
+  shadcn: ^4.22.0
   sonner: ^2.0.8
   tailwindcss: ^4.3.3
   tw-animate-css: ^1.4.0
@@ -38,7 +38,7 @@ catalog:
   # cannot see the coupling through the npm: alias, so update both by hand.
   vite: npm:@voidzero-dev/vite-plus-core@1.1.0
   vite-plus: 1.1.0
-  zod: ^4.6.5
+  zod: ^4.6.7
 overrides:
   vite: "catalog:"
 peerDependencyRules:
