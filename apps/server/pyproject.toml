@@ -9,7 +9,7 @@ dependencies = [
   "aiobotocore>=3.9.2,<4",
   "alembic>=1.19.1,<1.21",
   # 0.x: a minor bump can break, so pin the minor. Starlette is left to FastAPI.
-  "fastapi[standard-no-fastapi-cloud-cli]>=0.141.1,<0.142",
+  "fastapi[standard-no-fastapi-cloud-cli]>=0.162.0,<0.163",
   # The browser's plain fetches (`robots.txt`, `read_file`) and the search port.
   "httpx>=0.28,<1",
   # Hosts compared in their IDNA form on the allowlist.
