@@ -58,7 +58,7 @@ jobs:
 
       # Installs Vite+, the Node version from .node-version and the package manager from
       # package.json "packageManager", then runs `vp install`.
-      - uses: voidzero-dev/setup-vp@3754dd7dbdb32bd8f6d28b6043de13ad3a75f21f # v1.21.1
+      - uses: voidzero-dev/setup-vp@cab1ab9eaff52d4857875f4f2c016e36af8f2c76 # v1.22.0
         with:
           node-version-file: .node-version
           cache: true
@@ -67,7 +67,7 @@ jobs:
 
       # Installs the uv version `required-version` in pyproject.toml allows and the interpreter
       # from .python-version. Caching is on by default.
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - run: uv sync --locked --all-packages
 
@@ -187,7 +187,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
 
       - run: uv sync --locked --all-packages --group parse-cpu
 
