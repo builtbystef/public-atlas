@@ -28,7 +28,7 @@ dependencies = [
   "pydantic-settings>=2.13.1,<3",
   # The eval dataset: hand-labelled YAML files, the only YAML in the project.
   "pyyaml>=6.0.3,<7",
-  "sqlalchemy[asyncio]>=2.1.4,<2.2",
+  "sqlalchemy[asyncio]>=2.1.6,<2.2",
 ]
 
 [dependency-groups]
