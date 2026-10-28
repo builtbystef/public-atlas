@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.14"
 resolution-markers = [
     "sys_platform == 'win32' and extra != 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130'",
@@ -197,7 +197,7 @@ version = "4.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "idna" },
-    { name = "typing-extensions", marker = "python_full_version < '3.15' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "typing-extensions", marker = "python_full_version < '3.15'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/ea/9a/c15a60547004a3f3cea20296c934f827ddd7bdba225a2e7e9fcb5ec48c80/anyio-4.15.0.tar.gz", hash = "sha256:b5c620ed540725e2579c31b17bb995b3bf02c9281c9cace04c7d186380bab85e", size = 276504, upload-time = "2026-09-02T21:46:36.957Z" }
 wheels = [
@@ -399,7 +399,7 @@ name = "cuda-bindings"
 version = "13.4.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cuda-pathfinder", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "cuda-pathfinder", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ab/e6/3c094ef0eb00a7b0ff69a3915327e2c2d14e712ebe471a2217bf7f020f33/cuda_bindings-13.4.3-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4796864ce829bd95ef2ef0d23c6ba21bb64e08f7fab0a377302ed1affb6605c7", size = 6407948, upload-time = "2026-09-23T02:22:18.484Z" },
@@ -430,43 +430,43 @@ wheels = [
 
 [package.optional-dependencies]
 cublas = [
-    { name = "nvidia-cublas", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 cudart = [
-    { name = "nvidia-cuda-runtime", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cuda-runtime", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 cufft = [
-    { name = "nvidia-cufft", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cufft", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 cufile = [
-    { name = "nvidia-cufile", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cufile", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 cupti = [
-    { name = "nvidia-cuda-cupti", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cuda-cupti", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 curand = [
-    { name = "nvidia-curand", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-curand", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 cusolver = [
-    { name = "nvidia-cublas", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-cusolver", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-cusparse", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cublas", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cusolver", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 cusparse = [
-    { name = "nvidia-cusparse", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-nvjitlink", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cusparse", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 nvjitlink = [
-    { name = "nvidia-nvjitlink", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 nvrtc = [
-    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 nvtx = [
-    { name = "nvidia-nvtx", marker = "(platform_machine != 'aarch64' and platform_machine != 'x86_64' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvtx", marker = "(platform_machine == 'aarch64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (platform_machine == 'x86_64' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 
 [[package]]
@@ -498,27 +498,27 @@ wheels = [
 
 [[package]]
 name = "doclang"
-version = "0.7.3"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lxml" },
     { name = "typer", version = "0.26.8", source = { registry = "https://pypi.org/simple" } },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f5/3a/005e4856ad8e9b9879414a4df4dbc56dc3663b96f9d8c920ef210e8931cf/doclang-0.7.3.tar.gz", hash = "sha256:ca50615357e46ebf9597bb9065b9112367103ec24bd539f8ae12649224cf50b0", size = 31569, upload-time = "2026-07-15T08:11:02.917Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b1/3d/67a1af92bcd22548b02aa44dc24615a511d5c5ee9070259625ddc4b3c0a7/doclang-0.8.0.tar.gz", hash = "sha256:29607b86670c769071c785ade7b1f48d20f188b8eff9b68ffdb0446de1d979dc", size = 66380, upload-time = "2026-10-15T14:50:55.169Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a5/81/334ccc0f0cd7c3d75996b6b596e7f4c62c4c46a0ca042003315c28170159/doclang-0.7.3-py3-none-any.whl", hash = "sha256:9440c4ca9f7e061a7b8d33bdf15b1029be69a4c13cd8952dd6ce541884e4c685", size = 32267, upload-time = "2026-07-15T08:11:01.977Z" },
+    { url = "https://files.pythonhosted.org/packages/67/18/6c22e40531a43ae978584f16a2ada71c358bf1174c56ce4e9a57d49f2753/doclang-0.8.0-py3-none-any.whl", hash = "sha256:7c768f641414629ec23576ed1a4a76b3e934ff734803f09f8d9bd084ac2cae90", size = 69943, upload-time = "2026-10-15T14:50:53.844Z" },
 ]
 
 [[package]]
 name = "docling"
-version = "2.132.0"
+version = "2.142.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docling-slim", extra = ["standard"], marker = "extra == 'group-19-public-atlas-server-parse-cpu' or extra == 'group-19-public-atlas-server-parse-cu130'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7a/6f/6614bebc7516408c95cf36c6183f14076542a3b33131ccb549a02564e55e/docling-2.132.0.tar.gz", hash = "sha256:33b2ce9e34206d428fc0f23b56b312ff35547c33cebfcefede3a025c88181caf", size = 9073, upload-time = "2026-10-01T09:47:26.795Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/7a/71edecf102ba26c3dc6bd7344c10373761359eaf59d563424e82b9dc2ec8/docling-2.142.1.tar.gz", hash = "sha256:da56c51989045b3109d0b4fde7ab4cd57b9db67d80a780cf5d5da5e1be33810f", size = 9146, upload-time = "2026-10-23T08:22:09.742Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/ff/7689e3a3036c776526dbed4a6ed049fe5502c678fe74d145e66891953e4b/docling-2.132.0-py3-none-any.whl", hash = "sha256:efd35e2f3832179c0c25476df763a13d2f14262d9e8dd3c4edad2aa7597bafde", size = 5221, upload-time = "2026-10-01T09:47:25.619Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/9d/f68c418d11115ac593197a28b0f1e689876294035a1a5ea640be5e06218e/docling-2.142.1-py3-none-any.whl", hash = "sha256:72e52caeb95e36fcc3b2d90a6e77a8229432d20b22efdf17527b9ed5a08bd1b2", size = 5242, upload-time = "2026-10-23T08:22:08.356Z" },
 ]
 
 [package.optional-dependencies]
@@ -531,7 +531,7 @@ rapidocr = [
 
 [[package]]
 name = "docling-core"
-version = "2.99.0"
+version = "2.104.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "defusedxml" },
@@ -549,9 +549,9 @@ dependencies = [
     { name = "typer", version = "0.26.8", source = { registry = "https://pypi.org/simple" } },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/30/4da99847d85e3a2aa61e751c1e8749a2ba223c2208b0a9a1ad1b174cdb5a/docling_core-2.99.0.tar.gz", hash = "sha256:bff91f3313cc092f0255743f708cb86b4efec41532b3c60aae3b790ef1f2a71a", size = 388534, upload-time = "2026-09-25T15:10:15.996Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/39/07095f73dec9a9dfeaf75acce470a708c7f88fc66a5565a63f88dd6567ff/docling_core-2.104.0.tar.gz", hash = "sha256:94a5c968d40c3ff3cba59fe94d4c92b53e617637ba758b3f6bd38f585e147fe1", size = 446513, upload-time = "2026-10-22T14:02:02.15Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/02/61a226c0ba319dc7da463fd137f88a728e4eb0353591d85064181a5016bb/docling_core-2.99.0-py3-none-any.whl", hash = "sha256:2ce0bae815de8139e8c0dc93736ba613609db777c3cbe392d9ec76bfabec6104", size = 309099, upload-time = "2026-09-25T15:10:14.163Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/3d/effaf34794872ad8800bb0cc21de9c5c838ec080086249c6d222afaaa276/docling_core-2.104.0-py3-none-any.whl", hash = "sha256:e820fb6f130678df06119ea1f437d1a597c1c441fddd0e95299e27348d961011", size = 329981, upload-time = "2026-10-22T14:02:00.295Z" },
 ]
 
 [package.optional-dependencies]
@@ -589,7 +589,7 @@ wheels = [
 
 [[package]]
 name = "docling-parse"
-version = "7.22.1"
+version = "7.23.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "docling-core" },
@@ -597,18 +597,23 @@ dependencies = [
     { name = "pydantic" },
     { name = "pywin32", marker = "sys_platform == 'win32'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/37/d2b2378cda687cb61b0d86ba11d59ad6e1c6cc32711fdf2e71c783a2cbff/docling_parse-7.22.1.tar.gz", hash = "sha256:bf7da4fa6bac5078b4d43e40c8e988073568829de13c3df25317a4dfda35c03c", size = 7041478, upload-time = "2026-09-28T16:02:31.725Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/25/41/92864c6c957d1ca217dd6ad4a08990f4b6076e2331109cfa541c322967c5/docling_parse-7.23.0.tar.gz", hash = "sha256:5527017c8be23492d5074dbd8473a2ceb4dcb7c503bb95da21310c0e1f9cf1fd", size = 7126562, upload-time = "2026-10-22T14:53:05.826Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a7/64/e3b217ea7664e0dbb4bd7480c4492322f6bbc02f5173b871334e5da1c010/docling_parse-7.22.1-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:3a9bdac900a6fc02834714e2fb11a4aeecc4b81f2cc55deb673b48adbc090811", size = 9877415, upload-time = "2026-09-28T16:02:19.542Z" },
-    { url = "https://files.pythonhosted.org/packages/19/b2/7d6329e8c2f80a5d32867c193c05207e599a28610a68faaff1ca87ffadeb/docling_parse-7.22.1-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:7f0cffc8ae4ef88e6eb61b4257ae929aac2c5335d868a480c5ea33023ec4023e", size = 10436614, upload-time = "2026-09-28T16:02:22.065Z" },
-    { url = "https://files.pythonhosted.org/packages/92/a2/123022ea1579d722015e170ba1ea1f6e63a3a6a987a0700db56816233fe2/docling_parse-7.22.1-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9418e9d08baee7b592c839bfb2db1a646379c681e59a33058b046175df8a8d03", size = 10843335, upload-time = "2026-09-28T16:02:24.301Z" },
-    { url = "https://files.pythonhosted.org/packages/3d/50/0092ab8ef72ad0067fcd4ad4f6c75b56608263b84122325240933a25bd2a/docling_parse-7.22.1-cp314-cp314-win_amd64.whl", hash = "sha256:3fd4a2f526e63330d7052e9f050ccae3e56a55bd5595ee9597db772e24791712", size = 12321648, upload-time = "2026-09-28T16:02:26.92Z" },
-    { url = "https://files.pythonhosted.org/packages/d4/ce/9777f208d1dfa056e9ef3e293f1b11f4614cdefe56eaf1ba810ed4dc3513/docling_parse-7.22.1-cp314-cp314-win_arm64.whl", hash = "sha256:eb8b5375341b688d4f4ae7dbe781e8c88634abcad290653919beee12a5f47150", size = 9651228, upload-time = "2026-09-28T16:02:29.333Z" },
+    { url = "https://files.pythonhosted.org/packages/bb/1b/6468be5ed7dc6e3be39bc674d435dd3f712936e5e4dd597a29e5b8daf9ba/docling_parse-7.23.0-cp314-cp314-macosx_14_0_arm64.whl", hash = "sha256:67c71f27ee5e4d52791c2bc023f80ad9522b2ad465dab1a8be43f7715675c8d7", size = 9734432, upload-time = "2026-10-22T14:52:39.962Z" },
+    { url = "https://files.pythonhosted.org/packages/df/53/688f5de9edbb3993e56462fc90da3f4c57a8d82eb7b7cac33f35cd329390/docling_parse-7.23.0-cp314-cp314-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5a1ab03a1fc1185653545a3d648a60e00197bc7b6f4b122d9332895457aaf264", size = 10443019, upload-time = "2026-10-22T14:52:42.62Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/55/044e6b839114859bf44fe034729b935a295beb2148441c258d6a1fb6579a/docling_parse-7.23.0-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:aecfd319131cd74e520ebe4fa6ecc0cdbd9719b60ae5278a103a0bf3799ca2c2", size = 10849015, upload-time = "2026-10-22T14:52:45.555Z" },
+    { url = "https://files.pythonhosted.org/packages/71/d6/9274e5020841fd0e649d7f672e7fc076f841b5befd084c1e72ea59c633cc/docling_parse-7.23.0-cp314-cp314-win_amd64.whl", hash = "sha256:8d2cc8d179b795869a3a533a423ef236cac1d846fc49791d0f42fe9218660824", size = 12329257, upload-time = "2026-10-22T14:52:48.445Z" },
+    { url = "https://files.pythonhosted.org/packages/12/b6/4129084f51abdf6e230e9f9564b121a6f337639b57380047b79b54190e9d/docling_parse-7.23.0-cp314-cp314-win_arm64.whl", hash = "sha256:5577e44c36fc7e097b57e2077cfbcf1521fca01e4710bba264c5f26394f34c70", size = 9653258, upload-time = "2026-10-22T14:52:51.26Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/40/ef0663722c4cd28da5b9a12f1c0af11b13612994da59db793d4219ef2851/docling_parse-7.23.0-cp315-cp315-macosx_14_0_arm64.whl", hash = "sha256:ba72d9080fec10707677f5cadf6a5d23a7eb0b85c08c314dbe823e3414e5693a", size = 9734429, upload-time = "2026-10-22T14:52:53.975Z" },
+    { url = "https://files.pythonhosted.org/packages/ab/cd/94e2daddb9d82868111297ab2ce37428ae1cd6efb24474ec6bf34d873456/docling_parse-7.23.0-cp315-cp315-manylinux_2_26_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:df6b6ac4984da5936402b46c4f43bcdcdea650570be62bdc866e7efaf7cee33e", size = 10443024, upload-time = "2026-10-22T14:52:56.378Z" },
+    { url = "https://files.pythonhosted.org/packages/f2/63/0316ad450e2b9de67792348a4c26ef0686c5d076a9cd1e67eadee601529a/docling_parse-7.23.0-cp315-cp315-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ac704d1749a671aadb89a57775ab41b78bd05bf97afa16d5bbf0eb602c894f15", size = 10849008, upload-time = "2026-10-22T14:52:58.86Z" },
+    { url = "https://files.pythonhosted.org/packages/30/ec/345f9a82621c1aaff786d5036e2c8fd00c65184541c9aa6ab3a9a22ed9a7/docling_parse-7.23.0-cp315-cp315-win_amd64.whl", hash = "sha256:8bd26ee21db60a6ea7f51e18a0eb4f5c4ac3b90b1af6980cd7444f9bc67e51f2", size = 12329261, upload-time = "2026-10-22T14:53:01.277Z" },
+    { url = "https://files.pythonhosted.org/packages/cd/73/07c078bcedfede62d89a1367d2c1e039a2019456a7d90e11384c4514c4f9/docling_parse-7.23.0-cp315-cp315-win_arm64.whl", hash = "sha256:b3f678461f1aed6a13092780e0dbd70141ce975ca0abd2e5a24a386ee6fbf86a", size = 9653325, upload-time = "2026-10-22T14:53:03.649Z" },
 ]
 
 [[package]]
 name = "docling-slim"
-version = "2.132.0"
+version = "2.142.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -621,9 +626,9 @@ dependencies = [
     { name = "requests" },
     { name = "tqdm" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/05/bc/c6ddf2589ca55f3fcdd560669027227d09f34a27d3a83e0b041b9e40ae49/docling_slim-2.132.0.tar.gz", hash = "sha256:6970f2d17a3b5bac67cd44ff2705789e6b3cbbdb6366ca1a660dae39f566c27a", size = 772568, upload-time = "2026-10-01T09:45:47.623Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/43/fa84e245dd80d8c48912f0495c3a31a333fb3804efb0295646f5f052e748/docling_slim-2.142.1.tar.gz", hash = "sha256:b6042f9b6c8f156f04d59a298188b33aa8f6317ca57073225453056c164af0f4", size = 922507, upload-time = "2026-10-23T08:20:49.57Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/b4/338f066c44dca51fe0c7b39b516c3e39a672e647a548d69067ddf6c89621/docling_slim-2.132.0-py3-none-any.whl", hash = "sha256:a1977f7116bc03872c5b763278fcc8c6b7b070a4bc1e11942b771b509071e835", size = 948896, upload-time = "2026-10-01T09:45:45.428Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/5f/6ca181855e1cad1d9e8be1830fa660cf481bbb5e5da6caa21df491181e71/docling_slim-2.142.1-py3-none-any.whl", hash = "sha256:8013da3da0692b51406e6192c3b2aba4c241da92ff055af106dbe6b723b7f528", size = 1116839, upload-time = "2026-10-23T08:20:47.142Z" },
 ]
 
 [package.optional-dependencies]
@@ -748,7 +753,7 @@ source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "rich-toolkit" },
     { name = "typer", version = "0.26.8", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-public-atlas-server-parse-cpu' or extra == 'group-19-public-atlas-server-parse-cu130'" },
-    { name = "typer", version = "0.27.2", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "typer", version = "0.27.2", source = { registry = "https://pypi.org/simple" }, marker = "(extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/33/eb/3b534c6f8e157f9ddbf2a153512307c886cad0b258739c200dd8ff8c4452/fastapi_cli-0.0.32.tar.gz", hash = "sha256:38024d2345275e1b37ce8848727a580d84901b570e96b3256d9d36a9a5039424", size = 26636, upload-time = "2026-07-16T12:16:58.678Z" }
@@ -969,8 +974,8 @@ name = "httpcore2"
 version = "2.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11", marker = "sys_platform != 'emscripten' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "truststore", marker = "sys_platform != 'emscripten' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "h11" },
+    { name = "truststore" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cb/f3/1db7aa2bc2524062192bb0e0323969492d1883152a232fe36eea65f4e35c/httpcore2-2.13.1.tar.gz", hash = "sha256:e0aa977abe17e69a3b820a24542a6fa88702676d83880b8d194dcd18408e5103", size = 68071, upload-time = "2026-09-23T07:47:22.372Z" }
 wheels = [
@@ -1019,11 +1024,11 @@ name = "httpx2"
 version = "2.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "anyio", marker = "sys_platform != 'emscripten' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "httpcore2", marker = "sys_platform != 'emscripten' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "httpx2-jsfetch", marker = "sys_platform == 'emscripten' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "anyio", marker = "sys_platform != 'emscripten'" },
+    { name = "httpcore2", marker = "sys_platform != 'emscripten'" },
+    { name = "httpx2-jsfetch", marker = "sys_platform == 'emscripten'" },
     { name = "idna" },
-    { name = "truststore", marker = "sys_platform != 'emscripten' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "truststore", marker = "sys_platform != 'emscripten'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/d5/44/474bef2a0e9d90f1715d32cb98b0738695ca17ba324095fb2497ed7fbd59/httpx2-2.13.1.tar.gz", hash = "sha256:e48744a19e3af5ee48313d0ce5fe941d5422fae5705ea922a4aabf94d7800dfa", size = 100405, upload-time = "2026-09-23T07:47:23.052Z" }
 wheels = [
@@ -1560,7 +1565,7 @@ name = "nvidia-cublas"
 version = "13.1.1.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cuda-nvrtc", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cuda-nvrtc", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/a1/0bd24ee8c8d03adac032fd2909426a00c88f8c57961b1277ded97f91119f/nvidia_cublas-13.1.1.3-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:b7a210458267ac818974c53038fbec2e969d5c99f305ab15c72522fa9f001dd5", size = 542848918, upload-time = "2026-04-08T18:46:22.985Z" },
@@ -1603,7 +1608,7 @@ name = "nvidia-cudnn-cu13"
 version = "9.24.0.43"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cublas", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ca/30/7c257e3d5cb4fecb147b93895c66e29c93f8e76d74b45bb418ff0587c4ec/nvidia_cudnn_cu13-9.24.0.43-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:a6812a554a1ff0413e9c52b84c26c050380649ab9615f9c16bded368ce9f421f", size = 650976863, upload-time = "2026-07-02T16:23:39.248Z" },
@@ -1616,7 +1621,7 @@ name = "nvidia-cufft"
 version = "12.0.0.61"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/ae/f417a75c0259e85c1d2f83ca4e960289a5f814ed0cea74d18c353d3e989d/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:2708c852ef8cd89d1d2068bdbece0aa188813a0c934db3779b9b1faa8442e5f5", size = 214053554, upload-time = "2025-09-04T08:31:38.196Z" },
@@ -1648,9 +1653,9 @@ name = "nvidia-cusolver"
 version = "12.0.4.66"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-cublas", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-cusparse", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cublas", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-cusparse", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c8/c3/b30c9e935fc01e3da443ec0116ed1b2a009bb867f5324d3f2d7e533e776b/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_aarch64.whl", hash = "sha256:02c2457eaa9e39de20f880f4bd8820e6a1cfb9f9a34f820eb12a155aa5bc92d2", size = 223467760, upload-time = "2025-09-04T08:33:04.222Z" },
@@ -1663,7 +1668,7 @@ name = "nvidia-cusparse"
 version = "12.6.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'darwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'emscripten' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "nvidia-nvjitlink", marker = "(sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/94/5c26f33738ae35276672f12615a64bd008ed5be6d1ebcb23579285d960a9/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:80bcc4662f23f1054ee334a15c72b8940402975e0eab63178fc7e670aa59472c", size = 162155568, upload-time = "2025-09-04T08:33:42.864Z" },
@@ -2229,7 +2234,7 @@ name = "psycopg"
 version = "3.3.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tzdata", marker = "sys_platform == 'win32' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "tzdata", marker = "sys_platform == 'win32'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/76/26/3ea4ca5eaea1c0debcdf7ee7c1613fbe721dc27a03c461c0817ffd8a0601/psycopg-3.3.6.tar.gz", hash = "sha256:c081f2250df751a943036e42db6df4571c66cd0aabe8291a7a506512b12007d2", size = 168171, upload-time = "2026-09-18T13:22:55.152Z" }
 wheels = [
@@ -2238,7 +2243,7 @@ wheels = [
 
 [package.optional-dependencies]
 binary = [
-    { name = "psycopg-binary", marker = "implementation_name != 'pypy' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "psycopg-binary", marker = "implementation_name != 'pypy'" },
 ]
 pool = [
     { name = "psycopg-pool" },
@@ -2376,7 +2381,7 @@ dev = [
     { name = "types-pyyaml", specifier = ">=6.0.12,<7" },
 ]
 parse-cpu = [
-    { name = "docling", extras = ["rapidocr"], specifier = ">=2.132.0,<3" },
+    { name = "docling", extras = ["rapidocr"], specifier = ">=2.142.1,<3" },
     { name = "torch", marker = "sys_platform != 'darwin'", specifier = ">=2.14,<3", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "public-atlas-server", group = "parse-cpu" } },
     { name = "torch", marker = "sys_platform == 'darwin'", specifier = ">=2.14,<3" },
     { name = "torchvision", marker = "sys_platform != 'darwin'", specifier = ">=0.29,<1", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "public-atlas-server", group = "parse-cpu" } },
@@ -2596,7 +2601,7 @@ name = "pytest"
 version = "9.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "colorama", marker = "sys_platform == 'win32' or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "colorama", marker = "sys_platform == 'win32'" },
     { name = "iniconfig" },
     { name = "packaging" },
     { name = "pluggy" },
@@ -3370,7 +3375,7 @@ resolution-markers = [
     "sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "cuda-bindings", marker = "(python_full_version < '3.15' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (python_full_version >= '3.15' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "cuda-bindings", marker = "(python_full_version < '3.15' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "cuda-toolkit", extra = ["cublas", "cudart", "cufft", "cufile", "cupti", "curand", "cusolver", "cusparse", "nvjitlink", "nvrtc", "nvtx"], marker = "(sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "filelock", marker = "(sys_platform != 'darwin' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "fsspec", marker = "(sys_platform != 'darwin' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
@@ -3382,7 +3387,7 @@ dependencies = [
     { name = "nvidia-nvshmem-cu13", marker = "(sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "setuptools", marker = "(sys_platform != 'darwin' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "sympy", marker = "(sys_platform != 'darwin' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "triton", marker = "(python_full_version < '3.15' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (python_full_version >= '3.15' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform != 'linux' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "triton", marker = "(python_full_version < '3.15' and sys_platform == 'linux' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "typing-extensions", marker = "(sys_platform != 'darwin' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 wheels = [
@@ -3663,10 +3668,10 @@ name = "typer"
 version = "0.27.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "annotated-doc", marker = "(extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "annotated-doc", marker = "(extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
     { name = "colorama", marker = "(sys_platform == 'win32' and extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "rich", marker = "(extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
-    { name = "shellingham", marker = "(extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "rich", marker = "(extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "shellingham", marker = "(extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/16/f7/57713ba479fd405eb76de31404b2c744c289e336b2d999511ebf51e496f7/typer-0.27.2.tar.gz", hash = "sha256:269b7eb9d3c202ca84b4bc9618cb04ebb43d3d4d1e567e4c768607232c05f945", size = 204045, upload-time = "2026-08-28T10:26:55.046Z" }
 wheels = [
@@ -3757,10 +3762,10 @@ standard = [
     { name = "httptools" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
-    { name = "uvloop", marker = "(platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32') or (platform_python_implementation == 'PyPy' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'cygwin' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (sys_platform == 'win32' and extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "uvloop", marker = "platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32'" },
     { name = "watchfiles" },
     { name = "websockets", version = "16.1.1", source = { registry = "https://pypi.org/simple" }, marker = "extra == 'group-19-public-atlas-server-parse-cpu' or extra == 'group-19-public-atlas-server-parse-cu130'" },
-    { name = "websockets", version = "17.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130') or (extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130')" },
+    { name = "websockets", version = "17.1", source = { registry = "https://pypi.org/simple" }, marker = "(extra != 'group-19-public-atlas-server-parse-cpu' and extra != 'group-19-public-atlas-server-parse-cu130') or (extra == 'group-19-public-atlas-server-parse-cpu' and extra == 'group-19-public-atlas-server-parse-cu130')" },
 ]
 
 [[package]]
